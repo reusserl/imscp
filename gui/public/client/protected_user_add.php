@@ -30,10 +30,11 @@
  */
 
 /**
- * Add Htaccess user.
+ * Add htuser
  *
- * @param int $domainId Domain unique identifier
- * @return
+ * @param int $domainId
+ * @throws iMSCP_Exception
+ * @throws iMSCP_Exception_Database
  */
 function client_addHtaccessUser($domainId)
 {
@@ -56,7 +57,7 @@ function client_addHtaccessUser($domainId)
 
 			$status = 'toadd';
 			$uname = clean_input($_POST['username']);
-			$upass = cryptPasswordWithSalt($_POST['pass'], generateRandomSalt(true));
+			$upass = \iMSCP\Crypt::htpasswd($_POST['pass']);
 
 			$query = "
 				SELECT

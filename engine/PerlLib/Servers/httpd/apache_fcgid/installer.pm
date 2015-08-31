@@ -26,8 +26,8 @@ package Servers::httpd::apache_fcgid::installer;
 use strict;
 use warnings;
 no if $] >= 5.017011, warnings => 'experimental::smartmatch';
+use iMSCP::Crypt 'randomStr';
 use iMSCP::Debug;
-use iMSCP::EventManager;
 use iMSCP::Config;
 use iMSCP::Execute;
 use iMSCP::Rights;
@@ -38,7 +38,7 @@ use iMSCP::File;
 use iMSCP::TemplateParser;
 use iMSCP::ProgramFinder;
 use File::Basename;
-use Servers::httpd::apache_fcgid;
+use Servers::httpd;
 use version;
 use Net::LibIDN qw/idn_to_ascii/;
 use parent 'Common::SingletonClass';
@@ -56,7 +56,7 @@ use parent 'Common::SingletonClass';
  Register setup event listeners
 
  Param iMSCP::EventManager \%eventManager
- Return int 0 on success, other on failure
+ Return int 0 on success, die on failure
 
 =cut
 
@@ -64,9 +64,7 @@ sub registerSetupListeners
 {
 	my ($self, $eventManager) = @_;
 
-	my $rs = $eventManager->register('beforeSetupDialog', sub { push @{$_[0]}, sub { $self->showDialog(@_) }; 0; });
-	return $rs if $rs;
-
+	$eventManager->register('beforeSetupDialog', sub { push @{$_[0]}, sub { $self->showDialog(@_) }; 0; });
 	$eventManager->register('afterSetupCreateDatabase', sub { $self->_fixPhpErrorReportingValues(@_) });
 }
 
@@ -125,15 +123,10 @@ sub install
 {
 	my $self = shift;
 
-	# Saving all system configuration files if they exists
-	for my $file(
-		"$main::imscpConfig{'LOGROTATE_CONF_DIR'}/apache2", "$self->{'config'}->{'HTTPD_CONF_DIR'}/ports.conf"
-	) {
-		my $rs = $self->_bkpConfFile($file);
-		return $rs if $rs;
-	}
+	my $rs = $self->_bkpConfFile("$self->{'config'}->{'HTTPD_CONF_DIR'}/ports.conf");
+	return $rs if $rs;
 
-	my $rs = $self->_setApacheVersion();
+	$rs = $self->_setApacheVersion();
 	return $rs if $rs;
 
 	$rs = $self->_makeDirs();
@@ -143,9 +136,6 @@ sub install
 	return $rs if $rs;
 
 	$rs = $self->_buildApacheConfFiles();
-	return $rs if $rs;
-
-	$rs = $self->_installLogrotate();
 	return $rs if $rs;
 
 	$rs = $self->_setupVlogger();
@@ -161,7 +151,7 @@ sub install
 
  Set engine permissions
 
- Return int 0 on success, other on failure
+ Return int 0 on success, die on failure
 
 =cut
 
@@ -173,12 +163,10 @@ sub setEnginePermissions
 	my $rootGName = $main::imscpConfig{'ROOT_GROUP'};
 	my $fcgiDir = $self->{'config'}->{'PHP_STARTER_DIR'};
 
-	my $rs = setRights($fcgiDir, { user => $rootUName, group => $rootGName, mode => '0555' });
-	return $rs if $rs;
-
-	$rs = setRights('/usr/local/sbin/vlogger', { user => $rootUName, group => $rootGName, mode => '0750' });
-	return $rs if $rs;
-
+	setRights($fcgiDir, { user => $rootUName, group => $rootGName, mode => '0555' });
+	setRights("$main::imscpConfig{'TOOLS_ROOT_DIR'}/vlogger", {
+		user => $main::imscpConfig{'ROOT_USER'}, group => $main::imscpConfig{'ADM_GROUP'}, mode => '0750' }
+	);
 	setRights($self->{'config'}->{'HTTPD_LOG_DIR'}, {
 		user => $main::imscpConfig{'ROOT_USER'},
 		group => $main::imscpConfig{'ADM_GROUP'},
@@ -206,13 +194,8 @@ sub _init
 {
 	my $self = shift;
 
-	$self->{'eventManager'} = iMSCP::EventManager->getInstance();
-	$self->{'httpd'} = Servers::httpd::apache_fcgid->getInstance();
-
-	$self->{'eventManager'}->trigger(
-		'beforeHttpdInitInstaller', $self, 'apache_fcgid'
-	) and fatal('apache_fcgid - beforeHttpdInitInstaller has failed');
-
+	$self->{'httpd'} = Servers::httpd->factory();
+	$self->{'eventManager'} = $self->{'httpd'}->{'eventManager'};
 	$self->{'apacheCfgDir'} = $self->{'httpd'}->{'apacheCfgDir'};
 	$self->{'apacheBkpDir'} = "$self->{'apacheCfgDir'}/backup";
 	$self->{'apacheWrkDir'} = "$self->{'apacheCfgDir'}/working";
@@ -229,10 +212,6 @@ sub _init
 		}
 	}
 
-	$self->{'eventManager'}->trigger(
-		'afterHttpdInitInstaller', $self, 'apache_fcgid'
-	) and fatal('apache_fcgid - afterHttpdInitInstaller has failed');
-
 	$self;
 }
 
@@ -241,7 +220,7 @@ sub _init
  Backup the given file
 
  Param string $cfgFile File to backup
- Return int 0 on success, other on failure
+ Return int 0 on success, other or die on failure
 
 =cut
 
@@ -249,21 +228,16 @@ sub _bkpConfFile
 {
 	my ($self, $cfgFile) = @_;
 
-	my $timestamp = time;
-
-	my $rs = $self->{'eventManager'}->trigger('beforeHttpdBkpConfFile', $cfgFile);
-	return $rs if $rs;
+	$self->{'eventManager'}->trigger('beforeHttpdBkpConfFile', $cfgFile);
 
 	if(-f $cfgFile){
 		my $file = iMSCP::File->new( filename => $cfgFile );
 		my $filename = fileparse($cfgFile);
 
 		unless(-f "$self->{'apacheBkpDir'}/$filename.system") {
-			$rs = $file->copyFile("$self->{'apacheBkpDir'}/$filename.system");
-			return $rs if $rs;
+			$file->copyFile("$self->{'apacheBkpDir'}/$filename.system");
 		} else {
-			$rs = $file->copyFile("$self->{'apacheBkpDir'}/$filename.$timestamp");
-			return $rs if $rs;
+			$file->copyFile("$self->{'apacheBkpDir'}/$filename." . time());
 		}
 	}
 
@@ -282,8 +256,7 @@ sub _setApacheVersion
 {
 	my $self = shift;
 
-	my ($stdout, $stderr);
-	my $rs = execute('apache2ctl -v', \$stdout, \$stderr);
+	my $rs = execute('apache2ctl -v', \my $stdout, \my $stderr);
 	debug($stdout) if $stdout;
 	error($stderr) if $stderr && $rs;
 	error('Unable to find Apache version') if $rs && ! $stderr;
@@ -304,7 +277,7 @@ sub _setApacheVersion
 
  Create directories
 
- Return int 0 on success, other on failure
+ Return int 0 on success, die on failure
 
 =cut
 
@@ -312,25 +285,20 @@ sub _makeDirs
 {
 	my $self = shift;
 
-	my $rs = $self->{'eventManager'}->trigger('beforeHttpdMakeDirs');
-	return $rs if $rs;
+	$self->{'eventManager'}->trigger('beforeHttpdMakeDirs');
 
 	my $rootUName = $main::imscpConfig{'ROOT_USER'};
 	my $rootGName = $main::imscpConfig{'ROOT_GROUP'};
 	my $phpdir = $self->{'config'}->{'PHP_STARTER_DIR'};
 
 	# Remove any older fcgi directory (prevent possible orphaned file when switching to another ini level)
-	$rs = iMSCP::Dir->new( dirname => $self->{'config'}->{'PHP_STARTER_DIR'} )->remove();
-	return $rs if $rs;
+	iMSCP::Dir->new( dirname => $self->{'config'}->{'PHP_STARTER_DIR'} )->remove();
 
 	for my $dir(
 		[ $self->{'config'}->{'HTTPD_LOG_DIR'}, $rootUName, $rootUName, 0755 ],
 		[ $phpdir, $rootUName, $rootGName, 0555 ],
 	) {
-		$rs = iMSCP::Dir->new( dirname => $dir->[0] )->make({
-			user => $dir->[1], group => $dir->[2], mode => $dir->[3]
-		});
-		return $rs if $rs;
+		iMSCP::Dir->new( dirname => $dir->[0] )->make({ user => $dir->[1], group => $dir->[2], mode => $dir->[3] });
 	}
 
 	$self->{'eventManager'}->trigger('afterHttpdMakeDirs');
@@ -340,18 +308,18 @@ sub _makeDirs
 
  Build FastCGI configuration files
 
- Return int 0 on success, other on failure
+ Return int 0 on success, other or die on failure
 
 =cut
 
 sub _buildFastCgiConfFiles
 {
-	my $self = $_[0];
+	my $self = shift;
 
-	my $rs = $self->{'eventManager'}->trigger('beforeHttpdBuildFastCgiConfFiles');
+	$self->{'eventManager'}->trigger('beforeHttpdBuildFastCgiConfFiles');
 
 	for my $filename('fcgid_imscp.conf', 'fcgid_imscp.load') {
-		$rs = $self->_bkpConfFile("$self->{'config'}->{'HTTPD_MODS_AVAILABLE_DIR'}/$filename");
+		my $rs = $self->_bkpConfFile("$self->{'config'}->{'HTTPD_MODS_AVAILABLE_DIR'}/$filename");
 		return $rs if $rs;
 	}
 
@@ -365,40 +333,25 @@ sub _buildFastCgiConfFiles
 		AUTHZ_ALLOW_ALL => ($apache24) ? 'Require all granted' : 'Allow from all'
 	});
 
-	$rs = $self->{'httpd'}->buildConfFile("$self->{'apacheCfgDir'}/fcgid_imscp.conf");
+	my $rs = $self->{'httpd'}->buildConfFile("$self->{'apacheCfgDir'}/fcgid_imscp.conf");
 	return $rs if $rs;
 
 	my $file = iMSCP::File->new( filename => "$self->{'apacheWrkDir'}/fcgid_imscp.conf" );
-
-	$rs = $file->copyFile($self->{'config'}->{'HTTPD_MODS_AVAILABLE_DIR'});
-	return $rs if $rs;
+	$file->copyFile($self->{'config'}->{'HTTPD_MODS_AVAILABLE_DIR'});
 
 	$file = iMSCP::File->new( filename => "$self->{'config'}->{'HTTPD_MODS_AVAILABLE_DIR'}/fcgid.load");
 
 	my $cfgTpl = $file->get();
-	unless(defined $cfgTpl) {
-		error("Unable to read $file->{'filename'}");
-		return 1;
-	}
 
-	$file = iMSCP::File->new(filename => "$self->{'apacheWrkDir'}/fcgid_imscp.load");
+	$file = iMSCP::File->new( filename => "$self->{'apacheWrkDir'}/fcgid_imscp.load" );
 
 	$cfgTpl = "<IfModule !mod_fcgid.c>\n" . $cfgTpl . "</IfModule>\n";
 
-	$rs = $file->set($cfgTpl);
-	return $rs if $rs;
-
-	$rs = $file->save();
-	return $rs if $rs;
-
-	$rs = $file->mode(0644);
-	return $rs if $rs;
-
-	$rs = $file->owner($main::imscpConfig{'ROOT_USER'}, $main::imscpConfig{'ROOT_GROUP'});
-	return $rs if $rs;
-
-	$rs = $file->copyFile($self->{'config'}->{'HTTPD_MODS_AVAILABLE_DIR'});
-	return $rs if $rs;
+	$file->set($cfgTpl);
+	$file->save();
+	$file->mode(0644);
+	$file->owner($main::imscpConfig{'ROOT_USER'}, $main::imscpConfig{'ROOT_GROUP'});
+	$file->copyFile($self->{'config'}->{'HTTPD_MODS_AVAILABLE_DIR'});
 
 	# # Transitional: fastcgi_imscp
 	my @toDisableModules = (
@@ -432,8 +385,7 @@ sub _buildFastCgiConfFiles
 			'apc', 'curl', 'gd', 'imap', 'intl', 'json', 'mcrypt', 'mysqlnd/10', 'mysqli', 'mysql', 'opcache', 'pdo/10',
 			'pdo_mysql'
 		) {
-			my($stdout, $stderr);
-			$rs = execute("php5enmod $extension", \$stdout, \$stderr);
+			$rs = execute("php5enmod $extension", \my $stdout, \my $stderr);
 			debug($stdout) if $stdout;
 			unless($rs ~~ [0, 2]) {
 				error($stderr) if $stderr;
@@ -449,7 +401,7 @@ sub _buildFastCgiConfFiles
 
  Build Apache configuration files
 
- Return int 0 on success, other on failure
+ Return int 0 on success, other or die on failure
 
 =cut
 
@@ -457,57 +409,36 @@ sub _buildApacheConfFiles
 {
 	my $self = shift;
 
-	my $rs = $self->{'eventManager'}->trigger('beforeHttpdBuildApacheConfFiles');
-	return $rs if $rs;
+	$self->{'eventManager'}->trigger('beforeHttpdBuildApacheConfFiles');
 
 	if(-f "$self->{'config'}->{'HTTPD_CONF_DIR'}/ports.conf") {
-		my $cfgTpl;
-		$rs = $self->{'eventManager'}->trigger('onLoadTemplate', 'apache_fcgid', 'ports.conf', \$cfgTpl, { });
-		return $rs if $rs;
+		$self->{'eventManager'}->trigger('onLoadTemplate', 'apache_fcgid', 'ports.conf', \my $cfgTpl, { });
 
 		unless(defined $cfgTpl) {
 			$cfgTpl = iMSCP::File->new( filename => "$self->{'config'}->{'HTTPD_CONF_DIR'}/ports.conf" )->get();
-			unless(defined $cfgTpl) {
-				error("Unable to read $self->{'config'}->{'HTTPD_CONF_DIR'}/ports.conf");
-				return 1;
-			}
 		}
 
-		$rs = $self->{'eventManager'}->trigger('beforeHttpdBuildConfFile', \$cfgTpl, 'ports.conf');
-		return $rs if $rs;
-
+		$self->{'eventManager'}->trigger('beforeHttpdBuildConfFile', \$cfgTpl, 'ports.conf');
 		$cfgTpl =~ s/^(NameVirtualHost\s+\*:80)/#$1/gmi;
-
-		$rs = $self->{'eventManager'}->trigger('afterHttpdBuildConfFile', \$cfgTpl, 'ports.conf');
-		return $rs if $rs;
+		$self->{'eventManager'}->trigger('afterHttpdBuildConfFile', \$cfgTpl, 'ports.conf');
 
 		my $file = iMSCP::File->new( filename => "$self->{'config'}->{'HTTPD_CONF_DIR'}/ports.conf" );
-
-		$rs = $file->set($cfgTpl);
-		return $rs if $rs;
-
-		$rs = $file->mode(0644);
-		return $rs if $rs;
-
-		$rs = $file->save();
-		return $rs if $rs;
+		$file->set($cfgTpl);
+		$file->mode(0644);
+		$file->save();
 	}
 
 	# Turn off default access log provided by Debian package
 	if(-d "$self->{'config'}->{'HTTPD_CONF_DIR'}/conf-available") {
-		$rs = $self->{'httpd'}->disableConfs('other-vhosts-access-log.conf');
+		my $rs = $self->{'httpd'}->disableConfs('other-vhosts-access-log.conf');
 		return $rs if $rs;
 	} elsif(-f "$self->{'config'}->{'HTTPD_CONF_DIR'}/conf.d/other-vhosts-access-log") {
-		$rs = iMSCP::File->new(
-			filename => "$self->{'config'}->{'HTTPD_CONF_DIR'}/conf.d/other-vhosts-access-log"
-		)->delFile();
-		return $rs if $rs;
+		iMSCP::File->new(filename => "$self->{'config'}->{'HTTPD_CONF_DIR'}/conf.d/other-vhosts-access-log")->delFile();
 	}
 
 	# Remove default access log file provided by Debian package
 	if(-f "$self->{'config'}->{'HTTPD_LOG_DIR'}/other_vhosts_access.log") {
-		$rs = iMSCP::File->new( filename => "$self->{'config'}->{'HTTPD_LOG_DIR'}/other_vhosts_access.log" )->delFile();
-		return $rs if $rs;
+		iMSCP::File->new(filename => "$self->{'config'}->{'HTTPD_LOG_DIR'}/other_vhosts_access.log")->delFile();
 	}
 
 	my $version = $self->{'config'}->{'HTTPD_VERSION'};
@@ -527,10 +458,11 @@ sub _buildApacheConfFiles
 		AUTHZ_DENY_ALL => ($apache24) ? 'Require all denied' : 'Deny from all',
 		AUTHZ_ALLOW_ALL => ($apache24) ? 'Require all granted' : 'Allow from all',
 		PIPE => $pipeSyntax,
+		TOOLS_ROOT_DIR => $main::imscpConfig{'TOOLS_ROOT_DIR'},
 		VLOGGER_CONF => "$self->{'apacheWrkDir'}/vlogger.conf"
 	});
 
-	$rs = $self->{'httpd'}->buildConfFile('00_nameserver.conf');
+	my $rs = $self->{'httpd'}->buildConfFile('00_nameserver.conf');
 	return $rs if $rs;
 
 	$rs = $self->{'httpd'}->installConfFile('00_nameserver.conf');
@@ -548,7 +480,7 @@ sub _buildApacheConfFiles
 	});
 	return $rs if $rs;
 
-	$rs = $self->{'httpd'}->enableModules('cgid proxy proxy_http rewrite ssl suexec');
+	$rs = $self->{'httpd'}->enableModules('cgid proxy proxy_http rewrite ssl headers suexec');
 	return $rs if $rs;
 
 	$rs = $self->{'httpd'}->enableSites('00_nameserver.conf');
@@ -570,38 +502,6 @@ sub _buildApacheConfFiles
 	$self->{'eventManager'}->trigger('afterHttpdBuildApacheConfFiles');
 }
 
-=item _installLogrotate()
-
- Install Apache logrotate file
-
- Return int 0 on success, other on failure
-
-=cut
-
-sub _installLogrotate
-{
-	my $self = shift;
-
-	my $rs = $self->{'eventManager'}->trigger('beforeHttpdInstallLogrotate', 'apache2');
-	return $rs if $rs;
-
-	$self->{'httpd'}->setData({
-		ROOT_USER => $main::imscpConfig{'ROOT_USER'},
-		ADM_GROUP => $main::imscpConfig{'ADM_GROUP'},
-		HTTPD_LOG_DIR => $self->{'config'}->{'HTTPD_LOG_DIR'}
-	});
-
-	$rs = $self->{'httpd'}->buildConfFile('logrotate.conf');
-	return $rs if $rs;
-
-	$rs = $self->{'httpd'}->installConfFile('logrotate.conf', {
-		destination => "$main::imscpConfig{'LOGROTATE_CONF_DIR'}/apache2"
-	});
-	return $rs if $rs;
-
-	$self->{'eventManager'}->trigger('afterHttpdInstallLogrotate', 'apache2');
-}
-
 =item _setupVlogger()
 
  Setup vlogger
@@ -621,10 +521,7 @@ sub _setupVlogger
 	my $dbUser = 'vlogger_user';
 	my $dbUserHost = main::setupGetQuestion('DATABASE_USER_HOST');
 	$dbUserHost = ($dbUserHost eq '127.0.0.1') ? 'localhost' : $dbUserHost;
-
-	my @allowedChr = map { chr } (0x21..0x5b, 0x5d..0x7e);
-	my $dbPassword = '';
-	$dbPassword .= $allowedChr[rand @allowedChr] for 1..16;
+	my $dbPass = randomStr(16);
 
 	my ($db, $errStr) = main::setupGetSqlConnect($dbName);
 	fatal("Unable to connect to SQL server: $errStr") unless $db;
@@ -660,7 +557,7 @@ sub _setupVlogger
 			"GRANT SELECT, INSERT, UPDATE ON $quotedDbName.httpd_vlogger TO ?@? IDENTIFIED BY ?",
 			$dbUser,
 			$host,
-			$dbPassword
+			$dbPass
 		);
 		unless(ref $rs eq 'HASH') {
 			error(sprintf('Unable to add SQL privileges: %s', $rs));
@@ -673,7 +570,7 @@ sub _setupVlogger
 		DATABASE_HOST => $dbHost,
 		DATABASE_PORT => $dbPort,
 		DATABASE_USER => $dbUser,
-		DATABASE_PASSWORD => $dbPassword
+		DATABASE_PASSWORD => $dbPass
 	});
 
 	$self->{'httpd'}->buildConfFile(
@@ -702,7 +599,7 @@ sub _saveConf
 
  Remove old files
 
- Return int 0 on success, other on failure
+ Return int 0 on success, other or die on failure
 
 =cut
 
@@ -710,22 +607,21 @@ sub _oldEngineCompatibility
 {
 	my $self = shift;
 
-	my $rs = $self->{'eventManager'}->trigger('beforeHttpdOldEngineCompatibility');
-	return $rs if $rs;
+	$self->{'eventManager'}->trigger('beforeHttpdOldEngineCompatibility');
 
 	for my $site('imscp.conf', '00_modcband.conf', '00_master.conf', '00_master_ssl.conf') {
 		if(-f "$self->{'config'}->{'HTTPD_SITES_AVAILABLE_DIR'}/$site") {
-			$rs = $self->{'httpd'}->disableSites($site);
+			my $rs = $self->{'httpd'}->disableSites($site);
 			return $rs if $rs;
 
-			$rs = iMSCP::File->new( filename => "$self->{'config'}->{'HTTPD_SITES_AVAILABLE_DIR'}/$site" )->delFile();
-			return $rs if $rs;
+			iMSCP::File->new( filename => "$self->{'config'}->{'HTTPD_SITES_AVAILABLE_DIR'}/$site" )->delFile();
 		}
 	}
 
 	if(-d $self->{'config'}->{'PHP_STARTER_DIR'}) {
-		my ($stdout, $stderr);
-		$rs = execute("rm -f $self->{'config'}->{'PHP_STARTER_DIR'}/*/php5-fastcgi-starter", \$stdout, \$stderr);
+		my $rs = execute(
+			"rm -f $self->{'config'}->{'PHP_STARTER_DIR'}/*/php5-fastcgi-starter", \my $stdout, \my $stderr
+		);
 		return $rs if $rs;
 	}
 
@@ -733,15 +629,17 @@ sub _oldEngineCompatibility
 		$self->{'config'}->{'APACHE_BACKUP_LOG_DIR'}, $self->{'config'}->{'HTTPD_USERS_LOG_DIR'},
 		$self->{'config'}->{'APACHE_SCOREBOARDS_DIR'}
 	) {
-		$rs = iMSCP::Dir->new( dirname => $dir )->remove();
-		return $rs if $rs;
+		iMSCP::Dir->new( dirname => $dir )->remove();
 	}
 
 	# Remove customer's logs file if any (no longer needed since we are now using bind mount)
-	my ($stdout, $stderr);
-	$rs = execute("rm -f $main::imscpConfig{'USER_WEB_DIR'}/*/logs/*.log", \$stdout, $stderr);
+	my $rs = execute("rm -f $main::imscpConfig{'USER_WEB_DIR'}/*/logs/*.log", \my $stdout, \my $stderr);
 	error($stderr) if $rs && $stderr;
 	return $rs if $rs;
+
+	if(-f '/usr/local/sbin/vlogger') {
+		iMSCP::File->new( filename => '/usr/local/sbin/vlogger')->delFile();
+	}
 
 	$self->{'eventManager'}->trigger('afterHttpdOldEngineCompatibility');
 }
@@ -764,8 +662,7 @@ sub _fixPhpErrorReportingValues
 		return 1;
 	}
 
-	my ($stdout, $stderr);
-	my $rs = execute('php -v', \$stdout, \$stderr);
+	my $rs = execute('php -v', \my $stdout, \my $stderr);
 	debug($stdout) if $stdout;
 	debug($stderr) if $stderr && ! $rs;
 	error($stderr) if $stderr && $rs;

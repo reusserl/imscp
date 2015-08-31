@@ -33,7 +33,7 @@ use iMSCP::Database;
 use iMSCP::SystemGroup;
 use iMSCP::SystemUser;
 use iMSCP::Rights;
-use iMSCP::File;
+use iMSCP::Mount qw/mount umount/;
 use iMSCP::Ext2Attributes qw(setImmutable clearImmutable);
 use parent 'Modules::Abstract';
 
@@ -110,13 +110,13 @@ sub process
 
  Add user
 
- Return int 0 on success, other on failure
+ Return int 0 on success, other or die on failure
 
 =cut
 
 sub add
 {
-	my $self = $_[0];
+	my $self = shift;
 
 	my $userName = my $groupName = $main::imscpConfig{'SYSTEM_USER_PREFIX'} .
 		($main::imscpConfig{'SYSTEM_USER_MIN_UID'} + $self->{'admin_id'});
@@ -128,17 +128,16 @@ sub add
 
 	my ($oldUserName, undef, $userUid, $userGid) = getpwuid($self->{'admin_sys_uid'});
 
-	my $rs = $self->{'eventManager'}->trigger(
+	$self->{'eventManager'}->trigger(
 		'onBeforeAddImscpUnixUser', $self->{'admin_id'}, $userName, \$password, $groupName, \$comment, \$homedir,
 		\$skeletonPath, \$shell, $userUid, $userGid
 	);
-	return $rs if $rs;
 
 	clearImmutable($homedir) if -d $homedir;
 
 	if(! $oldUserName || $userUid == 0) {
 		# Creating i-MSCP unix user
-		$rs = iMSCP::SystemUser->new(
+		my $rs = iMSCP::SystemUser->new(
 			'password' => $password,
 			'comment' => $comment,
 			'home' => $homedir,
@@ -161,8 +160,7 @@ sub add
 			'-s', escapeShell($shell), #  New Shell
 			escapeShell($self->{'admin_sys_name'}) # Old username
 		);
-		my($stdout, $stderr);
-		$rs = execute("@cmd", \$stdout, \$stderr);
+		my $rs = execute("@cmd", \my $stdout, \my $stderr);
 		debug($stdout) if $stdout;
 		error($stderr) if $stderr && $rs && $rs != 12;
 		return $rs if $rs && $rs != 12;
@@ -207,6 +205,12 @@ sub add
 		$skeletonPath, $shell, $userUid, $userGid
 	);
 
+	# Remount user homedir on himself as a shared subtree
+	my $mountOptions = { fs_spec => $homedir, fs_file => $homedir, fs_vfstype => 'none', fs_mntops => 'shared,bind' };
+	$self->{'eventManager'}->trigger('beforeMountHomedir', $mountOptions);
+	mount($mountOptions);
+	$self->{'eventManager'}->trigger('afterMountHomedir', $mountOptions);
+
 	# Run the preaddUser(), addUser() and postaddUser() methods on servers/packages that implement them
 	$self->SUPER::add();
 }
@@ -215,22 +219,26 @@ sub add
 
  Delete user
 
- Return int 0 on success, other on failure
+ Return int 0 on success, other or die on failure
 
 =cut
 
 sub delete
 {
-	my $self = $_[0];
+	my $self = shift;
 
 	my $userName = my $groupName = $main::imscpConfig{'SYSTEM_USER_PREFIX'} .
 		($main::imscpConfig{'SYSTEM_USER_MIN_UID'} + $self->{'admin_id'});
+	my $homeDir = "$main::imscpConfig{'USER_WEB_DIR'}/$self->{'admin_name'}";
 
-	my $rs = $self->{'eventManager'}->trigger('onBeforeDeleteImscpUnixUser', $userName);
-	return $rs if $rs;
+	$self->{'eventManager'}->trigger('onBeforeDeleteImscpUnixUser', $userName);
+
+	$self->{'eventManager'}->trigger('beforeUnmountHomedir', $homeDir);
+	umount($homeDir);
+	$self->{'eventManager'}->trigger('afterUnmountHomedir', $homeDir);
 
 	# Run the predeleteUser(), deleteUser() and postdeleteUser() methods on servers/packages that implement them
-	$rs = $self->SUPER::delete();
+	my $rs = $self->SUPER::delete();
 	return $rs if $rs;
 
 	$rs = iMSCP::SystemUser->new('force' => 'yes')->delSystemUser($userName);
@@ -259,10 +267,9 @@ sub delete
 
 sub _init
 {
-	my $self = $_[0];
+	my $self = shift;
 
 	$self->{'eventManager'} = iMSCP::EventManager->getInstance();
-
 	$self;
 }
 
@@ -365,9 +372,8 @@ sub _getFtpdData
 
 =back
 
-=head1 AUTHORS
+=head1 AUTHOR
 
- Daniel Andreca <sci2tech@gmail.com>
  Laurent Declercq <l.declercq@nuxwin.com>
 
 =cut

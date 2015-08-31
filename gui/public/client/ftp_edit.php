@@ -81,7 +81,7 @@ function updateFtpAccount($userid, $mainDomainName)
 		}
 
 		$rawPassword = $_POST['password'];
-		$password = cryptPasswordWithSalt($rawPassword);
+		$password = \iMSCP\Crypt::sha512($rawPassword);
 	}
 
 	if (isset($_POST['home_dir'])) {

@@ -70,6 +70,7 @@ INSERT IGNORE INTO `config` (`name`, `value`) VALUES
 ('PORT_SSH', '22;tcp;SSH;1;0.0.0.0'),
 ('PORT_TELNET', '23;tcp;TELNET;1;0.0.0.0'),
 ('PORT_SMTP', '25;tcp;SMTP;1;0.0.0.0'),
+('PORT_SMTP_SUBMISSION', '587;tcp;SMTP-SUBMISSION;1;0.0.0.0'),
 ('PORT_SMTP-SSL', '465;tcp;SMTP-SSL;0;0.0.0.0'),
 ('PORT_DNS', '53;tcp;DNS;1;0.0.0.0'),
 ('PORT_HTTP', '80;tcp;HTTP;1;0.0.0.0'),
@@ -82,7 +83,7 @@ INSERT IGNORE INTO `config` (`name`, `value`) VALUES
 ('PREVENT_EXTERNAL_LOGIN_ADMIN', '1'),
 ('PREVENT_EXTERNAL_LOGIN_RESELLER', '1'),
 ('PREVENT_EXTERNAL_LOGIN_CLIENT', '1'),
-('DATABASE_REVISION', '210'),
+('DATABASE_REVISION', '214'),
 ('PHPINI_ALLOW_URL_FOPEN', 'off'),
 ('PHPINI_DISPLAY_ERRORS', 'off'),
 ('PHPINI_UPLOAD_MAX_FILESIZE', '10'),
@@ -170,6 +171,7 @@ CREATE TABLE IF NOT EXISTS `domain_aliasses` (
   `alias_mount` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
   `alias_ip_id` int(10) unsigned DEFAULT NULL,
   `url_forward` varchar(255) collate utf8_unicode_ci NOT NULL DEFAULT 'no',
+  `type_forward` varchar(5) collate utf8_unicode_ci DEFAULT NULL,
   `external_mail` varchar(15) collate utf8_unicode_ci NOT NULL DEFAULT 'off',
   `external_mail_dns_ids` varchar(255) collate utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`alias_id`),
@@ -608,6 +610,7 @@ CREATE TABLE IF NOT EXISTS `ssl_certs` (
   `private_key` text COLLATE utf8_unicode_ci NOT NULL,
   `certificate` text COLLATE utf8_unicode_ci NOT NULL,
   `ca_bundle` text COLLATE utf8_unicode_ci,
+  `allow_hsts` VARCHAR(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'off',
   `status` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`cert_id`),
   UNIQUE `domain_id_domain_type` (`domain_id`, `domain_type`)
@@ -625,6 +628,7 @@ CREATE TABLE IF NOT EXISTS `subdomain` (
   `subdomain_name` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
   `subdomain_mount` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
   `subdomain_url_forward` varchar(255) collate utf8_unicode_ci NOT NULL DEFAULT 'no',
+  `subdomain_type_forward` varchar(5) collate utf8_unicode_ci DEFAULT NULL,
   `subdomain_status` varchar(255) collate utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`subdomain_id`),
   KEY `domain_id` (`domain_id`)
@@ -642,6 +646,7 @@ CREATE TABLE IF NOT EXISTS `subdomain_alias` (
   `subdomain_alias_name` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
   `subdomain_alias_mount` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
   `subdomain_alias_url_forward` varchar(255) collate utf8_unicode_ci NOT NULL DEFAULT 'no',
+  `subdomain_alias_type_forward` varchar(5) collate utf8_unicode_ci DEFAULT NULL,
   `subdomain_alias_status` varchar(255) collate utf8_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`subdomain_alias_id`),
   KEY `alias_id` (`alias_id`)

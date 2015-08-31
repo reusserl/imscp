@@ -35,7 +35,16 @@ use iMSCP::Rights;
 use iMSCP::OpenSSL;
 use iMSCP::Ext2Attributes qw(clearImmutable);
 use Net::LibIDN qw/idn_to_unicode/;
+use File::Spec;
+use Scalar::Defer;
 use parent 'Modules::Abstract';
+
+# Lazy-load default phpini data (only once)
+my $phpiniDefaultData = lazy {
+	my $rows = iMSCP::Database->factory()->doQuery('name', 'SELECT * FROM config WHERE name LIKE ?', 'PHPINI%');
+	(ref $rows eq 'HASH') or die($rows);
+	$rows;
+};
 
 =head1 DESCRIPTION
 
@@ -339,8 +348,7 @@ sub restore
 				my $userName = $main::imscpConfig{'SYSTEM_USER_PREFIX'} .
 					($main::imscpConfig{'SYSTEM_USER_MIN_UID'} + $self->{'domain_admin_id'});
 
-				$rs = setRights($dmnDir, { user => $userName, group => $groupName, recursive => 1 });
-				return $rs if $rs;
+				setRights($dmnDir, { user => $userName, group => $groupName, recursive => 1 });
 
 				$rs = $self->SUPER::restore();
 				return $rs if $rs;
@@ -370,42 +378,41 @@ sub _loadData
 {
 	my ($self, $domainId) = @_;
 
-	my $rdata = iMSCP::Database->factory()->doQuery(
+	my $row = iMSCP::Database->factory()->doQuery(
 		'domain_id',
-		'
+		"
 			SELECT
-				domain.*, ip_number, IFNULL(mail_on_domain, 0) AS mail_on_domain
+				domain.*, ip_number, mail_on_domain
 			FROM
 				domain
 			INNER JOIN
 				server_ips ON (domain_ip_id = ip_id)
-			LEFT JOIN
-				(
-					SELECT
-						domain_id, COUNT(domain_id) AS mail_on_domain
-					FROM
-						mail_users WHERE sub_id = 0
-					GROUP BY
-						domain_id
-				) AS mail_count
-			USING
-				(domain_id)
+			LEFT JOIN (
+				SELECT
+					domain_id, COUNT(domain_id) AS mail_on_domain
+				FROM
+					mail_users
+				WHERE
+					sub_id = 0
+				AND
+					status <> 'todelete'
+			) AS mail_count USING (domain_id)
 			WHERE
 				domain_id = ?
-		',
-		$domainId
+		",
+		$domainId,
 	);
-	unless(ref $rdata eq 'HASH') {
-		error($rdata);
+	unless(ref $row eq 'HASH') {
+		error($row);
 		return 1;
 	}
 
-	unless(exists $rdata->{$domainId}) {
+	unless(exists $row->{$domainId}) {
 		error("Domain with ID $domainId has not been found or is in an inconsistent state");
 		return 1;
 	}
 
-	%{$self} = (%{$self}, %{$rdata->{$domainId}});
+	%{$self} = (%{$self}, %{$row->{$domainId}});
 
 	0;
 }
@@ -426,17 +433,9 @@ sub _getHttpdData
 	unless($self->{'httpd'}) {
 		my $groupName = my $userName = $main::imscpConfig{'SYSTEM_USER_PREFIX'} .
 			($main::imscpConfig{'SYSTEM_USER_MIN_UID'} + $self->{'domain_admin_id'});
-
-		my $homeDir = "$main::imscpConfig{'USER_WEB_DIR'}/$self->{'domain_name'}";
-		$homeDir =~ s~/+~/~g;
-		$homeDir =~ s~/$~~g;
+		my $homeDir = File::Spec->canonpath("$main::imscpConfig{'USER_WEB_DIR'}/$self->{'domain_name'}");
 
 		my $db = iMSCP::Database->factory();
-
-		my $rdata = $db->doQuery('name', 'SELECT * FROM config WHERE name LIKE ?', 'PHPINI%');
-		unless(ref $rdata eq 'HASH') {
-			fatal($rdata);
-		}
 
 		my $phpiniData = $db->doQuery('domain_id', "SELECT * FROM php_ini WHERE domain_id = ?", $self->{'domain_id'});
 		unless(ref $phpiniData eq 'HASH') {
@@ -455,6 +454,7 @@ sub _getHttpdData
 		}
 
 		my $haveCert = exists $certData->{$self->{'domain_id'}} && $self->isValidCertificate($self->{'domain_name'});
+		my $allowHSTS = $haveCert && $certData->{$self->{'domain_id'}}->{'allow_hsts'} eq 'on';
 
 		$self->{'httpd'} = {
 			DOMAIN_ADMIN_ID => $self->{'domain_admin_id'},
@@ -476,38 +476,40 @@ sub _getHttpdData
 			CGI_SUPPORT => $self->{'domain_cgi'},
 			WEB_FOLDER_PROTECTION => $self->{'web_folder_protection'},
 			SSL_SUPPORT => $haveCert,
+			HSTS_SUPPORT => $allowHSTS,
 			BWLIMIT => $self->{'domain_traffic_limit'},
 			ALIAS => $userName,
 			FORWARD => 'no',
+			FORWARD_TYPE => '',
 			DISABLE_FUNCTIONS => (exists $phpiniData->{$self->{'domain_id'}})
 			 	? $phpiniData->{$self->{'domain_id'}}->{'disable_functions'}
-			 	: $rdata->{'PHPINI_DISABLE_FUNCTIONS'}->{'value'},
+			 	: $phpiniDefaultData->{'PHPINI_DISABLE_FUNCTIONS'}->{'value'},
 			MAX_EXECUTION_TIME => (exists $phpiniData->{$self->{'domain_id'}})
 				? $phpiniData->{$self->{'domain_id'}}->{'max_execution_time'}
-				: $rdata->{'PHPINI_MAX_EXECUTION_TIME'}->{'value'},
+				: $phpiniDefaultData->{'PHPINI_MAX_EXECUTION_TIME'}->{'value'},
 			MAX_INPUT_TIME => (exists $phpiniData->{$self->{'domain_id'}})
 			 	? $phpiniData->{$self->{'domain_id'}}->{'max_input_time'}
-			 	: $rdata->{'PHPINI_MAX_INPUT_TIME'}->{'value'},
+			 	: $phpiniDefaultData->{'PHPINI_MAX_INPUT_TIME'}->{'value'},
 			MEMORY_LIMIT => (exists $phpiniData->{$self->{'domain_id'}})
 				? $phpiniData->{$self->{'domain_id'}}->{'memory_limit'}
-				: $rdata->{'PHPINI_MEMORY_LIMIT'}->{'value'},
+				: $phpiniDefaultData->{'PHPINI_MEMORY_LIMIT'}->{'value'},
 			ERROR_REPORTING => (exists $phpiniData->{$self->{'domain_id'}})
 				? $phpiniData->{$self->{'domain_id'}}->{'error_reporting'}
-				: $rdata->{'PHPINI_ERROR_REPORTING'}->{'value'},
+				: $phpiniDefaultData->{'PHPINI_ERROR_REPORTING'}->{'value'},
 			DISPLAY_ERRORS => (exists $phpiniData->{$self->{'domain_id'}})
 				? $phpiniData->{$self->{'domain_id'}}->{'display_errors'}
-				: $rdata->{'PHPINI_DISPLAY_ERRORS'}->{'value'},
+				: $phpiniDefaultData->{'PHPINI_DISPLAY_ERRORS'}->{'value'},
 			POST_MAX_SIZE => (exists $phpiniData->{$self->{'domain_id'}})
 				? $phpiniData->{$self->{'domain_id'}}->{'post_max_size'}
-				: $rdata->{'PHPINI_POST_MAX_SIZE'}->{'value'},
+				: $phpiniDefaultData->{'PHPINI_POST_MAX_SIZE'}->{'value'},
 			UPLOAD_MAX_FILESIZE => (exists $phpiniData->{$self->{'domain_id'}})
 				? $phpiniData->{$self->{'domain_id'}}->{'upload_max_filesize'}
-				: $rdata->{'PHPINI_UPLOAD_MAX_FILESIZE'}->{'value'},
+				: $phpiniDefaultData->{'PHPINI_UPLOAD_MAX_FILESIZE'}->{'value'},
 			ALLOW_URL_FOPEN => (exists $phpiniData->{$self->{'domain_id'}})
 				? $phpiniData->{$self->{'domain_id'}}->{'allow_url_fopen'}
-				: $rdata->{'PHPINI_ALLOW_URL_FOPEN'}->{value},
-			PHPINI_OPEN_BASEDIR => ($rdata->{'PHPINI_OPEN_BASEDIR'}->{'value'})
-				? ':' . $rdata->{'PHPINI_OPEN_BASEDIR'}->{'value'} : ''
+				: $phpiniDefaultData->{'PHPINI_ALLOW_URL_FOPEN'}->{value},
+			PHPINI_OPEN_BASEDIR => ($phpiniDefaultData->{'PHPINI_OPEN_BASEDIR'}->{'value'})
+				? ':' . $phpiniDefaultData->{'PHPINI_OPEN_BASEDIR'}->{'value'} : ''
 		};
 	}
 
@@ -531,8 +533,7 @@ sub _getMtaData
 		$self->{'mta'} = {
 			DOMAIN_ADMIN_ID => $self->{'domain_admin_id'},
 			DOMAIN_NAME => $self->{'domain_name'},
-			DOMAIN_TYPE => $self->getType(),
-			TYPE => 'vdmn_entry',
+			DOMAIN_TYPE => 'dmn',
 			EXTERNAL_MAIL => $self->{'external_mail'},
 			MAIL_ENABLED => ($self->{'mail_on_domain'} || $self->{'domain_mailacc_limit'} >= 0) ? 1 : 0
 		};
@@ -653,10 +654,7 @@ sub _getPackagesData
 	unless($self->{'packages'}) {
 		my $userName = my $groupName  = $main::imscpConfig{'SYSTEM_USER_PREFIX'} .
 			($main::imscpConfig{'SYSTEM_USER_MIN_UID'} + $self->{'domain_admin_id'});
-
-		my $homeDir = "$main::imscpConfig{'USER_WEB_DIR'}/$self->{'domain_name'}";
-		$homeDir =~ s~/+~/~g;
-		$homeDir =~ s~/$~~g;
+		my $homeDir = File::Spec->canonpath("$main::imscpConfig{'USER_WEB_DIR'}/$self->{'domain_name'}");
 
 		$self->{'packages'} = {
 			DOMAIN_ADMIN_ID => $self->{'domain_admin_id'},
@@ -667,6 +665,7 @@ sub _getPackagesData
 			HOME_DIR => $homeDir,
 			WEB_DIR => $homeDir,
 			FORWARD => 'no',
+			FORWARD_TYPE => '',
 			WEB_FOLDER_PROTECTION => $self->{'web_folder_protection'}
 		};
 	}

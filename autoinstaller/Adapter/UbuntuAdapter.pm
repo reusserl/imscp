@@ -20,12 +20,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-# @category    i-MSCP
-# @copyright   2010-2015 by i-MSCP | http://i-mscp.net
-# @Author      Laurent Declercq <l.declercq@nuxwin.com>
-# @link        http://i-mscp.net i-MSCP Home Site
-# @license     http://www.gnu.org/licenses/gpl-2.0.html GPL v2
 
 package autoinstaller::Adapter::UbuntuAdapter;
 
@@ -58,7 +52,7 @@ use parent 'autoinstaller::Adapter::DebianAdapter';
 
 sub _init
 {
-	my $self = $_[0];
+	my $self = shift;
 
 	$self->{'eventManager'} = iMSCP::EventManager->getInstance();
 
@@ -68,7 +62,7 @@ sub _init
 	$self->{'repositorySections'} = [ 'main', 'universe', 'multiverse' ];
 	$self->{'preRequiredPackages'} = [
 		'aptitude', 'debconf-utils', 'dialog', 'libbit-vector-perl', 'libclass-insideout-perl', 'liblist-moreutils-perl',
-		'libscalar-defer-perl', 'libxml-simple-perl', 'wget', 'rsync'
+		'libscalar-defer-perl', 'libxml-simple-perl', 'wget'
 	];
 
 	if(version->parse(iMSCP::LsbRelease->getInstance()->getRelease(1)) < version->parse('12.10')) {
@@ -103,22 +97,14 @@ sub _init
 
 sub _processAptRepositories
 {
-	my $self = $_[0];
+	my $self = shift;
 
 	if(@{$self->{'aptRepositoriesToRemove'}} || @{$self->{'aptRepositoriesToAdd'}}) {
-		my ($stdout, $stderr);
-		my @cmd = ();
-
 		my $file = iMSCP::File->new( filename => '/etc/apt/sources.list' );
 
-		my $rs = $file->copyFile('/etc/apt/sources.list.bkp') unless -f '/etc/apt/sources.list.bkp';
-		return $rs if $rs;
+		$file->copyFile('/etc/apt/sources.list.bkp') unless -f '/etc/apt/sources.list.bkp';
 
 		my $fileContent = $file->get();
-		unless (defined $fileContent) {
-			error('Unable to read /etc/apt/sources.list file');
-			return 1;
-		}
 
 		# Filter list of repositories which must not be removed
 		for my $repository(@{$self->{'aptRepositoriesToAdd'}}) {
@@ -134,8 +120,8 @@ sub _processAptRepositories
 
 			if($isPPA || $fileContent =~ /^$repository/m) {
 				if($isPPA && version->parse($distroRelease) > version->parse('10.04')) {
-					@cmd = ('add-apt-repository -y -r', escapeShell($repository));
-					$rs = execute("@cmd", \$stdout, \$stderr);
+					my @cmd = ('add-apt-repository -y -r', escapeShell($repository));
+					my $rs = execute("@cmd", \my $stdout, \my $stderr);
 					debug($stdout) if $stdout;
 					error($stderr) if $stderr && $rs;
 					return $rs if $rs;
@@ -144,7 +130,7 @@ sub _processAptRepositories
 						my $ppaFile = "/etc/apt/sources.list.d/$1-$2-*";
 
 						if(glob $ppaFile) {
-							$rs = execute("rm $ppaFile", \$stdout, \$stderr);
+							my $rs = execute("rm $ppaFile", \my $stdout, \my $stderr);
 							debug($stdout) if $stdout;
 							error($stderr) if $stderr && $rs;
 							return $rs if $rs;
@@ -161,9 +147,8 @@ sub _processAptRepositories
 		}
 
 		# Save new sources.list file
-		$rs = $file->set($fileContent);
-		$rs ||= $file->save();
-		return $rs if $rs;
+		$file->set($fileContent);
+		$file->save();
 
 		# Add needed APT repositories
 		for my $repository(@{$self->{'aptRepositoriesToAdd'}}) {
@@ -171,6 +156,8 @@ sub _processAptRepositories
 
 			if($isPPA || $fileContent !~ /^$repository->{'repository'}/m) {
 				if($isPPA) { # PPA repository
+					my @cmd = ();
+
 					if(version->parse($distroRelease) > version->parse('10.4')) {
 						if($repository->{'repository_key_srv'}) {
 							@cmd = (
@@ -185,11 +172,15 @@ sub _processAptRepositories
 						@cmd = ('add-apt-repository', escapeShell($repository->{'repository'}));
 					}
 
-					$rs = execute("@cmd", \$stdout, \$stderr);
+					my $rs = execute("@cmd", \my $stdout, \my $stderr);
 					debug($stdout) if $stdout;
 					error($stderr) if $stderr && $rs;
 					return $rs if $rs
 				} else { # Normal repository
+					my @cmd = ();
+					my $rs = 0;
+					my ($stdout, $stderr);
+
 					if(version->parse($distroRelease) > version->parse('10.4')) {
 						@cmd = ('add-apt-repository -y ', escapeShell($repository->{'repository'}));
 						$rs = execute("@cmd", \$stdout, \$stderr);
@@ -219,7 +210,7 @@ sub _processAptRepositories
 					}
 
 					if(@cmd) {
-						$rs = execute("@cmd", \$stdout, \$stderr);
+						my $rs = execute("@cmd", \my $stdout, \my $stderr);
 						debug($stdout) if $stdout;
 						error($stderr) if $stderr && $rs;
 						return $rs if $rs

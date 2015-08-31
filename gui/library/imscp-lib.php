@@ -47,6 +47,9 @@ Zend_Loader_AutoloaderFactory::factory(
 	array(
 		'Zend_Loader_StandardAutoloader' => array(
 			'autoregister_zf' => true,
+			'namespaces' => array(
+				'iMSCP' => LIBRARY_PATH . '/iMSCP'
+			),
 			'prefixes' => array(
 				'iMSCP_' => LIBRARY_PATH . '/iMSCP',
 				'Crypt_' => LIBRARY_PATH . '/vendor/phpseclib/Crypt',
@@ -60,6 +63,11 @@ Zend_Loader_AutoloaderFactory::factory(
 
 // Set handler for uncaught exceptions
 iMSCP_Registry::set('exceptionHandler', new iMSCP_Exception_Handler());
+
+// Check for PHP version
+if (version_compare(phpversion(), '5.3.10', '<')) {
+	throw new RuntimeException('i-MSCP require PHP version >= 5.3.10');
+}
 
 /**
  * Include core functions

@@ -26,6 +26,7 @@ package Package::FileManager::Net2ftp::Installer;
 use strict;
 use warnings;
 no if $] >= 5.017011, warnings => 'experimental::smartmatch';
+use iMSCP::Crypt 'randomStr';
 use iMSCP::Debug;
 use iMSCP::EventManager;
 use iMSCP::Execute;
@@ -33,6 +34,7 @@ use iMSCP::Rights;
 use iMSCP::Composer;
 use iMSCP::TemplateParser;
 use iMSCP::File;
+use iMSCP::Dir;
 use Package::FrontEnd;
 use parent 'Common::SingletonClass';
 
@@ -50,17 +52,15 @@ our $VERSION = '0.1.1.*@dev';
 
  Process preinstall tasks
 
- Return int 0 on success, other on failure
+ Return int 0 on success, die on failure
 
 =cut
 
 sub preinstall
 {
-	my $self = $_[0];
+	my $self = shift;
 
-	my $rs = iMSCP::Composer->getInstance()->registerPackage('imscp/net2ftp', $VERSION);
-	return $rs if $rs;
-
+	iMSCP::Composer->getInstance()->registerPackage('imscp/net2ftp', $VERSION);
 	$self->{'eventManager'}->register('afterFrontEndBuildConfFile', \&afterFrontEndBuildConfFile);
 }
 
@@ -68,13 +68,13 @@ sub preinstall
 
  Process install tasks
 
- Return int 0 on success, other on failure
+ Return int 0 on success, other or die on failure
 
 =cut
 
 sub install
 {
-	my $self = $_[0];
+	my $self = shift;
 
 	my $rs = $self->_installFiles();
 	return $rs if $rs;
@@ -89,7 +89,7 @@ sub install
 
  Set gui permissions
 
- Return int 0 on success, other on failure
+ Return int 0 on success, die on failure
 
 =cut
 
@@ -98,10 +98,9 @@ sub setGuiPermissions
 	my $panelUName =
 	my $panelGName = $main::imscpConfig{'SYSTEM_USER_PREFIX'} . $main::imscpConfig{'SYSTEM_USER_MIN_UID'};
 
-	setRights(
-		"$main::imscpConfig{'GUI_PUBLIC_DIR'}/tools/ftp",
-		{ 'user' => $panelUName, 'group' => $panelGName, 'dirmode' => '0550', 'filemode' => '0440', 'recursive' => 1 }
-	);
+	setRights("$main::imscpConfig{'GUI_PUBLIC_DIR'}/tools/ftp", {
+		user => $panelUName, group => $panelGName, dirmode => '0550', filemode => '0440', recursive => 1
+	});
 }
 
 =back
@@ -116,7 +115,7 @@ sub setGuiPermissions
 
  Param string \$tplContent Template file tplContent
  Param string $tplName Template name
- Return int 0 on success, other on failure
+ Return int 0
 
 =cut
 
@@ -159,10 +158,9 @@ sub afterFrontEndBuildConfFile
 
 sub _init
 {
-	my $self = $_[0];
+	my $self = shift;
 
 	$self->{'eventManager'} = iMSCP::EventManager->getInstance();
-
 	$self;
 }
 
@@ -170,7 +168,7 @@ sub _init
 
  Install Net2ftp files in production directory
 
- Return int 0 on success, other on failure
+ Return int 0 on success, die on failure
 
 =cut
 
@@ -178,41 +176,11 @@ sub _installFiles
 {
 	my $packageDir = "$main::imscpConfig{'CACHE_DATA_DIR'}/packages/vendor/imscp/net2ftp";
 
-	if(-d $packageDir) {
-		my $destDir = "$main::imscpConfig{'GUI_PUBLIC_DIR'}/tools/ftp";
+	-d $packageDir or die('Could not find the imscp/net2ftp package at %s', $packageDir);
 
-		my ($stdout, $stderr);
-		my $rs = execute("rm -fR $destDir", \$stdout, \$stderr);
-		debug($stdout) if $stdout;
-		error($stderr) if $rs && $stderr;
-		return $rs if $rs;
-
-		$rs = execute("cp -fR $packageDir $destDir", \$stdout, \$stderr);
-		debug($stdout) if $stdout;
-		error($stderr) if $rs && $stderr;
-		return $rs if $rs;
-	} else {
-		error("Couldn't find the imscp/net2ftp package into the packages cache directory");
-		return 1;
-	}
-
-	0;
-}
-
-=item _generateMd5SaltString()
-
- Generate MD5 salt string
-
- Return string Salt string
-
-=cut
-
-sub _generateMd5SaltString
-{
-	my $saltString = '';
-	$saltString .= ('A'..'Z', '0'..'9')[rand(35)] for 1..38;
-
-	$saltString;
+	my $destDir = "$main::imscpConfig{'GUI_PUBLIC_DIR'}/tools/ftp";
+	iMSCP::Dir->new( dirname => $destDir )->remove();
+	iMSCP::Dir->new( dirname => $packageDir )->rcopy($destDir);
 }
 
 =item _buildHttpdConfig()
@@ -238,13 +206,13 @@ sub _buildHttpdConfig
 
  Build configuration file
 
- Return int 0 on success, other on failure
+ Return int 0 on success, die on failure
 
 =cut
 
 sub _buildConfig
 {
-	my $self = $_[0];
+	my $self = shift;
 
 	my $panelUName =
 	my $panelGName = $main::imscpConfig{'SYSTEM_USER_PREFIX'} . $main::imscpConfig{'SYSTEM_USER_MIN_UID'};
@@ -252,33 +220,18 @@ sub _buildConfig
 
 	my $data = {
 		ADMIN_EMAIL => ($main::imscpConfig{'DEFAULT_ADMIN_ADDRESS'}) ? $main::imscpConfig{'DEFAULT_ADMIN_ADDRESS'} : '',
-		MD5_SALT_STRING => $self->_generateMd5SaltString()
+		MD5_SALT_STRING => randomStr(38, join('', A..Z , 0..9));
 	};
 
-	my $cfgTpl;
-	my $rs = $self->{'eventManager'}->trigger('onLoadTemplate', 'net2ftp', 'settings.inc.php', \$cfgTpl, $data);
-	return $rs if $rs;
+	$self->{'eventManager'}->trigger('onLoadTemplate', 'net2ftp', 'settings.inc.php', \my $cfgTpl, $data);
 
-	unless(defined $cfgTpl) {
-		$cfgTpl = iMSCP::File->new( filename => $conffile )->get();
-		unless(defined $cfgTpl) {
-			error("Unable to read file $conffile");
-			return 1;
-		}
-	}
-
+	$cfgTpl = iMSCP::File->new( filename => $conffile )->get() unless defined $cfgTpl;
 	$cfgTpl = process($data, $cfgTpl);
 
 	my $file = iMSCP::File->new( filename  => $conffile );
-	$rs = $file->set($cfgTpl);
-	return $rs if $rs;
-
-	$rs = $file->save();
-	return $rs if $rs;
-
-	$rs = $file->mode(0640);
-	return $rs if $rs;
-
+	$file->set($cfgTpl);
+	$file->save();
+	$file->mode(0640);
 	$file->owner($panelUName, $panelGName);
 }
 

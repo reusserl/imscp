@@ -70,7 +70,6 @@ sub showDialog
 	}
 
 	main::setupSetQuestion('AWSTATS_MODE', $awstatsMode) if $rs != 30;
-
 	$rs;
 }
 
@@ -84,7 +83,7 @@ sub showDialog
 
 sub install
 {
-	my $self = $_[0];
+	my $self = shift;
 
 	my $rs = $self->_disableDefaultConfig();
 	return $rs if $rs;
@@ -115,36 +114,31 @@ sub setEnginePermissions
 	require iMSCP::Rights;
 	iMSCP::Rights->import();
 
-	my $rs = setRights(
+	setRights(
 		"$main::imscpConfig{'ENGINE_ROOT_DIR'}/PerlLib/Package/Webstats/Awstats/Scripts/awstats_buildstaticpages.pl",
 		{
-			'user' => $main::imscpConfig{'ROOT_USER'},
-			'group' => $main::imscpConfig{'ROOT_USER'},
-			'mode' => '0700'
+			user => $main::imscpConfig{'ROOT_USER'},
+			group => $main::imscpConfig{'ROOT_USER'},
+			mode => '0700'
 		}
 	);
 
-	$rs = setRights(
+	setRights(
 		"$main::imscpConfig{'ENGINE_ROOT_DIR'}/PerlLib/Package/Webstats/Awstats/Scripts/awstats_updateall.pl",
 		{
-			'user' => $main::imscpConfig{'ROOT_USER'},
-			'group' => $main::imscpConfig{'ROOT_USER'},
-			'mode' => '0700'
+			user => $main::imscpConfig{'ROOT_USER'},
+			group => $main::imscpConfig{'ROOT_USER'},
+			mode => '0700'
 		}
 	);
 
-	$rs = setRights(
-		$main::imscpConfig{'AWSTATS_CACHE_DIR'},
-		{
-			'user' => $main::imscpConfig{'ROOT_USER'},
-			'group' => Servers::httpd->factory()->getRunningGroup(),
-			'dirmode' => '02750',
-			'filemode' => '0640',
-			'recursive' => 1
-		}
-	);
-
-	$rs;
+	setRights($main::imscpConfig{'AWSTATS_CACHE_DIR'}, {
+		user => $main::imscpConfig{'ROOT_USER'},
+		group => Servers::httpd->factory()->getRunningGroup(),
+		dirmode => '02750',
+		filemode => '0640',
+		recursive => 1
+	});
 }
 
 =back
@@ -163,10 +157,9 @@ sub setEnginePermissions
 
 sub _init
 {
-	my $self = $_[0];
+	my $self = shift;
 
 	$self->{'httpd'} = Servers::httpd->factory();
-
 	$self;
 }
 
@@ -182,9 +175,9 @@ sub _createCacheDir
 {
 	iMSCP::Dir->new(
 		dirname => $main::imscpConfig{'AWSTATS_CACHE_DIR'}
-	)->make(
-		{ 'user' => $main::imscpConfig{'ROOT_USER'}, 'group' => $_[0]->{'httpd'}->getRunningGroup(), 'mode' => 02750 }
-	);
+	)->make({
+		user => $main::imscpConfig{'ROOT_USER'}, group => $_[0]->{'httpd'}->getRunningGroup(), mode => 02750
+	});
 }
 
 =item _createGlobalAwstatsVhost()
@@ -197,19 +190,17 @@ sub _createCacheDir
 
 sub _createGlobalAwstatsVhost
 {
-	my $self = $_[0];
+	my $self = shift;
 
 	my $version = $self->{'httpd'}->{'config'}->{'HTTPD_VERSION'};;
 	my $apache24 = (version->parse($version) >= version->parse('2.4.0'));
 
-	$self->{'httpd'}->setData(
-		{
-			NAMEVIRTUALHOST => ($apache24) ? '' : 'NameVirtualHost 127.0.0.1:80',
-			AWSTATS_ENGINE_DIR => $main::imscpConfig{'AWSTATS_ENGINE_DIR'},
-			AWSTATS_WEB_DIR => $main::imscpConfig{'AWSTATS_WEB_DIR'},
-			AUTHZ_ALLOW_ALL => ($apache24) ? 'Require all granted' : 'Allow from all'
-		}
-	);
+	$self->{'httpd'}->setData({
+		NAMEVIRTUALHOST => ($apache24) ? '' : 'NameVirtualHost 127.0.0.1:80',
+		AWSTATS_ENGINE_DIR => $main::imscpConfig{'AWSTATS_ENGINE_DIR'},
+		AWSTATS_WEB_DIR => $main::imscpConfig{'AWSTATS_WEB_DIR'},
+		AUTHZ_ALLOW_ALL => ($apache24) ? 'Require all granted' : 'Allow from all'
+	});
 
 	my $rs = $self->{'httpd'}->buildConfFile(
 		"$main::imscpConfig{'ENGINE_ROOT_DIR'}/PerlLib/Package/Webstats/Awstats/Config/01_awstats.conf"
@@ -232,23 +223,20 @@ sub _createGlobalAwstatsVhost
 
 sub _disableDefaultConfig
 {
-	my $rs = 0;
-
 	if(-f "$main::imscpConfig{'AWSTATS_CONFIG_DIR'}/awstats.conf") {
-		$rs = iMSCP::File->new(
+		iMSCP::File->new(
 			filename => "$main::imscpConfig{'AWSTATS_CONFIG_DIR'}/awstats.conf"
 		)->moveFile(
 			"$main::imscpConfig{'AWSTATS_CONFIG_DIR'}/awstats.conf.disabled"
 		);
-		return $rs if $rs;
 	}
 
 	my $cronDir = Servers::cron->factory()->{'config'}->{'CRON_D_DIR'};
 	if(-f "$cronDir/awstats") {
-		$rs = iMSCP::File->new( filename => "$cronDir/awstats" )->moveFile("$cronDir/awstats.disable");
+		iMSCP::File->new( filename => "$cronDir/awstats" )->moveFile("$cronDir/awstats.disable");
 	}
 
-	$rs;
+	0;
 }
 
 =item _addAwstatsCronTask()
@@ -261,20 +249,18 @@ sub _disableDefaultConfig
 
 sub _addAwstatsCronTask
 {
-	Servers::cron->factory()->addTask(
-		{
-			TASKID => 'Package::Webstats::Awstats',
-			MINUTE => '15',
-			HOUR => '3-21/6',
-			DAY => '*',
-			MONTH => '*',
-			DWEEK => '*',
-			USER => $main::imscpConfig{'ROOT_USER'},
-			COMMAND => 'nice -n 15 ionice -c2 -n5 perl ' .
-				"$main::imscpConfig{'ENGINE_ROOT_DIR'}/PerlLib/Package/Webstats/Awstats/Scripts/awstats_updateall.pl now " .
-				"-awstatsprog=$main::imscpConfig{'AWSTATS_ENGINE_DIR'}/awstats.pl > /dev/null 2>&1"
-		}
-	);
+	Servers::cron->factory()->addTask({
+		TASKID => 'Package::Webstats::Awstats',
+		MINUTE => '15',
+		HOUR => '3-21/6',
+		DAY => '*',
+		MONTH => '*',
+		DWEEK => '*',
+		USER => $main::imscpConfig{'ROOT_USER'},
+		COMMAND => 'nice -n 15 ionice -c2 -n5 perl ' .
+			"$main::imscpConfig{'ENGINE_ROOT_DIR'}/PerlLib/Package/Webstats/Awstats/Scripts/awstats_updateall.pl now " .
+			"-awstatsprog=$main::imscpConfig{'AWSTATS_ENGINE_DIR'}/awstats.pl > /dev/null 2>&1"
+	});
 }
 
 =back

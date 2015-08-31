@@ -46,7 +46,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	/**
 	 * @var int Last database update revision
 	 */
-	protected $lastUpdate = 210;
+	protected $lastUpdate = 214;
 
 	/**
 	 * Singleton - Make new unavailable
@@ -658,6 +658,8 @@ class iMSCP_Update_Database extends iMSCP_Update
 		$sqlUpd = array();
 
 		// Decrypt all mail passwords
+		$key = iMSCP_Registry::get('MCRYPT_KEY');
+		$iv = iMSCP_Registry::get('MCRYPT_IV');
 
 		$stmt = execute_query(
 			"
@@ -672,7 +674,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 
 		if ($stmt->rowCount()) {
 			while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
-				$password = quoteValue(decryptBlowfishCbcPassword($row['mail_pass']));
+				$password = quoteValue(\iMSCP\Crypt::decryptRijndaelCBC($key, $iv, $row['mail_pass']));
 				$status = quoteValue('tochange');
 				$mailId = quoteValue($row['mail_id'], PDO::PARAM_INT);
 				$sqlUpd[] = "UPDATE mail_users SET mail_pass = $password, status = $status WHERE mail_id = $mailId";
@@ -685,7 +687,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 
 		if ($stmt->rowCount()) {
 			while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
-				$password = quoteValue(decryptBlowfishCbcPassword($row['sqlu_pass']));
+				$password = quoteValue(\iMSCP\Crypt::decryptRijndaelCBC($key, $iv, $row['sqlu_pass']));
 				$id = quoteValue($row['sqlu_id'], PDO::PARAM_INT);
 				$sqlUpd[] = "UPDATE sql_user SET sqlu_pass = $password WHERE sqlu_id = $id";
 			}
@@ -697,7 +699,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 
 		if ($stmt->rowCount()) {
 			while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
-				$password = quoteValue(decryptBlowfishCbcPassword($row['passwd']));
+				$password = quoteValue(\iMSCP\Crypt::decryptRijndaelCBC($key, $iv, $row['passwd']));
 				$userId = quoteValue($row['userid']);
 				$sqlUpd[] = "UPDATE ftp_users SET rawpasswd = $password WHERE userid = $userId";
 			}
@@ -3283,5 +3285,134 @@ class iMSCP_Update_Database extends iMSCP_Update
 		$this->removeDuplicateRowsOnColumns('server_traffic', 'traff_time');
 
 		return $this->addIndex('server_traffic', 'traff_time', 'UNIQUE', 'traff_time');
+	}
+
+	/**
+	 * Add column for HSTS feature
+	 *
+	 * @return null|string SQL statement to be executed
+	 */
+	protected function r211()
+	{
+		return $this->addColumn(
+			'ssl_certs',
+			'allow_hsts',
+			"VARCHAR(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'off' AFTER ca_bundle"
+		);
+	}
+
+	/**
+	 * #IP-1395: Domain redirect feature - Missing URL path separator
+	 *
+	 * @throws Zend_Uri_Exception
+	 * @throws iMSCP_Exception_Database
+	 * @throws iMSCP_Uri_Exception
+	 */
+	protected function r212()
+	{
+		$stmt = exec_query("SELECT alias_id, url_forward FROM domain_aliasses WHERE url_forward <> 'no'");
+
+		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+			$uri = iMSCP_Uri_Redirect::fromString($row['url_forward']);
+			$uriPath = rtrim(preg_replace('#/+#', '/', $uri->getPath()), '/') . '/';
+			$uri->setPath($uriPath);
+
+			exec_query(
+				'UPDATE domain_aliasses SET url_forward = ? WHERE alias_id = ?', array($uri->getUri(), $row['alias_id'])
+			);
+		}
+
+		$stmt = exec_query(
+			"SELECT subdomain_id, subdomain_url_forward FROM subdomain WHERE subdomain_url_forward <> 'no'"
+		);
+
+		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+			$uri = iMSCP_Uri_Redirect::fromString($row['subdomain_url_forward']);
+			$uriPath = rtrim(preg_replace('#/+#', '/', $uri->getPath()), '/') . '/';
+			$uri->setPath($uriPath);
+
+			exec_query(
+				'UPDATE subdomain SET subdomain_url_forward = ? WHERE subdomain_id = ?',
+				array($uri->getUri(), $row['subdomain_id'])
+			);
+		}
+
+		$stmt = exec_query(
+			"
+				SELECT
+					subdomain_alias_id, subdomain_alias_url_forward
+				FROM
+					subdomain_alias
+				WHERE
+					subdomain_alias_url_forward <> 'no'
+			"
+		);
+		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+			$uri = iMSCP_Uri_Redirect::fromString($row['subdomain_alias_url_forward']);
+			$uriPath = rtrim(preg_replace('#/+#', '/', $uri->getPath()), '/') . '/';
+			$uri->setPath($uriPath);
+
+			exec_query(
+				'UPDATE subdomain_alias SET subdomain_alias_url_forward = ? WHERE subdomain_alias_id = ?',
+				array($uri->getUri(), $row['subdomain_alias_id'])
+			);
+		}
+	}
+
+	/**
+	 * Add columns for forward type feature
+	 *
+	 * @return array SQL statements to be executed
+	 */
+	protected function r213()
+	{
+		$sqlUpd = array();
+
+		$sql = $this->addColumn(
+			'domain_aliasses',
+			'type_forward',
+			"VARCHAR(5) COLLATE utf8_unicode_ci DEFAULT NULL AFTER url_forward"
+		);
+
+		if ($sql !== null) {
+			$sqlUpd[] = $sql;
+			$sqlUpd[] = "UPDATE domain_aliasses SET type_forward = '302' WHERE url_forward <> 'no'";
+		}
+
+		$sql = $this->addColumn(
+			'subdomain',
+			'subdomain_type_forward',
+			"VARCHAR(5) COLLATE utf8_unicode_ci DEFAULT NULL AFTER subdomain_url_forward"
+		);
+
+		if ($sql !== null) {
+			$sqlUpd[] = $sql;
+			$sqlUpd[] = "UPDATE subdomain SET subdomain_type_forward = '302' WHERE subdomain_url_forward <> 'no'";
+		}
+
+		$sql = $this->addColumn(
+			'subdomain_alias',
+			'subdomain_alias_type_forward',
+			"VARCHAR(5) COLLATE utf8_unicode_ci DEFAULT NULL AFTER subdomain_alias_url_forward"
+		);
+
+		if ($sql !== null) {
+			$sqlUpd[] = $sql;
+			$sqlUpd[] = "UPDATE subdomain_alias SET subdomain_alias_type_forward = '302' WHERE subdomain_alias_url_forward <> 'no'";
+		}
+
+		return $sqlUpd;
+	}
+
+	/**
+	 * Add SMTP submission port in config table
+	 *
+	 * @return null
+	 */
+	protected function r214()
+	{
+		$dbConfig = iMSCP_Registry::get('dbConfig');
+		$dbConfig['PORT_SMTP_SUBMISSION'] = '587;tcp;SMTP-SUBMISSION;1;0.0.0.0';
+		return null;
 	}
 }

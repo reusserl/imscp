@@ -36,7 +36,7 @@ function _reseller_getAliasData($domainAliasId)
 	if (null === $domainAliasData) {
 		$query = "
 			SELECT
-				alias_name, url_forward AS forward_url
+				alias_name, url_forward AS forward_url, type_forward AS forward_type
 			FROM
 				domain_aliasses
 			INNER JOIN
@@ -84,35 +84,39 @@ function reseller_generatePage($tpl)
 				$uri = iMSCP_Uri_Redirect::fromString($domainAliasData['forward_url']);
 				$forwardUrlScheme = $uri->getScheme();
 				$forwardUrl = substr($uri->getUri(), strlen($forwardUrlScheme) + 3);
+				$forwardType = $domainAliasData['forward_type'];
 			} else {
 				$urlForwarding = false;
 				$forwardUrlScheme = 'http://';
 				$forwardUrl = '';
+				$forwardType = '302';
 			}
 		} else {
 			$urlForwarding = (isset($_POST['url_forwarding']) && $_POST['url_forwarding'] == 'yes') ? true : false;
 			$forwardUrlScheme = (isset($_POST['forward_url_scheme'])) ? $_POST['forward_url_scheme'] : 'http://';
 			$forwardUrl = isset($_POST['forward_url']) ? $_POST['forward_url'] : '';
+			$forwardType = isset($_POST['forward_type']) && in_array($_POST['forward_type'], array('301', '302', '303', '307'), true)
+				? $_POST['forward_type'] : '302';
 		}
 
-		/** @var iMSCP_Config_Handler_File $cfg */
 		$cfg = iMSCP_Registry::get('config');
+		$checked = $cfg['HTML_CHECKED'];
+		$selected = $cfg['HTML_SELECTED'];
 
-		$checked = $cfg->HTML_CHECKED;
-		$selected = $cfg->HTML_SELECTED;
-
-		$tpl->assign(
-			array(
-				'DOMAIN_ALIAS_ID' => $domainAliasId,
-				'DOMAIN_ALIAS_NAME' => tohtml($domainAliasData['alias_name_utf8']),
-				'FORWARD_URL_YES' => ($urlForwarding) ? $checked : '',
-				'FORWARD_URL_NO' => ($urlForwarding) ? '' : $checked,
-				'HTTP_YES' => ($forwardUrlScheme == 'http://') ? $selected : '',
-				'HTTPS_YES' => ($forwardUrlScheme == 'https://') ? $selected : '',
-				'FTP_YES' => ($forwardUrlScheme == 'ftp://') ? $selected : '',
-				'FORWARD_URL' => tohtml(decode_idna($forwardUrl))
-			)
-		);
+		$tpl->assign(array(
+			'DOMAIN_ALIAS_ID' => $domainAliasId,
+			'DOMAIN_ALIAS_NAME' => tohtml($domainAliasData['alias_name_utf8']),
+			'FORWARD_URL_YES' => ($urlForwarding) ? $checked : '',
+			'FORWARD_URL_NO' => ($urlForwarding) ? '' : $checked,
+			'HTTP_YES' => ($forwardUrlScheme == 'http://') ? $selected : '',
+			'HTTPS_YES' => ($forwardUrlScheme == 'https://') ? $selected : '',
+			'FTP_YES' => ($forwardUrlScheme == 'ftp://') ? $selected : '',
+			'FORWARD_URL' => tohtml(decode_idna($forwardUrl)),
+			'FORWARD_TYPE_301' => ($forwardType == '301') ? $checked : '',
+			'FORWARD_TYPE_302' => ($forwardType == '302') ? $checked : '',
+			'FORWARD_TYPE_303' => ($forwardType == '303') ? $checked : '',
+			'FORWARD_TYPE_307' => ($forwardType == '307') ? $checked : ''
+		));
 	} else {
 		showBadRequestErrorPage();
 	}
@@ -129,13 +133,16 @@ function reseller_editDomainAlias()
 		$domainAliasId = clean_input($_GET['id']);
 
 		if (($domainAliasData = _reseller_getAliasData($domainAliasId))) {
-			// Check for URL forwarding option
-
 			$forwardUrl = 'no';
+			$forwardType = 'null';
 
-			if (isset($_POST['url_forwarding']) && $_POST['url_forwarding'] == 'yes') { // We are safe here
+			if (
+				isset($_POST['url_forwarding']) && $_POST['url_forwarding'] == 'yes' &&
+				isset($_POST['forward_type']) && in_array($_POST['forward_type'], array('301', '302', '303', '307'), true)
+			) {
 				if (isset($_POST['forward_url_scheme']) && isset($_POST['forward_url'])) {
 					$forwardUrl = clean_input($_POST['forward_url_scheme']) . clean_input($_POST['forward_url']);
+					$forwardType = clean_input($_POST['forward_type']);
 
 					try {
 						try {
@@ -145,14 +152,13 @@ function reseller_editDomainAlias()
 						}
 
 						$uri->setHost(encode_idna($uri->getHost()));
+						$uriPath = rtrim(preg_replace('#/+#', '/', $uri->getPath()), '/') . '/'; // normalize path
+						$uri->setPath($uriPath);
 
 						if ($uri->getHost() == $domainAliasData['alias_name'] && $uri->getPath() == '/') {
 							throw new iMSCP_Exception(
 								tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>") . ' ' .
-								tr(
-									'Domain alias %s cannot be forwarded on itself.',
-									"<strong>{$domainAliasData['alias_name_utf8']}</strong>"
-								)
+								tr('Domain alias %s cannot be forwarded on itself.', "<strong>{$domainAliasData['alias_name_utf8']}</strong>")
 							);
 						}
 
@@ -163,28 +169,25 @@ function reseller_editDomainAlias()
 					}
 				} else {
 					showBadRequestErrorPage();
+					exit;
 				}
 			}
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(
-				iMSCP_Events::onBeforeEditDomainAlias, array('domainAliasId' => $domainAliasId)
-			);
+			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeEditDomainAlias, array(
+				'domainAliasId' => $domainAliasId
+			));
 
 			exec_query(
-				'UPDATE `domain_aliasses` SET `url_forward` = ?, `alias_status` = ? WHERE `alias_id` = ?',
-				array($forwardUrl, 'tochange', $domainAliasId)
+				'UPDATE `domain_aliasses` SET `url_forward` = ?, `type_forward` = ?, `alias_status` = ? WHERE `alias_id` = ?',
+				array($forwardUrl, $forwardType, 'tochange', $domainAliasId)
 			);
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(
-				iMSCP_Events::onAfterEditDomainALias, array('domainAliasId' => $domainAliasId)
-			);
+			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditDomainALias, array(
+				'domainAliasId' => $domainAliasId
+			));
 
 			send_request();
-
-			write_log(
-				"{$_SESSION['user_logged']}: scheduled update of domain alias: {$domainAliasData['alias_name_utf8']}.",
-				E_USER_NOTICE
-			);
+			write_log("{$_SESSION['user_logged']}: scheduled update of domain alias: {$domainAliasData['alias_name_utf8']}.", E_USER_NOTICE);
 		} else {
 			showBadRequestErrorPage();
 		}
@@ -199,13 +202,10 @@ function reseller_editDomainAlias()
  * Main
  */
 
-// Include core library
 require_once 'imscp-lib.php';
 
 iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
-
 check_login('reseller');
-
 (resellerHasFeature('domain_aliases') && resellerHasCustomers()) or showBadRequestErrorPage();
 
 if (!empty($_POST) && reseller_editDomainAlias()) {
@@ -213,41 +213,39 @@ if (!empty($_POST) && reseller_editDomainAlias()) {
 	redirectTo('alias.php');
 } else {
 	$tpl = new iMSCP_pTemplate();
-	$tpl->define_dynamic(
-		array(
-			'layout' => 'shared/layouts/ui.tpl',
-			'page' => 'reseller/alias_edit.tpl',
-			'page_message' => 'layout'
-		)
-	);
+	$tpl->define_dynamic(array(
+		'layout' => 'shared/layouts/ui.tpl',
+		'page' => 'reseller/alias_edit.tpl',
+		'page_message' => 'layout'
+	));
 
-	$tpl->assign(
-		array(
-			'TR_PAGE_TITLE' => tr('Reseller / Domains / Edit Domain Alias'),
-			'TR_DOMAIN_ALIAS' => tr('Domain alias'),
-			'TR_DOMAIN_ALIAS_NAME' => tr('Domain alias name'),
-			'TR_URL_FORWARDING' => tr('URL forwarding'),
-			'TR_FORWARD_TO_URL' => tr('Forward to URL'),
-			'TR_URL_FORWARDING_TOOLTIP' => tr('Allows to forward any request made to this domain alias to a specific URL.'),
-			'TR_YES' => tr('Yes'),
-			'TR_NO' => tr('No'),
-			'TR_HTTP' => 'http://',
-			'TR_HTTPS' => 'https://',
-			'TR_FTP' => 'ftp://',
-			'TR_UPDATE' => tr('Update'),
-			'TR_CANCEL' => tr('Cancel')
-		)
-	);
+	$tpl->assign(array(
+		'TR_PAGE_TITLE' => tr('Reseller / Domains / Edit Domain Alias'),
+		'TR_DOMAIN_ALIAS' => tr('Domain alias'),
+		'TR_DOMAIN_ALIAS_NAME' => tr('Domain alias name'),
+		'TR_URL_FORWARDING' => tr('URL forwarding'),
+		'TR_FORWARD_TO_URL' => tr('Forward to URL'),
+		'TR_URL_FORWARDING_TOOLTIP' => tr('Allows to forward any request made to this domain alias to a specific URL.'),
+		'TR_YES' => tr('Yes'),
+		'TR_NO' => tr('No'),
+		'TR_HTTP' => 'http://',
+		'TR_HTTPS' => 'https://',
+		'TR_FTP' => 'ftp://',
+		'TR_FORWARD_TYPE' => tr('Forward type'),
+		'TR_301' => '301',
+		'TR_302' => '302',
+		'TR_303' => '303',
+		'TR_307' => '307',
+		'TR_UPDATE' => tr('Update'),
+		'TR_CANCEL' => tr('Cancel')
+	));
 
 	generateNavigation($tpl);
 	reseller_generatePage($tpl);
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-
 	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
-
 	$tpl->prnt();
-
 	unsetMessages();
 }

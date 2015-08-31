@@ -1,0 +1,35 @@
+sudo: false
+
+language: perl
+
+perl:
+  - "5.14"
+  - "5.16"
+  - "5.18"
+  - "5.20"
+  - "5.21"
+
+addons:
+  apt:
+    packages:
+      - curl
+      - fakeroot
+      - whiptail
+
+env: PERL_CPANM_OPT="--quiet --notest --force --skip-satisfied"
+
+install:
+  - cpanm Expect
+  - cpanm Crypt::Blowfish
+  - cpanm Crypt::CBC
+  - cpanm Crypt::Eksblowfish::Bcrypt
+  - cpanm Crypt::Rijndael
+
+notifications:
+  irc:
+    - "irc.freenode.org#i-mscp-dev"
+    - "irc.freenode.org#i-mscp"
+  email: false
+
+script:
+  - fakeroot perl ./test/perlunit.pl

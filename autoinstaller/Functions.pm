@@ -36,7 +36,9 @@ use iMSCP::EventManager;
 use iMSCP::Execute;
 use iMSCP::Dir;
 use iMSCP::File;
+use iMSCP::Rights;
 use iMSCP::Stepper;
+use File::Basename;
 use File::Find;
 use Cwd;
 use version;
@@ -80,16 +82,16 @@ sub loadConfig
 
 	# Load old i-MSCP conffile as readonly if it exists
 	if (-f "$imscpNewConfig{'CONF_DIR'}/imscp.conf") {
-		tie %main::imscpOldConfig,
-			'iMSCP::Config',
-			fileName => "$imscpNewConfig{'CONF_DIR'}/imscp.conf",
-			readonly => 1,
+		tie %main::imscpOldConfig, 'iMSCP::Config', fileName => "$imscpNewConfig{'CONF_DIR'}/imscp.conf", readonly => 1,
 			nowarn => 1;
 
 		# Merge old config with the new but do not write anything yet.
-		for(keys %main::imscpOldConfig) {
-			if(exists $main::imscpConfig{$_} && not $_ ~~  [ 'BuildDate', 'Version', 'CodeName', 'THEME_ASSETS_VERSION' ]) {
-				$main::imscpConfig{$_} = $main::imscpOldConfig{$_};
+		for my $paramName(keys %main::imscpOldConfig) {
+			if(
+				exists $main::imscpConfig{$paramName} &&
+				not $paramName ~~  [ 'BuildDate', 'Version', 'CodeName', 'THEME_ASSETS_VERSION' ]
+			) {
+				$main::imscpConfig{$paramName} = $main::imscpOldConfig{$paramName};
 			}
 		}
 	} else { # No conffile found, assumption is made that it's a new install
@@ -113,10 +115,11 @@ sub build
 {
 	newDebug('imscp-build.log');
 
-	if($main::skippackages && ! iMSCP::Getopt->preseed) {
+	if($main::skippackages && !iMSCP::Getopt->preseed) {
 		unless(
-			$main::imscpConfig{'HTTPD_SERVER'} && $main::imscpConfig{'PO_SERVER'} && $main::imscpConfig{'MTA_SERVER'} &&
-			$main::imscpConfig{'FTPD_SERVER'} && $main::imscpConfig{'NAMED_SERVER'} && $main::imscpConfig{'SQL_SERVER'}
+			$main::imscpConfig{'FTPD_SERVER'} && $main::imscpConfig{'FRONTEND_SERVER'} &&
+			$main::imscpConfig{'HTTPD_SERVER'} && $main::imscpConfig{'MTA_SERVER'} &&
+			$main::imscpConfig{'NAMED_SERVER'} && $main::imscpConfig{'PO_SERVER'} && $main::imscpConfig{'SQL_SERVER'}
 		) {
 			$main::noprompt = 0;
 			$main::skippackages = 0;
@@ -153,51 +156,36 @@ sub build
 	return $rs if $rs;
 
 	my @steps = (
-		[ \&_processDistroPackages,  'Processing distro packages' ],
-		[ \&_testRequirements,       'Checking for requirements' ],
-		[ \&_buildDistributionFiles, 'Building distribution files' ],
-		[ \&_compileDaemon,          'Compiling daemon' ],
-		[ \&_savePersistentData,     'Saving persistent data' ]
+		[ \&_testRequirements,       'Checking in requirements' ],
+		[ \&_buildDistributionFiles, 'Building distribution files' ]
 	);
 
-	# Remove the distro packages step in case the --skippackages is set
-	shift @steps if $main::skippackages;
+	# Add the distro packages step in case the --skippackages is not set
+	unshift @steps, [ \&_processDistroPackages,  'Processing distro packages' ] unless $main::skippackages;
 
-	$rs = $eventManager->trigger('beforeBuild', \@steps);
-	return $rs if $rs;
+	$eventManager->trigger('beforeBuild', \@steps);
 
-	my $step = 1;
-	my $nbSteps = scalar @steps;
+	my ($nStep, $nSteps) = (0, scalar @steps);
+	step(@{ $steps[$nStep] }, $nSteps, ++$nStep) for @steps;
 
-	for (@steps) {
-		$rs = step($_->[0], $_->[1], $nbSteps, $step);
-		error('An error occurred while performing build steps') if $rs;
-		return $rs if $rs;
-		$step++;
-	}
-
-	$rs = $eventManager->trigger('afterBuild');
-	return $rs if $rs;
-
-	$rs = $eventManager->trigger('beforePostBuild');
-	return $rs if $rs;
+	$eventManager->trigger('afterBuild');
+	$eventManager->trigger('beforePostBuild');
 
 	$rs = _getDistroAdapter()->postBuild();
 	return $rs if $rs;
 
 	unless($main::skippackages) {
 		# Add/update servers selection in imscp.conf file
-		for('HTTPD', 'PO', 'MTA', 'FTPD', 'NAMED', 'SQL') {
-			$main::imscpConfig{ $_ . '_SERVER' } = $main::questions{ $_ . '_SERVER' };
+		for my $server('FTPD', 'FRONTEND', 'HTTPD', 'MTA', 'NAMED', 'PO', 'SQL') {
+			$main::imscpConfig{ $server . '_SERVER' } = $main::questions{ $server . '_SERVER' };
 		}
 	}
 
 	# Backup current configuration file if any
 	if(-f "$main::imscpConfig{'CONF_DIR'}/imscp.conf") {
-		$rs = iMSCP::File->new( filename => "$main::imscpConfig{'CONF_DIR'}/imscp.conf" )->copyFile(
+		iMSCP::File->new( filename => "$main::imscpConfig{'CONF_DIR'}/imscp.conf" )->copyFile(
 			"$main::imscpConfig{'CONF_DIR'}/imscp.old.conf"
 		);
-		return $rs if $rs;
 	}
 
 	# Write new config file
@@ -206,13 +194,17 @@ sub build
 	$main::imscpConfig{$_} = $imscpConf{$_} for keys %imscpConf;
 
 	# Clean build directory (remove any .gitignore|empty-file)
-	find(
-		sub { unlink or fatal("Unable to remove $File::Find::name: $!") if $_ eq '.gitignore' || $_ eq 'empty-file'; },
-		$main::{'INST_PREF'}
-	);
+	find {
+		wanted => sub {
+			my $basename = basename($_);
+			if ($basename eq '.gitignore' || $basename eq 'empty-file') {
+				unlink or die(sprintf('Could not remove %s: %s', $_, $!));
+			}
+		},
+		no_chdir => 1
+	}, $main::{'INST_PREF'};
 
-	$rs = $eventManager->trigger('afterPostBuild');
-	return $rs if $rs;
+	$eventManager->trigger('afterPostBuild');
 
 	endDebug();
 }
@@ -232,27 +224,24 @@ sub install
 	my $runningProcess = 0;
 	my $bootstrapper = iMSCP::Bootstrapper->getInstance();
 
-	for(
+	for my $lockFile(
 		'imscp-backup-all', 'imscp-backup-imscp', 'imscp-dsk-quota', 'imscp-srv-traff', 'imscp-vrl-traff',
 		'awstats_updateall.pl', 'imscp'
 	) {
-		unless($bootstrapper->lock("/tmp/$_.lock", 'nowait')) {
-			 $runningProcess = 1;
-		}
-	}
-
-	if($runningProcess) {
-		iMSCP::Dialog->getInstance()->msgbox(<<EOF);
+		unless($bootstrapper->lock("/tmp/$lockFile.lock", 'nowait')) {
+			iMSCP::Dialog->getInstance()->msgbox(<<EOF);
 
 One or many i-MSCP related processes are currently running on your system.
 
 You must wait until the end of the processes and re-run the installer.
 EOF
 		return 1;
+		}
 	}
 
 	my @steps = (
 		[ \&_installFiles,                'Installing files' ],
+		[ \&_systemCleanup,               'Cleaning system' ],
 		[ \&main::setupBoot,              'Setup bootstrapping' ],
 		[ \&main::setupRegisterListeners, 'Registering servers/packages event listeners' ],
 		[ \&main::setupDialog,            'Processing setup dialog' ],
@@ -260,24 +249,14 @@ EOF
 		[ \&_deleteBuildDir,              'Deleting Build directory' ]
 	);
 
-	my $rs = iMSCP::EventManager->getInstance()->trigger('beforeInstall', \@steps);
-	return $rs if $rs;
+	iMSCP::EventManager->getInstance()->trigger('beforeInstall', \@steps);
 
-	my $step = 1;
-	my $nbSteps = scalar @steps;
-
-	for (@steps) {
-		$rs = step($_->[0], $_->[1], $nbSteps, $step);
-		error('An error occurred while performing installation steps') if $rs;
-		return $rs if $rs;
-
-		$step++;
-	}
+	my ($nStep, $nSteps) = (0, scalar @steps);
+	step(@{ $steps[$nStep] }, $nSteps, ++$nStep) for @steps;
 
 	iMSCP::Dialog->getInstance()->endGauge() if iMSCP::Dialog->getInstance()->hasGauge();
 
-	$rs = iMSCP::EventManager->getInstance()->trigger('afterInstall');
-	return $rs if $rs;
+	iMSCP::EventManager->getInstance()->trigger('afterInstall');
 
 	my $port = ($main::imscpConfig{'BASE_SERVER_VHOST_PREFIX'} eq 'http://')
 		? $main::imscpConfig{'BASE_SERVER_VHOST_HTTP_PORT'}
@@ -327,7 +306,7 @@ sub _installPreRequiredPackages
 
 sub _showWelcomeMsg
 {
-	my $dialog = $_[0];
+	my $dialog = shift;
 
 	$dialog->msgbox(<<EOF);
 
@@ -336,7 +315,7 @@ sub _showWelcomeMsg
 
 Welcome to the i-MSCP setup dialog.
 
-i-MSCP ( internet Multi Server Control Panel ) is an open-source software which allows to manage shared hosting environments on Linux servers.
+i-MSCP (internet Multi Server Control Panel) is an open-source software which allows to manage shared hosting environments on Linux servers.
 
 i-MSCP aims to provide an easy-to-use Web interface for end-users, and to manage servers without any manual intervention on the filesystem.
 
@@ -365,14 +344,14 @@ EOF
 
 sub _showUpdateNotices
 {
-	my $dialog = $_[0];
+	my $dialog = shift;
 
 	my $noticesDir = "$FindBin::Bin/autoinstaller/UpdateNotices";
 	my $imscpVersion = $main::imscpOldConfig{'Version'};
 	my $notices = '';
 
 	if($imscpVersion !~ /git/i) {
-		if($imscpVersion =~ /^\d+\.\d+\.\d+/) {
+		if($imscpVersion =~ /^(\d+\.\d+\.\d+)/) {
 			$imscpVersion = $1;
 
 			my @noticeFiles = iMSCP::Dir->new( dirname => $noticesDir )->getFiles();
@@ -385,11 +364,6 @@ sub _showUpdateNotices
 
 					if(version->parse($imscpVersion) < version->parse($noticeVersion)) {
 						my $noticeBody = iMSCP::File->new( filename => "$noticesDir/$noticeFile" )->get();
-						unless(defined $noticeBody) {
-							error("Unable to read $noticesDir/$noticeFile file");
-							return 1;
-						}
-
 						$notices .= "\n$noticeBody";
 					}
 				}
@@ -403,7 +377,7 @@ sub _showUpdateNotices
 
 The installer detected that you're using the \\ZbGit\\ZB version of i-MSCP. Before continue, be sure to have read the errata file:
 
-    \\Zbhttps://github.com/i-MSCP/imscp/blob/1.2.x/docs/1.2.x_errata.md\\ZB
+    \\Zbhttps://github.com/i-MSCP/imscp/blob/1.3.x/docs/1.3.x_errata.md\\ZB
 
 We would remind you that the Git version can be highly unstable and that the i-MSCP team do not provides any support for it.
 EOF
@@ -439,7 +413,7 @@ EOF
 
 sub _confirmDistro
 {
-	my $dialog = $_[0];
+	my $dialog = shift;
 
 	$dialog->infobox("\nDetecting target distribution...");
 
@@ -513,7 +487,7 @@ EOF
 
 sub _askInstallMode
 {
-	my $dialog = $_[0];
+	my $dialog = shift;
 
 	$dialog->set('cancel-label', 'Abort');
 
@@ -572,16 +546,20 @@ sub _testRequirements
 
 sub _buildDistributionFiles
 {
-	my $rs = _buildLayout();
-	return $rs if $rs;
+	my @steps = (
+		[ \&_buildLayout,        'Building layout' ],
+		[ \&_buildConfigFiles,   'Building configuration files' ],
+		[ \&_buildEngineFiles,   'Building engine files' ],
+		[ \&_buildFrontendFiles, 'Building Building frontEnd files' ],
+		[ \&_buildDaemon,        'Building communication daemon' ]
+	);
 
-	$rs = _buildConfigFiles();
-	return $rs if $rs;
+	push @steps, [ \&_savePersistentData, 'Saving persistent data' ] if -d "$main::imscpConfig{'ROOT_DIR'}/gui";
 
-	$rs = _buildEngineFiles();
-	return $rs if $rs;
-
-	_buildFrontendFiles();
+	startDetail();
+	my ($nStep, $nSteps) = (0, scalar @steps);
+	step(@{ $steps[$nStep] }, $nSteps, ++$nStep) for @steps;
+	endDetail();
 }
 
 =item _buildLayout()
@@ -597,12 +575,12 @@ sub _buildLayout
 	my $distroLayout = "$FindBin::Bin/autoinstaller/Layout/" . iMSCP::LsbRelease->getInstance()->getId(1) . '.xml';
 	my $defaultLayout = "$FindBin::Bin/autoinstaller/Layout/Debian.xml";
 
-	_processXmlFile((-f $distroLayout) ? $distroLayout : $defaultLayout);
+	_processXmlFile(-f $distroLayout ? $distroLayout : $defaultLayout);
 }
 
 =item _buildConfigFiles()
 
- Build configuration files
+ Build configuration files by processing install.xml file inside configuration directories
 
  Return int 0 on success, other on failure
 
@@ -610,44 +588,22 @@ sub _buildLayout
 
 sub _buildConfigFiles
 {
-	# Possible config directory paths
-	my $distroConfigDir = "$FindBin::Bin/configs/" . lc(iMSCP::LsbRelease->getInstance()->getId(1));
-	my $defaultConfigDir = "$FindBin::Bin/configs/debian";
+	# Possible config directories
+	my $distroConfdir = "$FindBin::Bin/configs/" . lc(iMSCP::LsbRelease->getInstance()->getId(1));
+	my $defaultConfdir = "$FindBin::Bin/configs/debian";
 
-	# Determine config directory to use
-	my $confDir = (-d $distroConfigDir) ? $distroConfigDir : $defaultConfigDir;
-
-	unless(chdir($confDir)) {
-		error(sprintf("Unable to change directory to $confDir: %s", $!));
-		return 1;
-	}
-
-	# Determine install.xml file to process
-	my $file = (-f "$distroConfigDir/install.xml") ? "$distroConfigDir/install.xml" : "$defaultConfigDir/install.xml";
-
-	my $rs = _processXmlFile($file);
+	# Process root install.xml file
+	my $rs = _processXmlFile((-f "$distroConfdir/install.xml" ? $distroConfdir : $defaultConfdir) . '/install.xml');
 	return $rs if $rs;
 
-	# Get list of sub config dir from default config directory (debian)
-	my $dirDH = iMSCP::Dir->new( dirname => $defaultConfigDir );
-	my @configDirs = $dirDH->getDirs();
-
-	for(@configDirs) {
-		# Override sub config dir path if it is available in selected distro, else set it to default path
-		$confDir = (-d "$distroConfigDir/$_") ? "$distroConfigDir/$_" : "$defaultConfigDir/$_";
-
-		unless(chdir($confDir)) {
-			error(sprintf('Cannot change directory to %s: %s', $confDir, $!));
-			return 1;
-		}
-
-		$file = (-f "$distroConfigDir/$_/install.xml")
-			? "$distroConfigDir/$_/install.xml" : "$defaultConfigDir/$_/install.xml";
-
-		if(-f $file) {
-			$rs = _processXmlFile($file);
-			return $rs if $rs;
-		}
+	# Process install.xml files from subconfig directories
+	for my $subdir(iMSCP::Dir->new( dirname => $defaultConfdir )->getDirs()) {
+		$rs = _processXmlFile(
+			(
+				-f "$distroConfdir/$subdir/install.xml" ? "$distroConfdir/$subdir" : "$defaultConfdir/$subdir"
+			) . '/install.xml'
+		);
+		return $rs if $rs;
 	}
 
 	0;
@@ -655,7 +611,7 @@ sub _buildConfigFiles
 
 =item _buildEngineFiles()
 
- Build engine files
+ Build engine files by processing install.xml files inside engine directory
 
  Return int 0 on success, other on failure
 
@@ -663,26 +619,14 @@ sub _buildConfigFiles
 
 sub _buildEngineFiles
 {
-	unless(chdir "$FindBin::Bin/engine") {
-		error(sprintf('Unable to change dir to %s', "$FindBin::Bin/engine"));
-		return 1;
-	}
+	my $engineDir = "$FindBin::Bin/engine";
 
-	my $rs = _processXmlFile("$FindBin::Bin/engine/install.xml");
+	my $rs = _processXmlFile("$engineDir/install.xml");
 	return $rs if $rs;
 
-	my $dir = iMSCP::Dir->new( dirname => "$FindBin::Bin/engine" );
-
-	my @configDirs = $dir->getDirs();
-
-	for(@configDirs) {
-		if (-f "$FindBin::Bin/engine/$_/install.xml") {
-			unless(chdir "$FindBin::Bin/engine/$_") {
-				error(sprintf('Unable to change dir to %s', "$FindBin::Bin/engine/$_"));
-				return 1;
-			}
-
-			$rs = _processXmlFile("$FindBin::Bin/engine/$_/install.xml") ;
+	for my $subdir(iMSCP::Dir->new( dirname => $engineDir )->getDirs()) {
+		if (-f "$engineDir/$subdir/install.xml") {
+			$rs = _processXmlFile("$engineDir/$subdir/install.xml") ;
 			return $rs if $rs;
 		}
 	}
@@ -700,39 +644,32 @@ sub _buildEngineFiles
 
 sub _buildFrontendFiles
 {
-	my ($stdout, $stderr);
-	my $rs = execute("cp -fR $FindBin::Bin/gui $main::{'SYSTEM_ROOT'}", \$stdout, \$stderr);
-	debug($stdout) if $stdout;
-	error($stderr) if $stderr && $rs;
-	$rs;
+	iMSCP::Dir->new( dirname => "$FindBin::Bin/gui" )->rcopy("$main::{'SYSTEM_ROOT'}/gui");
 }
 
-=item _compileDaemon()
+=item _buildDaemon()
 
- Compile daemon
+ Build daemon
 
  Return int 0 on success, other on failure
 
 =cut
 
-sub _compileDaemon
+sub _buildDaemon
 {
 	unless(chdir "$FindBin::Bin/daemon") {
-		error(sprintf('Unable to change dir to %s', "$FindBin::Bin/daemon"));
+		error(sprintf('Could not change dir to %s', "$FindBin::Bin/daemon"));
 		return 1;
 	}
 
-	my ($stdout, $stderr);
-	my $rs = execute('make clean imscp_daemon', \$stdout, \$stderr);
+	my $rs = execute('make clean imscp_daemon', \my $stdout, \my $stderr);
 	debug($stdout) if $stdout;
 	error($stderr) if $stderr && $rs;
-	error('Unable to build i-MSCP daemon') if $rs;
+	error('Could not build i-MSCP daemon') if $rs && !$stderr;
 	return $rs if $rs;
 
-	$rs = iMSCP::Dir->new( dirname => "$main::{'SYSTEM_ROOT'}/daemon" )->make();
-	return $rs if $rs;
-
-	iMSCP::File->new( filename => 'imscp_daemon' )->copyFile("$main::{'SYSTEM_ROOT'}/daemon");
+	iMSCP::Dir->new( dirname => "$main::{'SYSTEM_ROOT'}/daemon" )->make();
+	iMSCP::File->new( filename => 'imscp_daemon' )->copyFile("$main::{'SYSTEM_ROOT'}/daemon", { preserve => 1 });
 }
 
 =item _savePersistentData()
@@ -745,171 +682,86 @@ sub _compileDaemon
 
 sub _savePersistentData
 {
-	my ($rs, $stdout, $stderr);
-	my $destdir = $main::{'INST_PREF'};
-
-	## Config files
-
 	# Save Web directories skeletons
 
-	# Remove deprecated phptmp directories
-	for my $skelDir("alias", "subdomain") {
-		$rs = iMSCP::Dir->new( dirname => "$main::imscpConfig{'CONF_DIR'}/apache/skel/$skelDir/phptmp" )->remove();
-		return $rs if $rs;
-	}
-
-	# Move old skel directory to new location
+	# Move skel directory to new location
 	if(-d "$main::imscpConfig{'CONF_DIR'}/apache/skel") {
-		$rs = execute(
-			"mv $main::imscpConfig{'CONF_DIR'}/apache/skel $main::imscpConfig{'CONF_DIR'}/skel", \$stdout, \$stderr
+		iMSCP::Dir->new( dirname => "$main::imscpConfig{'CONF_DIR'}/apache/skel" )->moveDir(
+			"$main::imscpConfig{'CONF_DIR'}/skel"
 		);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
 	}
 
+	# Save skel directory
 	if(-d "$main::imscpConfig{'CONF_DIR'}/skel") {
-		$rs = execute(
-			"cp -fRT $main::imscpConfig{'CONF_DIR'}/skel " .
-			"$destdir$main::imscpConfig{'CONF_DIR'}/skel",
-			\$stdout,
-			\$stderr
+		iMSCP::Dir->new( dirname => "$main::imscpConfig{'CONF_DIR'}/skel" )->rcopy(
+			"$main::{'INST_PREF'}$main::imscpConfig{'CONF_DIR'}/skel"
 		);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
 	}
 
-	# Move old listener files to new location
+	# Move listener files to new location
 	if(-d "$main::imscpConfig{'CONF_DIR'}/hooks.d") {
-		$rs = execute(
-			"mv $main::imscpConfig{'CONF_DIR'}/hooks.d $main::imscpConfig{'CONF_DIR'}/listeners.d", \$stdout, \$stderr
+		iMSCP::Dir->new( dirname => "$main::imscpConfig{'CONF_DIR'}/hooks.d")->moveDir(
+			"$main::imscpConfig{'CONF_DIR'}/listeners.d"
 		);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
 	}
 
-	# Remove old README file
-	if(-f "$main::imscpConfig{'CONF_DIR'}/listeners.d/README") {
-		$rs = execute("rm -f $main::imscpConfig{'CONF_DIR'}/listeners.d/README", \$stdout, \$stderr);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
-	}
-
-	## Package files
-
-	# Move old package cache directory to new location
+	# Move package cache directory to new location
 	if(-d  "$main::imscpConfig{'CACHE_DATA_DIR'}/addons") {
-		$rs = execute(
-			"mv $main::imscpConfig{'CACHE_DATA_DIR'}/addons $main::imscpConfig{'CACHE_DATA_DIR'}/packages",
-			\$stdout,
-			\$stderr
+		iMSCP::Dir->new( dirname => "$main::imscpConfig{'CACHE_DATA_DIR'}/addons")->moveDir(
+			"$main::imscpConfig{'CACHE_DATA_DIR'}/packages"
 		);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
 	}
 
-	## GUI files
-
-	# Save ISP logos (older location)
+	# Move ISP logos to new location
 	if(-d "$main::imscpConfig{'ROOT_DIR'}/gui/themes/user_logos") {
-		$rs = execute(
-			"cp -fRT $main::imscpConfig{'ROOT_DIR'}/gui/themes/user_logos " .
-				"$destdir$main::imscpConfig{'ROOT_DIR'}/gui/data/persistent/ispLogos",
-			\$stdout,
-			\$stderr
+		iMSCP::Dir->new( dirname => "$main::imscpConfig{'ROOT_DIR'}/gui/themes/user_logos" )->rcopy(
+			"$main::{'INST_PREF'}$main::imscpConfig{'ROOT_DIR'}/gui/data/persistent/ispLogos"
 		);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
 	}
 
-	# Save ISP logos (new location)
+	# Save ISP logos
 	if(-d "$main::imscpConfig{'ROOT_DIR'}/gui/data/ispLogos") {
-		$rs = execute(
-			"cp -fRT $main::imscpConfig{'ROOT_DIR'}/gui/data/ispLogos " .
-				"$destdir$main::imscpConfig{'ROOT_DIR'}/gui/data/persistent/ispLogos",
-			\$stdout,
-			\$stderr
+		iMSCP::Dir->new( dirname => "$main::imscpConfig{'ROOT_DIR'}/gui/data/ispLogos" )->rcopy(
+			"$main::{'INST_PREF'}$main::imscpConfig{'ROOT_DIR'}/gui/data/persistent/ispLogos"
 		);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
 	}
 
-	# Save GUI logs
+	# Save logs
 	if(-d "$main::imscpConfig{'ROOT_DIR'}/gui/data/logs") {
-		$rs = execute(
-			"cp -fRT $main::imscpConfig{'ROOT_DIR'}/gui/data/logs " .
-				"$destdir$main::imscpConfig{'ROOT_DIR'}/gui/data/logs",
-			\$stdout,
-			\$stderr
+		iMSCP::Dir->new( dirname => "$main::imscpConfig{'ROOT_DIR'}/gui/data/logs" )->rcopy(
+			"$main::{'INST_PREF'}$main::imscpConfig{'ROOT_DIR'}/gui/data/logs"
 		);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
 	}
 
 	# Save persistent data
 	if(-d "$main::imscpConfig{'ROOT_DIR'}/gui/data/persistent") {
-		$rs = execute(
-			"cp -fRT $main::imscpConfig{'ROOT_DIR'}/gui/data/persistent " .
-				"$destdir$main::imscpConfig{'ROOT_DIR'}/gui/data/persistent",
-			\$stdout,
-			\$stderr
+		iMSCP::Dir->new( dirname => "$main::imscpConfig{'ROOT_DIR'}/gui/data/persistent" )->rcopy(
+			"$main::{'INST_PREF'}$main::imscpConfig{'ROOT_DIR'}/gui/data/persistent"
 		);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
 	}
 
-	# Save software (older path ./gui/data/softwares) to new path (./gui/data/persistent/softwares)
+	# Move software to new location
 	if(-d "$main::imscpConfig{'ROOT_DIR'}/gui/data/softwares") {
-		$rs = execute(
-			"cp -fRT $main::imscpConfig{'ROOT_DIR'}/gui/data/softwares " .
-				"$destdir$main::imscpConfig{'ROOT_DIR'}/gui/data/persistent/softwares",
-			\$stdout,
-			\$stderr
+		iMSCP::Dir->new( dirname => "$main::imscpConfig{'ROOT_DIR'}/gui/data/softwares" )->rcopy(
+			"$main::{'INST_PREF'}$main::imscpConfig{'ROOT_DIR'}/gui/data/persistent/softwares"
 		);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
 	}
 
 	# Save plugins
 	if(-d $main::imscpConfig{'PLUGINS_DIR'}) {
-		$rs = execute(
-			"cp -fRT $main::imscpConfig{'PLUGINS_DIR'} $destdir$main::imscpConfig{'PLUGINS_DIR'}",
-			\$stdout,
-			\$stderr
+		iMSCP::Dir->new( dirname => "$main::imscpConfig{'PLUGINS_DIR'}" )->rcopy(
+			"$main::{'INST_PREF'}$main::imscpConfig{'PLUGINS_DIR'}"
 		);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
 	}
 
-	# Quick fix for #IP-1340 ( Removes old filemanager directory which is no longer used )
-	if(-d "$main::imscpConfig{'ROOT_DIR'}/gui/public/tools/filemanager") {
-		$rs = execute("rm -rf $main::imscpConfig{'ROOT_DIR'}/gui/public/tools/filemanager", \$stdout, \$stderr);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
-	}
+	# Quick fix for #IP-1340 (Removes old filemanager directory which is no longer used)
+	iMSCP::Dir->new( dirname => "$main::imscpConfig{'ROOT_DIR'}/gui/public/tools/filemanager" )->remove();
 
 	# Save tools
 	if(-d "$main::imscpConfig{'ROOT_DIR'}/gui/public/tools") {
-		$rs = execute(
-			"cp -fRT $main::imscpConfig{'ROOT_DIR'}/gui/public/tools " .
-				"$destdir$main::imscpConfig{'ROOT_DIR'}/gui/public/tools",
-			\$stdout,
-			\$stderr
+		iMSCP::Dir->new( dirname => "$main::imscpConfig{'ROOT_DIR'}/gui/public/tools" )->rcopy(
+			"$main::{'INST_PREF'}$main::imscpConfig{'ROOT_DIR'}/gui/public/tools"
 		);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
 	}
 
 	0;
@@ -932,21 +784,55 @@ sub _installFiles
 		$serviceMngr->stop('imscp_daemon');
 	}
 
-	# Process cleanup to avoid any security risks and conflicts
-	for(qw/daemon engine gui/) {
-		my ($stdout, $stderr);
-		my $rs = execute("rm -fR $main::imscpConfig{'ROOT_DIR'}/$_", \$stdout, \$stderr);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
+	# Process cleanup before copying newest files
+	iMSCP::Dir->new( dirname => "$main::imscpConfig{'ROOT_DIR'}/$_" )->remove() for qw/daemon engine gui/;
+
+	# Install new files
+	iMSCP::Dir->new( dirname => $main::{'INST_PREF'} )->rcopy('/', 1);
+}
+
+=item _systemCleanup
+
+ Cleanup system
+
+ Return int 0 on success, die on failure
+
+=cut
+
+sub _systemCleanup
+{
+
+	# TODO Look at git hystory for any garbage from older releases
+
+	for my $skelDir('alias', 'subdomain') {
+		iMSCP::Dir->new( dirname => "$main::imscpConfig{'CONF_DIR'}/apache/skel/$skelDir/phptmp" )->remove();
 	}
 
-	# Install new i-MSCP files on the files system
-	my ($stdout, $stderr);
-	my $rs = execute("rsync -OKa $main::{'INST_PREF'}/* /", \$stdout, \$stderr);
-	debug($stdout) if $stdout;
-	error($stderr) if $stderr && $rs;
-	$rs;
+	if(-f '/etc/logrotate.d/imscp') {
+		iMSCP::File->new( filename => '/etc/logrotate.d/imscp' )->delFile();
+	}
+
+	if(-f "$main::imscpConfig{'CONF_DIR'}/apache/logrotate.conf" ) {
+		iMSCP::File->new( filename => "$main::imscpConfig{'CONF_DIR'}/apache/logrotate.conf" )->delFile();
+	}
+
+	if(-f "$main::imscpConfig{'CONF_DIR'}/apache/working/logrotate.conf" ) {
+		iMSCP::File->new( filename => "$main::imscpConfig{'CONF_DIR'}/apache/working/logrotate.conf" )->delFile();
+	}
+
+	if(-f "$main::imscpConfig{'CONF_DIR'}/php-fpm/logrotate.conf" ) {
+		iMSCP::File->new( filename => "$main::imscpConfig{'CONF_DIR'}/php-fpm/logrotate.conf" )->delFile();
+	}
+
+	if(-f "$main::imscpConfig{'CONF_DIR'}/php-fpm/working/logrotate.conf" ) {
+		iMSCP::File->new( filename => "$main::imscpConfig{'CONF_DIR'}/php-fpm/working/logrotate.conf" )->delFile();
+	}
+
+	if(-f "$main::imscpConfig{'CONF_DIR'}/listeners.d/README") {
+		iMSCP::file->new( filename => "$main::imscpConfig{'CONF_DIR'}/listeners.d/README" )->delFile();
+	}
+
+	0;
 }
 
 =item _deleteBuildDir()
@@ -959,95 +845,68 @@ sub _installFiles
 
 sub _deleteBuildDir
 {
-	my ($stdout, $stderr);
-
-	if($main::{'INST_PREF'} && -d $main::{'INST_PREF'}) {
-		my $rs = execute("rm -fR $main::{'INST_PREF'}", \$stdout, \$stderr);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
-	}
-
-	0;
+	iMSCP::Dir->new( dirname => $main::{'INST_PREF'})->remove() if $main::{'INST_PREF'};
 }
 
-=item _processXmlFile($filepath)
+=item _processXmlFile($xmlFilePath)
 
- Process an install.xml file or distribution layout.xml file
+ Process all elements from the given XML file
 
- Param string $filepath xml file path
- Return int 0 on success, other on failure ; A fatal error is raised in case a variable cannot be exported
+ Param string $xmlFilePath Path of XML file to be processed
+ Return int 0 on success, die on failure
 
 =cut
 
 sub _processXmlFile
 {
-	my $file = $_[0];
+	my ($xmlFilePath, $distribution) = (shift, lc(iMSCP::LsbRelease->getInstance()->getId(1)));
+	my $workingDir = dirname($xmlFilePath);
 
-	unless(-f $file) {
-		error(sprintf("File %s doesn't exists", $file));
-		return 1;
+	my $xmlElements = eval {
+		require XML::Simple;
+		XML::Simple->new( ForceArray => 1, ForceContent => 1 )->XMLin( $xmlFilePath, VarAttr => 'export' );
+	} or die(
+		sprintf('Could not parse the %s file: %s', $xmlFilePath, $@)
+	);
+
+	# Process xml 'create_dir' elements
+	for my $xmlElement(@{$xmlElements->{'create_dir'}}) {
+		$xmlElement->{'content'} = _expandVars($xmlElement->{'content'}, $xmlElement->{'export'});
+		_createDirFromXmlElement($xmlElement);
 	}
 
-	eval "use XML::Simple; 1";
-	fatal('Unable to load the XML::Simple perl module') if $@;
-	my $xml = XML::Simple->new( ForceArray => 1, ForceContent => 1 );
-	my $data = eval { $xml->XMLin($file, VarAttr => 'export') };
-	if ($@) {
-		error($@);
-		return 1;
+	# Process xml 'copy_confdir' elements
+	for my $xmlElement(@{$xmlElements->{'copy_confdir'}}) {
+		$xmlElement->{'content'} = _expandVars($xmlElement->{'content'});
+		_copyConfdirFromXmlElement($workingDir, $xmlElement, $distribution);
 	}
 
-	# Process xml 'folders' nodes if any
-	for(@{$data->{'folders'}}) {
-		$_->{'content'} = _expandVars($_->{'content'});
-		$main::{$_->{'export'}} = $_->{'content'} if $_->{'export'};
-		my $rs = _processFolder($_);
-		return $rs if $rs;
+	# Process xml 'copy_conffile' elements
+	for my $xmlElement(@{$xmlElements->{'copy_conffile'}}) {
+		$xmlElement->{'content'} = _expandVars($xmlElement->{'content'});
+		_copyConffileFromXmlElement($workingDir, $xmlElement, $distribution);
 	}
 
-	# Process xml 'copy_config' nodes if any
-	for(@{$data->{'copy_config'}}) {
-		$_->{'content'} = _expandVars($_->{'content'});
-		my $rs = _copyConfig($_);
-		return $rs if $rs;
+	# Process xml 'copy_dir' elements
+	for my $xmlElement(@{$xmlElements->{'copy_dir'}}) {
+		$xmlElement->{'content'} = _expandVars($xmlElement->{'content'});
+		_copyDirFromXmlElement($workingDir, $xmlElement);
 	}
 
-	# Process xml 'copy' nodes if any
-	for(@{$data->{'copy'}}) {
-		$_->{'content'} = _expandVars($_->{'content'});
-		my $rs = _copy($_);
-		return $rs if $rs;
-	}
-
-	# Process xml 'create_file' nodes if any
-	for(@{$data->{'create_file'}}) {
-		$_->{'content'} = _expandVars($_->{'content'});
-		my $rs = _createFile($_);
-		return $rs if $rs;
-	}
-
-	# Process xml 'chmod_file' nodes if any
-	for(@{$data->{'chmod_file'}}) {
-		$_->{'content'} = _expandVars($_->{'content'});
-		my $rs = _chmodFile($_) if $_->{'content'};
-		return $rs if $rs;
-	}
-
-	# Process xml 'chmod_file' nodes if any
-	for(@{$data->{'chown_file'}}) {
-		$_->{'content'} = _expandVars($_->{'content'});
-		my $rs = _chownFile($_);
-		return $rs if $rs;
+	# Process xml 'copy_file' elements
+	for my $xmlElement(@{$xmlElements->{'copy_file'}}) {
+		$xmlElement->{'content'} = _expandVars($xmlElement->{'content'});
+		_copyFileFromXmlElement($workingDir, $xmlElement);
 	}
 
 	0;
 }
 
-=item _expandVars($string)
+=item _expandVars($string [, $exportIn ])
 
- Expand variables in the given string
+ Expands all variables in the given string and optionally, exports the resulting string in a new variable
 
+ Param string $exportIn OPTIONAL Name of variable into which the resulting string be exported
  Param string $string string containing variables to expands
  Return string
 
@@ -1055,198 +914,177 @@ sub _processXmlFile
 
 sub _expandVars
 {
-	my $string = $_[0] || '';
+	my ($string, $exportIn) = @_;
 
-	for($string =~ /\$\{([^\}]+)\}/g) {
-		if(exists $main::{$_}) {
-			$string =~ s/\$\{$_\}/$main::{$_}/g;
-		} elsif(exists $main::imscpConfig{$_}) {
-			$string =~ s/\$\{$_\}/$main::imscpConfig{$_}/g;
+	for my $var($string =~ /\$\{([^\}]+)\}/g) {
+		if(exists $main::{$var}) {
+			$string =~ s/\$\{$var\}/$main::{$var}/g;
+		} elsif(exists $main::imscpConfig{$var}) {
+			$string =~ s/\$\{$var\}/$main::imscpConfig{$var}/g;
 		} else {
-			fatal("Unable to expand variable \${$_}. Variable not found.");
+			fatal("Could not expand the \${$var} variable. Variable not found.");
 		}
 	}
+
+	$main::{$exportIn} = $string if $exportIn;
 
 	$string;
 }
 
-=item _processFolder(\%data)
+=item _createDirFromXmlElement(\%element)
 
- Process a folder node from an install.xml file
+ Create a directory as described by given XML element
 
- Process the xml folder node by creating the described directory.
-
- Return int 0 on success, other on failure
+ Param \%element XML element
+ Return int 0 on success, die on failure
 
 =cut
 
-sub _processFolder
+sub _createDirFromXmlElement
 {
-	my $data = $_[0];
+	my $element = shift;
 
-	my $dir = iMSCP::Dir->new( dirname => $data->{'content'} );
+	my $dir = iMSCP::Dir->new( dirname => $element->{'content'} );
 
 	# Needed to be sure to not keep any file from a previous build that has failed
-	if(defined $main::{'INST_PREF'} && $main::{'INST_PREF'} eq $data->{'content'}) {
-		my $rs = $dir->remove();
-		return $rs if $rs;
+	if(defined $main::{'INST_PREF'} && $main::{'INST_PREF'} eq $element->{'content'}) {
+		$dir->remove();
 	}
 
 	my $options = { };
-
-	$options->{'mode'} = oct($data->{'mode'}) if exists $data->{'mode'};
-	$options->{'user'} = _expandVars($data->{'owner'}) if exists $data->{'owner'};
-	$options->{'group'} = _expandVars($data->{'group'}) if exists $data->{'group'};
+	$options->{'user'} = _expandVars($element->{'owner'}) if $element->{'owner'};
+	$options->{'group'} = _expandVars($element->{'group'}) if $element->{'group'};
+	$options->{'mode'} = oct($element->{'mode'}) if $element->{'mode'};
 
 	$dir->make($options);
 }
 
-=item _copyConfig(\%data)
+=item _copyConfdirFromXmlElement($workingDir, $distribution, \%element)
 
- Process a copy_config node from an install.xml file
+ Copy a configuration directory as described by the given XML element
 
- Return int 0 on success, other on failure
+ Param string $workingDir Working directory
+ Param hash \%element XML element describing the configuration directory to be copied
+ Param string $distribution Distribution identifer
+ Return int 0 on success, die on failure
 
 =cut
 
-sub _copyConfig
+sub _copyConfdirFromXmlElement
 {
-	my $data = $_[0];
+	my ($workingDir, $element, $distribution) = @_;
 
-	my @parts = split '/', $data->{'content'};
-	my $name = pop(@parts);
-	my $path = join '/', @parts;
-	my $distribution = lc(iMSCP::LsbRelease->getInstance()->getId(1));
+	my $target = $element->{'content'};
+	my $targetBasename = basename($target);
+	my $source = "$workingDir/$targetBasename";
 
-	my $alternativeFolder = getcwd();
-	$alternativeFolder =~ s/$distribution/debian/;
-
-	my $source = -f $name ? $name : "$alternativeFolder/$name";
-
-	if(-d $source) {
-		my ($stdout, $stderr);
-		my $rs = execute("cp -fR $source $path", \$stdout, \$stderr);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
-	} else {
-		my ($stdout, $stderr);
-		my $rs = execute("cp -f $source $path", \$stdout, \$stderr);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
+	unless(-d $source) {
+		(my $defaultConfigFolder = $workingDir) =~ s/$distribution/debian/;
+		$source = "$defaultConfigFolder/$targetBasename";
 	}
 
-	if($data->{'user'} || $data->{'group'} || $data->{'mode'}) {
-		my $file = iMSCP::File->new( filename =>  (-e "$path/$name") ? "$path/$name" : $path );
-		my $rs = $file->mode(oct($data->{'mode'})) if $data->{'mode'};
-		return $rs if $rs;
+	iMSCP::Dir->new( dirname => $source )->rcopy($target);
+}
 
-		if($data->{'user'} || $data->{'group'}) {
-			$rs = $file->owner(
-				($data->{'user'}) ? _expandVars($data->{'user'}) : -1,
-				($data->{'group'}) ? _expandVars($data->{'group'}) : -1
+=item _copyConffileFromXmlElement($workingDir, \%element, $distribution)
+
+ Copy a configuration file as described by the given XML element
+
+ Param string $workingDir Working directory
+ Param hash \%element XML element describing the configuration directory to be copied
+ Param string $distribution Distribution identifer
+ Return int 0 on success, die on failure
+
+=cut
+
+sub _copyConffileFromXmlElement
+{
+	my ($workingDir, $element, $distribution) = @_;
+
+	my $target = $element->{'content'};
+	my $targetBasename = basename($target);
+	my $source = "$workingDir/$targetBasename";
+
+	unless(-f $source) {
+		(my $defaultConfigFolder = $workingDir) =~ s/$distribution/debian/;
+		$source = "$defaultConfigFolder/$targetBasename";
+	}
+
+	iMSCP::File->new( filename => $source )->copyFile($target, { preserve => 'no' });
+
+	if($element->{'user'} || $element->{'group'} || $element->{'mode'}) {
+		my $file = iMSCP::File->new( filename => $target );
+
+		if($element->{'mode'}) {
+			$file->mode(oct($element->{'mode'}));
+		}
+
+		if($element->{'user'} || $element->{'group'}) {
+			$file->owner(
+				$element->{'user'} ? _expandVars($element->{'user'}) : -1,
+				$element->{'group'} ? _expandVars($element->{'group'}) : -1
 			);
-			return $rs if $rs;
 		}
 	}
 
 	0;
 }
 
-=item _copy(\%data)
+=item _copyDirFromXmlElement($workingDir, \%element)
 
- Process the copy node from an install.xml file
+ Copy a directory as described by the given XML element
 
- Return int 0 on success, other on failure
+ Param string $workingDir Working directory
+ Param \%element XML element describing the configuration directory to be copied
+ Return int 0 on success, die on failure
 
 =cut
 
-sub _copy
+sub _copyDirFromXmlElement
 {
-	my $data = $_[0];
+	my ($workingDir, $element) = @_;
 
-	my @parts = split '/', $data->{'content'};
-	my $name = pop(@parts);
-	my $path = join '/', @parts;
+	my $target = $element->{'content'};
+	my $targetBasename = basename($target);
+	my $source = "$workingDir/$targetBasename";
 
-	my ($stdout, $stderr);
-	my $rs = execute("cp -fR $name $path", \$stdout, \$stderr);
-	debug($stdout) if $stdout;
-	error($stderr) if $stderr && $rs;
-	return $rs if $rs;
+	iMSCP::Dir->new( dirname => $source )->rcopy($target);
+}
 
-	if($data->{'user'} || $data->{'group'} || $data->{'mode'}) {
-		my $file = iMSCP::File->new( filename => (-e "$path/$name") ? "$path/$name" : $path );
-		$rs = $file->mode(oct($data->{'mode'})) if $data->{'mode'};
-		return $rs if $rs;
+=item _copyFileFromXmlElement($workingDir, \%element)
 
-		if($data->{'user'} || $data->{'group'}) {
-			$rs = $file->owner(
-				$data->{'user'} ? _expandVars($data->{'user'}) : -1,
-				$data->{'group'} ? _expandVars($data->{'group'}) : -1
-			);
-			return $rs if $rs;
+ Copy a file as described by the given XML element
+
+ Param string $workingDir Working directory
+ Param hash \%element XML element describing the configuration directory to be copied
+ Param string $distribution Distribution identifer
+ Return int 0 on success, die on failure
+
+=cut
+
+sub _copyFileFromXmlElement
+{
+	my ($workingDir, $element, $distribution) = @_;
+
+	my $target = $element->{'content'};
+	my $targetBasename = basename($target);
+	my $source = "$workingDir/$targetBasename";
+
+	iMSCP::File->new( filename => $source )->copyFile($target, { preserve => 'no' });
+
+	if($element->{'user'} || $element->{'group'} || $element->{'mode'}) {
+		my $file = iMSCP::File->new( filename => $target );
+
+		if($file->{'mode'}) {
+			$file->mode(oct($element->{'mode'}));
 		}
-	}
 
-	0;
-}
-
-=item _createFile(\%$data)
-
- Create a file
-
- Return int 0 on success, other on failure
-
-=cut
-
-sub _createFile
-{
-	iMSCP::File->new( filename => $_[0]->{'content'} )->save();
-}
-
-=item _chownFile()
-
- Change file/directory owner and/or group recursively
-
- Return int 0 on success, other on failure
-
-=cut
-
-sub _chownFile
-{
-	my $data = $_[0];
-
-	if($data->{'owner'} && $data->{'group'}) {
-		my ($stdout, $stderr);
-		my $rs = execute("chown $data->{'owner'}:$data->{'group'} $data->{'content'}", \$stdout, \$stderr);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
-	}
-
-	0;
-}
-
-=item _chmodFile(\%data)
-
- Process chmod_file from an install.xml file
-
- Return int 0 on success, other on failure
-
-=cut
-
-sub _chmodFile
-{
-	my $data = $_[0];
-
-	if(exists $data->{'mode'}) {
-		my ($stdout, $stderr);
-		my $rs = execute("chmod $data->{'mode'} $data->{'content'}", \$stdout, \$stderr);
-		debug($stdout) if $stdout;
-		error($stderr) if $stderr && $rs;
-		return $rs if $rs;
+		if($element->{'user'} || $element->{'group'}) {
+			$file->owner(
+				$element->{'user'} ? _expandVars($element->{'user'}) : -1,
+				$element->{'group'} ? _expandVars($element->{'group'}) : -1
+			);
+		}
 	}
 
 	0;
@@ -1281,9 +1119,8 @@ sub _getDistroAdapter
 
 =back
 
-=head1 AUTHORS
+=head1 AUTHOR
 
- Daniel Andreca <sci2tech@gmail.com>
  Laurent Declercq <l.declercq@nuxwin.com>
 
 =cut
