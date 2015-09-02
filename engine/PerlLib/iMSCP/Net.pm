@@ -400,7 +400,12 @@ sub _extractDevices
 	));
 
 	my $devices = { };
-	$devices->{$1}->{'flags'} = $2 while($stdout =~ /^[^\s]+\s+(.*?):\s+<(.*)>/gm);
+	# Note: The (?:\@[^\s]+)? sub-pattern matches suffixes of interface names (@xxx) as they are displayed in the LXC
+	# containers when using macvlan interfaces (and maybe some other interface types).
+	# ATM, we discard those suffixes to be consistent with the frontEnd which use ifconfig to get interface names
+	# FIXME: Does we should show full interface names in control panel instead?
+	my $regexp = qr/[^\s]+\s+(.*?)(?:@[^\s]+)?:\s+<(.*)>/;
+	$devices->{$1}->{'flags'} = $2 while($stdout =~ /^$regexp/gmo);
 	$devices;
 }
 
@@ -423,7 +428,7 @@ sub _extractAddresses
 
 	my $regexp = qr/[\d]+\:\s+([^\s:]+)\s+([^\s]+).*?([^\s]+)\/([\d]+).*?(\1(?:\:[^\s]+)?|)/;
 	my $addresses = { };
-	while($stdout =~ /^$regexp/gmo) {
+	while($stdout =~ /^$regexp$/gmo) {
 		$addresses->{$self->normalizeAddr($3)} = {
 			'device' => $1,
 			'version' => ($2 eq 'inet') ? 'ipv4' : 'ipv6',
