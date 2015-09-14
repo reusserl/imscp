@@ -32,14 +32,14 @@ use DOMXPath;
 class Document
 {
 	/**
-	 * @var DOMDocument
+	 * @var DOMDocument Associated DOMDocument object
 	 */
-	protected $document;
+	protected $DOMdocument;
 
 	/**
-	 * @var DOMXPath
+	 * @var DOMXPath Associated DOMXPath object
 	 */
-	protected $xpath;
+	protected $DOMXPath;
 
 	/**
 	 * Constructor
@@ -49,8 +49,28 @@ class Document
 	 */
 	public function __construct($path, $type = 'xml')
 	{
-		$this->document = new DOMDocument();
+		$this->DOMdocument = new DOMDocument();
 		$this->load($path, $type);
+	}
+
+	/**
+	 * Get underlying DOMDocument object associated with thid document
+	 *
+	 * @return DOMDocument
+	 */
+	public function getDOMDocument()
+	{
+		return $this->DOMdocument;
+	}
+
+	/**
+	 * Get underlying DOMXPath object associated with thid document
+	 *
+	 * @return DOMXPath
+	 */
+	public function getDOMXPath()
+	{
+		return $this->DOMXPath;
 	}
 
 	/**
@@ -63,7 +83,7 @@ class Document
 	 */
 	public function getValue($XPathExpression, DOMNode $contextNode = null, $asString = false)
 	{
-		$ret = $this->xpath->query($XPathExpression, $contextNode);
+		$ret = $this->DOMXPath->query($XPathExpression, $contextNode);
 
 		if ($asString) {
 			$ret = ($ret->length) ? $ret->item(0)->nodeValue : '';
@@ -81,11 +101,11 @@ class Document
 	 */
 	protected function load($path, $type = 'xml')
 	{
-		$doc = $this->document;
+		$doc = $this->DOMdocument;
 		$ret = ($type == 'xml') ? $doc->load($path, LIBXML_PARSEHUGE) : $doc->loadHTMLFile($path);
 
 		if (!$ret) {
-			throw new \RuntimeException(sprintf('Could not load the %s APS document', $path));
+			throw new \RuntimeException(sprintf('Could not load the %s document', $path));
 		}
 
 		$xpath = new DOMXPath($doc);
@@ -104,6 +124,6 @@ class Document
 			}
 		}
 
-		$this->xpath = $xpath;
+		$this->DOMXPath = $xpath;
 	}
 }
