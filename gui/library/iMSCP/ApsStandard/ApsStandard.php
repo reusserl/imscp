@@ -32,7 +32,7 @@ use DOMNodeList;
 abstract class ApsStandardAbstract
 {
 	/**
-	 * @var array List of supported APS versionns
+	 * @var array List of supported APS format specifications
 	 */
 	protected $apsVersions = array(
 		'1',
