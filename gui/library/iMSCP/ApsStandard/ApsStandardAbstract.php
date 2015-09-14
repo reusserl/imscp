@@ -20,11 +20,6 @@
 
 namespace iMSCP\ApsStandard;
 
-use DOMNode;
-use DOMDocument;
-use DOMXPath;
-use DOMNodeList;
-
 /**
  * Class ApsStandard
  * @package iMSCP\ApsStandard
@@ -34,7 +29,11 @@ abstract class ApsStandardAbstract
 	/**
 	 * @var array List of supported APS format specifications
 	 */
-	protected $apsVersions = array('1', '1.1', '1.2');
+	protected $apsVersions = array(
+		'1',
+		'1.1',
+		'1.2'
+	);
 
 	/**
 	 * @var string APS catalog URL
@@ -42,7 +41,7 @@ abstract class ApsStandardAbstract
 	protected $apsCatalogURL = 'http://apscatalog.com';
 
 	/**
-	 * @var string APS packages metadatas directory
+	 * @var string APS package metadatas directory
 	 */
 	protected $packageMetadatasDir;
 
@@ -80,60 +79,5 @@ abstract class ApsStandardAbstract
 	public function setAPScatalogURL($url)
 	{
 		$this->apsCatalogURL = (string)$url;
-	}
-
-	/**
-	 * Load the given HTML/XML document
-	 *
-	 * @param string $path HTML/XML document path
-	 * @param string $type OPTIONAL Document type (xml|html), default to 'xml'
-	 * @return DOMDocument
-	 */
-	protected function loadAPSdocument($path, $type = 'xml')
-	{
-		$doc = new DOMDocument();
-		$ret = ($type == 'xml') ? $doc->load($path, LIBXML_PARSEHUGE) : $doc->loadHTMLFile($path);
-
-		if (!$ret) {
-			throw new \RuntimeException(sprintf('Could not load the %s APS document', $path));
-		}
-
-		return $doc;
-	}
-
-	/**
-	 * Get an APS document value by executing the givenXPath expression on the given APS document
-	 *
-	 * @param DOMDocument $doc HTML or XML document
-	 * @param string $XPathExpression The XPath expression to execute
-	 * @param DOMNode $contextNode OPTIONAL Context node
-	 * @param bool $asString OPTIONAL Weither value must be returned as string (node value of first item)
-	 * @return DOMNodeList|string
-	 */
-	public function getAPSvalue(DOMDocument $doc, $XPathExpression, DOMNode $contextNode = null, $asString = false)
-	{
-		$xPath = new DOMXPath($doc);
-
-		foreach ($xPath->query('namespace::*') as $node) {
-			$prefix = $doc->lookupPrefix($node->nodeValue);
-
-			if ($prefix == '') {
-				$prefix = 'atom'; // Assume atom as default prefix
-			}
-
-			if (!$xPath->registerNamespace($prefix, $node->nodeValue)) {
-				throw new \RuntimeException(sprintf(
-					"Could not register '%s' XPath namespace with '%s' as prefix", $prefix, $node->nodeValue
-				));
-			}
-		}
-
-		$ret = $xPath->query($XPathExpression, $contextNode);
-
-		if ($asString) {
-			$ret = ($ret->length) ? $ret->item(0)->nodeValue : '';
-		}
-
-		return $ret;
 	}
 }
