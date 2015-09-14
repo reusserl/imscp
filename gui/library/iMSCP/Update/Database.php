@@ -46,7 +46,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	/**
 	 * @var int Last database update revision
 	 */
-	protected $lastUpdate = 222;
+	protected $lastUpdate = 223;
 
 	/**
 	 * Singleton - Make new unavailable
@@ -3126,5 +3126,28 @@ class iMSCP_Update_Database extends iMSCP_Update
 				"VARCHAR(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'off' AFTER hsts_max_age"
 			)
 		);
+	}
+
+	/**
+	 * Create aps_packages table (APS Standard)
+	 *
+	 * @return string SQL statements to be executed
+	 */
+	protected function r223()
+	{
+		return '
+			CREATE TABLE IF NOT EXISTS `aps_packages` (
+				`package_id` int(11) unsigned NOT NULL auto_increment,
+				`package_name` varchar(255) collate utf8_unicode_ci NOT NULL,
+				`package_description` text collate utf8_unicode_ci NOT NULL,
+				`package_version` varchar(255) collate utf8_unicode_ci NOT NULL,
+				`package_release` varchar(255) collate utf8_unicode_ci NOT NULL,
+				`package_category` varchar(255) collate utf8_unicode_ci NOT NULL,
+				`package_path` varchar(255) collate utf8_unicode_ci NOT NULL,
+				`package_url` varchar(255) collate utf8_unicode_ci NOT NULL,
+				`package_status` varchar(255) collate utf8_unicode_ci NOT NULL,
+				PRIMARY KEY  (`package_id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+		';
 	}
 }

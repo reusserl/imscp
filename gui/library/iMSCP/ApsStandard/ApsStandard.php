@@ -34,11 +34,7 @@ abstract class ApsStandardAbstract
 	/**
 	 * @var array List of supported APS format specifications
 	 */
-	protected $apsVersions = array(
-		'1',
-		'1.1',
-		'1.2'
-	);
+	protected $apsVersions = array('1', '1.1', '1.2');
 
 	/**
 	 * @var string APS catalog URL
@@ -60,6 +56,7 @@ abstract class ApsStandardAbstract
 	 */
 	public function __construct()
 	{
+		// FIXME: make this configurable
 		$this->packagesDir = GUI_ROOT_DIR . '/data/persistent/aps/packages';
 		$this->packageMetadatasDir = GUI_ROOT_DIR . '/data/persistent/aps/package_metadatas';
 	}
@@ -88,7 +85,6 @@ abstract class ApsStandardAbstract
 	/**
 	 * Load the given HTML/XML document
 	 *
-	 * @throw \RuntimeException
 	 * @param string $path HTML/XML document path
 	 * @param string $type OPTIONAL Document type (xml|html), default to 'xml'
 	 * @return DOMDocument
@@ -109,12 +105,12 @@ abstract class ApsStandardAbstract
 	 * Get an APS document value by executing the givenXPath expression on the given APS document
 	 *
 	 * @param DOMDocument $doc HTML or XML document
-	 * @param string $xPathExpression The XPath expression to execute
+	 * @param string $XPathExpression The XPath expression to execute
 	 * @param DOMNode $contextNode OPTIONAL Context node
-	 * @param bool|false $asString Weither value must be returned as string (node value of first item)
+	 * @param bool $asString OPTIONAL Weither value must be returned as string (node value of first item)
 	 * @return DOMNodeList|string
 	 */
-	public function getAPSvalue(DOMDocument $doc, $xPathExpression, DOMNode $contextNode = null, $asString = false)
+	public function getAPSvalue(DOMDocument $doc, $XPathExpression, DOMNode $contextNode = null, $asString = false)
 	{
 		$xPath = new DOMXPath($doc);
 
@@ -122,7 +118,7 @@ abstract class ApsStandardAbstract
 			$prefix = $doc->lookupPrefix($node->nodeValue);
 
 			if ($prefix == '') {
-				$prefix = 'atom'; // Assume atom for default namespace
+				$prefix = 'atom'; // Assume atom as default prefix
 			}
 
 			if (!$xPath->registerNamespace($prefix, $node->nodeValue)) {
@@ -132,7 +128,7 @@ abstract class ApsStandardAbstract
 			}
 		}
 
-		$ret = $xPath->query($xPathExpression, $contextNode);
+		$ret = $xPath->query($XPathExpression, $contextNode);
 
 		if ($asString) {
 			$ret = ($ret->length) ? $ret->item(0)->nodeValue : '';
