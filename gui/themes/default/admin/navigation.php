@@ -196,6 +196,23 @@ return array(
 			)
 		)
 	),
+	'aps_standard' => array(
+		'label' => tr('APS Standard'),
+		'uri' => '/admin/aps_packages.php',
+		'class' => 'packages',
+		'pages' => array(
+			'packages' => array(
+				'label' => tr('Packages'),
+				'uri' => '/admin/aps_packages.php',
+				'title_class' => 'packages'
+			),
+			'package_instances' => array(
+				'label' => tr('Package instances'),
+				'uri' => '/admin/aps_package_instances.php',
+				'title_class' => 'packages'
+			)
+		)
+	),
 	'statistics' => array(
 		'label' => tr('Statistics'),
 		'uri' => '/admin/server_statistic.php',

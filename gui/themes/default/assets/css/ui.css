@@ -286,6 +286,14 @@ a {
     background-image: url(../images/menu/profile_a.png);
 }
 
+.main_menu .packages {
+    background-image: url(../images/menu/packages.png);
+}
+
+.main_menu .packages:hover, .main_menu .active .packages {
+    background-image: url(../images/menu/packages_a.png);
+}
+
 /**
  * Location
  */
@@ -370,6 +378,10 @@ a {
 
 .location-area .webtools {
     background-image: url(../images/menu/webtools.png);
+}
+
+.location-area .packages {
+    background-image: url(../images/menu/packages.png);
 }
 
 /* Breadcrumbs */
@@ -637,6 +649,10 @@ h2 span, h3 span {
 
 .body .plugin {
     background-image: url(../images/content/table_icon_plugin.png);
+}
+
+.body .packages {
+    background-image: url(../images/content/table_icon_packages.png);
 }
 
 /* Paragraph */
