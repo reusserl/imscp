@@ -32,7 +32,8 @@ abstract class ApsStandardAbstract
 	protected $apsVersions = array(
 		'1',
 		'1.1',
-		'1.2'
+		'1.2',
+		'2.0'
 	);
 
 	/**

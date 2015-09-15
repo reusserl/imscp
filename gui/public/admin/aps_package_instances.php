@@ -57,14 +57,14 @@ $tpl->define_dynamic(array(
 
 $tpl->assign(array(
 	'TR_PAGE_TITLE' => tohtml(tr('Admin / APS Standard / Package Instances'), 'htmlAttr'),
-	'PACKAGE_LIST' => tr('Package list'),
-	'TR_PACKAGE_NAME' => tr('Package name'),
-	'TR_PACKAGE_STATUS' => tr('Package status'),
-	'TR_LOADING_IN_PROGRSS' => tr('Loading in progress...'),
-	'TR_ID' => tr('Id'),
-	'TR_INSTALL_LOCATION' => tr('Install location'),
-	'TR_STATUS' => tr('Status'),
-	'TR_ACTIONS' => tr('Actions')
+	'PACKAGE_LIST' => tohtml(tr('Package list')),
+	'TR_PACKAGE_NAME' => tohtml(tr('Package name')),
+	'TR_PACKAGE_STATUS' => tohtml(tr('Package status')),
+	'TR_LOADING_IN_PROGRSS' => tohtml(tr('Loading in progress...')),
+	'TR_ID' => tohtml(tr('Id')),
+	'TR_INSTALL_LOCATION' => tohtml(tr('Install location')),
+	'TR_STATUS' => tohtml(tr('Status')),
+	'TR_ACTIONS' => tohtml(tr('Actions'))
 ));
 
 generateNavigation($tpl);

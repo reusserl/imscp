@@ -697,6 +697,7 @@ CREATE TABLE IF NOT EXISTS `aps_packages` (
   `package_description` text collate utf8_unicode_ci NOT NULL,
   `package_version` varchar(255) collate utf8_unicode_ci NOT NULL,
   `package_release` varchar(255) collate utf8_unicode_ci NOT NULL,
+  `package_aps_version` varchar(255) collate utf8_unicode_ci NOT NULL,
   `package_category` varchar(255) collate utf8_unicode_ci NOT NULL,
   `package_path` varchar(255) collate utf8_unicode_ci NOT NULL,
   `package_url` varchar(255) collate utf8_unicode_ci NOT NULL,
