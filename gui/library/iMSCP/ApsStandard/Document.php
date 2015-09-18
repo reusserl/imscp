@@ -78,18 +78,13 @@ class Document
 	 *
 	 * @param string $XPathExpression The XPath expression to execute
 	 * @param DOMNode $contextNode OPTIONAL Context node
-	 * @param bool $asString OPTIONAL Weither value must be returned as string (node value of first item)
+	 * @param bool $asString OPTIONAL Weither value must be returned as string (default: true)
 	 * @return DOMNodeList|string
 	 */
-	public function getValue($XPathExpression, DOMNode $contextNode = null, $asString = false)
+	public function getValue($XPathExpression, DOMNode $contextNode = null, $asString = true)
 	{
 		$ret = $this->DOMXPath->query($XPathExpression, $contextNode);
-
-		if ($asString) {
-			$ret = ($ret->length) ? $ret->item(0)->nodeValue : '';
-		}
-
-		return $ret;
+		return ($asString) ? (($ret->length) ? $ret->item(0)->nodeValue : '') : $ret;
 	}
 
 	/**

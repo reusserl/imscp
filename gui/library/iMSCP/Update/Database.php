@@ -3139,13 +3139,17 @@ class iMSCP_Update_Database extends iMSCP_Update
 			CREATE TABLE IF NOT EXISTS `aps_packages` (
 				`package_id` int(11) unsigned NOT NULL auto_increment,
 				`package_name` varchar(255) collate utf8_unicode_ci NOT NULL,
-				`package_description` text collate utf8_unicode_ci NOT NULL,
+				`package_summary` text collate utf8_unicode_ci NOT NULL,
 				`package_version` varchar(255) collate utf8_unicode_ci NOT NULL,
 				`package_release` varchar(255) collate utf8_unicode_ci NOT NULL,
 				`package_aps_version` varchar(255) collate utf8_unicode_ci NOT NULL,
 				`package_category` varchar(255) collate utf8_unicode_ci NOT NULL,
+				`package_vendor` varchar(255) collate utf8_unicode_ci NOT NULL,
+				`package_vendor_uri` varchar(255) collate utf8_unicode_ci NOT NULL,
 				`package_path` varchar(255) collate utf8_unicode_ci NOT NULL,
 				`package_url` varchar(255) collate utf8_unicode_ci NOT NULL,
+				`package_icon_url` varchar(255) collate utf8_unicode_ci NOT NULL,
+				`package_cert` varchar(255) collate utf8_unicode_ci NOT NULL,
 				`package_status` varchar(255) collate utf8_unicode_ci NOT NULL,
 				PRIMARY KEY  (`package_id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;

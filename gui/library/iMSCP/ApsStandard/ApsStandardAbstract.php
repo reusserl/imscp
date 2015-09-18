@@ -58,7 +58,7 @@ abstract class ApsStandardAbstract
 	{
 		// FIXME: make this configurable
 		$this->packagesDir = GUI_ROOT_DIR . '/data/persistent/aps/packages';
-		$this->packageMetadatasDir = GUI_ROOT_DIR . '/data/persistent/aps/package_metadatas';
+		$this->packageMetadatasDir = GUI_ROOT_DIR . '/data/persistent/aps/meta_packages';
 	}
 
 	/**
