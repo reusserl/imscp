@@ -11,14 +11,14 @@
 <script>
 	imscp_i18n = {JS_TRANSLATIONS};
 </script>
-<script src="{THEME_ASSETS_PATH}/js/jquery/jquery.js?v={THEME_ASSETS_VERSION}"></script>
-<script src="{THEME_ASSETS_PATH}/js/jquery/jquery-ui.js?v={THEME_ASSETS_VERSION}"></script>
-<script src="{THEME_ASSETS_PATH}/js/jquery/plugins/dataTables.js?v={THEME_ASSETS_VERSION}"></script>
-<script src="{THEME_ASSETS_PATH}/js/jquery/plugins/dataTables_naturalSorting.js?v={THEME_ASSETS_VERSION}"></script>
-<script src="{THEME_ASSETS_PATH}/js/jquery/plugins/pGenerator.js?v={THEME_ASSETS_VERSION}"></script>
+<script src="{THEME_ASSETS_PATH}/js/vendor/jquery.min.js?v={THEME_ASSETS_VERSION}"></script>
+<script src="{THEME_ASSETS_PATH}/js/vendor/jquery-ui.min.js?v={THEME_ASSETS_VERSION}"></script>
+<script src="{THEME_ASSETS_PATH}/js/vendor/datatables.min.js?v={THEME_ASSETS_VERSION}"></script>
+<script src="{THEME_ASSETS_PATH}/js/vendor/datatables_natural.min.js?v={THEME_ASSETS_VERSION}"></script>
+<script src="{THEME_ASSETS_PATH}/js/vendor/pgenerator.min.js?v={THEME_ASSETS_VERSION}"></script>
 <script src="{THEME_ASSETS_PATH}/js/imscp.js?v={THEME_ASSETS_VERSION}"></script>
 </head>
-<body>
+<body class="{THEME_COLOR}">
 <div id="wrapper">
 	<div class="header">
 		<!-- INCLUDE "../partials/navigation/main_menu.tpl" -->
@@ -46,9 +46,9 @@
 	</div>
 </div>
 <div class="footer">
- i-MSCP {VERSION}<br>
- Build: {BUILDDATE}<br>
- Codename: {CODENAME}
+ i-MSCP {iMSCP_VERSION}<br>
+ Build: {iMSCP_BUILDDATE}<br>
+ Codename: {iMSCP_CODENAME}
 </div>
 </body>
 </html>

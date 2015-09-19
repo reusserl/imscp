@@ -68,7 +68,7 @@
 
     // Initialize updateTable event listener
     var initTables = function () {
-        $(".body").on("updateTable", "tbody", function () {
+        $("table").on("updateTable", function () {
             $(this).find("tr:visible:odd").css('background', "#ededed");
             $(this).find("tr:visible:even").css("background", "#ffffff");
         });

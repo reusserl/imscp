@@ -82,6 +82,15 @@ TESTS
 	  - iMSCP::Servers
 	  - iMSCP::SetRights libraries
 
+VENDOR
+	Added: Angular library v1.4.6 (JS)
+	Added: Angular resource module v1.4.6 (JS)
+	Added: Angular loader module v1.4.6 (JS)
+	Added: Angular ng-table module v1.0.0-beta.5 (JS)
+	Updated: DataTables library to v1.10.9 (JS)
+	Updated: jQuery library to v1.11.3 (JS)
+	Updated: jQuery UI library to v1.11.4 (JS)
+
 YOUTRACK
 	Fixed: #IP-0826 Any password should be encrypted
 	Fixed: #IP-1367 Support for the VsFTPd server

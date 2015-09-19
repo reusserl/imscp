@@ -405,9 +405,9 @@ function generateNavigation($tpl)
 	// Static variables
 	$tpl->assign(array(
 		'TR_MENU_LOGOUT' => tr('Logout'),
-		'VERSION' => (isset($cfg['Version']) && $cfg['Version'] != '') ? $cfg['Version'] : tohtml(tr('Unknown')),
-		'BUILDDATE' => (isset($cfg['BuildDate']) && $cfg['BuildDate'] != '') ? $cfg['BuildDate'] : tohtml(tr('Unavailable')),
-		'CODENAME' => (isset($cfg['CodeName']) && $cfg['CodeName'] != '') ? $cfg['CodeName'] : tohtml(tr('Unknown'))
+		'iMSCP_VERSION' => (isset($cfg['Version']) && $cfg['Version'] != '') ? $cfg['Version'] : tohtml(tr('Unknown')),
+		'iMSCP_BUILDDATE' => (isset($cfg['BuildDate']) && $cfg['BuildDate'] != '') ? $cfg['BuildDate'] : tohtml(tr('Unavailable')),
+		'iMSCP_CODENAME' => (isset($cfg['CodeName']) && $cfg['CodeName'] != '') ? $cfg['CodeName'] : tohtml(tr('Unknown'))
 	));
 
 	iMSCP_Events_Aggregator::getInstance()->dispatch(

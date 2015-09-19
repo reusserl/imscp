@@ -13,8 +13,8 @@
 <script>
 	imscp_i18n = {JS_TRANSLATIONS};
 </script>
-<script src="{THEME_ASSETS_PATH}/js/jquery/jquery.js?v={THEME_ASSETS_VERSION}"></script>
-<script src="{THEME_ASSETS_PATH}/js/jquery/jquery-ui.js?v={THEME_ASSETS_VERSION}"></script>
+<script src="{THEME_ASSETS_PATH}/js/vendor/jquery.min.js?v={THEME_ASSETS_VERSION}"></script>
+<script src="{THEME_ASSETS_PATH}/js/vendor/jquery-ui.min.js?v={THEME_ASSETS_VERSION}"></script>
 <script src="{THEME_ASSETS_PATH}/js/imscp.js?v={THEME_ASSETS_VERSION}"></script>
 </head>
 <body class="{THEME_COLOR} simple">
