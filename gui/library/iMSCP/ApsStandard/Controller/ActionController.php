@@ -35,6 +35,9 @@ abstract class ActionController extends ApsStandardAbstract
 	 */
 	protected $identity;
 
+	/**
+	 * @var EventManager
+	 */
 	protected $eventManager;
 
 	/**
