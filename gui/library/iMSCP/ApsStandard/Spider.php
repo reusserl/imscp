@@ -44,13 +44,13 @@ class Spider extends ApsStandardAbstract
 		ignore_user_abort(1); // Do not abort on a client disconnection
 		set_time_limit(0); // Explore task can take up several minutes to finish
 
-		$stmt = exec_query('SELECT package_name, package_version, package_aps_version, package_release FROM aps_packages');
+		$stmt = exec_query('SELECT `name`, `version`, `aps_version`, `release` FROM aps_packages');
 
 		if ($stmt->rowCount()) {
 			while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
-				$this->packages[$row['package_aps_version']][$row['package_name']] = array(
-					'package_version' => $row['package_version'],
-					'package_release' => $row['package_release']
+				$this->packages[$row['aps_version']][$row['name']] = array(
+					'version' => $row['version'],
+					'release' => $row['release']
 				);
 			}
 		}
@@ -124,8 +124,8 @@ class Spider extends ApsStandardAbstract
 				? array_key_exists($packageName, $this->packages[$packageApsVersion]) : false;
 			$isOutDatedPackage = ($isKnowPackage)
 				? version_compare(
-					$this->packages[$packageApsVersion][$packageName]['package_version'] . '-' .
-					$this->packages[$packageApsVersion][$packageName]['package_release'],
+					$this->packages[$packageApsVersion][$packageName]['version'] . '-' .
+					$this->packages[$packageApsVersion][$packageName]['release'],
 					$packageVersion . '-' . $packageRelease,
 					'<'
 				)
@@ -139,7 +139,7 @@ class Spider extends ApsStandardAbstract
 						@unlink($packageMetaFile);
 					}
 
-					exec_query("DELETE FROM aps_packages WHERE package_name = ?", $packageName);
+					exec_query('DELETE FROM `aps_packages` WHERE `name` = ?', $packageName);
 				}
 
 				$this->packages[$packageApsVersion][$packageName] = array(
@@ -155,12 +155,7 @@ class Spider extends ApsStandardAbstract
 				$packageUrl = $repoFeedDoc->getValue("atom:link[@a:type='aps']/@href", $package);
 				$packagesIconUrl = $repoFeedDoc->getValue("atom:link[@a:type='icon']/@href", $package);
 				$packageMetaUrl = $repoFeedDoc->getValue("atom:link[@a:type='meta']/@href", $package);
-
-				if ($repoFeedDoc->getValue("atom:link[@a:type='certificate']/@href", $package) !== '') {
-					$packageCert = $repoFeedDoc->getValue("atom:link[@a:type='certificate']/a:level", $package);
-				} else {
-					$packageCert = 'none';
-				}
+				$packageCert = $repoFeedDoc->getValue("atom:link[@a:type='certificate']/a:level", $package);
 
 				$metaFiles[] = array(
 					'src' => $packageMetaUrl,
@@ -170,9 +165,8 @@ class Spider extends ApsStandardAbstract
 				exec_query(
 					'
 						INSERT INTO aps_packages (
-							package_name, package_summary, package_version, package_aps_version, package_release,
-							package_category, package_vendor, package_vendor_uri, package_path, package_url,
-							package_icon_url, package_cert, package_status
+							`name`, `summary`, `version`, `aps_version`, `release`, `category`, `vendor`, `vendor_uri`,
+							`path, url`, `icon_url`, `cert`, `status`
 						) VALUES(
 							?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 						)
@@ -190,9 +184,10 @@ class Spider extends ApsStandardAbstract
 	}
 
 	/**
-	 * Download files
+	 * Download META files
 	 *
 	 * @param array $metaFiles
+	 * @return void
 	 */
 	protected function downloadMetafiles($metaFiles)
 	{

@@ -25,7 +25,7 @@ use iMSCP_Authentication as Authentication;
 use iMSCP_Events_Aggregator as EventManager;
 
 /**
- * Class ControllerAbstract
+ * Class ActionController
  * @package iMSCP\ApsStandard\Controller
  */
 abstract class ActionController extends ApsStandardAbstract
@@ -57,18 +57,27 @@ abstract class ActionController extends ApsStandardAbstract
 	 * Send Json response
 	 *
 	 * @param int $statusCode HTTP status code
-	 * @param array $data JSON data
+	 * @param array|string $data JSON data
 	 * @return void
 	 */
-	public function sendJsonResponse($statusCode = 200, array $data = array())
+	public function sendJsonResponse($statusCode = 200, $data = '')
 	{
 		header('Cache-Control: no-cache, must-revalidate');
 		header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
 		header('Content-type: application/json');
 
 		switch ($statusCode) {
+			case 200:
+				header('Status: 202 OK');
+				break;
+			case 201:
+				header('Status: 202 Created');
+				break;
 			case 202:
 				header('Status: 202 Accepted');
+				break;
+			case 204:
+				header('Status: 202 No Content');
 				break;
 			case 400:
 				header('Status: 400 Bad Request');
