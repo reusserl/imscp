@@ -21,6 +21,8 @@
 namespace iMSCP\ApsStandard\Entity;
 
 use Symfony\Component\Validator\Mapping\ClassMetadata;
+use Symfony\Component\Validator\Constraints\Choice;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 /**
  * Class Package
@@ -116,7 +118,11 @@ class Package implements EntityHydrator, EntityValidation
 	 */
 	public static function loadValidationMetadata(ClassMetadata $metadata)
 	{
-		// TODO
+		// Right now, only the status filed is mutable. Thus, we process validation only for that field
+		$metadata->addPropertyConstraints('status', array(
+			new NotBlank(),
+			new Choice(array('choices' => array('ok', 'disabled')))
+		));
 	}
 
 	/**
@@ -130,7 +136,7 @@ class Package implements EntityHydrator, EntityValidation
 		$reflect = new \ReflectionClass($this);
 
 		foreach ($data as $property => $value) {
-			if ($reflect->hasProperty('name')) {
+			if ($reflect->hasProperty($property)) {
 				$this->{$property} = $value;
 			}
 		}
