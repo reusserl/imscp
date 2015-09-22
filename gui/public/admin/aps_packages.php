@@ -20,56 +20,62 @@
 
 namespace iMSCP\ApsStandard;
 
+use iMSCP\ApsStandard\Controller\Package as PackageController;
+use iMSCP\ApsStandard\Entity\Package as PackageEntity;
 use iMSCP_Events_Aggregator as EventManager;
 use iMSCP_Events as Events;
 use iMSCP_pTemplate as TemplateEngine;
 
-/***********************************************************************************************************************
- * Functions
- */
-
-/**
- * Generate page
- *
- * @param TemplateEngine $tpl
- */
-function generatePage($tpl)
-{
-
-}
-
-/***********************************************************************************************************************
- * Main
- */
-
+// Include core library
 require 'imscp-lib.php';
 
-EventManager::getInstance()->dispatch(Events::onAdminScriptStart);
+$eventManager = EventManager::getInstance();
+$eventManager->dispatch(Events::onAdminScriptStart);
 check_login('admin');
+
+if (is_xhr()) { // Dispatches the XHR request based on HTTP verbs
+	$controller = new PackageController($eventManager);
+
+	switch ($_SERVER['REQUEST_METHOD']) {
+		case 'GET': // Return packages list
+			$controller->indexAction();
+			break;
+		case 'PUT': // Change (lock/unlock) package status
+			$payload = json_decode(file_get_contents('php://input'), JSON_OBJECT_AS_ARRAY);
+			if (is_array($payload)) {
+				$controller->changeStatus(new PackageEntity($payload));
+			}
+			break;
+		case 'POST':
+			// Trigger package index update
+			$controller->updateIndexAction();
+	}
+
+	$controller->sendJsonResponse(400);
+}
 
 $tpl = new TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'shared/partials/aps_standard/aps_packages.tpl',
-	'page_message' => 'layout'
+	'page_message' => 'layout',
+	'aps_package_entry' => 'page'
 ));
 
 $tpl->assign(array(
 	'TR_PAGE_TITLE' => tohtml(tr('Admin / APS Standard / Packages'), 'htmlAttr'),
-	'TR_NAME' => tohtml(tr('Name')),
-	'TR_DESCRIPTION' => tohtml(tr('Description')),
-	'TR_VERSION' => tohtml(tr('Version')),
-	'TR_APS_VERSION' => tohtml(tr('APS version')),
+	'TR_DETAILS' => tohtml(tr('Details')),
 	'TR_CATEGORY' => tohtml(tr('Category')),
-	'TR_STATUS' => tohtml(tr('Status')),
-	'TR_LOADING_IN_PROGRSS' => tohtml(tr('Loading in progress...')),
-	'TR_UPDATE_PACKAGE_LIST' => tohtml(tr('Update package list'))
+	'TR_VENDOR' => tohtml(tr('Vendor')),
+	'TR_CERTIFIED' => tohtml(tr('Certified')),
+	'TR_LOCK' => tohtml(tr('Lock'), 'htmlAttr'),
+	'TR_UNLOCK' => tohtml(tr('Unlock'), 'htmlAttr'),
+	'TR_UPDATE_PACKAGE_INDEX' => tohtml(tr('Update package index'))
 ));
 
 generateNavigation($tpl);
-generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-EventManager::getInstance()->dispatch(Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+$eventManager->dispatch(Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();
