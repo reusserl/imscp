@@ -18,6 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+namespace iMSCP;
+
+use iMSCP_Registry as Registry;
+use iMSCP_Exception_Handler as ExceptionHandler;
+use iMSCP_Config_Handler_File as ConfigHandlerFile;
+use iMSCP_Initializer as Initializer;
+use Zend_Loader_AutoloaderFactory as AutoloaderFactory;
+use iMSCP\Autoloader\Psr4Autoloader;
+
 // Set default error reporting level
 error_reporting(E_ALL | E_STRICT);
 
@@ -43,7 +52,7 @@ set_include_path(implode(PATH_SEPARATOR, array_unique(
 // Setup autoloader
 require_once LIBRARY_PATH . '/vendor/Zend/Loader/AutoloaderFactory.php';
 
-Zend_Loader_AutoloaderFactory::factory(
+AutoloaderFactory::factory(
 	array(
 		'Zend_Loader_StandardAutoloader' => array(
 			'autoregister_zf' => true,
@@ -61,12 +70,19 @@ Zend_Loader_AutoloaderFactory::factory(
 	)
 );
 
+// PSR4 autoloader
+$psr4Autoloader = new Psr4Autoloader();
+$psr4Autoloader->register();
+$psr4Autoloader->addNamespace('Symfony\\Component\\Validator\\', LIBRARY_PATH . '/vendor/symfony/validator');
+$psr4Autoloader->addNamespace('Symfony\\Component\\Translation\\', LIBRARY_PATH . '/vendor/symfony/translation');
+unset($psr4Autoloader);
+
 // Set handler for uncaught exceptions
-iMSCP_Registry::set('exceptionHandler', new iMSCP_Exception_Handler());
+Registry::set('exceptionHandler', new ExceptionHandler());
 
 // Check for PHP version
 if (version_compare(phpversion(), '5.3.10', '<')) {
-	throw new RuntimeException('i-MSCP require PHP version >= 5.3.10');
+	throw new \RuntimeException('i-MSCP require PHP version >= 5.3.10');
 }
 
 /**
@@ -85,7 +101,7 @@ require_once LIBRARY_PATH . '/Functions/Reseller.php';
 require_once LIBRARY_PATH . '/Functions/View.php';
 require_once LIBRARY_PATH . '/vendor/idna_convert/idna_convert.class.php';
 
-/** @var $config iMSCP_Config_Handler_File */
+/** @var $config ConfigHandlerFile */
 if(is_readable(CONFIG_CACHE_FILE_PATH)) {
 	$config = unserialize(file_get_contents(CONFIG_CACHE_FILE_PATH));
 
@@ -98,7 +114,7 @@ if(is_readable(CONFIG_CACHE_FILE_PATH)) {
 } else {
 	FORCE_CONFIG_RELOAD:
 
-	$config = new iMSCP_Config_Handler_File(CONFIG_FILE_PATH);
+	$config = new ConfigHandlerFile(CONFIG_FILE_PATH);
 
 	// Template root directory
 	$config['ROOT_TEMPLATE_PATH'] = dirname(__DIR__) . '/themes/' . $config['USER_INITIAL_THEME'];
@@ -262,7 +278,7 @@ if(is_readable(CONFIG_CACHE_FILE_PATH)) {
 }
 
 // Initialize application
-iMSCP_Initializer::run($config);
+Initializer::run($config);
 
 // Remove useless variable
 unset($configFilePath, $cachedConfigFilePath, $config);

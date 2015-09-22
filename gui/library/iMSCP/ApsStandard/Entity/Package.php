@@ -20,81 +20,83 @@
 
 namespace iMSCP\ApsStandard\Entity;
 
+use Symfony\Component\Validator\Mapping\ClassMetadata;
+
 /**
  * Class Package
  * @package iMSCP\ApsStandard\Entity
  */
-class Package implements EntityHydrator
+class Package implements EntityHydrator, EntityValidation
 {
 	/**
 	 * @var int Package unique identifier
 	 */
-	protected $id;
+	public $id;
 
 	/**
 	 * @var string Package name
 	 */
-	protected $name;
+	public $name;
 
 	/**
 	 * @var string Package summary
 	 */
-	protected $summary;
+	public $summary;
 
 	/**
 	 * @var string Package version
 	 */
-	protected $version;
+	public $version;
 
 	/**
 	 * @var int Package release number
 	 */
-	protected $release;
+	public $release;
 
 	/**
 	 * @var string Package APS version
 	 */
-	protected $aps_version;
+	public $aps_version;
 
 	/**
 	 * @var string Package category
 	 */
-	protected $category;
+	public $category;
 
 	/**
 	 * @var string Package vendor
 	 */
-	protected $vendor;
+	public $vendor;
 
 	/**
 	 * @var string Package vendor URI
 	 */
-	protected $vendor_uri;
+	public $vendor_uri;
 
 	/**
 	 * @var string Package path
 	 */
-	protected $path;
+	public $path;
 
 	/**
 	 * @var string Package URL
 	 */
-	protected $url;
+	public $url;
 
 	/**
 	 * @var string Package icon URL
 	 */
-	protected $icon_url;
+	public $icon_url;
 
 	/**
 	 * @var string Package certification
 	 */
-	protected $cert;
+	public $cert;
 
 	/**
 	 * @var string Package status
 	 */
-	protected $status;
+	public $status;
 
 	/**
 	 * Constructor
@@ -105,6 +107,16 @@ class Package implements EntityHydrator
 		if (!empty($data)) {
 			$this->hydrate($data);
 		}
+	}
+
+	/**
+	 * Get validation metadata
+	 *
+	 * @param ClassMetadata $metadata
+	 */
+	public static function loadValidationMetadata(ClassMetadata $metadata)
+	{
+		// TODO
 	}
 
 	/**
@@ -137,7 +149,7 @@ class Package implements EntityHydrator
 
 		$data = array();
 
-		foreach ($reflect->getProperties(\ReflectionProperty::IS_PROTECTED) as $prop) {
+		foreach ($reflect->getProperties(\ReflectionProperty::IS_PUBLIC) as $prop) {
 			$propName = $prop->getName();
 			$data[$propName] = $this->{$propName};
 		}

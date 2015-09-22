@@ -23,6 +23,8 @@ namespace iMSCP\ApsStandard\Controller;
 use iMSCP\ApsStandard\ApsStandardAbstract;
 use iMSCP_Authentication as Authentication;
 use iMSCP_Events_Aggregator as EventManager;
+use iMSCP_Database as Database;
+use Symfony\Component\Validator\Validation;
 
 /**
  * Class ActionController
@@ -41,6 +43,11 @@ abstract class ActionController extends ApsStandardAbstract
 	protected $eventManager;
 
 	/**
+	 * @var \PDO
+	 */
+	protected $db;
+
+	/**
 	 * Constructor
 	 *
 	 * @param EventManager $eventManager
@@ -51,6 +58,17 @@ abstract class ActionController extends ApsStandardAbstract
 
 		$this->eventManager = $eventManager;
 		$this->identity = Authentication::getInstance()->getIdentity();
+		$this->db = Database::getRawInstance();
+	}
+
+	/**
+	 * Return Validator
+	 *
+	 * @return \Symfony\Component\Validator\ValidatorInterface
+	 */
+	public function getValidator()
+	{
+		return Validation::createValidatorBuilder()->addMethodMapping('loadValidationMetadata')->getValidator();
 	}
 
 	/**
@@ -98,6 +116,6 @@ abstract class ActionController extends ApsStandardAbstract
 				header('Status: 200 OK');
 		}
 
-		exit(json_encode($data));
+		exit(json_encode($data, JSON_PRETTY_PRINT));
 	}
 }

@@ -28,6 +28,7 @@ use warnings;
 no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 use iMSCP::Debug;
 use iMSCP::Config;
+use iMSCP::Composer;
 use iMSCP::Dir;
 use iMSCP::Execute;
 use iMSCP::File;
@@ -320,6 +321,19 @@ sub askPorts
 	$rs;
 }
 
+=item preinstall()
+
+ Process preinstall tasks
+
+ Return int 0 on success, die on failure
+
+=cut
+
+sub preinstall
+{
+	iMSCP::Composer->getInstance()->registerPackage('symfony/validator', '~2.7.4');
+}
+
 =item install()
 
  Process install tasks
@@ -354,6 +368,9 @@ sub install
 	return $rs if $rs;
 
 	$rs = $self->_addDnsZone();
+	return $rs if $rs;
+
+	$rs = $self->_installComposerPackages();
 	return $rs if $rs;
 
 	$self->_saveConfig();
@@ -1003,6 +1020,25 @@ sub _addDnsZone
 	return $rs if $rs;
 
 	$self->{'eventManager'}->trigger('afterNamedAddMasterZone');
+}
+
+=item _installComposerPackages()
+
+ Install composer package
+
+ Return int 0 on success, other on failure
+
+=cut
+
+sub _installComposerPackages
+{
+	my $packagesDir = "$main::imscpConfig{'CACHE_DATA_DIR'}/packages/vendor/symfony";
+
+	-d $packagesDir or die('Could not find the symfony packages at %s', $packagesDir);
+
+	my $destDir = "$main::imscpConfig{'GUI_ROOT_DIR'}/library/vendor/symfony";
+	iMSCP::Dir->new( dirname => $destDir )->remove();
+	iMSCP::Dir->new( dirname => $packagesDir )->rcopy($destDir);
 }
 
 =item _saveConfig()
