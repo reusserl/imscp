@@ -56,9 +56,8 @@ abstract class ApsStandardAbstract
 	 */
 	public function __construct()
 	{
-		// FIXME: make this configurable
-		$this->packagesDir = GUI_ROOT_DIR . '/data/persistent/aps/packages';
-		$this->packageMetadatasDir = GUI_ROOT_DIR . '/data/persistent/aps/meta_packages';
+		$this->setPackageMetadatasDir(GUI_ROOT_DIR . '/data/persistent/aps/meta');
+		$this->setPackagesDir(GUI_ROOT_DIR . '/data/persistent/aps/packages');
 	}
 
 	/**
@@ -80,5 +79,47 @@ abstract class ApsStandardAbstract
 	public function setAPScatalogURL($url)
 	{
 		$this->apsCatalogURL = (string)$url;
+	}
+
+	/**
+	 * Get package metadatas directory
+	 *
+	 * @return string
+	 */
+	public function getPackageMetadatasDir()
+	{
+		return $this->packageMetadatasDir;
+	}
+
+	/**
+	 * Set package metadatas directory
+	 *
+	 * @param string $packageMetadatasDir
+	 */
+	public function setPackageMetadatasDir($packageMetadatasDir)
+	{
+		$packageMetadatasDir = (string)$packageMetadatasDir;
+		$this->packageMetadatasDir = rtrim($packageMetadatasDir, '/');
+	}
+
+	/**
+	 * Get packages directory
+	 *
+	 * @return string
+	 */
+	public function getPackagesDir()
+	{
+		return $this->packagesDir;
+	}
+
+	/**
+	 * Set packages directory
+	 *
+	 * @param string $packagesDir
+	 */
+	public function setPackagesDir($packagesDir)
+	{
+		$packagesDir = (string)$packagesDir;
+		$this->packagesDir = rtrim($packagesDir, '/');
 	}
 }
