@@ -110,7 +110,7 @@ class Document
 			$prefix = $doc->lookupPrefix($node->nodeValue);
 
 			if ($prefix == '') {
-				$prefix = 'atom'; // Assume atom as default prefix
+				$prefix = 'root';
 			}
 
 			if (!$xpath->registerNamespace($prefix, $node->nodeValue)) {

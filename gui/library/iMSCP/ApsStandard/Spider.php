@@ -109,7 +109,7 @@ class Spider extends ApsStandardAbstract
 						// See https://doc.apsstandard.org/2.1/portal/cat/search/#search-description-arguments
 						$repoChunkDoc = new Document($baseURL . str_replace('../', '/', $repoFeedPath) . '?pageSize=100&latest=1');
 						$this->exploreRepositoryChunk($repoChunkDoc, $repoId);
-						while ($repoFeedPath = $repoChunkDoc->getXPathValue("atom:link[@rel='next']/@href")) {
+						while ($repoFeedPath = $repoChunkDoc->getXPathValue("root:link[@rel='next']/@href")) {
 							$repoChunkDoc = new Document($repoFeedPath);
 							$this->exploreRepositoryChunk($repoChunkDoc, $repoId);
 						}
@@ -146,14 +146,14 @@ class Spider extends ApsStandardAbstract
 		$files = array();
 		$pkgMetaBasedir = $this->getPackageMetadatasDir();
 
-		foreach ($doc->getXPathValue("atom:entry", null, false) as $pkgEntry) {
+		foreach ($doc->getXPathValue("root:entry", null, false) as $pkgEntry) {
 			// Retrieves needed values
 			$pkgName = $doc->getXPathValue("a:name", $pkgEntry);
 			$pkgVersion = $doc->getXPathValue("a:version", $pkgEntry);
 			$pkgRelease = $doc->getXPathValue("a:release", $pkgEntry);
-			$pkgUrl = $doc->getXPathValue("atom:link[@a:type='aps']/@href", $pkgEntry);
-			$pkgMetaUrl = $doc->getXPathValue("atom:link[@a:type='meta']/@href", $pkgEntry);
-			$pkgIconUrl = $doc->getXPathValue("atom:link[@a:type='icon']/@href", $pkgEntry);
+			$pkgUrl = $doc->getXPathValue("root:link[@a:type='aps']/@href", $pkgEntry);
+			$pkgMetaUrl = $doc->getXPathValue("root:link[@a:type='meta']/@href", $pkgEntry);
+			$pkgIconUrl = $doc->getXPathValue("root:link[@a:type='icon']/@href", $pkgEntry);
 
 			if ($pkgName == '' || $pkgVersion == '' || $pkgRelease == '' || $pkgUrl == '' || $pkgMetaUrl == '') {
 				continue; // Ignore invalid package entry
@@ -205,7 +205,7 @@ class Spider extends ApsStandardAbstract
 		}
 
 		/*
-		foreach ($doc->getValue("atom:entry", null, false) as $package) {
+		foreach ($doc->getValue("root:entry", null, false) as $package) {
 			$name = $doc->getValue("a:name", $package);
 			$version = $doc->getValue("a:version", $package);
 			$release = $doc->getValue("a:release", $package);
@@ -239,14 +239,14 @@ class Spider extends ApsStandardAbstract
 				$this->packages[$apsVersion][$name] = array('version' => $version, 'release' => $release);
 
 				$summary = $doc->getValue("a:summary", $package);
-				$category = $doc->getValue("atom:category/@term", $package);
+				$category = $doc->getValue("root:category/@term", $package);
 				$vendor = $doc->getValue("a:vendor", $package);
 				$vendorURI = $doc->getValue("a:vendor_uri", $package);
-				$url = $doc->getValue("atom:link[@a:type='aps']/@href", $package);
-				$iconUrl = $doc->getValue("atom:link[@a:type='icon']/@href", $package);
-				$metaSrc = $doc->getValue("atom:link[@a:type='meta']/@href", $package);
-				$cert = $doc->getValue("atom:link[@a:type='certificate']/a:level", $package);
-				$license = $doc->getValue("atom:link[@a:type='eula']/@href", $package);
+				$url = $doc->getValue("root:link[@a:type='aps']/@href", $package);
+				$iconUrl = $doc->getValue("root:link[@a:type='icon']/@href", $package);
+				$metaSrc = $doc->getValue("root:link[@a:type='meta']/@href", $package);
+				$cert = $doc->getValue("root:link[@a:type='certificate']/a:level", $package);
+				$license = $doc->getValue("root:link[@a:type='eula']/@href", $package);
 
 				// Create package metadatas directory if needed
 				@mkdir($packageMetadatasDir, 0750, true);
