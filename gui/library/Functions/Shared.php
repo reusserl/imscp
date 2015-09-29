@@ -1589,7 +1589,7 @@ function utils_getPhpValueInBytes($value)
 }
 
 /**
- * Remove the given directory recusively
+ * Remove the given directory recursively
  *
  * @param string $directory Path of directory to remove
  * @return boolean TRUE on success, FALSE otherwise

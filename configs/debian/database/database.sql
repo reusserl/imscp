@@ -83,7 +83,7 @@ INSERT IGNORE INTO `config` (`name`, `value`) VALUES
 ('PREVENT_EXTERNAL_LOGIN_ADMIN', '1'),
 ('PREVENT_EXTERNAL_LOGIN_RESELLER', '1'),
 ('PREVENT_EXTERNAL_LOGIN_CLIENT', '1'),
-('DATABASE_REVISION', '223'),
+('DATABASE_REVISION', '224'),
 ('PHPINI_ALLOW_URL_FOPEN', 'off'),
 ('PHPINI_DISPLAY_ERRORS', 'off'),
 ('PHPINI_UPLOAD_MAX_FILESIZE', '10'),
@@ -696,15 +696,29 @@ CREATE TABLE IF NOT EXISTS `aps_packages` (
   `name` varchar(255) collate utf8_unicode_ci NOT NULL,
   `summary` text collate utf8_unicode_ci NOT NULL,
   `version` varchar(255) collate utf8_unicode_ci NOT NULL,
-  `release` varchar(255) collate utf8_unicode_ci NOT NULL,
+  `release` int(11) unsigned NOT NULL,
   `aps_version` varchar(255) collate utf8_unicode_ci NOT NULL,
   `category` varchar(255) collate utf8_unicode_ci NOT NULL,
   `vendor` varchar(255) collate utf8_unicode_ci NOT NULL,
   `vendor_uri` varchar(255) collate utf8_unicode_ci NOT NULL,
-  `path` varchar(255) collate utf8_unicode_ci NOT NULL,
   `url` varchar(255) collate utf8_unicode_ci NOT NULL,
   `icon_url` varchar(255) collate utf8_unicode_ci NOT NULL,
   `cert` varchar(255) collate utf8_unicode_ci NOT NULL,
   `status` varchar(255) collate utf8_unicode_ci NOT NULL,
-  PRIMARY KEY  (`package_id`)
+  PRIMARY KEY  (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `aps_instances`
+--
+
+CREATE TABLE IF NOT EXISTS `aps_instances` (
+  `id` int(11) unsigned NOT NULL auto_increment,
+  `pid` int(11) unsigned DEFAULT NULL,
+  `settings` text COLLATE utf8_unicode_ci NOT NULL,
+  `status` varchar(255) collate utf8_unicode_ci NOT NULL,
+  PRIMARY KEY  (`id`),
+  FOREIGN KEY (pid) REFERENCES aps_packages(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;

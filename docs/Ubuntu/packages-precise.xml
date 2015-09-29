@@ -159,6 +159,7 @@
     </php>
     <perl>
         <package>perl</package>
+        <package>libarchive-zip-perl</package>
         <package>libcrypt-blowfish-perl</package>
         <package>libcrypt-cbc-perl</package>
         <package>libcrypt-eksblowfish-perl</package>
@@ -169,15 +170,17 @@
         <package>libdbi-perl</package>
         <package>libemail-valid-perl</package>
         <package>libfile-homedir-perl</package>
+        <package>libjson-perl</package>
         <package>libmailtools-perl</package>
         <package>libmime-tools-perl</package>
         <package>libnet-ip-perl</package>
         <package>libnet-dns-perl</package>
         <package>libnet-libidn-perl</package>
         <package>libtimedate-perl</package>
+        <package>libwww-perl</package>
         <package>libxml-parser-perl</package>
         <package>libxml-simple-perl</package>
-        <package>libjson-perl</package>
+        <package>libxml-xpath-perl</package>
     </perl>
     <other>
         <package>at</package>

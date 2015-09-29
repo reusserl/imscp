@@ -32,14 +32,14 @@ use DOMXPath;
 class Document
 {
 	/**
-	 * @var DOMDocument Associated DOMDocument object
+	 * @var DOMDocument Associated Document Model Object
 	 */
-	protected $DOMdocument;
+	protected $dom;
 
 	/**
-	 * @var DOMXPath Associated DOMXPath object
+	 * @var DOMXPath Associated Document Object Model XPath
 	 */
-	protected $DOMXPath;
+	protected $xpath;
 
 	/**
 	 * Constructor
@@ -49,28 +49,27 @@ class Document
 	 */
 	public function __construct($path, $type = 'xml')
 	{
-		$this->DOMdocument = new DOMDocument();
 		$this->load($path, $type);
 	}
 
 	/**
-	 * Get underlying DOMDocument object associated with thid document
+	 * Get underlying DOMDocument object associated with this document
 	 *
 	 * @return DOMDocument
 	 */
 	public function getDOMDocument()
 	{
-		return $this->DOMdocument;
+		return $this->dom;
 	}
 
 	/**
-	 * Get underlying DOMXPath object associated with thid document
+	 * Get underlying DOM XPath object associated with this document
 	 *
 	 * @return DOMXPath
 	 */
-	public function getDOMXPath()
+	public function getXpath()
 	{
-		return $this->DOMXPath;
+		return $this->xpath;
 	}
 
 	/**
@@ -78,12 +77,12 @@ class Document
 	 *
 	 * @param string $XPathExpression The XPath expression to execute
 	 * @param DOMNode $contextNode OPTIONAL Context node
-	 * @param bool $asString OPTIONAL Weither value must be returned as string (default: true)
+	 * @param bool $asString OPTIONAL Tells whether or not only the first node value must be returned (default: true)
 	 * @return DOMNodeList|string
 	 */
-	public function getValue($XPathExpression, DOMNode $contextNode = null, $asString = true)
+	public function getXPathValue($XPathExpression, DOMNode $contextNode = null, $asString = true)
 	{
-		$ret = $this->DOMXPath->query($XPathExpression, $contextNode);
+		$ret = $this->xpath->query($XPathExpression, $contextNode);
 		return ($asString) ? (($ret->length) ? $ret->item(0)->nodeValue : '') : $ret;
 	}
 
@@ -96,15 +95,17 @@ class Document
 	 */
 	protected function load($path, $type = 'xml')
 	{
-		$doc = $this->DOMdocument;
-		$ret = ($type == 'xml') ? $doc->load($path, LIBXML_PARSEHUGE) : $doc->loadHTMLFile($path);
+		$doc = new DOMDocument();
+		@$ret = ($type == 'xml') ? $doc->load($path, LIBXML_PARSEHUGE) : $doc->loadHTMLFile($path);
 
 		if (!$ret) {
-			throw new \RuntimeException(sprintf('Could not load the %s document', $path));
+			throw new \RuntimeException(sprintf('Could not load the %s document: %s', $path, $php_errormsg));
 		}
 
+		// Create associated DOM XPath object
 		$xpath = new DOMXPath($doc);
 
+		// Set namespaces
 		foreach ($xpath->query('namespace::*') as $node) {
 			$prefix = $doc->lookupPrefix($node->nodeValue);
 
@@ -119,6 +120,7 @@ class Document
 			}
 		}
 
-		$this->DOMXPath = $xpath;
+		$this->dom = $doc;
+		$this->xpath = $xpath;
 	}
 }

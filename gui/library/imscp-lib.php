@@ -34,6 +34,7 @@ error_reporting(E_ALL | E_STRICT);
 // Will be overwritten during initialization process
 // @see iMSCP_Initializer::_setDisplayErrors()
 ini_set('display_errors', 1);
+ini_set('track_errors', 1);
 
 // Define paths
 define('GUI_ROOT_DIR', dirname(__DIR__));

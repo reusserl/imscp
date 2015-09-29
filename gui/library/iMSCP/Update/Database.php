@@ -46,7 +46,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	/**
 	 * @var int Last database update revision
 	 */
-	protected $lastUpdate = 223;
+	protected $lastUpdate = 224;
 
 	/**
 	 * Singleton - Make new unavailable
@@ -3131,7 +3131,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	/**
 	 * Create aps_packages table (APS Standard)
 	 *
-	 * @return string SQL statements to be executed
+	 * @return string SQL statement to be executed
 	 */
 	protected function r223()
 	{
@@ -3146,12 +3146,30 @@ class iMSCP_Update_Database extends iMSCP_Update
 				`category` varchar(255) collate utf8_unicode_ci NOT NULL,
 				`vendor` varchar(255) collate utf8_unicode_ci NOT NULL,
 				`vendor_uri` varchar(255) collate utf8_unicode_ci NOT NULL,
-				`path` varchar(255) collate utf8_unicode_ci NOT NULL,
 				`url` varchar(255) collate utf8_unicode_ci NOT NULL,
 				`icon_url` varchar(255) collate utf8_unicode_ci NOT NULL,
 				`cert` varchar(255) collate utf8_unicode_ci NOT NULL,
 				`status` varchar(255) collate utf8_unicode_ci NOT NULL,
-				PRIMARY KEY  (`package_id`)
+				PRIMARY KEY (`id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+		';
+	}
+
+	/**
+	 * Create aps_instances table (APS Standard)
+	 *
+	 * @return string SQL statement to be executed
+	 */
+	protected function r224()
+	{
+		return '
+			CREATE TABLE IF NOT EXISTS `aps_instances` (
+				`id` int(11) unsigned NOT NULL auto_increment,
+				`pid` int(11) unsigned DEFAULT NULL,
+				`settings` text COLLATE utf8_unicode_ci NOT NULL,
+				`status` varchar(255) collate utf8_unicode_ci NOT NULL,
+				PRIMARY KEY  (`id`),
+				FOREIGN KEY (pid) REFERENCES aps_packages(id) ON DELETE SET NULL
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 		';
 	}
