@@ -3166,10 +3166,12 @@ class iMSCP_Update_Database extends iMSCP_Update
 			CREATE TABLE IF NOT EXISTS `aps_instances` (
 				`id` int(11) unsigned NOT NULL auto_increment,
 				`pid` int(11) unsigned DEFAULT NULL,
+				`uid` int(10) unsigned NOT NULL,
 				`settings` text COLLATE utf8_unicode_ci NOT NULL,
 				`status` varchar(255) collate utf8_unicode_ci NOT NULL,
 				PRIMARY KEY  (`id`),
-				FOREIGN KEY (pid) REFERENCES aps_packages(id) ON DELETE SET NULL
+				FOREIGN KEY (pid) REFERENCES aps_packages(id) ON DELETE SET NULL,
+				FOREIGN KEY (uid) REFERENCES admin(admin_id) ON DELETE CASCADE
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 		';
 	}
