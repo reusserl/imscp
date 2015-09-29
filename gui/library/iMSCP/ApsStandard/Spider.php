@@ -19,7 +19,6 @@
  */
 
 namespace iMSCP\ApsStandard;
-use Symfony\Component\Validator\Exception\RuntimeException;
 
 /**
  * Class Spider
@@ -83,7 +82,7 @@ class Spider extends ApsStandardAbstract
 			// Acquires exclusive lock to prevent multiple run
 			$fpLock = @fopen(GUI_ROOT_DIR . '/data/tmp/aps_spider_lock', 'w');
 			if (!@flock($fpLock, LOCK_EX | LOCK_NB)) {
-				throw new RuntimeException('Another instance is already running. Aborting...');
+				throw new \RuntimeException('Another instance is already running. Aborting...');
 			}
 
 			$baseURL = $this->getAPScatalogURL();
