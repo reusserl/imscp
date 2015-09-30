@@ -85,8 +85,8 @@ class Spider extends ApsStandardAbstract
 				$config = Registry::get('config');
 				$panelUser = $config['SYSTEM_USER_PREFIX'] . $config['SYSTEM_USER_MIN_UID'];
 				$info = posix_getpwnam($panelUser);
-				posix_setgid($info['uid']);
-				posix_setuid($info['gid']);
+				posix_setuid($info['uid']);
+				posix_setgid($info['gid']);
 			}
 
 			// Acquires exclusive lock to prevent multiple run
