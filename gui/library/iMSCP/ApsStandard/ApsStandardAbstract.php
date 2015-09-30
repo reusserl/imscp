@@ -42,9 +42,9 @@ abstract class ApsStandardAbstract
 	protected $apsCatalogURL = 'http://apscatalog.com';
 
 	/**
-	 * @var string APS package metadatas directory
+	 * @var string APS package metadata directory
 	 */
-	protected $packageMetadatasDir;
+	protected $packageMetadataDir;
 
 	/**
 	 * @var string APS packages directory
@@ -56,7 +56,7 @@ abstract class ApsStandardAbstract
 	 */
 	public function __construct()
 	{
-		$this->setPackageMetadatasDir(GUI_ROOT_DIR . '/data/persistent/aps/meta');
+		$this->setPackageMetadataDir(GUI_ROOT_DIR . '/data/persistent/aps/meta');
 		$this->setPackagesDir(GUI_ROOT_DIR . '/data/persistent/aps/packages');
 	}
 
@@ -82,24 +82,24 @@ abstract class ApsStandardAbstract
 	}
 
 	/**
-	 * Get package metadatas directory
+	 * Get package metadata directory
 	 *
 	 * @return string
 	 */
-	public function getPackageMetadatasDir()
+	public function getPackageMetadataDir()
 	{
-		return $this->packageMetadatasDir;
+		return $this->packageMetadataDir;
 	}
 
 	/**
-	 * Set package metadatas directory
+	 * Set package metadata directory
 	 *
-	 * @param string $packageMetadatasDir
+	 * @param string $packageMetadataDir
 	 */
-	public function setPackageMetadatasDir($packageMetadatasDir)
+	public function setPackageMetadataDir($packageMetadataDir)
 	{
-		$packageMetadatasDir = (string)$packageMetadatasDir;
-		$this->packageMetadatasDir = rtrim($packageMetadatasDir, '/');
+		$packageMetadataDir = (string)$packageMetadataDir;
+		$this->packageMetadataDir = rtrim($packageMetadataDir, '/');
 	}
 
 	/**
