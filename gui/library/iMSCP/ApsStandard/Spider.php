@@ -35,6 +35,11 @@ class Spider extends ApsStandardAbstract
 	protected $packages = array();
 
 	/**
+	 * @var resource Lock file
+	 */
+	protected $lockFile;
+
+	/**
 	 * Constructor
 	 */
 	public function __construct()
@@ -44,6 +49,34 @@ class Spider extends ApsStandardAbstract
 
 			// Ensure that all needed functions are available
 			$this->checkRequirements();
+
+			ignore_user_abort(1); // Do not abort on a client disconnection
+			set_time_limit(0); // Tasks made by this object can take up several minutes to finish
+
+			if (PHP_SAPI == 'cli') {
+				if (0 != posix_getuid()) {
+					throw new \RuntimeException('This script must be run as root user.');
+				}
+
+				// Set real user UID/GID of current process (panel user)
+				$config = Registry::get('config');
+				$panelUser = $config['SYSTEM_USER_PREFIX'] . $config['SYSTEM_USER_MIN_UID'];
+				if ($info = @posix_getpwnam($panelUser) === false) {
+					throw new \RuntimeException(sprintf("Could not get info about the '%s' user.", $panelUser));
+				}
+
+				if (!@posix_setuid($info['uid']) || !@posix_setgid($info['gid'])) {
+					throw new \RuntimeException(sprintf(
+						'Could not change real user uid/gid of current process: %s', $panelUser, $php_errormsg
+					));
+				}
+			}
+
+			// Acquires exclusive lock to prevent multiple run
+			$this->lockFile = @fopen(GUI_ROOT_DIR . '/data/tmp/aps_spider_lock', 'w');
+			if (!@flock($this->lockFile, LOCK_EX | LOCK_NB)) {
+				throw new \RuntimeException('Another instance is already running. Aborting...');
+			}
 
 			// Retrieves list of known packages
 			$stmt = exec_query('SELECT `name`, `version`, `aps_version`, `release` FROM `aps_packages`');
@@ -66,6 +99,20 @@ class Spider extends ApsStandardAbstract
 	}
 
 	/**
+	 * Remove lock file
+	 * @return void
+	 */
+	public function __destruct()
+	{
+		// Release exlusive lock if any
+		if ($this->lockFile) {
+			@flock($this->lockFile, LOCK_UN);
+			@fclose($this->lockFile);
+			@unlink(GUI_ROOT_DIR . '/data/tmp/aps_spider_lock');
+		}
+	}
+
+	/**
 	 * Explore APS standard catalog
 	 *
 	 * Return void
@@ -73,68 +120,43 @@ class Spider extends ApsStandardAbstract
 	public function exploreCatalog()
 	{
 		try {
-			ignore_user_abort(1); // Do not abort on a client disconnection
-			set_time_limit(0); // This task can take up several minutes to finish
+			$serviceUrl = $this->getServiceURL();
+			$systemIndex = new Document($serviceUrl, 'html');
 
-			if (PHP_SAPI == 'cli') {
-				if (0 == posix_getuid()) {
-					throw new \RuntimeException('This script must be run as root user.');
-				}
+			// Parse system index to retrieve list of available repositories
+			// See: https://doc.apsstandard.org/2.1/portal/cat/browsing/#retrieving-repository-index
+			$repositories = $systemIndex->getXPathValue("//a[@class='repository']/@href", null, false);
 
-				// Set real user UID/GID of current process (panel user)
-				$config = Registry::get('config');
-				$panelUser = $config['SYSTEM_USER_PREFIX'] . $config['SYSTEM_USER_MIN_UID'];
-				$info = posix_getpwnam($panelUser);
-				posix_setuid($info['uid']);
-				posix_setgid($info['gid']);
-			}
+			foreach ($repositories as $repository) {
+				$repositoryUrl = $repository->nodeValue;
+				$repositoryId = rtrim($repositoryUrl, '/');
 
-			// Acquires exclusive lock to prevent multiple run
-			$fpLock = @fopen(GUI_ROOT_DIR . '/data/tmp/aps_spider_lock', 'w');
-			if (!@flock($fpLock, LOCK_EX | LOCK_NB)) {
-				throw new \RuntimeException('Another instance is already running. Aborting...');
-			}
+				// Explores supported APS standard repositories only
+				if (in_array($repositoryId, $this->supportedRepositories)) {
+					// Discover repository feed
+					// See: https://doc.apsstandard.org/2.1/portal/cat/browsing/#discovering-repository-feed
+					$repositoryIndex = new Document($serviceUrl . '/' . $repositoryUrl, 'html');
+					$repositoryFeedUrl = $repositoryIndex->getXPathValue("//a[@id='feedLink']/@href");
+					unset($repositoryIndex);
 
-			$baseURL = $this->getAPScatalogURL();
-			$catalogDoc = new Document($baseURL, 'html');
-
-			// Retrieves list of available APS standard repositories
-			// See https://doc.apsstandard.org/2.1/portal/cat/browsing/#retrieving-repository-index
-			$repos = $catalogDoc->getXPathValue("//a[@class='repository']/@href", null, false);
-
-			foreach ($repos as $repo) {
-				$repoPath = $repo->nodeValue;
-				$repoId = rtrim($repoPath, '/');
-
-				// Explore supported APS standard repositories only
-				if (in_array($repoId, $this->apsVersions)) {
-					// Discover repository feed path
-					// See https://doc.apsstandard.org/2.1/portal/cat/browsing/#discovering-repository-feed
-					$repoIndexDoc = new Document($baseURL . '/' . $repoPath, 'html');
-					$repoFeedPath = $repoIndexDoc->getXPathValue("//a[@id='feedLink']/@href");
-					unset($repoIndexDoc);
-
-					if ($repoFeedPath != '') { // Ignore invalid repository entry
-						// Explore the repository by chunk of 100 entries (we fetch only latest package versions)
-						// See https://doc.apsstandard.org/2.1/portal/cat/search/#search-description-arguments
-						$repoChunkDoc = new Document($baseURL . str_replace('../', '/', $repoFeedPath) . '?pageSize=100&latest=1');
-						$this->exploreRepositoryChunk($repoChunkDoc, $repoId);
-						while ($repoFeedPath = $repoChunkDoc->getXPathValue("root:link[@rel='next']/@href")) {
-							$repoChunkDoc = new Document($repoFeedPath);
-							$this->exploreRepositoryChunk($repoChunkDoc, $repoId);
+					if ($repositoryFeedUrl != '') { // Ignore invalid repository entry
+						// Parse the repository feed by chunk of 100 entries (we fetch only latest package versions)
+						// See: https://doc.apsstandard.org/2.1/portal/cat/search/#search-description-arguments
+						$repositoryFeed = new Document(
+							$serviceUrl . str_replace('../', '/', $repositoryFeedUrl) . '?pageSize=100&latest=1'
+						);
+						$this->parseRepositoryFeedPage($repositoryFeed, $repositoryId);
+						while ($repositoryFeedUrl = $repositoryFeed->getXPathValue("root:link[@rel='next']/@href")) {
+							$repositoryFeed = new Document($repositoryFeedUrl);
+							$this->parseRepositoryFeedPage($repositoryFeed, $repositoryId);
 						}
-						unset($repoChunkDoc);
+						unset($repositoryFeed);
 
 						// Update package index by exploring local metadata directory for the given repository
-						$this->updatePackageIndex($repoId);
+						$this->updatePackageIndex($repositoryId);
 					}
 				}
 			}
-
-			// Release exlusive lock
-			@flock($fpLock, LOCK_UN);
-			@fclose($fpLock);
-			@unlink(GUI_ROOT_DIR . '/data/tmp/aps_spider_lock');
 		} catch (\Exception $e) {
 			if (PHP_SAPI == 'cli') {
 				fwrite(STDERR, sprintf("Runtime error: %s\n", $e->getMessage()));
@@ -146,28 +168,31 @@ class Spider extends ApsStandardAbstract
 	}
 
 	/**
-	 * Process the given APS repository chunk
+	 * Parse the given repository feed page and extract/download package metadata
 	 *
-	 * @param Document $doc Document representing APS repository feed page
-	 * @param string $repoId Repository unique identifier (e.g. 1, 1.1, 1.2, .2.0)
+	 * @param Document $repositoryFeed Document representing APS repository feed
+	 * @param string $repositoryId Repository unique identifier (e.g. 1, 1.1, 1.2, 2.0 ...)
 	 * @return void
 	 */
-	protected function exploreRepositoryChunk(Document $doc, $repoId)
+	protected function parseRepositoryFeedPage(Document $repositoryFeed, $repositoryId)
 	{
-		$filesToDownload = array();
-		$pkgMetaBasedir = $this->getPackageMetadataDir();
+		$metaFiles = array();
+		$metadataDir = $this->getPackageMetadataDir() . '/' . $repositoryId;
+		$knowsPkgs = isset($this->packages[$repositoryId]) ? $this->packages[$repositoryId] : array();
 
-		foreach ($doc->getXPathValue("root:entry", null, false) as $entry) {
+		// Parse all package entries
+		foreach ($repositoryFeed->getXPathValue("root:entry", null, false) as $entry) {
 			// Retrieves needed data
-			$pkgName = $doc->getXPathValue("a:name/text()", $entry);
-			$pkgVersion = $doc->getXPathValue("a:version/text()", $entry);
-			$pkgRelease = $doc->getXPathValue("a:release/text()", $entry);
-			$vendor = $doc->getXPathValue("a:vendor/text()", $entry);
-			$vendorURI = $doc->getXPathValue("a:vendor_uri/text()", $entry) ?: $doc->getXPathValue("a:homepage/text()", $entry);
-			$pkgUrl = $doc->getXPathValue("root:link[@a:type='aps']/@href", $entry);
-			$pkgMetaUrl = $doc->getXPathValue("root:link[@a:type='meta']/@href", $entry);
-			$pkgIconUrl = $doc->getXPathValue("root:link[@a:type='icon']/@href", $entry);
-			$pkgCertLevel = $doc->getXPathValue("root:link[@a:type='certificate']/a:level/text()", $entry) ?: 'none';
+			$pkgName = $repositoryFeed->getXPathValue("a:name/text()", $entry);
+			$pkgVersion = $repositoryFeed->getXPathValue("a:version/text()", $entry);
+			$pkgRelease = $repositoryFeed->getXPathValue("a:release/text()", $entry);
+			$vendor = $repositoryFeed->getXPathValue("a:vendor/text()", $entry);
+			$vendorURI = $repositoryFeed->getXPathValue("a:vendor_uri/text()", $entry) ?:
+				$repositoryFeed->getXPathValue("a:homepage/text()", $entry);
+			$pkgUrl = $repositoryFeed->getXPathValue("root:link[@a:type='aps']/@href", $entry);
+			$pkgMetaUrl = $repositoryFeed->getXPathValue("root:link[@a:type='meta']/@href", $entry);
+			$pkgIconUrl = $repositoryFeed->getXPathValue("root:link[@a:type='icon']/@href", $entry);
+			$pkgCertLevel = $repositoryFeed->getXPathValue("root:link[@a:type='certificate']/a:level/text()", $entry) ?: 'none';
 
 			// Continue only if all data are available
 			if (
@@ -175,13 +200,13 @@ class Spider extends ApsStandardAbstract
 				$pkgUrl != '' && $pkgMetaUrl != ''
 			) {
 				// Package metadata directory
-				$pkgMetaDir = "$pkgMetaBasedir/$repoId/$pkgName";
+				$pkgMetadataDir = "$metadataDir/$pkgName";
 
 				$pkgCversion = null;
 				$pkgCrelease = null;
-				if (isset($this->packages[$repoId][$pkgName])) {
-					$pkgCversion = $this->packages[$repoId][$pkgName]['version'];
-					$pkgCrelease = $this->packages[$repoId][$pkgName]['release'];
+				if (isset($knowsPkgs[$pkgName])) {
+					$pkgCversion = $knowsPkgs[$pkgName]['version'];
+					$pkgCrelease = $knowsPkgs[$pkgName]['release'];
 				}
 
 				$isKnowVersion = !is_null($pkgCversion);
@@ -192,42 +217,47 @@ class Spider extends ApsStandardAbstract
 				// Continue only if a newer version is available, or if there is no valid APP-META.xml or APP-DATA.json file
 				if (
 					(!$isKnowVersion || $isOutDatedVersion) ||
-					!file_exists("$pkgMetaDir/APP-META.xml") || filesize("$pkgMetaDir/APP-META.xml") == 0 ||
-					!file_exists("$pkgMetaDir/APP-DATA.json") || filesize("$pkgMetaDir/APP-DATA.json") == 0
+					!file_exists("$pkgMetadataDir/APP-META.xml") || filesize("$pkgMetadataDir/APP-META.xml") == 0 ||
+					!file_exists("$pkgMetadataDir/APP-META.json") || filesize("$pkgMetadataDir/APP-META.json") == 0
 				) {
 					// Delete out-dated version if any
 					if ($isOutDatedVersion) {
-						utils_removeDir("$pkgMetaBasedir/$repoId/$pkgName");
+						utils_removeDir("$metadataDir/$pkgName");
 						exec_query(
 							'
 								DELETE FROM `aps_packages`
 								WHERE `name` = ? AND aps_version = ? AND `version` = ? AND `release` = ?
 							',
-							array($pkgName, $repoId, $pkgCversion, $pkgCrelease)
+							array($pkgName, $repositoryId, $pkgCversion, $pkgCrelease)
 						);
-						unset($filesToDownload[$pkgName]);
+						unset($metaFiles[$pkgName]);
 					}
 
 					// Marks this package as seen
-					$this->packages[$repoId][$pkgName] = array('version' => $pkgVersion, 'release' => $pkgRelease);
+					$knowsPkgs[$pkgName] = array('version' => $pkgVersion, 'release' => $pkgRelease);
 
 					// Create package metadata directory
-					@mkdir($pkgMetaDir, 0750, true);
+					if (!@mkdir($pkgMetadataDir, 0750, true)) {
+						throw new \RuntimeException(sprintf('Could not create package metadata directory:', $php_errormsg));
+					}
 
 					// Save intermediate metadata
-					@file_put_contents("$pkgMetaDir/APP-DATA.json", json_encode(array(
+					if (!(@file_put_contents("$pkgMetadataDir/APP-META.json", json_encode(array(
 						'app_url' => $pkgUrl, 'app_icon_url' => $pkgIconUrl, 'app_cert_level' => $pkgCertLevel,
 						'app_vendor' => $vendor, 'app_vendor_uri' => $vendorURI
-					)));
+					))))
+					) {
+						throw new \RuntimeException(sprintf('Could not save intermediate metadata:', $php_errormsg));
+					}
 
 					// Schedule download of APP-META.xml file
-					$filesToDownload[$pkgName] = array('src' => $pkgMetaUrl, 'trg' => "$pkgMetaDir/APP-META.xml");
+					$metaFiles[$pkgName] = array('src' => $pkgMetaUrl, 'trg' => "$pkgMetadataDir/APP-META.xml");
 				}
 			}
 		}
 
-		if (!empty($filesToDownload)) {
-			$this->downloadFiles($filesToDownload); // Download package APP-META.xml files
+		if (!empty($metaFiles)) {
+			$this->downloadFiles($metaFiles); // Download package APP-META.xml files
 		}
 	}
 
@@ -239,61 +269,59 @@ class Spider extends ApsStandardAbstract
 	 */
 	public function updatePackageIndex($repoId)
 	{
-		$packages = array();
-		$metadataDirectory = $this->getPackageMetadataDir() . '/' . $repoId;
-		$directory = @dir($metadataDirectory);
-
-		if (!$directory) {
-			throw new \RuntimeException(sprintf('Could not read directory: %s', $php_errormsg));
-		}
+		$newPkgs = array();
+		$knownPkgs = isset($this->packages[$repoId]) ? array_keys($this->packages[$repoId]) : array();
+		$metadataDir = $this->getPackageMetadataDir() . '/' . $repoId;
 
 		// Retrieve list of packages
-		while ($pkgDir = $directory->read()) {
-			if ($pkgDir != '.' && $pkgDir != '..') {
-				$packages[] = $pkgDir;
+		$directoryIterator = new \DirectoryIterator($metadataDir);
+		foreach ($directoryIterator as $fileInfo) {
+			if (!$fileInfo->isDot() && $fileInfo->isDir()) {
+				$newPkgs[] = $fileInfo->getFileName();
 			}
 		}
 
-		// Find package for which metadata are no longer available and removes them from database
+		// Find packages for which metadata are no longer available and removes them from database
 		if (isset($this->packages[$repoId])) {
-			$pkgToDelete = array_diff(array_keys($this->packages[$repoId]), $packages);
-			foreach ($pkgToDelete as $pkgName) {
+			$pkgsToDelete = array_diff($knownPkgs, $newPkgs);
+			foreach ($pkgsToDelete as $pkgName) {
 				exec_query('DELETE FROM `aps_packages` WHERE `name` = ? AND aps_version = ?', array($pkgName, $repoId));
 			}
-			unset($pkgToDelete);
+			unset($pkgsToDelete);
 		}
 
-		// Add new package in database
-		if (!empty($packages)) {
-			foreach ($packages as $package) {
-				$metaFilePath = $metadataDirectory . '/' . $package . '/APP-META.xml';
-				$dataFilePath = $metadataDirectory . '/' . $package . '/APP-DATA.json';
+		// Add new packages in database
+		if (!empty($newPkgs)) {
+			$newPkgs = array_diff($newPkgs, $knownPkgs);
+			foreach ($newPkgs as $pkg) {
+				$metaFilePath = $metadataDir . '/' . $pkg . '/APP-META.xml';
+				$dataFilePath = $metadataDir . '/' . $pkg . '/APP-META.json';
 
 				// Retrieves needed data
 				if (
 					file_exists($metaFilePath) && filesize($metaFilePath) != 0 &&
 					file_exists($dataFilePath) && filesize($dataFilePath) != 0
 				) {
-					$metaDoc = new Document($metadataDirectory . '/' . $package . '/APP-META.xml');
-					$name = $metaDoc->getXPathValue('root:name/text()');
-					$summary = $metaDoc->getXPathValue('//root:summary/text()');
-					$version = $metaDoc->getXPathValue('root:version/text()');
-					$release = $metaDoc->getXPathValue('root:release/text()');
-					$apsVersion = $repoId;
-					$category = $metaDoc->getXPathValue('//root:category/text()');
+					$metaDoc = new Document($metadataDir . '/' . $pkg . '/APP-META.xml');
+					$pkgName = $metaDoc->getXPathValue('root:name/text()');
+					$pkgSummary = $metaDoc->getXPathValue('//root:summary/text()');
+					$pkgVersion = $metaDoc->getXPathValue('root:version/text()');
+					$pkgRelease = $metaDoc->getXPathValue('root:release/text()');
+					$pkgCategory = $metaDoc->getXPathValue('//root:category/text()');
 
-					// Get intermediate data
+					// Get intermediate metadata
 					$data = json_decode(file_get_contents($dataFilePath), JSON_OBJECT_AS_ARRAY);
-					$vendor = isset($data['app_vendor']) ? $data['app_vendor'] : '';
-					$vendorURI = isset($data['app_vendor_uri']) ? $data['app_vendor_uri'] : '';
-					$url = isset($data['app_url']) ? $data['app_url'] : '';
-					$iconUrl = isset($data['app_icon_url']) ? $data['app_icon_url'] : '';
-					$certLevel = isset($data['app_cert_level']) ? $data['app_cert_level'] : '';
+					$pkgVendor = isset($data['app_vendor']) ? $data['app_vendor'] : '';
+					$pkgVendorURI = isset($data['app_vendor_uri']) ? $data['app_vendor_uri'] : '';
+					$pkgUrl = isset($data['app_url']) ? $data['app_url'] : '';
+					$pkgIconUrl = isset($data['app_icon_url']) ? $data['app_icon_url'] : '';
+					$pkgCertLevel = isset($data['app_cert_level']) ? $data['app_cert_level'] : '';
 
 					// Only add valid packages
 					if (
-						$name != '' && $summary != '' && $version != '' && $release != '' && $category != '' &&
-						$vendor != '' && $vendorURI != '' && $url && $iconUrl && $certLevel
+						$pkgName != '' && $pkgSummary != '' && $pkgVersion != '' && $pkgRelease != '' &&
+						$pkgCategory != '' && $pkgVendor != '' && $pkgVendorURI != '' && $pkgUrl && $pkgIconUrl &&
+						$pkgCertLevel
 					) {
 						exec_query(
 							'
@@ -305,15 +333,15 @@ class Spider extends ApsStandardAbstract
 								)
 							',
 							array(
-								$name, $summary, $version, $apsVersion, $release, $category, $vendor, $vendorURI, $url,
-								$iconUrl, $certLevel, 'disabled'
+								$pkgName, $pkgSummary, $pkgVersion, $repoId, $pkgRelease, $pkgCategory, $pkgVendor,
+								$pkgVendorURI, $pkgUrl, $pkgIconUrl, $pkgCertLevel, 'disabled'
 							)
 						);
 					} else {
-						utils_removeDir($metadataDirectory . '/' . $package); // Remove invalid package
+						utils_removeDir($metadataDir . '/' . $pkg); // Remove invalid package
 					}
 				} else {
-					utils_removeDir($metadataDirectory . '/' . $package); // Remove invalid package
+					utils_removeDir($metadataDir . '/' . $pkg); // Remove invalid package
 				}
 			}
 		}
@@ -413,7 +441,7 @@ class Spider extends ApsStandardAbstract
 		}
 
 		if (!function_exists('posix_getuid')) {
-			throw new \RuntimeException('Support for POSIX function is not available');
+			throw new \RuntimeException('Support for POSIX functions is not available');
 		}
 	}
 }

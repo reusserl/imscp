@@ -27,9 +27,9 @@ namespace iMSCP\ApsStandard;
 abstract class ApsStandardAbstract
 {
 	/**
-	 * @var array List of supported APS format specifications
+	 * @var array List of supported repositories (APS format specifications)
 	 */
-	protected $apsVersions = array(
+	protected $supportedRepositories = array(
 		'1',
 		'1.1',
 		'1.2',
@@ -37,9 +37,9 @@ abstract class ApsStandardAbstract
 	);
 
 	/**
-	 * @var string APS catalog URL
+	 * @var string APS service URL
 	 **/
-	protected $apsCatalogURL = 'http://apscatalog.com';
+	protected $serviceURL = 'http://apscatalog.com';
 
 	/**
 	 * @var string APS package metadata directory
@@ -65,9 +65,9 @@ abstract class ApsStandardAbstract
 	 *
 	 * @return string
 	 */
-	public function getAPScatalogURL()
+	public function getServiceURL()
 	{
-		return $this->apsCatalogURL;
+		return $this->serviceURL;
 	}
 
 	/**
@@ -76,9 +76,9 @@ abstract class ApsStandardAbstract
 	 * @param string $url URL
 	 * @return void
 	 */
-	public function setAPScatalogURL($url)
+	public function setServiceURL($url)
 	{
-		$this->apsCatalogURL = (string)$url;
+		$this->serviceURL = (string)$url;
 	}
 
 	/**

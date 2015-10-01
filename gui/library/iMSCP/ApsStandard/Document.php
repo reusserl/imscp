@@ -20,11 +20,6 @@
 
 namespace iMSCP\ApsStandard;
 
-use DOMDocument;
-use DOMNode;
-use DOMNodeList;
-use DOMXPath;
-
 /**
  * Class Document
  * @package iMSCP\ApsStandard
@@ -32,12 +27,12 @@ use DOMXPath;
 class Document
 {
 	/**
-	 * @var DOMDocument Associated Document Model Object
+	 * @var \DOMDocument Associated Document Model Object
 	 */
 	protected $dom;
 
 	/**
-	 * @var DOMXPath Associated Document Object Model XPath
+	 * @var \DOMXPath Associated Document Object Model XPath
 	 */
 	protected $xpath;
 
@@ -55,7 +50,7 @@ class Document
 	/**
 	 * Get underlying DOMDocument object associated with this document
 	 *
-	 * @return DOMDocument
+	 * @return \DOMDocument
 	 */
 	public function getDOMDocument()
 	{
@@ -65,7 +60,7 @@ class Document
 	/**
 	 * Get underlying DOM XPath object associated with this document
 	 *
-	 * @return DOMXPath
+	 * @return \DOMXPath
 	 */
 	public function getXpath()
 	{
@@ -76,11 +71,11 @@ class Document
 	 * Get document value by executing the givenXPath expression
 	 *
 	 * @param string $XPathExpression The XPath expression to execute
-	 * @param DOMNode $contextNode OPTIONAL Context node
+	 * @param \DOMNode $contextNode OPTIONAL Context node
 	 * @param bool $asString OPTIONAL Tells whether or not only the first node value must be returned (default: true)
-	 * @return DOMNodeList|string
+	 * @return \DOMNodeList|string
 	 */
-	public function getXPathValue($XPathExpression, DOMNode $contextNode = null, $asString = true)
+	public function getXPathValue($XPathExpression, \DOMNode $contextNode = null, $asString = true)
 	{
 		$ret = $this->xpath->query($XPathExpression, $contextNode);
 		return ($asString) ? (($ret->length) ? $ret->item(0)->nodeValue : '') : $ret;
@@ -95,7 +90,7 @@ class Document
 	 */
 	protected function load($path, $type = 'xml')
 	{
-		$doc = new DOMDocument();
+		$doc = new \DOMDocument();
 		@$ret = ($type == 'xml') ? $doc->load($path, LIBXML_PARSEHUGE) : $doc->loadHTMLFile($path);
 
 		if (!$ret) {
@@ -103,7 +98,7 @@ class Document
 		}
 
 		// Create associated DOM XPath object
-		$xpath = new DOMXPath($doc);
+		$xpath = new \DOMXPath($doc);
 
 		// Set namespaces
 		foreach ($xpath->query('namespace::*') as $node) {
