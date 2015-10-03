@@ -20,13 +20,17 @@
 
 namespace iMSCP\ApsStandard\Entity;
 
+/**
+ * Class PackageCollection
+ * @package iMSCP\ApsStandard\Entity
+ */
 class PackageCollection extends CollectionAbstract
 {
 	/**
 	 * Hydrate collection with the provided data
 	 *
-	 * @param  array $data
-	 * @return object
+	 * @param array $data
+	 * @return PackageCollection
 	 */
 	public function hydrate(array $data)
 	{
@@ -34,5 +38,7 @@ class PackageCollection extends CollectionAbstract
 			$entity = new Package();
 			$this->addEntity($entity->hydrate($entityData));
 		}
+
+		return $this;
 	}
 }

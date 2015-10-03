@@ -59,7 +59,7 @@ abstract class EntityAbstract implements Hydrator, Validation
 	 * Hydrate this object with the provided data
 	 *
 	 * @param  array $data
-	 * @return self
+	 * @return EntityAbstract
 	 */
 	public function hydrate(array $data)
 	{
