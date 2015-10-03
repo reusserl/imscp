@@ -28,88 +28,67 @@ use Symfony\Component\Validator\Constraints\NotBlank;
  * Class Package
  * @package iMSCP\ApsStandard\Entity
  */
-class Package implements EntityHydrator, EntityValidation
+class Package extends EntityAbstract
 {
-	/**
-	 * @var int Package unique identifier
-	 */
-	public $id;
-
 	/**
 	 * @var string Package name
 	 */
-	public $name;
+	protected $name;
 
 	/**
 	 * @var string Package summary
 	 */
-	public $summary;
+	protected $summary;
 
 	/**
 	 * @var string Package version
 	 */
-	public $version;
+	protected $version;
 
 	/**
 	 * @var int Package release number
 	 */
-	public $release;
+	protected $release;
 
 	/**
 	 * @var string Package APS version
 	 */
-	public $aps_version;
+	protected $aps_version;
 
 	/**
 	 * @var string Package category
 	 */
-	public $category;
+	protected $category;
 
 	/**
 	 * @var string Package vendor
 	 */
-	public $vendor;
+	protected $vendor;
 
 	/**
 	 * @var string Package vendor URI
 	 */
-	public $vendor_uri;
-
-	/**
-	 * @var string Package path
-	 */
-	public $path;
+	protected $vendor_uri;
 
 	/**
 	 * @var string Package URL
 	 */
-	public $url;
+	protected $url;
 
 	/**
 	 * @var string Package icon URL
 	 */
-	public $icon_url;
+	protected $icon_url;
 
 	/**
 	 * @var string Package certification
 	 */
-	public $cert;
+	protected $cert;
 
 	/**
 	 * @var string Package status
 	 */
-	public $status;
-
-	/**
-	 * Constructor
-	 * @param array $data Optional
-	 */
-	public function __construct(array $data = array())
-	{
-		if (!empty($data)) {
-			$this->hydrate($data);
-		}
-	}
+	protected $status;
 
 	/**
 	 * Get validation metadata
@@ -118,48 +97,257 @@ class Package implements EntityHydrator, EntityValidation
 	 */
 	public static function loadValidationMetadata(ClassMetadata $metadata)
 	{
-		// Right now, only the status filed is mutable. Thus, we process validation only for that field
+		// Right now, only the status field is mutable. Thus, we process validation only for that field
 		$metadata->addPropertyConstraints('status', array(
-			new NotBlank(),
-			new Choice(array('choices' => array('ok', 'disabled')))
+			new NotBlank(), new Choice(array('choices' => array('ok', 'disabled')))
 		));
 	}
 
 	/**
-	 * Hydrate this object with the provided data
+	 * Get package name
 	 *
-	 * @param  array $data
-	 * @return self
+	 * @return string
 	 */
-	public function hydrate(array $data)
+	public function getName()
 	{
-		$reflect = new \ReflectionClass($this);
-
-		foreach ($data as $property => $value) {
-			if ($reflect->hasProperty($property)) {
-				$this->{$property} = $value;
-			}
-		}
-
-		return $this;
+		return $this->name;
 	}
 
 	/**
-	 * Extract values from this object
+	 * Set package name
 	 *
-	 * @return array
+	 * @param string $name
+	 * @return void
 	 */
-	public function extract()
+	public function setName($name)
 	{
-		$reflect = new \ReflectionClass($this);
+		$this->name = $name;
+	}
 
-		$data = array();
+	/**
+	 * Get package summary
+	 *
+	 * @return string
+	 */
+	public function getSummary()
+	{
+		return $this->summary;
+	}
 
-		foreach ($reflect->getProperties(\ReflectionProperty::IS_PUBLIC) as $prop) {
-			$propName = $prop->getName();
-			$data[$propName] = $this->{$propName};
-		}
+	/**
+	 * Set package summary
+	 *
+	 * @param string $summary
+	 * @return void
+	 */
+	public function setSummary($summary)
+	{
+		$this->summary = $summary;
+	}
 
-		return $data;
+	/**
+	 * Get package version
+	 *
+	 * @return string
+	 */
+	public function getVersion()
+	{
+		return $this->version;
+	}
+
+	/**
+	 * Set package version
+	 *
+	 * @param string $version
+	 * @return void
+	 */
+	public function setVersion($version)
+	{
+		$this->version = $version;
+	}
+
+	/**
+	 * Get package release
+	 *
+	 * @return int
+	 */
+	public function getRelease()
+	{
+		return $this->release;
+	}
+
+	/**
+	 * Set package release
+	 *
+	 * @param int $release
+	 * @return void
+	 */
+	public function setRelease($release)
+	{
+		$this->release = $release;
+	}
+
+	/**
+	 * Get package aps version
+	 *
+	 * @return string
+	 */
+	public function getApsVersion()
+	{
+		return $this->aps_version;
+	}
+
+	/**
+	 * @param string $aps_version
+	 * @return void
+	 */
+	public function setApsVersion($aps_version)
+	{
+		$this->aps_version = $aps_version;
+	}
+
+	/**
+	 * Get package category
+	 *
+	 * @return string
+	 */
+	public function getCategory()
+	{
+		return $this->category;
+	}
+
+	/**
+	 * @param string $category
+	 * @return void
+	 */
+	public function setCategory($category)
+	{
+		$this->category = $category;
+	}
+
+	/**
+	 * Get package vendor uri
+	 *
+	 * @return string
+	 */
+	public function getVendorUri()
+	{
+		return $this->vendor_uri;
+	}
+
+	/**
+	 * Set package vendor URI
+	 *
+	 * @param string $vendor_uri
+	 * @return void
+	 */
+	public function setVendorUri($vendor_uri)
+	{
+		$this->vendor_uri = $vendor_uri;
+	}
+
+	/**
+	 * Get package vendor
+	 *
+	 * @return string
+	 */
+	public function getVendor()
+	{
+		return $this->vendor;
+	}
+
+	/**
+	 * Set package vendor
+	 *
+	 * @param string $vendor
+	 * @return void
+	 */
+	public function setVendor($vendor)
+	{
+		$this->vendor = $vendor;
+	}
+
+	/**
+	 * Get package URL
+	 *
+	 * @return string
+	 */
+	public function getUrl()
+	{
+		return $this->url;
+	}
+
+	/**
+	 * Set package URL
+	 *
+	 * @param string $url
+	 * @return void
+	 */
+	public function setUrl($url)
+	{
+		$this->url = $url;
+	}
+
+	/**
+	 * Get package icon URL
+	 *
+	 * @return string
+	 */
+	public function getIconUrl()
+	{
+		return $this->icon_url;
+	}
+
+	/**
+	 * Set package icon URL
+	 *
+	 * @param string $icon_url
+	 * @return void
+	 */
+	public function setIconUrl($icon_url)
+	{
+		$this->icon_url = $icon_url;
+	}
+
+	/**
+	 * Get package certification level
+	 *
+	 * @return string
+	 */
+	public function getCert()
+	{
+		return $this->cert;
+	}
+
+	/**
+	 * Set package certification level
+	 *
+	 * @param string $cert
+	 * @return void
+	 */
+	public function setCert($cert)
+	{
+		$this->cert = $cert;
+	}
+
+	/**
+	 * Get package status
+	 *
+	 * @return string
+	 */
+	public function getStatus()
+	{
+		return $this->status;
+	}
+
+	/**
+	 * Set package status
+	 *
+	 * @param string $status
+	 * @return void
+	 */
+	public function setStatus($status)
+	{
+		$this->status = $status;
 	}
 }

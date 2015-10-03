@@ -20,6 +20,8 @@
 
 namespace iMSCP\ApsStandard;
 
+use iMSCP_Registry as Registry;
+
 /**
  * Class ApsStandard
  * @package iMSCP\ApsStandard
@@ -33,7 +35,7 @@ abstract class ApsStandardAbstract
 		'1',
 		'1.1',
 		'1.2',
-		// '2.0' Not yet supported (must add routines to handle new schema)
+		// '2.0' Not supported yet (must add routines to handle new schema)
 	);
 
 	/**
@@ -49,15 +51,16 @@ abstract class ApsStandardAbstract
 	/**
 	 * @var string APS packages directory
 	 */
-	protected $packagesDir;
+	protected $packageDir;
 
 	/**
 	 * Constructor
 	 */
 	public function __construct()
 	{
-		$this->setPackageMetadataDir(GUI_ROOT_DIR . '/data/persistent/aps/meta');
-		$this->setPackagesDir(GUI_ROOT_DIR . '/data/persistent/aps/packages');
+		$config = Registry::get('config');
+		$this->setPackageMetadataDir($config['CACHE_DATA_DIR'] . '/aps_standard/metadata');
+		$this->setPackageDir($config['CACHE_DATA_DIR'] . '/aps_standard/packages');
 	}
 
 	/**
@@ -107,19 +110,19 @@ abstract class ApsStandardAbstract
 	 *
 	 * @return string
 	 */
-	public function getPackagesDir()
+	public function getPackageDir()
 	{
-		return $this->packagesDir;
+		return $this->packageDir;
 	}
 
 	/**
 	 * Set packages directory
 	 *
-	 * @param string $packagesDir
+	 * @param string $packageDir
 	 */
-	public function setPackagesDir($packagesDir)
+	public function setPackageDir($packageDir)
 	{
-		$packagesDir = (string)$packagesDir;
-		$this->packagesDir = rtrim($packagesDir, '/');
+		$packageDir = (string)$packageDir;
+		$this->packageDir = rtrim($packageDir, '/');
 	}
 }

@@ -18,26 +18,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\ApsStandard\Entity;
+namespace iMSCP\ApsStandard;
+
+use Symfony\Component\Validator\Mapping\ClassMetadata;
 
 /**
- * Interface EntityHydrator
+ * Interface EntityValidation
  * @package iMSCP\ApsStandard\Entity
  */
-interface EntityHydrator
+interface Validation
 {
 	/**
-	 * Hydrate object with the provided data
+	 * Load validation metadata
 	 *
-	 * @param  array $data
-	 * @return object
+	 * @param ClassMetadata $metadata
+	 * @return void
 	 */
-	public function hydrate(array $data);
-
-	/**
-	 * Extract values from object
-	 *
-	 * @return array
-	 */
-	public function extract();
+	public static function loadValidationMetadata(ClassMetadata $metadata);
 }

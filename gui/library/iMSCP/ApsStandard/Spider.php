@@ -50,32 +50,13 @@ class Spider extends ApsStandardAbstract
 			// Ensure that all needed functions are available
 			$this->checkRequirements();
 
-			ignore_user_abort(1); // Do not abort on a client disconnection
-			set_time_limit(0); // Tasks made by this object can take up several minutes to finish
-
-			if (PHP_SAPI == 'cli') {
-				if (0 != posix_getuid()) {
-					throw new \RuntimeException('This script must be run as root user.');
-				}
-
-				// Set real user UID/GID of current process (panel user)
-				$config = Registry::get('config');
-				$panelUser = $config['SYSTEM_USER_PREFIX'] . $config['SYSTEM_USER_MIN_UID'];
-				if ($info = @posix_getpwnam($panelUser) === false) {
-					throw new \RuntimeException(sprintf("Could not get info about the '%s' user.", $panelUser));
-				}
-
-				if (!@posix_setuid($info['uid']) || !@posix_setgid($info['gid'])) {
-					throw new \RuntimeException(sprintf(
-						'Could not change real user uid/gid of current process: %s', $panelUser, $php_errormsg
-					));
-				}
-			}
+			// Setup environment
+			$this->setupEnvironment();
 
 			// Acquires exclusive lock to prevent multiple run
 			$this->lockFile = @fopen(GUI_ROOT_DIR . '/data/tmp/aps_spider_lock', 'w');
 			if (!@flock($this->lockFile, LOCK_EX | LOCK_NB)) {
-				throw new \RuntimeException('Another instance is already running. Aborting...');
+				throw new \RuntimeException(tr('Another instance is already running. Aborting...'));
 			}
 
 			// Retrieves list of known packages
@@ -90,7 +71,7 @@ class Spider extends ApsStandardAbstract
 			}
 		} catch (\Exception $e) {
 			if (PHP_SAPI == 'cli') {
-				fwrite(STDERR, sprintf("Runtime error: %s\n", $e->getMessage()));
+				fwrite(STDERR, sprintf(tr("Runtime error: %s\n"), $e->getMessage()));
 				exit(1);
 			}
 
@@ -152,14 +133,14 @@ class Spider extends ApsStandardAbstract
 						}
 						unset($repositoryFeed);
 
-						// Update package index by exploring local metadata directory for the given repository
+						// Update package index by exploring local metadata directories for the given repository
 						$this->updatePackageIndex($repositoryId);
 					}
 				}
 			}
 		} catch (\Exception $e) {
 			if (PHP_SAPI == 'cli') {
-				fwrite(STDERR, sprintf("Runtime error: %s\n", $e->getMessage()));
+				fwrite(STDERR, sprintf(tr("Runtime error: %s\n"), $e->getMessage()));
 				exit(1);
 			}
 
@@ -178,7 +159,7 @@ class Spider extends ApsStandardAbstract
 	{
 		$metaFiles = array();
 		$metadataDir = $this->getPackageMetadataDir() . '/' . $repositoryId;
-		$knowsPkgs = isset($this->packages[$repositoryId]) ? $this->packages[$repositoryId] : array();
+		$knownPkgs = isset($this->packages[$repositoryId]) ? $this->packages[$repositoryId] : array();
 
 		// Parse all package entries
 		foreach ($repositoryFeed->getXPathValue("root:entry", null, false) as $entry) {
@@ -187,7 +168,7 @@ class Spider extends ApsStandardAbstract
 			$pkgVersion = $repositoryFeed->getXPathValue("a:version/text()", $entry);
 			$pkgRelease = $repositoryFeed->getXPathValue("a:release/text()", $entry);
 			$vendor = $repositoryFeed->getXPathValue("a:vendor/text()", $entry);
-			$vendorURI = $repositoryFeed->getXPathValue("a:vendor_uri/text()", $entry) ?:
+			$vendorUri = $repositoryFeed->getXPathValue("a:vendor_uri/text()", $entry) ?:
 				$repositoryFeed->getXPathValue("a:homepage/text()", $entry);
 			$pkgUrl = $repositoryFeed->getXPathValue("root:link[@a:type='aps']/@href", $entry);
 			$pkgMetaUrl = $repositoryFeed->getXPathValue("root:link[@a:type='meta']/@href", $entry);
@@ -196,7 +177,7 @@ class Spider extends ApsStandardAbstract
 
 			// Continue only if all data are available
 			if (
-				$pkgName != '' && $pkgVersion != '' && $pkgRelease != '' && $vendor != '' && $vendorURI != '' &&
+				$pkgName != '' && $pkgVersion != '' && $pkgRelease != '' && $vendor != '' && $vendorUri != '' &&
 				$pkgUrl != '' && $pkgMetaUrl != ''
 			) {
 				// Package metadata directory
@@ -204,9 +185,9 @@ class Spider extends ApsStandardAbstract
 
 				$pkgCversion = null;
 				$pkgCrelease = null;
-				if (isset($knowsPkgs[$pkgName])) {
-					$pkgCversion = $knowsPkgs[$pkgName]['version'];
-					$pkgCrelease = $knowsPkgs[$pkgName]['release'];
+				if (isset($knownPkgs[$pkgName])) {
+					$pkgCversion = $knownPkgs[$pkgName]['version'];
+					$pkgCrelease = $knownPkgs[$pkgName]['release'];
 				}
 
 				$isKnowVersion = !is_null($pkgCversion);
@@ -234,21 +215,16 @@ class Spider extends ApsStandardAbstract
 					}
 
 					// Marks this package as seen
-					$knowsPkgs[$pkgName] = array('version' => $pkgVersion, 'release' => $pkgRelease);
+					$knownPkgs[$pkgName] = array('version' => $pkgVersion, 'release' => $pkgRelease);
 
 					// Create package metadata directory
-					if (!@mkdir($pkgMetadataDir, 0750, true)) {
-						throw new \RuntimeException(sprintf('Could not create package metadata directory:', $php_errormsg));
-					}
+					@mkdir($pkgMetadataDir, 0750, true);
 
 					// Save intermediate metadata
-					if (!(@file_put_contents("$pkgMetadataDir/APP-META.json", json_encode(array(
+					@file_put_contents("$pkgMetadataDir/APP-META.json", json_encode(array(
 						'app_url' => $pkgUrl, 'app_icon_url' => $pkgIconUrl, 'app_cert_level' => $pkgCertLevel,
-						'app_vendor' => $vendor, 'app_vendor_uri' => $vendorURI
-					))))
-					) {
-						throw new \RuntimeException(sprintf('Could not save intermediate metadata:', $php_errormsg));
-					}
+						'app_vendor' => $vendor, 'app_vendor_uri' => $vendorUri
+					)));
 
 					// Schedule download of APP-META.xml file
 					$metaFiles[$pkgName] = array('src' => $pkgMetaUrl, 'trg' => "$pkgMetadataDir/APP-META.xml");
@@ -355,7 +331,13 @@ class Spider extends ApsStandardAbstract
 	 */
 	protected function downloadFiles(array $files)
 	{
-		$files = array_chunk($files, 20); // Download by chunk of 20 files at once
+		# Get needed configuration parameters
+		$config = Registry::get('config');
+		$distroCAbundle = $config['DISTRO_CA_BUNDLE'];
+		$distroCApath = $config['DISTRO_CA_PATH'];
+
+		// We download by chunk of 20 files at once
+		$files = array_chunk($files, 20);
 
 		foreach ($files as $chunk) {
 			$fileHandles = array();
@@ -364,24 +346,26 @@ class Spider extends ApsStandardAbstract
 
 			// Create cURL handles (one per file) and add them to cURL multi handle
 			for ($i = 0, $size = count($chunk); $i < $size; $i++) {
-				$fileHandle = @fopen($chunk[$i]['trg'], 'wb');
-				$curlHandle = @curl_init($chunk[$i]['src']);
+				$fileHandle = fopen($chunk[$i]['trg'], 'wb');
+				$curlHandle = curl_init($chunk[$i]['src']);
 
 				if (!$curlHandle || !$fileHandle) {
-					continue;
+					throw new \RuntimeException(tr("Runtime error: %s\n", tr('Could not create cURL or file handle')));
 				}
 
 				curl_setopt_array($curlHandle, array(
 					CURLOPT_BINARYTRANSFER => true,
 					CURLOPT_RETURNTRANSFER => true,
 					CURLOPT_FILE => $fileHandle,
-					CURLOPT_TIMEOUT => 240,
+					CURLOPT_TIMEOUT => 300,
 					CURLOPT_FAILONERROR => true,
-					CURLOPT_FOLLOWLOCATION => false, // Cannot be true when safe_mode or openbase_dir are in effect
+					CURLOPT_FOLLOWLOCATION => false, // Cannot be true when safe_mode or open_basedir are in effect
 					CURLOPT_HEADER => false,
 					CURLOPT_NOBODY => false,
 					CURLOPT_SSL_VERIFYHOST => 2,
-					CURLOPT_SSL_VERIFYPEER => false
+					CURLOPT_SSL_VERIFYPEER => true,
+					CURLOPT_CAINFO => $distroCAbundle,
+					CURLOPT_CAPATH => $distroCApath
 				));
 
 				$curlHandles[$i] = $curlHandle;
@@ -395,7 +379,7 @@ class Spider extends ApsStandardAbstract
 
 				// Follow location manually by updating the cUrl handle (URL).
 				// This is a workaround for CURLOPT_FOLLOWLOCATION which cannot be true when safe_more or
-				// openbase_dir are in effect
+				// open_basedir are in effect
 				while ($info = curl_multi_info_read($curlMultiHandle)) {
 					$handle = $info['handle']; // Get involved cURL handle
 					$info = curl_getinfo($handle); // Get handle info
@@ -429,19 +413,61 @@ class Spider extends ApsStandardAbstract
 	protected function checkRequirements()
 	{
 		if (!ini_get('allow_url_fopen')) {
-			throw new \RuntimeException('allow_url_fopen is disabled');
+			throw new \RuntimeException(tr("Runtime error: %s\n", tr('allow_url_fopen is disabled')));
 		}
 
 		if (!function_exists('curl_version')) {
-			throw new \RuntimeException('cURL extension is not available');
+			throw new \RuntimeException(tr("Runtime error: %s\n", tr('cURL extension is not available')));
 		}
 
 		if (!function_exists('json_encode')) {
-			throw new \RuntimeException('JSON support is not available');
+			throw new \RuntimeException(tr("Runtime error: %s\n", tr('JSON support is not available')));
 		}
 
 		if (!function_exists('posix_getuid')) {
-			throw new \RuntimeException('Support for POSIX functions is not available');
+			throw new \RuntimeException(tr("Runtime error: %s\n", tr('Support for POSIX functions is not available')));
+		}
+
+		if (0 != posix_getuid()) {
+			throw new \RuntimeException(tr("Runtime error: %s\n", tr('This script must be run as root user.')));
+		}
+	}
+
+	/**
+	 * Setup environment
+	 *
+	 * @return void
+	 */
+	protected function setupEnvironment()
+	{
+		ignore_user_abort(1); // Do not abort on a client disconnection
+		set_time_limit(0); // Tasks made by this object can take up several minutes to finish
+
+		// Set umask
+		umask(027);
+
+		if (PHP_SAPI == 'cli') {
+			// Set real user UID/GID of current process (panel user)
+			$config = Registry::get('config');
+			$panelUser = $config['SYSTEM_USER_PREFIX'] . $config['SYSTEM_USER_MIN_UID'];
+			if (($info = @posix_getpwnam($panelUser)) === false) {
+				throw new \RuntimeException(tr(
+					"Runtime error: %s\n", tr("Could not get info about the '%s' user.", $panelUser)
+				));
+			}
+
+			if (!@posix_initgroups($panelUser, $info['gid'])) {
+				throw new \RuntimeException(tr(
+					"Runtime error: %s\n", tr("could not calculates the group access list for the '%s' user", $panelUser)
+				));
+			}
+
+			// setgid must be called first, else it will fail
+			if (!@posix_setgid($info['gid']) || !@posix_setuid($info['uid'])) {
+				throw new \RuntimeException(tr(
+					"Runtime error: %s \n", tr('Could not change real user uid/gid of current process')
+				));
+			}
 		}
 	}
 }

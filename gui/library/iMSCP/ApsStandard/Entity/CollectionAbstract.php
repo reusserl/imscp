@@ -20,19 +20,42 @@
 
 namespace iMSCP\ApsStandard\Entity;
 
-use Symfony\Component\Validator\Mapping\ClassMetadata;
+use iMSCP\ApsStandard\Hydrator;
 
 /**
- * Interface EntityValidation
+ * Class CollectionAbstract
  * @package iMSCP\ApsStandard\Entity
  */
-interface EntityValidation
+abstract class CollectionAbstract implements Hydrator
 {
 	/**
-	 * Load validation metadata
+	 * @var EntityAbstract[]
+	 */
+	protected $entities = array();
+
+	/**
+	 * Add the given entity to the collection
 	 *
-	 * @param ClassMetadata $metadata
+	 * @param EntityAbstract $entity
 	 * @return void
 	 */
-	public static function loadValidationMetadata(ClassMetadata $metadata);
+	public function addEntity(EntityAbstract $entity)
+	{
+		$this->entities[] = $entity;
+	}
+
+	/**
+	 * Extract values from collection
+	 *
+	 * @return array
+	 */
+	public function extract()
+	{
+		$data = array();
+		foreach ($this->entities as $entity) {
+			$data[] = $entity->extract();
+		}
+
+		return $data;
+	}
 }

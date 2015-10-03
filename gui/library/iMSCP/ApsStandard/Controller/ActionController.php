@@ -25,6 +25,7 @@ use iMSCP_Authentication as Authentication;
 use iMSCP_Events_Aggregator as EventManager;
 use iMSCP_Database as Database;
 use Symfony\Component\Validator\Validation;
+use iMSCP\ApsStandard\Hydrator;
 
 /**
  * Class ActionController
@@ -62,11 +63,18 @@ abstract class ActionController extends ApsStandardAbstract
 	}
 
 	/**
+	 * Handle HTTP request
+	 *
+	 * @return void
+	 */
+	abstract function handleRequest();
+
+	/**
 	 * Return Validator
 	 *
 	 * @return \Symfony\Component\Validator\ValidatorInterface
 	 */
-	public function getValidator()
+	protected function getValidator()
 	{
 		return Validation::createValidatorBuilder()->addMethodMapping('loadValidationMetadata')->getValidator();
 	}
@@ -75,10 +83,10 @@ abstract class ActionController extends ApsStandardAbstract
 	 * Send Json response
 	 *
 	 * @param int $statusCode HTTP status code
-	 * @param array|string $data JSON data
+	 * @param Hydrator|array|string $data JSON data
 	 * @return void
 	 */
-	public function sendJsonResponse($statusCode = 200, $data = '')
+	protected function sendResponse($statusCode = 200, $data = '')
 	{
 		header('Cache-Control: no-cache, must-revalidate');
 		header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
@@ -86,19 +94,22 @@ abstract class ActionController extends ApsStandardAbstract
 
 		switch ($statusCode) {
 			case 200:
-				header('Status: 202 OK');
+				header('Status: 200 OK');
 				break;
 			case 201:
-				header('Status: 202 Created');
+				header('Status: 201 Created');
 				break;
 			case 202:
 				header('Status: 202 Accepted');
 				break;
 			case 204:
-				header('Status: 202 No Content');
+				header('Status: 204 No Content');
 				break;
 			case 400:
 				header('Status: 400 Bad Request');
+				break;
+			case 403:
+				header('Status: 403 Forbidden');
 				break;
 			case 404:
 				header('Status: 404 Not Found');
@@ -116,6 +127,10 @@ abstract class ActionController extends ApsStandardAbstract
 				header('Status: 200 OK');
 		}
 
-		exit(json_encode($data, JSON_PRETTY_PRINT));
+		if ($data instanceof Hydrator) {
+			$data = $data->extract();
+		}
+
+		exit(json_encode($data));
 	}
 }
