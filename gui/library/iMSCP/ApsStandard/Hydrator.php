@@ -27,12 +27,12 @@ namespace iMSCP\ApsStandard;
 interface Hydrator
 {
 	/**
-	 * Hydrate object with the provided data
+	 * Hydrate object with the provided values
 	 *
-	 * @param  array $data
+	 * @param  array $values
 	 * @return Hydrator
 	 */
-	public function hydrate(array $data);
+	public function hydrate(array $values);
 
 	/**
 	 * Extract values from object

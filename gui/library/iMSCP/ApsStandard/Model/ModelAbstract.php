@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\ApsStandard\Entity;
+namespace iMSCP\ApsStandard\Model;
 
 use iMSCP\ApsStandard\Hydrator;
 use iMSCP\ApsStandard\Validation;
@@ -28,7 +28,7 @@ use iMSCP\ApsStandard\Validation;
  * Class Package
  * @package iMSCP\ApsStandard\Entity
  */
-abstract class EntityAbstract implements Hydrator, Validation
+abstract class ModelAbstract implements Hydrator, Validation
 {
 	/**
 	 * @var int Package unique identifier
@@ -56,17 +56,15 @@ abstract class EntityAbstract implements Hydrator, Validation
 	}
 
 	/**
-	 * Hydrate this object with the provided data
-	 *
-	 * @param  array $data
-	 * @return EntityAbstract
+	 * {@inheritDoc}
 	 */
-	public function hydrate(array $data)
+	public function hydrate(array $values)
 	{
-		$reflect = new \ReflectionClass($this);
-		foreach ($data as $property => $value) {
-			if ($reflect->hasProperty($property)) {
-				$this->{$property} = $value;
+		// Hydrate using class methods (setters)
+		foreach ($values as $property => $value) {
+			$setter = 'set' . str_replace(' ', '', ucwords(str_replace('_', ' ', $property)));
+			if (is_callable(array($this, $setter))) {
+				$this->{$setter}($value);
 			}
 		}
 
@@ -74,19 +72,38 @@ abstract class EntityAbstract implements Hydrator, Validation
 	}
 
 	/**
-	 * Extract values from this object
-	 *
-	 * @return array
+	 * {@inheritDoc}
 	 */
 	public function extract()
 	{
+		// Extract using class methods (getters)
 		$reflect = new \ReflectionClass($this);
-		$data = array();
-		foreach ($reflect->getProperties(\ReflectionProperty::IS_PROTECTED) as $prop) {
-			$propName = $prop->getName();
-			$data[$propName] = $this->{$propName};
+
+		$values = array();
+		foreach ($reflect->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+			$attribute = $method->getName();
+
+			if (strlen($attribute) < 3 || !in_array(substr($attribute, 0, 3), array('get', 'has', 'is'))) {
+				continue;
+			}
+
+			if (strpos($attribute, 'get') === 0) {
+				$attribute = substr($attribute, 3);
+				if (!property_exists($this, $attribute)) {
+					$attribute = lcfirst($attribute);
+				}
+			}
+
+			// CamelCase to underscore
+			$attribute = strtolower(preg_replace(
+				array('#(?<=(?:\p{Lu}))(\p{Lu}\p{Ll})#', '#(?<=(?:\p{Ll}|\p{Nd}))(\p{Lu})#'),
+				array('_' . '\1', '_' . '\1'),
+				$attribute
+			));
+
+			$values[$attribute] = $method->invoke($this);
 		}
 
-		return $data;
+		return $values;
 	}
 }

@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\ApsStandard\Entity;
+namespace iMSCP\ApsStandard\Model;
 
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Constraints\Choice;
@@ -26,9 +26,9 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 /**
  * Class Package
- * @package iMSCP\ApsStandard\Entity
+ * @package iMSCP\ApsStandard\Model
  */
-class Package extends EntityAbstract
+class Package extends ModelAbstract
 {
 	/**
 	 * @var string Package name

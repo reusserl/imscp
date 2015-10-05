@@ -18,11 +18,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\ApsStandard\Entity;
+namespace iMSCP\ApsStandard\Model;
 
 /**
  * Class PackageDetails
- * @package iMSCP\ApsStandard\Entity
+ * @package iMSCP\ApsStandard\Model
  */
 class PackageDetails extends Package
 {
@@ -35,6 +35,21 @@ class PackageDetails extends Package
 	 * @var array Package screenshots
 	 */
 	protected $screenshots = array();
+
+	/**
+	 * @var string Package packager
+	 */
+	protected $packager;
+
+	/**
+	 * @var string Package license
+	 */
+	protected $license_name;
+
+	/**
+	 * @var string Package license text
+	 */
+	protected $licence_text;
 
 	/**
 	 * Get package description
@@ -75,5 +90,57 @@ class PackageDetails extends Package
 	public function setScreenshots($screenshots)
 	{
 		$this->screenshots = $screenshots;
+	}
+
+	/**
+	 * Get package packager
+	 *
+	 * @return string
+	 */
+	public function getPackager()
+	{
+		return $this->packager;
+	}
+
+	/**
+	 * Set package packager
+	 *
+	 * @param string $packager
+	 */
+	public function setPackager($packager)
+	{
+		$this->packager = $packager;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getLicenseName()
+	{
+		return $this->license_name;
+	}
+
+	/**
+	 * @param string $license_name
+	 */
+	public function setLicenseName($license_name)
+	{
+		$this->license_name = $license_name;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getLicenceText()
+	{
+		return $this->licence_text;
+	}
+
+	/**
+	 * @param string $licence_text
+	 */
+	public function setLicenceText($licence_text)
+	{
+		$this->licence_text = $licence_text;
 	}
 }

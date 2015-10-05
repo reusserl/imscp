@@ -18,27 +18,44 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\ApsStandard\Entity;
+namespace iMSCP\ApsStandard\Model;
 
 /**
  * Class PackageCollection
- * @package iMSCP\ApsStandard\Entity
+ * @package iMSCP\ApsStandard\Model
  */
 class PackageCollection extends CollectionAbstract
 {
 	/**
-	 * Hydrate collection with the provided data
+	 * Get total packages in that collection
 	 *
-	 * @param array $data
-	 * @return PackageCollection
+	 * @return int Package count
 	 */
-	public function hydrate(array $data)
+	public function getTotalPackages()
 	{
-		foreach ($data as $entityData) {
+		return count($this->models);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function hydrate(array $values)
+	{
+		foreach ($values as $entityData) {
 			$entity = new Package();
 			$this->addEntity($entity->hydrate($entityData));
 		}
 
 		return $this;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function extract()
+	{
+		$data['packages'] = parent::extract();
+		$data['total_packages'] = $this->getTotalPackages();
+		return $data;
 	}
 }

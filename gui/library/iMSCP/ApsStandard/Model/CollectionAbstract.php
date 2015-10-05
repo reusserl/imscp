@@ -18,44 +18,42 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\ApsStandard\Entity;
+namespace iMSCP\ApsStandard\Model;
 
 use iMSCP\ApsStandard\Hydrator;
 
 /**
  * Class CollectionAbstract
- * @package iMSCP\ApsStandard\Entity
+ * @package iMSCP\ApsStandard\Model
  */
 abstract class CollectionAbstract implements Hydrator
 {
 	/**
-	 * @var EntityAbstract[]
+	 * @var ModelAbstract[]
 	 */
-	protected $entities = array();
+	protected $models = array();
 
 	/**
-	 * Add the given entity to the collection
+	 * Add the given model to the collection
 	 *
-	 * @param EntityAbstract $entity
+	 * @param ModelAbstract $model
 	 * @return void
 	 */
-	public function addEntity(EntityAbstract $entity)
+	public function addEntity(ModelAbstract $model)
 	{
-		$this->entities[] = $entity;
+		$this->models[] = $model;
 	}
 
 	/**
-	 * Extract values from collection
-	 *
-	 * @return array
+	 * {@inheritDoc}
 	 */
 	public function extract()
 	{
-		$data = array();
-		foreach ($this->entities as $entity) {
-			$data[] = $entity->extract();
+		$values = array();
+		foreach ($this->models as $model) {
+			$values[] = $model->extract();
 		}
 
-		return $data;
+		return $values;
 	}
 }
