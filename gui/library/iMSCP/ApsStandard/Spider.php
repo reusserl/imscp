@@ -35,6 +35,11 @@ class Spider extends ApsStandardAbstract
 	protected $packages = array();
 
 	/**
+	 * @var array List of unlocked packages
+	 */
+	protected $unlockedPackages = array();
+
+	/**
 	 * @var resource Lock file
 	 */
 	protected $lockFile;
@@ -54,13 +59,17 @@ class Spider extends ApsStandardAbstract
 			$this->setupEnvironment();
 
 			// Retrieves list of known packages
-			$stmt = exec_query('SELECT `name`, `version`, `aps_version`, `release` FROM `aps_packages`');
+			$stmt = exec_query('SELECT `name`, `version`, `aps_version`, `release`, `status` FROM `aps_packages`');
 			if ($stmt->rowCount()) {
 				while ($row = $stmt->fetchRow(\PDO::FETCH_ASSOC)) {
 					$this->packages[$row['aps_version']][$row['name']] = array(
 						'version' => $row['version'],
 						'release' => $row['release']
 					);
+
+					if ($row['status'] === 'ok') {
+						$this->unlockedPackages[] = $row['name'];
+					}
 				}
 			}
 		} catch (\Exception $e) {
@@ -299,7 +308,8 @@ class Spider extends ApsStandardAbstract
 							',
 							array(
 								$pkgName, $pkgSummary, $pkgVersion, $repoId, $pkgRelease, $pkgCategory, $pkgVendor,
-								$pkgVendorURI, $pkgUrl, $pkgIconUrl, $pkgCertLevel, 'disabled'
+								$pkgVendorURI, $pkgUrl, $pkgIconUrl, $pkgCertLevel,
+								(isset($this->unlockedPackages[$pkgName])) ? 'ok' : 'disabled'
 							)
 						);
 					} else {

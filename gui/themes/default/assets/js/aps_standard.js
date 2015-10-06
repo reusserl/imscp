@@ -133,7 +133,7 @@
 						"class": "static_info",
 						"html": $.parseHTML(imscp_i18n.core.aps_standard.no_package_available),
 						"hide": true
-					}).prependTo(".aps");
+					}).prependTo(".PackageList");
 					return [];
 				}
 			});
