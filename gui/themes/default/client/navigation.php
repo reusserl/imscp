@@ -404,6 +404,27 @@ return array(
 			)
 		)
 	),
+	'aps_standard' => array(
+		'label' => tr('APS Standard'),
+		'uri' => '/client/aps_packages.php',
+		'class' => 'packages',
+		'privilege_callback' => array(
+			'name' => 'customerHasFeature',
+			'param' => 'aps_standard'
+		),
+		'pages' => array(
+			'packages' => array(
+				'label' => tr('Packages'),
+				'uri' => '/client/aps_packages.php',
+				'title_class' => 'packages'
+			),
+			'package_instances' => array(
+				'label' => tr('Package instances'),
+				'uri' => '/client/aps_package_instances.php',
+				'title_class' => 'packages'
+			)
+		)
+	),
 	'support' => array(
 		'label' => tr('Support'),
 		'uri' => '{SUPPORT_SYSTEM_PATH}',

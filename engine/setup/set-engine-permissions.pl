@@ -85,7 +85,7 @@ setRights($rootDir, { user => $rootUName, group => $rootGName, mode => '0755' })
 setRights("$rootDir/engine", { user => $rootUName, group => $imscpGName, mode => '0750', recursive => 1 });
 setRights($main::imscpConfig{'USER_WEB_DIR'}, { user => $rootUName, group => $rootGName, mode => '0755' });
 setRights($main::imscpConfig{'LOG_DIR'}, { user => $rootUName, group => $imscpGName, mode => '0750'} );
-setRights($main::imscpConfig{'CACHE_DATA_DIR'}, { user => $rootUName, group => $rootGName, mode => '0750' });
+setRights($main::imscpConfig{'CACHE_DATA_DIR'}, { user => $rootUName, group => $imscpGName, mode => '0770' });
 setRights($main::imscpConfig{'VARIABLE_DATA_DIR'}, { user => $rootUName, group => $rootGName, mode => '0750' });
 
 $counter++;

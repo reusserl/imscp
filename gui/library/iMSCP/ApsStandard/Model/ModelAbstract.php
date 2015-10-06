@@ -23,10 +23,9 @@ namespace iMSCP\ApsStandard\Model;
 use iMSCP\ApsStandard\Hydrator;
 use iMSCP\ApsStandard\Validation;
 
-
 /**
- * Class Package
- * @package iMSCP\ApsStandard\Entity
+ * Class ModelAbstract
+ * @package iMSCP\ApsStandard\Model
  */
 abstract class ModelAbstract implements Hydrator, Validation
 {

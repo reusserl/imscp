@@ -31,7 +31,7 @@ use iMSCP\ApsStandard\Hydrator;
  * Class ActionController
  * @package iMSCP\ApsStandard\Controller
  */
-abstract class ActionController extends ApsStandardAbstract
+abstract class ControllerAbstract extends ApsStandardAbstract
 {
 	/**
 	 * @var \stdClass $identity User identity

@@ -780,6 +780,7 @@ sub _buildPhpConfig
 		WEB_DIR => $main::imscpConfig{'GUI_ROOT_DIR'},
 		DOMAIN => $main::imscpConfig{'BASE_SERVER_VHOST'},
 		CONF_DIR => $main::imscpConfig{'CONF_DIR'},
+		CACHE_DATA_DIR => $main::imscpConfig{'CACHE_DATA_DIR'},
 		PEAR_DIR => $main::imscpConfig{'PEAR_DIR'},
 		RKHUNTER_LOG => $main::imscpConfig{'RKHUNTER_LOG'},
 		CHKROOTKIT_LOG => $main::imscpConfig{'CHKROOTKIT_LOG'},
@@ -1033,12 +1034,8 @@ sub _addDnsZone
 sub _installComposerPackages
 {
 	my $packagesDir = "$main::imscpConfig{'CACHE_DATA_DIR'}/packages/vendor/symfony";
-
-	-d $packagesDir or die('Could not find the symfony packages at %s', $packagesDir);
-
-	my $destDir = "$main::imscpConfig{'GUI_ROOT_DIR'}/library/vendor/symfony";
-	iMSCP::Dir->new( dirname => $destDir )->remove();
-	iMSCP::Dir->new( dirname => $packagesDir )->rcopy($destDir);
+	-d $packagesDir or die('Could not find symfony packages at %s', $packagesDir);
+	iMSCP::Dir->new( dirname => $packagesDir )->rcopy("$main::imscpConfig{'GUI_ROOT_DIR'}/library/vendor/symfony");
 }
 
 =item _saveConfig()

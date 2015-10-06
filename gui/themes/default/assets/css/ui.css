@@ -118,6 +118,7 @@ body {
 /* Links */
 a {
     text-decoration: none;
+    cursor: pointer;
 }
 
 /**
@@ -696,7 +697,7 @@ small {
     right:0;
     width:50%;
     margin: 0 auto 0 auto;
-    z-index: 5000;
+    z-index: 7000;
 }
 
 .static_warning,
@@ -822,11 +823,13 @@ table .icon {
     padding-left: 18px;
 }
 
+/*
 .paginator .icon {
     width: 0;
     height: 16px;
     line-height: 32px;
 }
+*/
 
 .icon.big {
     line-height: 44px;
@@ -1063,7 +1066,7 @@ table .icon {
 .dataTables_wrapper table {
     min-width: 100%;
     width: 100%;
-    white-space: nowrap;
+    /*white-space: nowrap;*/
 }
 
 .dataTables_processing {
@@ -1304,6 +1307,7 @@ table .graph {
 .paginator {
     margin: 0.5em 0;
     float: right;
+    cursor: pointer;
 }
 
 .paginator .icon {
@@ -1318,13 +1322,13 @@ table .graph {
  */
 .footer {
     position: absolute;
-    bottom: 10px;
+    left:0;
+    bottom: 5px;
     text-align: center;
     width: 197px;
-    height: 4em;
+    height: auto;
     font-weight: bold;
     line-height: 1.2em;
-    /*padding: 1em 0;*/
 }
 
 .no_footer .footer {

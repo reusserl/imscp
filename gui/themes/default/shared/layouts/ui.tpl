@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>{TR_PAGE_TITLE}</title>
-<meta charset="{THEME_CHARSET}">
-<meta name="robots" content="nofollow, noindex">
-<link rel="icon" href="{THEME_ASSETS_PATH}/images/favicon.ico">
-<link rel="stylesheet" href="{THEME_ASSETS_PATH}/css/jquery-ui-{THEME_COLOR}.css?v={THEME_ASSETS_VERSION}">
-<link rel="stylesheet" href="{THEME_ASSETS_PATH}/css/ui.css?v={THEME_ASSETS_VERSION}">
-<link rel="stylesheet" href="{THEME_ASSETS_PATH}/css/{THEME_COLOR}.css?v={THEME_ASSETS_VERSION}">
-<script>
-	imscp_i18n = {JS_TRANSLATIONS};
-</script>
-<script src="{THEME_ASSETS_PATH}/js/vendor/jquery.min.js?v={THEME_ASSETS_VERSION}"></script>
-<script src="{THEME_ASSETS_PATH}/js/vendor/jquery-ui.min.js?v={THEME_ASSETS_VERSION}"></script>
-<script src="{THEME_ASSETS_PATH}/js/vendor/datatables.min.js?v={THEME_ASSETS_VERSION}"></script>
-<script src="{THEME_ASSETS_PATH}/js/vendor/datatables_natural.min.js?v={THEME_ASSETS_VERSION}"></script>
-<script src="{THEME_ASSETS_PATH}/js/vendor/pgenerator.min.js?v={THEME_ASSETS_VERSION}"></script>
-<script src="{THEME_ASSETS_PATH}/js/imscp.js?v={THEME_ASSETS_VERSION}"></script>
+	<title>{TR_PAGE_TITLE}</title>
+	<meta charset="{THEME_CHARSET}">
+	<meta name="robots" content="nofollow, noindex">
+	<link rel="icon" href="{THEME_ASSETS_PATH}/images/favicon.ico">
+	<link rel="stylesheet" href="{THEME_ASSETS_PATH}/css/jquery-ui-{THEME_COLOR}.css?v={THEME_ASSETS_VERSION}">
+	<link rel="stylesheet" href="{THEME_ASSETS_PATH}/css/ui.css?v={THEME_ASSETS_VERSION}">
+	<link rel="stylesheet" href="{THEME_ASSETS_PATH}/css/{THEME_COLOR}.css?v={THEME_ASSETS_VERSION}">
+	<script>
+		imscp_i18n = {JS_TRANSLATIONS};
+	</script>
+	<script src="{THEME_ASSETS_PATH}/js/vendor/jquery.min.js?v={THEME_ASSETS_VERSION}"></script>
+	<script src="{THEME_ASSETS_PATH}/js/vendor/jquery-ui.min.js?v={THEME_ASSETS_VERSION}"></script>
+	<script src="{THEME_ASSETS_PATH}/js/vendor/datatables.min.js?v={THEME_ASSETS_VERSION}"></script>
+	<script src="{THEME_ASSETS_PATH}/js/vendor/datatables_natural.min.js?v={THEME_ASSETS_VERSION}"></script>
+	<script src="{THEME_ASSETS_PATH}/js/vendor/pgenerator.min.js?v={THEME_ASSETS_VERSION}"></script>
+	<script src="{THEME_ASSETS_PATH}/js/imscp.js?v={THEME_ASSETS_VERSION}"></script>
 </head>
 <body class="{THEME_COLOR}">
 <div id="wrapper">
@@ -44,11 +44,11 @@
 		<!-- EDP: page_message -->
 		{LAYOUT_CONTENT}
 	</div>
-</div>
-<div class="footer">
- i-MSCP {iMSCP_VERSION}<br>
- Build: {iMSCP_BUILDDATE}<br>
- Codename: {iMSCP_CODENAME}
+	<div class="footer">
+		i-MSCP {iMSCP_VERSION}<br>
+		Build: {iMSCP_BUILDDATE}<br>
+		Codename: {iMSCP_CODENAME}
+	</div>
 </div>
 </body>
 </html>

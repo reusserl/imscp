@@ -308,7 +308,8 @@ function customerHasFeature($featureNames, $forceReload = false)
 			'backup' => ($cfg['BACKUP_DOMAINS'] != 'no' && $dmnProps['allowbackup'] != '') ? true : false,
 			'protected_areas' => true,
 			'custom_error_pages' => true,
-			'ssl' => ($cfg['ENABLE_SSL']) ? true : false
+			'ssl' => ($cfg['ENABLE_SSL']) ? true : false,
+			'aps_standard' => true
 		);
 
 		if (($cfg['IMSCP_SUPPORT_SYSTEM'])) {

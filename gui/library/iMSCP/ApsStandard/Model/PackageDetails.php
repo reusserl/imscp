@@ -121,11 +121,11 @@ class PackageDetails extends Package
 	}
 
 	/**
-	 * @param string $license_name
+	 * @param string $licenseName
 	 */
-	public function setLicenseName($license_name)
+	public function setLicenseName($licenseName)
 	{
-		$this->license_name = $license_name;
+		$this->license_name = $licenseName;
 	}
 
 	/**
@@ -137,10 +137,10 @@ class PackageDetails extends Package
 	}
 
 	/**
-	 * @param string $licence_text
+	 * @param string $licenseText
 	 */
-	public function setLicenceText($licence_text)
+	public function setLicenceText($licenseText)
 	{
-		$this->licence_text = $licence_text;
+		$this->licence_text = $licenseText;
 	}
 }

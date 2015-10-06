@@ -53,12 +53,6 @@ class Spider extends ApsStandardAbstract
 			// Setup environment
 			$this->setupEnvironment();
 
-			// Acquires exclusive lock to prevent multiple run
-			$this->lockFile = @fopen(GUI_ROOT_DIR . '/data/tmp/aps_spider_lock', 'w');
-			if (!@flock($this->lockFile, LOCK_EX | LOCK_NB)) {
-				throw new \RuntimeException(tr('Another instance is already running. Aborting...'));
-			}
-
 			// Retrieves list of known packages
 			$stmt = exec_query('SELECT `name`, `version`, `aps_version`, `release` FROM `aps_packages`');
 			if ($stmt->rowCount()) {
@@ -85,12 +79,7 @@ class Spider extends ApsStandardAbstract
 	 */
 	public function __destruct()
 	{
-		// Release exlusive lock if any
-		if ($this->lockFile) {
-			@flock($this->lockFile, LOCK_UN);
-			@fclose($this->lockFile);
-			@unlink(GUI_ROOT_DIR . '/data/tmp/aps_spider_lock');
-		}
+		$this->releaseLock();
 	}
 
 	/**
@@ -336,7 +325,7 @@ class Spider extends ApsStandardAbstract
 		$distroCAbundle = $config['DISTRO_CA_BUNDLE'];
 		$distroCApath = $config['DISTRO_CA_PATH'];
 
-		// We download by chunk of 20 files at once
+		// Download by chunk of 20 files at once
 		$files = array_chunk($files, 20);
 
 		foreach ($files as $chunk) {
@@ -428,7 +417,7 @@ class Spider extends ApsStandardAbstract
 			throw new \RuntimeException(tr("Runtime error: %s\n", tr('Support for POSIX functions is not available')));
 		}
 
-		if (0 != posix_getuid()) {
+		if (PHP_SAPI == 'cli' && 0 != posix_getuid()) {
 			throw new \RuntimeException(tr("Runtime error: %s\n", tr('This script must be run as root user.')));
 		}
 	}
@@ -442,9 +431,7 @@ class Spider extends ApsStandardAbstract
 	{
 		ignore_user_abort(1); // Do not abort on a client disconnection
 		set_time_limit(0); // Tasks made by this object can take up several minutes to finish
-
-		// Set umask
-		umask(027);
+		umask(027); // Set umask
 
 		if (PHP_SAPI == 'cli') {
 			// Set real user UID/GID of current process (panel user)
@@ -468,6 +455,33 @@ class Spider extends ApsStandardAbstract
 					"Runtime error: %s \n", tr('Could not change real user uid/gid of current process')
 				));
 			}
+		}
+
+		// Acquire exclusive lock to prevent multiple run
+		$this->acquireLock();
+	}
+
+	/**
+	 * Acquire exclusive lock
+	 *
+	 * @return void
+	 */
+	public function acquireLock()
+	{
+		$this->lockFile = @fopen(GUI_ROOT_DIR . '/data/tmp/aps_spider_lock', 'w');
+		if (!@flock($this->lockFile, LOCK_EX | LOCK_NB)) {
+			throw new \RuntimeException(tr('Another instance is already running. Aborting...'));
+		}
+	}
+
+	/**
+	 * Release exclusive lock
+	 */
+	public function releaseLock()
+	{
+		if ($this->lockFile) {
+			@flock($this->lockFile, LOCK_UN);
+			@fclose($this->lockFile);
 		}
 	}
 }

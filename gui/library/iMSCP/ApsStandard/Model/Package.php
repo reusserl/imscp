@@ -97,9 +97,10 @@ class Package extends ModelAbstract
 	 */
 	public static function loadValidationMetadata(ClassMetadata $metadata)
 	{
-		// Right now, only the status field is mutable. Thus, we process validation only for that field
+		// Right now, only the status field is mutable. Thus, we process validation only for that field.
 		$metadata->addPropertyConstraints('status', array(
-			new NotBlank(), new Choice(array('choices' => array('ok', 'disabled')))
+			new NotBlank(),
+			new Choice(array('choices' => array('ok', 'disabled')))
 		));
 	}
 
@@ -198,12 +199,14 @@ class Package extends ModelAbstract
 	}
 
 	/**
-	 * @param string $aps_version
+	 * Set package aps version
+	 *
+	 * @param string $apsVersion
 	 * @return void
 	 */
-	public function setApsVersion($aps_version)
+	public function setApsVersion($apsVersion)
 	{
-		$this->aps_version = $aps_version;
+		$this->aps_version = $apsVersion;
 	}
 
 	/**
@@ -217,6 +220,8 @@ class Package extends ModelAbstract
 	}
 
 	/**
+	 * Set package category
+	 *
 	 * @param string $category
 	 * @return void
 	 */
@@ -238,12 +243,12 @@ class Package extends ModelAbstract
 	/**
 	 * Set package vendor URI
 	 *
-	 * @param string $vendor_uri
+	 * @param string $vendorUri
 	 * @return void
 	 */
-	public function setVendorUri($vendor_uri)
+	public function setVendorUri($vendorUri)
 	{
-		$this->vendor_uri = $vendor_uri;
+		$this->vendor_uri = $vendorUri;
 	}
 
 	/**
@@ -301,12 +306,12 @@ class Package extends ModelAbstract
 	/**
 	 * Set package icon URL
 	 *
-	 * @param string $icon_url
+	 * @param string $iconUrl
 	 * @return void
 	 */
-	public function setIconUrl($icon_url)
+	public function setIconUrl($iconUrl)
 	{
-		$this->icon_url = $icon_url;
+		$this->icon_url = $iconUrl;
 	}
 
 	/**

@@ -25,14 +25,13 @@ use iMSCP_Events_Aggregator as EventManager;
 use iMSCP_Events as Events;
 use iMSCP_pTemplate as TemplateEngine;
 
-// Include core library
 require 'imscp-lib.php';
 
 $eventManager = EventManager::getInstance();
 $eventManager->dispatch(Events::onAdminScriptStart);
 check_login('admin');
 
-if (is_xhr()) { // Handle the XHR request
+if (is_xhr()) {
 	$controller = new PackageController($eventManager);
 	$controller->handleRequest();
 }
@@ -42,7 +41,9 @@ $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'shared/partials/aps_standard/aps_packages.tpl',
 	'page_message' => 'layout',
-	'admin_only_block' => 'page'
+	'adm_btn1' => 'page',
+	'adm_btn2' => 'page',
+	'client_btn1' => 'page'
 ));
 
 $tpl->assign(array(
@@ -56,13 +57,20 @@ $tpl->assign(array(
 	'TR_UNLOCK' => tohtml(tr('Unlock'), 'htmlAttr'),
 	'TR_TOTAL_PACKAGES' => tohtml(tr('Total packages')),
 	'TR_UPDATE_PACKAGE_INDEX' => tohtml(tr('Update package index')),
-	'PAGE_MESSAGE' => '' // Not needed
+	'TR_APS_VERSION' => tohtml(tr('%s version', 'APS')),
+	'TR_NAME' => tohtml(tr('Name')),
+	'TR_VERSION' => tohtml(tr('Version')),
+	'TR_PACKAGER' => tohtml(tr('Packager')),
+	'TR_DOWNLOAD' => tohtml(tr('Download')),
+	'PAGE_MESSAGE' => '',
+	'CLIENT_BTN1' => ''
 ));
 
 $eventManager->registerListener('onGetJsTranslations', function ($e) {
-	$e->getParam('translations')->core['aps'] = array(
+	$e->getParam('translations')->core['aps_standard'] = array(
 		'no_package_available' => tr('No package available. You should update package index.'),
-		'update_in_progress' => tr('Update of package index is in progress. This task can take several minutes.')
+		'update_in_progress' => tr('Update of package index is in progress. This task can take several minutes.'),
+		'package_destails' => tr('Package details')
 	);
 });
 
