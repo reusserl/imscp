@@ -508,7 +508,11 @@ class iMSCP_pTemplate
 				array('context' => $this, 'templatePath' => $this->root_dir . '/'. $fname)
 			);
 
-			$fileContent = file_get_contents($this->root_dir . '/' . $fname);
+			// Evaluate template (since 1.3.x)
+			//$fileContent = file_get_contents($this->root_dir . '/' . $fname);
+			ob_start();
+			include($this->root_dir . '/' . $fname);
+			$fileContent = ob_get_clean();
 
 			$this->eventManager->dispatch(
 				iMSCP_Events::onAfterLoadTemplateFile, array('context' => $this, 'templateContent' => $fileContent)
