@@ -49,18 +49,6 @@ if(customerHasFeature('aps_standard')) {
 
 	$tpl->assign(array(
 		'TR_PAGE_TITLE' => tohtml(tr('Client / APS Standard / Packages'), 'htmlAttr'),
-		'TR_GLOBAL_SEARCH' => tohtml(tr('Global search', 'htmlAttr')),
-		'TR_DETAILS' => tohtml(tr('Details')),
-		'TR_CATEGORY' => tohtml(tr('Category')),
-		'TR_VENDOR' => tohtml(tr('Vendor')),
-		'TR_CERTIFIED' => tohtml(tr('Certified')),
-		'TR_TOTAL_PACKAGES' => tohtml(tr('Total packages')),
-		'TR_APS_VERSION' => tohtml(tr('%s version', 'APS')),
-		'TR_NAME' => tohtml(tr('Name')),
-		'TR_VERSION' => tohtml(tr('Version')),
-		'TR_PACKAGER' => tohtml(tr('Packager')),
-		'TR_DOWNLOAD' => tohtml(tr('Download')),
-		'TR_INSTALL' => tohtml(tr('Install'), 'htmlAttr'),
 		'PAGE_MESSAGE' => '',
 		'ADM_BTN1' => '',
 		'ADM_BTN2' => ''
@@ -69,7 +57,7 @@ if(customerHasFeature('aps_standard')) {
 	$eventManager->registerListener('onGetJsTranslations', function ($e) {
 		$e->getParam('translations')->core['aps_standard'] = array(
 			'no_package_available' => tr('No package available. Please contact your reseller.'),
-			'package_destails' => tr('Package details')
+			'package_details' => tr('Package details')
 		);
 	});
 

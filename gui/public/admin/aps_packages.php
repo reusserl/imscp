@@ -48,20 +48,6 @@ $tpl->define_dynamic(array(
 
 $tpl->assign(array(
 	'TR_PAGE_TITLE' => tohtml(tr('Admin / APS Standard / Packages'), 'htmlAttr'),
-	'TR_GLOBAL_SEARCH' => tohtml(tr('Global search', 'htmlAttr')),
-	'TR_DETAILS' => tohtml(tr('Details')),
-	'TR_CATEGORY' => tohtml(tr('Category')),
-	'TR_VENDOR' => tohtml(tr('Vendor')),
-	'TR_CERTIFIED' => tohtml(tr('Certified')),
-	'TR_LOCK' => tohtml(tr('Lock'), 'htmlAttr'),
-	'TR_UNLOCK' => tohtml(tr('Unlock'), 'htmlAttr'),
-	'TR_TOTAL_PACKAGES' => tohtml(tr('Total packages')),
-	'TR_UPDATE_PACKAGE_INDEX' => tohtml(tr('Update package index')),
-	'TR_APS_VERSION' => tohtml(tr('%s version', 'APS')),
-	'TR_NAME' => tohtml(tr('Name')),
-	'TR_VERSION' => tohtml(tr('Version')),
-	'TR_PACKAGER' => tohtml(tr('Packager')),
-	'TR_DOWNLOAD' => tohtml(tr('Download')),
 	'PAGE_MESSAGE' => '',
 	'CLIENT_BTN1' => ''
 ));
@@ -70,7 +56,7 @@ $eventManager->registerListener('onGetJsTranslations', function ($e) {
 	$e->getParam('translations')->core['aps_standard'] = array(
 		'no_package_available' => tr('No package available. You should update package index.'),
 		'update_in_progress' => tr('Update of package index is in progress. This task can take several minutes.'),
-		'package_destails' => tr('Package details')
+		'package_details' => tr('Package details')
 	);
 });
 

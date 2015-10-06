@@ -26,7 +26,6 @@
 
 	iMSCP.apsStandard.config(['$httpProvider', function ($httpProvider) {
 		// Make i-MSCP aware of XHR requests
-		$httpProvider.defaults.headers.common["Accept"] = 'application/json';
 		$httpProvider.defaults.headers.common["X-Requested-With"] = 'XMLHttpRequest';
 		// Disable caching
 		$httpProvider.defaults.headers.common["Cache-Control"] = "no-cache";
@@ -144,8 +143,8 @@
 		// Show package details
 		$scope.showDetails = function () {
 			PackageResource.get({}, {id: this.package.id}).$promise.then(function (data) {
-				dialogService.open("Package details", "dialog/package/details", data, {
-					title: imscp_i18n.core.aps_standard.package_destails,
+				dialogService.open("Package details", "/templates.php?tpl=shared/partials/aps_standard/package_details.tpl", data, {
+					title: imscp_i18n.core.aps_standard.package_details,
 					modal: true,
 					width: $($window).width() / 2
 				});
@@ -175,6 +174,11 @@
 				vm.loadTable();
 			}).$promise;
 		};
+
+		// Install package
+		$scope.install = function() {
+			// TODO
+		}
 	}
 
 	iMSCP.jQueryUI = angular.module("jQueryUI", []);
@@ -190,7 +194,6 @@
 			}
 		};
 	});
-
 
 	// Ajax loader
 	iMSCP.apsStandard.directive('ajaxLoader', function ($http) {
@@ -276,7 +279,6 @@
 				// Get the template from teh cache or url
 				loadTemplate(template).then(
 					function (dialogTemplate) {
-
 						// Create a new scope, inherited from the parent.
 						dialog.scope = $rootScope.$new();
 						dialog.scope.model = model;
@@ -325,7 +327,6 @@
 			};
 
 			this.cancel = function (id) {
-
 				// Get the dialog and throw exception if not found
 				var dialog = getExistingDialog(id);
 
@@ -339,7 +340,6 @@
 			};
 
 			function cleanup(id) {
-
 				// Get the dialog and throw exception if not found
 				var dialog = getExistingDialog(id);
 
@@ -357,9 +357,9 @@
 			}
 
 			function getExistingDialog(id) {
-
 				// Get the dialog from the cache
 				var dialog = _this.dialogs[id];
+
 				// Throw an exception if the dialog is not found
 				if (!angular.isDefined(dialog)) {
 					throw "DialogService does not have a reference to dialog id " + id;
@@ -402,13 +402,5 @@
 				return deferred.promise;
 			}
 		}
-	]).directive('hboTabs', function() {
-		return {
-			restrict: 'A',
-			link: function(scope, elm, attrs) {
-				var jqueryElm = $(elm[0]);
-				$(jqueryElm).tabs()
-			}
-		};
-	});
+	]);
 })();
