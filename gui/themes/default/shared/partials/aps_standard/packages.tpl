@@ -7,14 +7,14 @@
 
 <div data-ng-app="apsStandard">
 	<div class="PackageList" ajax-loader ng-cloak>
-		<div ng-controller="PackageController as pkgCtrl">
-			<table ng-table="pkgCtrl.tableParams" data-template-header="custom/header" data-template-pagination="custom/pager" ng-show="total_packages">
+		<div ng-controller="PackageController as Ctrl">
+			<table ng-table="Ctrl.tableParams" data-template-header="custom/header" data-template-pagination="custom/pager" ng-show="total_packages">
 				<tbody>
 				<tr ng-repeat-start="package in $data">
 					<td class="Logo" data-filter="{nbpages: 'custom/filters/nbpages'}">
 						<a data-ng-click="showDetails()"><img data-ng-src="{{package.icon_url}}" alt=""/></a>
 					</td>
-					<td class="Description" data-filter="{category: 'select'}" data-filter-data="pkgCtrl.categories">
+					<td class="Description" data-filter="{category: 'select'}" data-filter-data="Ctrl.categories">
 						<h4><a data-ng-click="showDetails()">{{package.name + ' - ' + package.version}}</a></h4>
 						{{package.summary}}
 					</td>
@@ -56,7 +56,7 @@
 				</label>
 			</script>
 			<script type="text/ng-template" id="custom/filters/globalsearch">
-				<label><input type="text" placeholder="<?= tohtml(tr('Global search'))?>" ng-model="pkgCtrl.search"></label>
+				<label><input type="text" placeholder="<?= tohtml(tr('Global search'))?>" ng-model="Ctrl.search"></label>
 			</script>
 			<script type="text/ng-template" id="custom/pager">
 				<div class="paginator" ng-if="pages.length">
@@ -65,7 +65,7 @@
 				</div>
 			</script>
 			<!-- BDP: adm_btn2 -->
-			<button data-ng-click="pkgCtrl.updateIndex()"><?= tohtml(tr('Update package index'))?></button>
+			<button data-ng-click="Ctrl.updateIndex()"><?= tohtml(tr('Update package index'))?></button>
 			<!-- EDP: adm_btn2 -->
 		</div>
 	</div>

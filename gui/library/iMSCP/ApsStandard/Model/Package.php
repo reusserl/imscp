@@ -99,7 +99,6 @@ class Package extends ModelAbstract
 	{
 		// Right now, only the status field is mutable. Thus, we process validation only for that field.
 		$metadata->addPropertyConstraints('status', array(
-			new NotBlank(),
 			new Choice(array('choices' => array('ok', 'disabled')))
 		));
 	}

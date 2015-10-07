@@ -30,7 +30,7 @@ use iMSCP\ApsStandard\Validation;
 abstract class ModelAbstract implements Hydrator, Validation
 {
 	/**
-	 * @var int Package unique identifier
+	 * @var int|string Identity
 	 */
 	protected $id;
 

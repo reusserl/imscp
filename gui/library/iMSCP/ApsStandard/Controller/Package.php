@@ -20,12 +20,9 @@
 
 namespace iMSCP\ApsStandard\Controller;
 
-use iMSCP\ApsStandard\Document;
+use iMSCP_Authentication as Authentication;
 use iMSCP\ApsStandard\Model\Package as PackageModel;
-use iMSCP\ApsStandard\Model\PackageCollection;
-use iMSCP\ApsStandard\Model\PackageDetails as PackageDetailsModel;
-use iMSCP\ApsStandard\Spider;
-use Zend_Session as Session;
+use iMSCP\ApsStandard\Service\PackageService;
 
 /**
  * Class Package
@@ -33,6 +30,21 @@ use Zend_Session as Session;
  */
 class Package extends ControllerAbstract
 {
+	/**
+	 * @var PackageService
+	 */
+	protected $packageService;
+
+	/**
+	 * Constructor
+	 *
+	 * @param PackageService $packageService
+	 */
+	public function __construct(PackageService $packageService)
+	{
+		$this->packageService = $packageService;
+	}
+
 	/**
 	 * Handle HTTP request
 	 *
@@ -55,7 +67,7 @@ class Package extends ControllerAbstract
 				$this->updateIndex();
 		}
 
-		$this->sendResponse(400, array('message' => tr('Bad request.')));
+		$this->sendResponse(400);
 	}
 
 	/**
@@ -66,17 +78,11 @@ class Package extends ControllerAbstract
 	protected function index()
 	{
 		try {
-			$pkgCollection = new PackageCollection();
-			$stmt = $this->db->query(sprintf('SELECT * FROM aps_packages WHERE status %s',
-				// Show only unlocked packages to clients and all packages to administrators
-				($this->identity->admin_type === 'admin') ? " IN('ok', 'disabled')" : " = 'ok'"
-			));
-			$pkgCollection->hydrate($stmt->fetchAll(\PDO::FETCH_ASSOC));
-			$this->sendResponse(200, $pkgCollection);
+			$this->sendResponse(200, $this->packageService->findAllPackages());
 		} catch (\Exception $e) {
 			write_log(sprintf('Could not get package list: %s', $e->getMessage()), E_USER_ERROR);
 
-			if ($this->identity->admin_type === 'admin') {
+			if (Authentication::getInstance()->getIdentity()->admin_type === 'admin') {
 				$this->sendResponse(500, array('message' => tr('Could not get package list: %s', $e->getMessage())));
 			} else {
 				$this->sendResponse(500, array('message' => tr('Could not get package list. Please contact your reseller.')));
@@ -92,39 +98,16 @@ class Package extends ControllerAbstract
 	protected function showDetails($packageId)
 	{
 		try {
-			$stmt = $this->db->prepare(sprintf(
-				'SELECT * FROM aps_packages WHERE id = ? AND status %s',
-				// Client are not allowed to get details about locked packages
-				($this->identity->admin_type === 'admin') ? " IN('ok', 'disabled')" : " = 'ok'"
-			));
-			$stmt->execute(array($packageId));
-
-			if ($stmt->rowCount()) {
-				$pkgDetails = new PackageDetailsModel();
-				$pkgDetails->hydrate($stmt->fetch());
-
-				// Retrieve missing data by parsing package metadata file
-				$pkgMetaFile = $this->getPackageMetadataDir() . '/' . $pkgDetails->getApsVersion() . '/' .
-					$pkgDetails->getName() . '/APP-META.xml';
-
-				if (file_exists($pkgMetaFile) && filesize($pkgMetaFile) != 0) {
-					$doc = new Document($pkgMetaFile);
-					$pkgDetails->setDescription($doc->getXPathValue("//root:description"));
-					$pkgDetails->setPackager(
-						$doc->getXPathValue("//root:packager/root:name") ?:
-							parse_url($doc->getXPathValue("//root:package-homepage"), PHP_URL_HOST) ?: tr('Unknown')
-					);
-					$this->sendResponse(200, $pkgDetails);
-				}
-
-				throw new \RuntimeException(tr('The %s package META file is missing or invalid.', $pkgMetaFile));
+			$packageDetails = $this->packageService->findPackageDetails($packageId);
+			if (!$packageDetails) {
+				$this->sendResponse(404);
 			}
 
-			$this->sendResponse(400, array('message' => tr('Bad request.')));
+			$this->sendResponse(200, $packageDetails);
 		} catch (\Exception $e) {
 			write_log(sprintf('Could not get package details: %s', $e->getMessage()), E_USER_ERROR);
 
-			if ($this->identity->admin_type === 'admin') {
+			if (Authentication::getInstance()->getIdentity()->admin_type === 'admin') {
 				$this->sendResponse(500, array('message' => tr('Could not get package details: %s', $e->getMessage())));
 			} else {
 				$this->sendResponse(500, array('message' => tr('Could not get package details. Please contact your reseller.')));
@@ -140,28 +123,24 @@ class Package extends ControllerAbstract
 	protected function changeStatus()
 	{
 		try {
-			if ($this->identity->admin_type === 'admin') { // Only administrators can change package status
-				$payload = @json_decode(@file_get_contents('php://input'), JSON_OBJECT_AS_ARRAY);
+			if (Authentication::getInstance()->getIdentity()->admin_type !== 'admin') {
+				$this->sendResponse(403); // Only administrators can change package status
+			}
 
-				if (is_array($payload)) {
-					$pkg = new PackageModel();
-					$pkg->hydrate($payload);
+			$payload = @json_decode(@file_get_contents('php://input'), JSON_OBJECT_AS_ARRAY);
 
-					if (count($this->getValidator()->validate($pkg)) == 0) {
-						$this->eventManager->dispatch('beforeApsPackageChangeStatus', array('package' => $pkg));
+			if ($payload && is_array($payload)) {
+				$package = new PackageModel();
+				$package->hydrate($payload);
 
-						$stmt = $this->db->prepare('UPDATE aps_packages SET status = ? WHERE id = ?');
-						$stmt->execute(array($pkg->getStatus(), $pkg->getId()));
-
-						if ($stmt->rowCount()) {
-							$this->eventManager->dispatch('afterApsPackageChangeStatus', array('package' => $pkg));
-							$this->sendResponse(204);
-						}
+				if (count($this->getValidator()->validate($package)) == 0) {
+					if ($this->packageService->updatePackageStatus($package)) {
+						$this->sendResponse(204);
 					}
 				}
 			}
 
-			$this->sendResponse(400, array('message' => tr('Bad request.')));
+			$this->sendResponse(400);
 		} catch (\Exception $e) {
 			write_log(sprintf('Could not change package status: %s', $e->getMessage()), E_USER_ERROR);
 			$this->sendResponse(500, array('message' => tr('Could not change package status: %s', $e->getMessage())));
@@ -169,25 +148,19 @@ class Package extends ControllerAbstract
 	}
 
 	/**
-	 * Update package index by exploring APS standard repositories
+	 * Update package index
 	 *
 	 * @return void
 	 */
 	protected function updateIndex()
 	{
 		try {
-			if ($this->identity->admin_type == 'admin') {
-				// We need close session to prevent connection blocking from same host
-				// See for a better explaination
-				Session::writeClose();
-				$this->eventManager->dispatch('beforeApsPackageUpdateIndex');
-				$spider = new Spider();
-				$spider->exploreCatalog();
-				$this->eventManager->dispatch('afterApsPackageUpdateIndex');
-				$this->sendResponse(200, array('message' => tr('Package index has been updated.')));
+			if (Authentication::getInstance()->getIdentity()->admin_type !== 'admin') {
+				$this->sendResponse(400);
 			}
 
-			$this->sendResponse(400, array('message' => tr('Bad request')));
+			$this->packageService->updatePackageIndex();
+			$this->sendResponse(200, array('message' => tr('Package index has been updated.')));
 		} catch (\Exception $e) {
 			write_log(sprintf('Could not update package index: %s', $e->getMessage()), E_USER_ERROR);
 			$this->sendResponse(500, array('message' => tr('Could not update package index: %s', $e->getMessage())));

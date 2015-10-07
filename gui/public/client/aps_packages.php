@@ -21,6 +21,7 @@
 namespace iMSCP\ApsStandard;
 
 use iMSCP\ApsStandard\Controller\Package as PackageController;
+use iMSCP\ApsStandard\Service\PackageService;
 use iMSCP_Events_Aggregator as EventManager;
 use iMSCP_Events as Events;
 use iMSCP_pTemplate as TemplateEngine;
@@ -33,14 +34,14 @@ check_login('user');
 
 if(customerHasFeature('aps_standard')) {
 	if (is_xhr()) {
-		$controller = new PackageController($eventManager);
+		$controller = new PackageController(new PackageService());
 		$controller->handleRequest();
 	}
 
 	$tpl = new TemplateEngine();
 	$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'shared/partials/aps_standard/aps_packages.tpl',
+		'page' => 'shared/partials/aps_standard/packages.tpl',
 		'page_message' => 'layout',
 		'adm_btn1' => 'page',
 		'adm_btn2' => 'page',

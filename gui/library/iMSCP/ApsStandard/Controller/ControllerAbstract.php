@@ -20,10 +20,6 @@
 
 namespace iMSCP\ApsStandard\Controller;
 
-use iMSCP\ApsStandard\ApsStandardAbstract;
-use iMSCP_Authentication as Authentication;
-use iMSCP_Events_Aggregator as EventManager;
-use iMSCP_Database as Database;
 use Symfony\Component\Validator\Validation;
 use iMSCP\ApsStandard\Hydrator;
 
@@ -31,37 +27,8 @@ use iMSCP\ApsStandard\Hydrator;
  * Class ActionController
  * @package iMSCP\ApsStandard\Controller
  */
-abstract class ControllerAbstract extends ApsStandardAbstract
+abstract class ControllerAbstract
 {
-	/**
-	 * @var \stdClass $identity User identity
-	 */
-	protected $identity;
-
-	/**
-	 * @var EventManager
-	 */
-	protected $eventManager;
-
-	/**
-	 * @var \PDO
-	 */
-	protected $db;
-
-	/**
-	 * Constructor
-	 *
-	 * @param EventManager $eventManager
-	 */
-	public function __construct(EventManager $eventManager)
-	{
-		parent::__construct();
-
-		$this->eventManager = $eventManager;
-		$this->identity = Authentication::getInstance()->getIdentity();
-		$this->db = Database::getRawInstance();
-	}
-
 	/**
 	 * Handle HTTP request
 	 *

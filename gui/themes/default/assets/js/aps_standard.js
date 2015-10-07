@@ -143,7 +143,7 @@
 		// Show package details
 		$scope.showDetails = function () {
 			PackageResource.get({}, {id: this.package.id}).$promise.then(function (data) {
-				dialogService.open("Package details", "/templates.php?tpl=shared/partials/aps_standard/package_details.tpl", data, {
+				dialogService.open("PackageDetails", "/templates.php?tpl=shared/partials/aps_standard/package_details.tpl", data, {
 					title: imscp_i18n.core.aps_standard.package_details,
 					modal: true,
 					width: $($window).width() / 2
@@ -177,9 +177,46 @@
 
 		// Install package
 		$scope.install = function() {
-			// TODO
+			dialogService.open("PackageInstall", "/templates.php?tpl=shared/partials/aps_standard/package_install.tpl", { id: this.package.id }, {
+				title: imscp_i18n.core.aps_standard.package_details,
+				modal: true,
+				width: $($window).width() / 2
+			});
 		}
 	}
+
+	// APS standard package instance resource
+	iMSCP.apsStandard.factory("PackageInstanceResource", function ($resource) {
+		return $resource("aps_instances.php", {id: '@id'}, {
+			query: {isArray: false},
+			update: {method: 'PUT'},
+			updateIndex: {method: 'POST'}
+		});
+	});
+
+	// APS standard package controller
+	iMSCP.apsStandard.controller("PackageInstallController", packageInstallController);
+	packageInstallController.$inject = ["$scope", "PackageInstanceResource", "$window", 'dialogService', '$rootScope'];
+
+	function packageInstallController($scope,  PackageInstanceResource, $window, dialogService, $rootScope) {
+		var vm = this;
+		vm.package = $scope.model;
+		vm.create = create;
+
+		// Create package instance
+		function create() {
+
+		}
+	}
+
+
+
+
+
+
+
+
+
 
 	iMSCP.jQueryUI = angular.module("jQueryUI", []);
 
