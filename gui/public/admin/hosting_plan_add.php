@@ -133,6 +133,8 @@ function admin_generatePage($tpl, $phpini)
 			'TR_CGI_NO' => $checked,
 			'TR_DNS_YES' => '',
 			'TR_DNS_NO' => $checked,
+			'TR_APS_STANDARD_YES' => '',
+			'TR_APS_STANDARD_NO' => $checked,
 			'TR_EXTMAIL_YES' => '',
 			'TR_EXTMAIL_NO' => $checked,
 			'TR_PROTECT_WEB_FOLDERS_YES' => $checked,
@@ -172,7 +174,7 @@ function admin_generatePage($tpl, $phpini)
 function admin_generateErrorPage($tpl, $phpini)
 {
 	global $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $traffic, $diskSpace, $php, $cgi,
-		   $backup, $dns, $extMail, $webFolderProtection, $status;
+		   $backup, $dns, $apsStandard, $extMail, $webFolderProtection, $status;
 
 	/** @var $cfg iMSCP_Config_Handler_File */
 	$cfg = iMSCP_Registry::get('config');
@@ -199,11 +201,12 @@ function admin_generateErrorPage($tpl, $phpini)
 			'TR_CGI_NO' => ($cgi == '_no_') ? $checked : '',
 			'TR_DNS_YES' => ($dns == '_yes_') ? $checked : '',
 			'TR_DNS_NO' => ($dns == '_no_') ? $checked : '',
+			'TR_APS_STANDARD_YES' => ($apsStandard == '_yes_') ? $checked : '',
+			'TR_APS_STANDARD_NO' => ($apsStandard == '_no_') ? $checked : '',
 			'TR_EXTMAIL_YES' => ($extMail == '_yes_') ? $checked : '',
 			'TR_EXTMAIL_NO' => ($extMail == '_no_') ? $checked : '',
 			'TR_PROTECT_WEB_FOLDERS_YES' => ($webFolderProtection == '_yes_') ? $checked : '',
 			'TR_PROTECT_WEB_FOLDERS_NO' => ($webFolderProtection == '_no_') ? $checked : '',
-			
 
 			'TR_STATUS_YES' => ($status) ? $checked : '',
 			'TR_STATUS_NO' => (!$status) ? $checked : ''
@@ -238,7 +241,7 @@ function admin_generateErrorPage($tpl, $phpini)
 function admin_checkData($phpini)
 {
 	global $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $traffic, $diskSpace, $php, $cgi,
-		   $dns, $backup, $extMail, $webFolderProtection, $status;
+		   $dns, $apsStandard, $backup, $extMail, $webFolderProtection, $status;
 
 	/** @var iMSCP_Config_Handler_File $cfg */
 	$cfg = iMSCP_Registry::get('config');
@@ -260,6 +263,7 @@ function admin_checkData($phpini)
 	$cgi = isset($_POST['hp_cgi']) ? clean_input($_POST['hp_cgi']) : '_no_';
 	$dns = isset($_POST['hp_dns']) ? clean_input($_POST['hp_dns']) : '_no_';
 	$backup = isset($_POST['hp_backup']) && is_array($_POST['hp_backup']) ? $_POST['hp_backup'] : array();
+	$apsStandard = isset($_POST['hp_aps_standard']) ? clean_input($_POST['hp_aps_standard']) : '_no_';
 	$extMail = isset($_POST['hp_external_mail']) ? clean_input($_POST['hp_external_mail']) : '_no_';
 
 	$webFolderProtection = isset($_POST['hp_protected_webfolders'])
@@ -271,6 +275,7 @@ function admin_checkData($phpini)
 	$cgi = ($cgi == '_yes_') ? '_yes_' : '_no_';
 	$dns = ($dns == '_yes_') ? '_yes_' : '_no_';
 	$backup = ($cfg->BACKUP_DOMAINS != 'no') ? array_intersect($backup, array('_dmn_', '_sql_', '_mail_')) : array();
+	$apsStandard = ($apsStandard == '_yes_') ? '_yes_' : '_no_';
 	$extMail = ($extMail == '_yes_') ? '_yes_' : '_no_';
 	$webFolderProtection = ($webFolderProtection == '_yes_') ? '_yes_' : '_no_';
 
@@ -375,6 +380,10 @@ function admin_checkData($phpini)
 		}
 	}
 
+	if ($php == '_no_' && $apsStandard == '_yes_') {
+		set_page_message(tr('APS standard feature require PHP support.'), 'error');
+	}
+
 	if (!Zend_Session::namespaceIsset('pageMessages')) {
 		return true;
 	} else {
@@ -392,7 +401,7 @@ function admin_checkData($phpini)
 function admin_addHostingPlan($adminId, $phpini)
 {
 	global $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $traffic, $diskSpace, $php, $cgi,
-		   $dns, $backup, $extMail, $webFolderProtection, $status;
+		   $dns, $apsStandard, $backup, $extMail, $webFolderProtection, $status;
 
 	$query = "
 		SELECT
@@ -419,6 +428,7 @@ function admin_addHostingPlan($adminId, $phpini)
 	$hpProps .= ';' . $phpini->getDataVal('phpiniMaxExecutionTime') . ';' . $phpini->getDataVal('phpiniMaxInputTime');
 	$hpProps .= ';' . $phpini->getDataVal('phpiniMemoryLimit') . ';' . $extMail . ';' . $webFolderProtection;
 	$hpProps .= ';' . $mailQuota * 1048576;
+	$hpProps .= ';' . $apsStandard;
 
 	$query = "
 		INSERT INTO `hosting_plans`(
@@ -500,6 +510,7 @@ if (isset($cfg->HOSTING_PLANS_LEVEL) && $cfg->HOSTING_PLANS_LEVEL == 'admin') {
 			'TR_BACKUP_DOMAIN' => tr('Domain'),
 			'TR_BACKUP_SQL' => tr('SQL'),
 			'TR_BACKUP_MAIL' => tr('Mail'),
+			'TR_APS_STANDARD' => tr('APS Standard'),
 			'TR_EXTMAIL' => tr('External mail server'),
 			'TR_WEB_FOLDER_PROTECTION' => tr('Web folder protection'),
 			'TR_WEB_FOLDER_PROTECTION_HELP' => tr("If set to 'yes', Web folders as provisioned by i-MSCP will be protected against deletion using the immutable flag (only if supported by the file system)."),

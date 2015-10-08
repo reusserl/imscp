@@ -79,6 +79,7 @@ function &admin_getData()
 				'max_sql_user_cnt' => '0',
 				'max_traff_amnt' => '0',
 				'max_disk_amnt' => '0',
+				'aps_standard' => 'no',
 				'support_system' => 'no',
 				'customer_id' => '',
 				'php_ini_system' => 'no',
@@ -256,6 +257,10 @@ function _admin_generateFeaturesForm($tpl, &$data)
 
 			'TR_PHP_INI_MAX_MAX_INPUT_TIME' => tr('Max value for the %s PHP directive', '<b>max_input_time</b>'),
 			'PHP_INI_MAX_MAX_INPUT_TIME' => tohtml($data['php_ini_max_max_input_time']),
+
+			'TR_APS_STANDARD' => tr('APS Standard'),
+			'APS_STANDARD_YES' => ($data['aps_standard'] == 'yes') ? $htmlChecked : '',
+			'APS_STANDARD_NO' => ($data['aps_standard'] != 'yes') ? $htmlChecked : '',
 
 			'TR_SUPPORT_SYSTEM' => tr('Support system'),
 			'SUPPORT_SYSTEM_YES' => ($data['support_system'] == 'yes') ? $htmlChecked : '',
@@ -563,9 +568,9 @@ function admin_checkAndCreateResellerAccount()
 					`php_ini_system`, `php_ini_al_disable_functions`, `php_ini_al_allow_url_fopen`,
 					`php_ini_al_display_errors`, `php_ini_max_post_max_size`,
 					`php_ini_max_upload_max_filesize`, `php_ini_max_max_execution_time`,
-					`php_ini_max_max_input_time`, `php_ini_max_memory_limit`
+					`php_ini_max_max_input_time`, `php_ini_max_memory_limit`, `aps_standard`
 				) VALUES (
-					?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+					?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 				)
 			";
 			exec_query($query, array(
@@ -577,7 +582,8 @@ function admin_checkAndCreateResellerAccount()
 				$phpEditor->getRePermVal('phpiniDisableFunctions'), $phpEditor->getRePermVal('phpiniAllowUrlFopen'),
 				$phpEditor->getRePermVal('phpiniDisplayErrors'), $phpEditor->getRePermVal('phpiniPostMaxSize'),
 				$phpEditor->getRePermVal('phpiniUploadMaxFileSize'), $phpEditor->getRePermVal('phpiniMaxExecutionTime'),
-				$phpEditor->getRePermVal('phpiniMaxInputTime'), $phpEditor->getRePermVal('phpiniMemoryLimit')
+				$phpEditor->getRePermVal('phpiniMaxInputTime'), $phpEditor->getRePermVal('phpiniMemoryLimit'),
+				$data['aps_standard']
 			));
 
 			$db->commit();

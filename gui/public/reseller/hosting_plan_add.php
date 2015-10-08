@@ -179,6 +179,15 @@ function reseller_generatePage($tpl, $phpini)
 		)
 	);
 
+	if(resellerHasFeature('aps_standard')) {
+		$tpl->assign(
+			array(
+				'TR_APS_STANDARD_YES' => '',
+				'TR_APS_STANDARD_NO' => $checked,
+			)
+		);
+	}
+
 	if (resellerHasFeature('backup')) {
 		$tpl->assign(
 			array(
@@ -202,7 +211,7 @@ function reseller_generatePage($tpl, $phpini)
 function reseller_generateErrorPage($tpl, $phpini)
 {
 	global $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $traffic, $diskSpace, $php, $cgi,
-		   $backup, $dns, $extMail, $webFolderProtection, $status;
+		   $backup, $dns, $apsStandard, $extMail, $webFolderProtection, $status;
 
 	/** @var $cfg iMSCP_Config_Handler_File */
 	$cfg = iMSCP_Registry::get('config');
@@ -241,6 +250,15 @@ function reseller_generateErrorPage($tpl, $phpini)
 		)
 	);
 
+	if(resellerHasFeature('aps')) {
+		$tpl->assign(
+			array(
+				'TR_APS_STANDARD_YES' => ($apsStandard == '_yes_') ? $checked : '',
+				'TR_APS_STANDARD_NO' => ($apsStandard == '_no_') ? $checked : '',
+			)
+		);
+	}
+
 	if (resellerHasFeature('backup')) {
 		$tpl->assign(
 			array(
@@ -263,7 +281,7 @@ function reseller_generateErrorPage($tpl, $phpini)
 function reseller_checkData($phpini)
 {
 	global $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $traffic, $diskSpace, $php, $cgi,
-		   $dns, $backup, $extMail, $webFolderProtection, $status;
+		   $dns, $apsStandard, $backup, $extMail, $webFolderProtection, $status;
 
 	/** @var $cfg iMSCP_Config_Handler_File */
 	$cfg = iMSCP_Registry::get('config');
@@ -284,6 +302,7 @@ function reseller_checkData($phpini)
 	$php = isset($_POST['hp_php']) ? clean_input($_POST['hp_php']) : '_no_';
 	$cgi = isset($_POST['hp_cgi']) ? clean_input($_POST['hp_cgi']) : '_no_';
 	$dns = isset($_POST['hp_dns']) ? clean_input($_POST['hp_dns']) : '_no_';
+	$apsStandard = isset($_POST['hp_aps_standard']) ? clean_input($_POST['hp_aps_standard']) : '_no_';
 	$backup = isset($_POST['hp_backup']) && is_array($_POST['hp_backup']) ? $_POST['hp_backup'] : array();
 	$extMail = isset($_POST['hp_external_mail']) ? clean_input($_POST['hp_external_mail']) : '_no_';
 
@@ -295,6 +314,7 @@ function reseller_checkData($phpini)
 	$php = ($php == '_yes_') ? '_yes_' : '_no_';
 	$cgi = ($cgi == '_yes_') ? '_yes_' : '_no_';
 	$dns = ($dns == '_yes_') ? '_yes_' : '_no_';
+	$apsStandard = (resellerHasFeature('aps') && $apsStandard == '_yes_') ? '_yes_' : '_no_';
 	$backup = resellerHasFeature('backup') ? array_intersect($backup, array('_dmn_', '_sql_', '_mail_')) : array();
 	$extMail = ($extMail == '_yes_') ? '_yes_' : '_no_';
 	$webFolderProtection = ($webFolderProtection == '_yes_') ? '_yes_' : '_no_';
@@ -416,6 +436,10 @@ function reseller_checkData($phpini)
 		}
 	}
 
+	if ($php == '_no_' && $apsStandard == '_yes_') {
+		set_page_message(tr('APS standard feature require PHP support.'), 'error');
+	}
+
 	if (!Zend_Session::namespaceIsset('pageMessages')) {
 		return true;
 	} else {
@@ -433,7 +457,7 @@ function reseller_checkData($phpini)
 function reseller_addHostingPlan($resellerId, $phpini)
 {
 	global $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $traffic, $diskSpace, $php, $cgi,
-		$dns, $backup, $extMail, $webFolderProtection, $status;
+		$dns, $apsStandard, $backup, $extMail, $webFolderProtection, $status;
 
 	$query = "SELECT `id` FROM `hosting_plans` WHERE `name` = ? AND `reseller_id` = ? LIMIT 1";
 	$stmt = exec_query($query, array($name, $resellerId));
@@ -449,6 +473,7 @@ function reseller_addHostingPlan($resellerId, $phpini)
 		$hpProps .= ';' . $phpini->getDataVal('phpiniMaxExecutionTime') . ';' . $phpini->getDataVal('phpiniMaxInputTime');
 		$hpProps .= ';' . $phpini->getDataVal('phpiniMemoryLimit') . ';' . $extMail . ';' . $webFolderProtection;
 		$hpProps .= ';' . $mailQuota * 1048576;
+		$hpProps .= ';' . $apsStandard;
 
 		if (reseller_limits_check($resellerId, $hpProps)) {
 			$query = "
@@ -504,6 +529,7 @@ if (isset($cfg->HOSTING_PLANS_LEVEL) && $cfg->HOSTING_PLANS_LEVEL == 'reseller')
 			'php_editor_default_values_block' => 'php_editor_feature',
 			'cgi_feature' => 'page',
 			'custom_dns_records_feature' => 'page',
+			'aps_standard_feature' => 'page',
 			'backup_feature' => 'page'
 		)
 	);
@@ -548,6 +574,7 @@ if (isset($cfg->HOSTING_PLANS_LEVEL) && $cfg->HOSTING_PLANS_LEVEL == 'reseller')
 			'TR_PHP' => tr('PHP'),
 			'TR_CGI' => tr('CGI'),
 			'TR_DNS' => tr('Custom DNS records'),
+			'TR_APS_STANDARD' => tr('APS Standard'),
 			'TR_BACKUP' => tr('Backup'),
 			'TR_BACKUP_DOMAIN' => tr('Domain'),
 			'TR_BACKUP_SQL' => tr('SQL'),
@@ -577,6 +604,7 @@ if (isset($cfg->HOSTING_PLANS_LEVEL) && $cfg->HOSTING_PLANS_LEVEL == 'reseller')
 	if (!resellerHasFeature('php_editor')) $tpl->assign('PHP_EDITOR_FEATURE', '');
 	if (!resellerHasFeature('cgi')) $tpl->assign('CGI_FEATURE', '');
 	if (!resellerHasFeature('custom_dns_records')) $tpl->assign('CUSTOM_DNS_RECORDS_FEATURE', '');
+	if (!resellerHasFeature('aps_standard')) $tpl->assign('APS_STANDARD_FEATURE', '');
 	if (!resellerHasFeature('external_mail')) $tpl->assign('EXT_MAIL_FEATURE', '');
 	if (!resellerHasFeature('backup')) $tpl->assign('BACKUP_FEATURE', '');
 

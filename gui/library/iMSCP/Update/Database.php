@@ -46,7 +46,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	/**
 	 * @var int Last database update revision
 	 */
-	protected $lastUpdate = 224;
+	protected $lastUpdate = 226;
 
 	/**
 	 * Singleton - Make new unavailable
@@ -3174,5 +3174,33 @@ class iMSCP_Update_Database extends iMSCP_Update
 				FOREIGN KEY (uid) REFERENCES admin(admin_id) ON DELETE CASCADE
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 		';
+	}
+
+	/**
+	 * Add reseller_props.aps_standard column
+	 *
+	 * @return string SQL statement to be executed
+	 */
+	protected function r225()
+	{
+		return $this->addColumn(
+			'reseller_props',
+			'aps_standard',
+			"ENUM('yes','no') CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no' AFTER `php_ini_max_memory_limit`"
+		);
+	}
+
+	/**
+	 * Add domain.aps_standard column
+	 *
+	 * @return string SQL statement to be executed
+	 */
+	protected function r226()
+	{
+		return $this->addColumn(
+			'domain',
+			'aps_standard',
+			"ENUM('yes','no') CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no' AFTER `mail_quota`"
+		);
 	}
 }

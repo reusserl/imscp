@@ -208,7 +208,7 @@ return array(
 			),
 			'package_instances' => array(
 				'label' => tr('Package instances'),
-				'uri' => '/admin/aps_package_instances.php',
+				'uri' => '/admin/aps_instances.php',
 				'title_class' => 'packages'
 			)
 		)

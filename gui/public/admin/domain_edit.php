@@ -82,7 +82,7 @@ function admin_getResellerProps($resellerId)
 				reseller_id, current_sub_cnt, max_sub_cnt, current_als_cnt, max_als_cnt, current_mail_cnt,
 				max_mail_cnt, current_ftp_cnt, max_ftp_cnt, current_sql_db_cnt, max_sql_db_cnt,
 				current_sql_user_cnt, max_sql_user_cnt, current_disk_amnt, max_disk_amnt, current_traff_amnt,
-				max_traff_amnt,  php_ini_system AS reseller_php_ini_system
+				max_traff_amnt,  php_ini_system AS reseller_php_ini_system, aps_standard AS reseller_aps_standard
 			FROM
 				reseller_props
 			WHERE
@@ -109,7 +109,8 @@ function admin_getDomainProps($domainId)
 				domain_subd_limit, domain_alias_limit, domain_mailacc_limit, domain_ftpacc_limit,
 				domain_sqld_limit, domain_sqlu_limit, domain_disk_limit, domain_disk_usage, domain_traffic_limit,
 				domain_php, domain_cgi, domain_dns, allowbackup, phpini_perm_system AS customer_php_ini_system,
-				domain_external_mail, web_folder_protection, (mail_quota / 1048576) AS mail_quota
+				domain_external_mail, web_folder_protection, (mail_quota / 1048576) AS mail_quota,
+				aps_standard AS domain_aps_standard
 			FROM
 				domain
 			INNER JOIN
@@ -231,6 +232,7 @@ function &admin_getData($domainId, $forUpdate = false)
 		$data['fallback_domain_external_mail'] = $data['domain_external_mail'];
 		$data['fallback_web_folder_protection'] = $data['web_folder_protection'];
 		$data['fallback_mail_quota'] = $data['mail_quota'];
+		$data['fallback_domain_aps_standard'] = $data['domain_aps_standard'];
 
 		$data['domain_expires_ok'] = true;
 		$data['domain_never_expires'] = ($data['domain_expires'] == 0) ? 'on' : 'off';
@@ -269,7 +271,7 @@ function &admin_getData($domainId, $forUpdate = false)
 
 			$data['domain_ip_id'] = (isset($_POST['domain_ip_id']))
 				? clean_input($_POST['domain_ip_id']) : $data['domain_ip_id']; 
-			
+
 			$data['domain_expires'] = (isset($_POST['domain_expires']))
 				? clean_input($_POST['domain_expires']) : $data['domain_expires'];
 
@@ -284,6 +286,9 @@ function &admin_getData($domainId, $forUpdate = false)
 
 			$data['domain_dns'] = isset($_POST['domain_dns'])
 				? clean_input($_POST['domain_dns']) : $data['domain_dns'];
+
+			$data['domain_aps_standard'] = isset($_POST['domain_aps_standard'])
+				? clean_input($_POST['domain_aps_standard']) : $data['domain_aps_standard'];
 
 			if($cfg['BACKUP_DOMAINS'] == 'yes') {
 				$data['allowbackup'] = isset($_POST['allowbackup']) && is_array($_POST['allowbackup'])
@@ -517,7 +522,6 @@ function _admin_generateFeaturesForm($tpl, &$data)
 		$tplVars['TR_PHP_MEMORY_LIMIT_DIRECTIVE'] = tr('PHP %s directive', '<b>memory_limit</b>');
 		$tplVars['MEMORY_LIMIT'] = tohtml($phpEditor->getDataVal('phpiniMemoryLimit'));
 
-
 		// We make those values available for client side validation
 		$tplVars['PHP_DIRECTIVES_RESELLER_MAX_VALUES'] = json_encode(array(
 			'post_max_size' => $phpEditor->getRePermVal('phpiniPostMaxSize'),
@@ -541,6 +545,15 @@ function _admin_generateFeaturesForm($tpl, &$data)
 		$tplVars['DNS_NO'] = ($data['domain_dns'] != 'yes') ? $htmlChecked : '';
 	} else {
 		$tplVars['CUSTOM_DNS_RECORDS_FEATURE'] = '';
+	}
+
+	// APS Standard
+	if ($data['reseller_aps_standard'] == 'no') { // Reseller has no permissions on this service
+		$tpl->assign('APS_STANDARD_FEATURE', '');
+	} else {
+		$tplVars['TR_APS_STANDARD'] = tr('APS Standard');
+		$tplVars['APS_STANDARD_YES'] = ($data['domain_aps_standard'] == 'yes') ? $htmlChecked : '';
+		$tplVars['APS_STANDARD_NO'] = ($data['domain_aps_standard'] != 'yes') ? $htmlChecked : '';
 	}
 
 	// External mail support
@@ -833,6 +846,18 @@ function admin_checkAndUpdateData($domainId)
 		$data['domain_dns'] = (in_array($data['domain_dns'], array('no', 'yes')))
 			? $data['domain_dns'] : $data['fallback_domain_dns'];
 
+		// Check for APS Standard support (we are safe here)
+		if($data['reseller_aps_standard'] == 'yes') {
+			$data['domain_aps_standard'] = (in_array($data['domain_aps_standard'], array('no', 'yes')))
+				? $data['domain_aps_standard'] : $data['fallback_domain_aps_standard'];
+
+			if($data['domain_aps_standard'] == 'yes' && $data['domain_php'] == 'no') {
+				set_page_message(tr('APS standard feature require PHP support.'), 'error');
+			}
+		} else {
+			$data['domain_aps_standard'] = 'no';
+		}
+
 		// Check for External mail server support (we are safe here)
 		$data['domain_external_mail'] = (in_array($data['domain_external_mail'], array('no', 'yes')))
 			? $data['domain_external_mail'] : $data['fallback_domain_external_mail'];
@@ -923,7 +948,7 @@ function admin_checkAndUpdateData($domainId)
 						domain_php = ?, domain_cgi = ?, allowbackup = ?, domain_dns = ?, phpini_perm_system = ?,
 						phpini_perm_allow_url_fopen = ?, phpini_perm_display_errors = ?,
 						phpini_perm_disable_functions = ?, domain_external_mail = ?, web_folder_protection = ?,
-						mail_quota = ?
+						mail_quota = ?, aps_standard = ?
 					WHERE
 						domain_id = ?
 				',
@@ -935,7 +960,7 @@ function admin_checkAndUpdateData($domainId)
 					implode('|',$data['allowbackup']), $data['domain_dns'], $phpEditor->getClPermVal('phpiniSystem'),
 					$phpEditor->getClPermVal('phpiniAllowUrlFopen'),  $phpEditor->getClPermVal('phpiniDisplayErrors'),
 					$phpEditor->getClPermVal('phpiniDisableFunctions'),  $data['domain_external_mail'],
-					$data['web_folder_protection'], $data['mail_quota'] * 1048576,
+					$data['web_folder_protection'], $data['mail_quota'] * 1048576, $data['domain_aps_standard'],
 					$domainId
 				)
 			);
@@ -1071,7 +1096,7 @@ $data =& admin_getData($domainId);
 $tpl = new iMSCP_pTemplate();
 $tpl->define_dynamic(array(
 	 'layout' => 'shared/layouts/ui.tpl',
-	 'page' => 'admin/domain_edit.tpl',
+	 'page' => 'shared/partials/forms/domain_edit.tpl',
 	 'page_message' => 'layout',
 	 'ip_entry' => 'page',
 	 'subdomain_limit_block' => 'page',
@@ -1089,6 +1114,7 @@ $tpl->define_dynamic(array(
 	 'php_editor_default_values_block' => 'php_directives_editor_block',
 	 'cgi_block' => 'page',
 	 'custom_dns_records_feature' => 'page',
+	 'aps_standard_feature' => 'page',
 	 'backup_block' => 'page'
 ));
 

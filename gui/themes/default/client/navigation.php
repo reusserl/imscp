@@ -420,7 +420,7 @@ return array(
 			),
 			'package_instances' => array(
 				'label' => tr('Package instances'),
-				'uri' => '/client/aps_package_instances.php',
+				'uri' => '/client/aps_instances.php',
 				'title_class' => 'packages'
 			)
 		)

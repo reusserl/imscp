@@ -29,6 +29,10 @@
 		<td>{VL_DNS_SUPP}</td>
 	</tr>
 	<tr>
+		<td>{TR_APS_STANDARD}</td>
+		<td>{APS_STANDARD}</td>
+	</tr>
+	<tr>
 		<td>{TR_EXT_MAIL_SUPP}</td>
 		<td>{VL_EXT_MAIL_SUPP}</td>
 	</tr>

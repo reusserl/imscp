@@ -304,12 +304,12 @@ function customerHasFeature($featureNames, $forceReload = false)
 			'domain_aliases' => ($dmnProps['domain_alias_limit'] != '-1') ? true : false,
 			'custom_dns_records' =>
 				($dmnProps['domain_dns'] != 'no' && $cfg['NAMED_SERVER'] != 'external_server') ? true : false,
+			'aps_standard' => ($dmnProps['aps_standard'] == 'yes') ? true : false,
 			'webstats' => ($cfg['WEBSTATS_PACKAGES'] != 'No') ? true : false,
 			'backup' => ($cfg['BACKUP_DOMAINS'] != 'no' && $dmnProps['allowbackup'] != '') ? true : false,
 			'protected_areas' => true,
 			'custom_error_pages' => true,
-			'ssl' => ($cfg['ENABLE_SSL']) ? true : false,
-			'aps_standard' => true
+			'ssl' => ($cfg['ENABLE_SSL']) ? true : false
 		);
 
 		if (($cfg['IMSCP_SUPPORT_SYSTEM'])) {

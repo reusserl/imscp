@@ -138,7 +138,7 @@ function admin_generatePage($tpl, $id, $phpini)
 		$php, $cgi, $sub, $als, $mail, $ftp, $sqld, $sqlu, $monthlyTraffic, $diskspace, $backup, $dns, $phpEditor,
 		$phpAllowUrlFopenPerm, $phpDisplayErrorsPerm, $phpDisableFunctionsPerm, $phpPostMaxSizeValue,
 		$phpUploadMaxFilesizeValue, $phpMaxExecutionTimeValue, $phpMaxInputTimeValue, $phpMemoryLimitValue,
-		$hpExtMail, $hpProtectedWebFolders, $mailQuota
+		$hpExtMail, $hpProtectedWebFolders, $mailQuota, $apsStandard
 		) = explode(';', $data['props']);
 
     $backup = explode('|', $backup);
@@ -177,6 +177,8 @@ function admin_generatePage($tpl, $id, $phpini)
 			'CGI_NO' => ($cgi == '_no_') ? $checked : '',
 			'DNS_YES' => ($dns == '_yes_') ? $checked : '',
 			'DNS_NO' => ($dns == '_no_') ? $checked : '',
+			'APS_STANDARD_YES' => ($apsStandard == '_yes_') ? $checked : '',
+			'APS_STANDARD_NO' => ($apsStandard == '_no_') ? $checked : '',
 			'EXTMAIL_YES' => ($hpExtMail == '_yes_') ? $checked : '',
 			'EXTMAIL_NO' => ($hpExtMail == '_no_') ? $checked : '',
 			'PROTECT_WEB_FOLDERS_YES' => ($hpProtectedWebFolders == '_yes_') ? $checked : '',
@@ -215,7 +217,7 @@ function admin_generatePage($tpl, $id, $phpini)
 function admin_generateErrorPage($tpl, $phpini)
 {
 	global $id, $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $monthlyTraffic, $diskspace,
-		   $php, $cgi, $backup, $dns, $hpExtMail, $hpProtectedWebFolders, $status;
+		   $php, $cgi, $backup, $dns, $apsStandard, $hpExtMail, $hpProtectedWebFolders, $status;
 
 	/** @var $cfg iMSCP_Config_Handler_File */
 	$cfg = iMSCP_Registry::get('config');
@@ -241,6 +243,8 @@ function admin_generateErrorPage($tpl, $phpini)
 			'CGI_NO' => ($cgi == '_no_') ? $checked : '',
 			'DNS_YES' => ($dns == '_yes_') ? $checked : '',
 			'DNS_NO' => ($dns == '_no_') ? $checked : '',
+			'APS_STANDARD_YES' => ($apsStandard == '_yes_') ? $checked : '',
+			'APS_STANDARD_NO' => ($apsStandard == '_no_') ? $checked : '',
 			'EXTMAIL_YES' => ($hpExtMail == '_yes_') ? $checked : '',
 			'EXTMAIL_NO' => ($hpExtMail == '_no_') ? $checked : '',
 			'PROTECT_WEB_FOLDERS_YES' => ($hpProtectedWebFolders == '_yes_') ? $checked : '',
@@ -278,7 +282,7 @@ function admin_generateErrorPage($tpl, $phpini)
 function admin_checkData($phpini)
 {
 	global $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $monthlyTraffic, $diskspace, $php,
-		   $cgi, $dns, $backup, $hpExtMail, $hpProtectedWebFolders, $status;
+		   $cgi, $dns, $apsStandard, $backup, $hpExtMail, $hpProtectedWebFolders, $status;
 
 	/** @var iMSCP_Config_Handler_File $cfg */
 	$cfg = iMSCP_Registry::get('config');
@@ -299,6 +303,7 @@ function admin_checkData($phpini)
 	$php = isset($_POST['hp_php']) ? clean_input($_POST['hp_php']) : '_no_';
 	$cgi = isset($_POST['hp_cgi']) ? clean_input($_POST['hp_cgi']) : '_no_';
 	$dns = isset($_POST['hp_dns']) ? clean_input($_POST['hp_dns']) : '_no_';
+	$apsStandard = isset($_POST['hp_aps_standard']) ? clean_input($_POST['hp_aps_standard']) : '_no_';
 	$backup = isset($_POST['hp_backup']) && is_array($_POST['hp_backup']) ? $_POST['hp_backup'] : array();
 	$hpExtMail = isset($_POST['hp_external_mail']) ? clean_input($_POST['hp_external_mail']) : '_no_';
 
@@ -310,6 +315,7 @@ function admin_checkData($phpini)
 	$php = ($php == '_yes_') ? '_yes_' : '_no_';
 	$cgi = ($cgi == '_yes_') ? '_yes_' : '_no_';
 	$dns = ($dns == '_yes_') ? '_yes_' : '_no_';
+	$apsStandard = ($apsStandard == '_yes_') ? '_yes_' : '_no_';
 	$backup = ($cfg->BACKUP_DOMAINS != 'no') ? array_intersect($backup, array('_dmn_', '_sql_', '_mail_')) : array();
 	$hpExtMail = ($hpExtMail == '_yes_') ? '_yes_' : '_no_';
 	$hpProtectedWebFolders = ($hpProtectedWebFolders == '_yes_') ? '_yes_' : '_no_';
@@ -415,6 +421,10 @@ function admin_checkData($phpini)
 		}
 	}
 
+	if ($php == '_no_' && $apsStandard == '_yes_') {
+		set_page_message(tr('APS standard feature require PHP support.'), 'error');
+	}
+
 	if (!Zend_Session::namespaceIsset('pageMessages')) {
 		return true;
 	} else {
@@ -431,7 +441,7 @@ function admin_checkData($phpini)
 function admin_UpdateHostingPlan($phpini)
 {
 	global $id, $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $monthlyTraffic, $diskspace,
-		   $php, $cgi, $dns, $backup, $hpExtMail, $hpProtectedWebFolders, $status;
+		   $php, $cgi, $dns, $apsStandard, $backup, $hpExtMail, $hpProtectedWebFolders, $status;
 
 	$query = "
 		SELECT
@@ -460,6 +470,7 @@ function admin_UpdateHostingPlan($phpini)
 	$hpProps .= ';' . $phpini->getDataVal('phpiniMaxExecutionTime') . ';' . $phpini->getDataVal('phpiniMaxInputTime');
 	$hpProps .= ';' . $phpini->getDataVal('phpiniMemoryLimit') . ';' . $hpExtMail . ';' . $hpProtectedWebFolders;
 	$hpProps .= ';' . $mailQuota * 1048576;
+	$hpProps .= ';' . $apsStandard;
 
 	$query = "UPDATE `hosting_plans` SET `name` = ?, `description` = ?, `props` = ?, `status` = ? WHERE `id` = ?";
 	exec_query($query, array($name, $description, $hpProps, $status, $id));
@@ -539,6 +550,7 @@ if (isset($cfg->HOSTING_PLANS_LEVEL) && $cfg->HOSTING_PLANS_LEVEL == 'admin') {
 				'TR_PHP' => tr('PHP'),
 				'TR_CGI' => tr('CGI'),
 				'TR_DNS' => tr('Custom DNS records'),
+				'TR_APS_STANDARD' => tr('APS Standard'),
 				'TR_BACKUP' => tr('Backup'),
 				'TR_BACKUP_DOMAIN' => tr('Domain'),
 				'TR_BACKUP_SQL' => tr('SQL'),

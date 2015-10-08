@@ -319,6 +319,19 @@
 	</td>
 </tr>
 <!-- EDP: custom_dns_records_feature -->
+<!-- BDP: aps_standard_feature -->
+<tr>
+	<td>{TR_APS_STANDARD}</td>
+	<td>
+		<div class="radio">
+			<input type="radio" id="aps_standard_yes" name="aps_standard" value="_yes_"{APS_STANDARD_YES}/>
+			<label for="aps_standard_yes">{TR_YES}</label>
+			<input type="radio" id="aps_standard_no" name="aps_standard" value="_no_"{APS_STANDARD_NO}/>
+			<label for="aps_standard_no">{TR_NO}</label>
+		</div>
+	</td>
+</tr>
+<!-- EDP: aps_standard_feature -->
 <!-- BDP: ext_mail_feature -->
 <tr>
 	<td>{TR_EXTMAIL}</td>

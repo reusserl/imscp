@@ -306,7 +306,7 @@
 	<td>{TR_CGI}</td>
 	<td>
 		<div class="radio">
-			<input type="radio" name="hp_cgi" value="_yes_" id="hp_cgi_yes" {TR_CGI_YES}/>
+			<input type="radio" name="hp_cgi" value="_yes_" id="hp_cgi_yes"{TR_CGI_YES}/>
 			<label for="hp_cgi_yes">{TR_YES}</label>
 			<input type="radio" name="hp_cgi" value="_no_" id="hp_cgi_no"{TR_CGI_NO}/>
 			<label for="hp_cgi_no">{TR_NO}</label>
@@ -327,6 +327,19 @@
 	</td>
 </tr>
 <!-- EDP: custom_dns_records_feature -->
+<!-- BDP: aps_standard_feature -->
+<tr>
+	<td>{TR_APS_STANDARD}</td>
+	<td>
+		<div class="radio">
+			<input type="radio" name="hp_aps_standard" value="_yes_" id="hp_aps_standard_yes"{TR_APS_STANDARD_YES}/>
+			<label for="hp_aps_standard_yes">{TR_YES}</label>
+			<input type="radio" name="hp_aps_standard" value="_no_" id="hp_aps_standard_no"{TR_APS_STANDARD_NO}/>
+			<label for="hp_aps_standard_no">{TR_NO}</label>
+		</div>
+	</td>
+</tr>
+<!-- EDP: aps_standard_feature -->
 <!-- BDP: ext_mail_feature -->
 <tr>
 	<td>{TR_EXTMAIL}</td>

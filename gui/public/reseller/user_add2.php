@@ -59,7 +59,7 @@ function get_pageone_param()
 function get_init_au2_page($tpl, $phpini)
 {
 	global $hpName, $php, $cgi, $sub, $als, $mail, $mailQuota, $ftp, $sqlDb, $sqlUser, $traffic, $diskSpace, $backup,
-		   $dns, $extMailServer, $webFolderProtection;
+		   $dns, $apsStandard, $extMailServer, $webFolderProtection;
 
 	/** @var $cfg iMSCP_Config_Handler_File */
 	$cfg = iMSCP_Registry::get('config');
@@ -89,6 +89,11 @@ function get_init_au2_page($tpl, $phpini)
 	if(resellerHasFeature('custom_dns_records')) {
 		$tplVars['VL_DNSY'] = ($dns == '_yes_') ? $htmlChecked : '';
 		$tplVars['VL_DNSN'] = ($dns == '_no_') ? $htmlChecked : '';
+	}
+
+	if(resellerHasFeature('aps_standard')) {
+		$tplVars['APS_STANDARD_YES'] = ($apsStandard == '_yes_') ? $htmlChecked : '';
+		$tplVars['APS_STANDARD_NO'] = ($apsStandard == '_no_') ? $htmlChecked : '';
 	}
 
 	if(resellerHasFeature('backup')) {
@@ -196,7 +201,7 @@ function get_init_au2_page($tpl, $phpini)
 function reseller_getHostingPlanData($hpid, $resellerId, $phpini)
 {
 	global $hpName, $php, $cgi, $sub, $als, $mail, $mailQuota, $ftp, $sqlDb, $sqlUser, $traffic, $diskSpace, $backup,
-		   $dns, $extMailServer, $webFolderProtection;
+		   $dns, $apsStandard, $extMailServer, $webFolderProtection;
 
 	if($hpid != 0) {
 		$query = 'SELECT `name`, `props` FROM `hosting_plans` WHERE `reseller_id` = ? AND `id` = ?';
@@ -210,7 +215,7 @@ function reseller_getHostingPlanData($hpid, $resellerId, $phpini)
 				$php, $cgi, $sub, $als, $mail, $ftp, $sqlDb, $sqlUser, $traffic, $diskSpace, $backup, $dns, $phpEditor,
 				$phpiniAllowUrlFopen, $phpiniDisplayErrors, $phpiniDisableFunctions, $phpiniPostMaxSize,
 				$phpiniUploadMaxFileSize, $phpiniMaxExecutionTime, $phpiniMaxInputTime, $phpiniMemoryLimit,
-				$extMailServer, $webFolderProtection, $mailQuota
+				$extMailServer, $webFolderProtection, $mailQuota, $apsStandard
 			) = explode(';', $props);
 
 			$backup = explode('|', $backup);
@@ -237,7 +242,7 @@ function reseller_getHostingPlanData($hpid, $resellerId, $phpini)
 	} else {
 		$hpName = 'Custom';
 		$sub = $als = $mail = $mailQuota = $ftp = $sqlDb = $sqlUser = $traffic = $diskSpace = '0';
-		$php = $cgi = $dns = $extMailServer = '_no_';
+		$php = $cgi = $dns = $apsStandard = $extMailServer = '_no_';
 		$backup = array();
 		$webFolderProtection = '_yes_';
 	}
@@ -252,7 +257,7 @@ function reseller_getHostingPlanData($hpid, $resellerId, $phpini)
 function check_user_data($phpini)
 {
 	global $php, $cgi, $sub, $als, $mail, $mailQuota, $ftp, $sqlDb, $sqlUser, $traffic, $diskSpace, $backup,
-		$dns, $extMailServer, $webFolderProtection;
+		$dns, $apsStandard, $extMailServer, $webFolderProtection;
 
 	/** @var $cfg iMSCP_Config_Handler_File */
 	$cfg = iMSCP_Registry::get('config');
@@ -444,6 +449,14 @@ function check_user_data($phpini)
 		$extMailServer = '_no_';
 	}
 
+	// APS Standard feature
+
+	if (isset($_POST['aps_standard']) && resellerHasFeature('aps_standard')) {
+		$apsStandard = $_POST['aps_standard'];
+	} else {
+		$apsStandard = '_no_';
+	}
+
 	// Backup feature
 
 	if (resellerHasFeature('backup')) {
@@ -499,6 +512,7 @@ $tpl->define_dynamic(
 		'alias_feature' => 'page',
 		'mail_feature' => 'page',
 		'custom_dns_records_feature' => 'page',
+		'aps_standard_feature' => 'page',
 		'ext_mail_feature' => 'page',
 		'ftp_feature' => 'page',
 		'sql_feature' => 'page',
@@ -537,6 +551,7 @@ $tpl->assign(
 		'TR_BACKUP_SQL' => tr('SQL'),
 		'TR_BACKUP_MAIL' => tr('Mail'),
 		'TR_DNS' => tr('Custom DNS records'),
+		'TR_APS_STANDARD' => tr('APS standard'),
 		'TR_YES' => tr('yes'),
 		'TR_NO' => tr('no'),
 		'TR_NEXT_STEP' => tr('Next step'),
@@ -550,7 +565,7 @@ $tpl->assign(
 generateNavigation($tpl);
 
 global $dmnName, $dmnExpire, $php, $cgi, $sub, $als, $mail, $mailQuota, $ftp, $sqlDb, $sqlUser, $traffic, $diskSpace,
-	   $backup, $dns, $extMailServer, $webFolderProtection;
+	   $backup, $dns, $apsStandard, $extMailServer, $webFolderProtection;
 
 if (!get_pageone_param()) {
 	set_page_message(tr('Domain data were been altered. Please try again.'), 'error');
@@ -572,7 +587,7 @@ if (isset($_POST['uaction']) && ('user_add2_nxt' == $_POST['uaction']) && (!isse
 			$phpini->getDataVal('phpiniMaxExecutionTime') . ';' .
 			$phpini->getDataVal('phpiniMaxInputTime') . ';' .
 			$phpini->getDataVal('phpiniMemoryLimit') . ';' .
-			$extMailServer . ';' . $webFolderProtection . ';' . $mailQuota * 1048576;
+			$extMailServer . ';' . $webFolderProtection . ';' . ($mailQuota * 1048576) . $apsStandard;
 
 		if (reseller_limits_check($_SESSION['user_id'], $_SESSION['ch_hpprops'])) {
 			redirectTo('user_add3.php');
@@ -596,6 +611,10 @@ if (!resellerHasFeature('domain_aliases')) {
 
 if (!resellerHasFeature('custom_dns_records')) {
 	$tpl->assign('CUSTOM_DNS_RECORDS_FEATURE', '');
+}
+
+if (!resellerHasFeature('aps_standard')) {
+	$tpl->assign('APS_STANDARD_FEATURE', '');
 }
 
 if (!resellerHasFeature('mail')) {

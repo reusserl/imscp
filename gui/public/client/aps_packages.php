@@ -57,7 +57,7 @@ if(customerHasFeature('aps_standard')) {
 
 	$eventManager->registerListener('onGetJsTranslations', function ($e) {
 		$e->getParam('translations')->core['aps_standard'] = array(
-			'no_package_available' => tr('No package available. Please contact your reseller.'),
+			'no_package_available' => tr('No package available.'),
 			'package_details' => tr('Package details')
 		);
 	});

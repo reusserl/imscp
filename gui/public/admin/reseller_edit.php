@@ -131,7 +131,7 @@ function &admin_getData($resellerId, $forUpdate = false)
 					'max_traff_amnt', 'max_disk_amnt', 'support_system', 'customer_id', 'php_ini_system',
 					'php_ini_al_disable_functions', 'php_ini_al_allow_url_fopen', 'php_ini_al_display_errors',
 					'php_ini_max_post_max_size', 'php_ini_max_upload_max_filesize', 'php_ini_max_max_execution_time',
-					'php_ini_max_max_input_time', 'php_ini_max_memory_limit'
+					'php_ini_max_max_input_time', 'php_ini_max_memory_limit', 'aps_standard'
 				) as $key
 			) {
 				if (isset($_POST[$key])) {
@@ -312,6 +312,10 @@ function _admin_generateFeaturesForm($tpl, &$data)
 
 			'TR_PHP_INI_MAX_MAX_INPUT_TIME' => tr('Max value for the %s PHP directive', '<b>max_input_time</b>'),
 			'PHP_INI_MAX_MAX_INPUT_TIME' => tohtml($data['php_ini_max_max_input_time']),
+
+			'TR_APS_STANDARD' => tr('APS Standard'),
+			'APS_STANDARD_YES' => ($data['aps_standard'] == 'yes') ? $htmlChecked : '',
+			'APS_STANDARD_NO' => ($data['aps_standard'] != 'yes') ? $htmlChecked : '',
 
 			'TR_SUPPORT_SYSTEM' => tr('Support system'),
 			'SUPPORT_SYSTEM_YES' => ($data['support_system'] == 'yes') ? $htmlChecked : '',
@@ -686,7 +690,7 @@ function admin_checkAndUpdateData($resellerId)
 					`reseller_ips` = ?, `customer_id` = ?, `support_system` = ?, `php_ini_system` = ?,
 					`php_ini_al_disable_functions` = ?, `php_ini_al_allow_url_fopen` = ?, `php_ini_al_display_errors` = ?,
 					`php_ini_max_post_max_size` = ?, `php_ini_max_upload_max_filesize` = ?, `php_ini_max_max_execution_time` = ?,
-					`php_ini_max_max_input_time` = ?, `php_ini_max_memory_limit` = ?
+					`php_ini_max_max_input_time` = ?, `php_ini_max_memory_limit` = ?, `aps_standard` = ?
 				WHERE
 					`reseller_id` = ?
 			';
@@ -706,9 +710,27 @@ function admin_checkAndUpdateData($resellerId)
 					$phpEditor->getRePermVal('phpiniMaxExecutionTime'),
 					$phpEditor->getRePermVal('phpiniMaxInputTime'),
 					$phpEditor->getRePermVal('phpiniMemoryLimit'),
+					$data['aps_standard'],
 					$resellerId
 				)
 			);
+
+			if ($data['aps_standard'] == 'no') {
+				// Disable APS Standard feature for all reseller's customers
+				exec_query(
+					'
+						UPDATE
+							domain
+						INNER JOIN
+							admin ON(admin_id = domain_admin_id)
+						SET
+							aps_standard = ?
+						WHERE
+							created_by = ?
+					',
+					array($data['aps_standard'], $resellerId)
+				);
+			}
 
 			$db->commit();
 

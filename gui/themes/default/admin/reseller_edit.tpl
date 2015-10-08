@@ -227,6 +227,17 @@
 		</td>
 	</tr>
 	<tr>
+		<td>{TR_APS_STANDARD}</td>
+		<td>
+			<div class="radio">
+				<input type="radio" name="aps_standard" id="aps_standard_yes" value="yes"{APS_STANDARD_YES}/>
+				<label for="aps_standard_yes">{TR_YES}</label>
+				<input type="radio" name="aps_standard" id="aps_standard_no" value="no"{APS_STANDARD_NO}/>
+				<label for="aps_standard_no">{TR_NO}</label>
+			</div>
+		</td>
+	</tr>
+	<tr>
 		<td>{TR_SUPPORT_SYSTEM}</td>
 		<td>
 			<div class="radio">

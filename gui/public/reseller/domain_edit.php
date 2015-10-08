@@ -89,7 +89,7 @@ function reseller_getResellerProps($resellerId)
 				reseller_id, current_sub_cnt, max_sub_cnt, current_als_cnt, max_als_cnt, current_mail_cnt, max_mail_cnt,
 				current_ftp_cnt, max_ftp_cnt, current_sql_db_cnt, max_sql_db_cnt, current_sql_user_cnt, max_sql_user_cnt,
 				current_disk_amnt, max_disk_amnt, current_traff_amnt, max_traff_amnt,
-				php_ini_system AS reseller_php_ini_system
+				php_ini_system AS reseller_php_ini_system, aps_standard as domain_aps_standard
 			FROM
 				reseller_props
 			WHERE
@@ -116,7 +116,8 @@ function reseller_getDomainProps($domainId)
 				domain_alias_limit, domain_mailacc_limit, domain_ftpacc_limit, domain_sqld_limit,
 				domain_sqlu_limit, domain_disk_limit, domain_disk_usage, domain_traffic_limit, domain_php,
 				domain_cgi, domain_dns, allowbackup, phpini_perm_system AS customer_php_ini_system,
-				domain_external_mail, web_folder_protection, (mail_quota / 1048576) AS mail_quota
+				domain_external_mail, web_folder_protection, (mail_quota / 1048576) AS mail_quota,
+				aps_standard AS reseller_aps_standard
 			FROM
 				domain
 			WHERE
@@ -240,6 +241,7 @@ function &reseller_getData($domainId, $forUpdate = false)
 		$data['fallback_domain_external_mail'] = $data['domain_external_mail'];
 		$data['fallback_web_folder_protection'] = $data['web_folder_protection'];
 		$data['fallback_mail_quota'] = $data['mail_quota'];
+		$data['fallback_domain_aps_standard'] = $data['domain_aps_standard'];
 
 		$data['domain_expires_ok'] = true;
 		$data['domain_never_expires'] = ($data['domain_expires'] == 0) ? 'on' : 'off';
@@ -293,6 +295,9 @@ function &reseller_getData($domainId, $forUpdate = false)
 
 			$data['domain_dns'] = isset($_POST['domain_dns'])
 				? clean_input($_POST['domain_dns']) : $data['domain_dns'];
+
+			$data['domain_aps_standard'] = isset($_POST['domain_aps_standard'])
+				? clean_input($_POST['domain_aps_standard']) : $data['domain_aps_standard'];
 
 			if ($cfg['BACKUP_DOMAINS'] == 'yes') {
 				$data['allowbackup'] = isset($_POST['allowbackup']) && is_array($_POST['allowbackup'])
@@ -553,6 +558,15 @@ function _reseller_generateFeaturesForm($tpl, &$data)
 		$tplVars['CUSTOM_DNS_RECORDS_FEATURE'] = '';
 	}
 
+	// APS Standard
+	if(resellerHasFeature('aps_standard')) {
+		$tplVars['TR_APS_STANDARD'] = tr('APS Standard');
+		$tplVars['APS_STANDARD_YES'] = ($data['domain_aps_standard'] == 'yes') ? $htmlChecked : '';
+		$tplVars['APS_STANDARD_NO'] = ($data['domain_aps_standard'] != 'yes') ? $htmlChecked : '';
+	} else {
+		$tplVars['APS_STANDARD_FEATURE'] = '';
+	}
+
 	// External mail support
 	if($data['max_mail_cnt'] == '-1') {
 		$tplVars['EXT_MAIL_BLOCK'] =  '';
@@ -592,10 +606,9 @@ function _reseller_generateFeaturesForm($tpl, &$data)
  *
  * @throws iMSCP_Exception_Database
  * @param int $domainId Domain unique identifier
- * @param bool $recoveryMode
  * @return bool TRUE on success, FALSE otherwise
  */
-function reseller_checkAndUpdateData($domainId, $recoveryMode = false)
+function reseller_checkAndUpdateData($domainId)
 {
 	/** @var $cfg iMSCP_Config_Handler_File */
 	$cfg = iMSCP_Registry::get('config');
@@ -607,7 +620,7 @@ function reseller_checkAndUpdateData($domainId, $recoveryMode = false)
 
 	try {
 		// Getting domain data
-		$data =& reseller_getData($domainId, true, $recoveryMode);
+		$data =& reseller_getData($domainId, true);
 
 		// Check for expires date
 		if ($data['domain_never_expires'] == 'off') {
@@ -793,7 +806,7 @@ function reseller_checkAndUpdateData($domainId, $recoveryMode = false)
 
 				if($cfg['HTTPD_SERVER'] != 'apache_itk') {
 					if ($phpEditor->checkRePerm('phpiniDisableFunctions') && isset($_POST['phpini_perm_disable_functions'])) {
-						if($phpEditor->getClPerm('phpiniDisableFunctions') != $_POST['phpini_perm_disable_functions']) {
+						if($phpEditor->getClPermVal('phpiniDisableFunctions') != $_POST['phpini_perm_disable_functions']) {
 							$phpEditor->setClPerm('phpiniDisableFunctions', clean_input($_POST['phpini_perm_disable_functions']));
 							$phpEditor->setData('phpiniDisableFunctions', $phpEditor->getDataDefaultVal('phpiniDisableFunctions'));
 						}
@@ -847,6 +860,18 @@ function reseller_checkAndUpdateData($domainId, $recoveryMode = false)
 		// Check for custom DNS records support (we are safe here)
 		$data['domain_dns'] = (in_array($data['domain_dns'], array('no', 'yes')))
 			? $data['domain_dns'] : $data['fallback_domain_dns'];
+
+		// Check for APS Standard support (we are safe here)
+		if($data['reseller_aps_standard'] == 'yes') {
+			$data['domain_aps_standard'] = (in_array($data['domain_aps_standard'], array('no', 'yes')))
+				? $data['domain_aps_standard'] : $data['fallback_domain_aps_standard'];
+
+			if($data['domain_aps_standard'] == 'yes' && $data['domain_php'] == 'no') {
+				set_page_message(tr('APS standard feature require PHP support.'), 'error');
+			}
+		} else {
+			$data['domain_aps_standard'] = 'no';
+		}
 
 		// Check for External mail server support (we are safe here)
 		$data['domain_external_mail'] = (in_array($data['domain_external_mail'], array('no', 'yes')))
@@ -937,7 +962,7 @@ function reseller_checkAndUpdateData($domainId, $recoveryMode = false)
 						domain_php = ?, domain_cgi = ?, allowbackup = ?, domain_dns = ?, phpini_perm_system = ?,
 						phpini_perm_allow_url_fopen = ?, phpini_perm_display_errors = ?,
 						phpini_perm_disable_functions = ?, domain_external_mail = ?, web_folder_protection = ?,
-						mail_quota = ?
+						mail_quota = ?, aps_standard = ?
 					WHERE
 						domain_id = ?
 				',
@@ -949,7 +974,7 @@ function reseller_checkAndUpdateData($domainId, $recoveryMode = false)
 					implode('|',$data['allowbackup']), $data['domain_dns'], $phpEditor->getClPermVal('phpiniSystem'),
 					$phpEditor->getClPermVal('phpiniAllowUrlFopen'), $phpEditor->getClPermVal('phpiniDisplayErrors'),
 					$phpEditor->getClPermVal('phpiniDisableFunctions'), $data['domain_external_mail'],
-					$data['web_folder_protection'], $data['mail_quota'] * 1048576,
+					$data['web_folder_protection'], $data['mail_quota'] * 1048576, $data['domain_aps_standard'],
 					$domainId
 				)
 			);
@@ -1087,7 +1112,7 @@ $data =& reseller_getData($domainId);
 $tpl = new iMSCP_pTemplate();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
-	'page' => 'reseller/domain_edit.tpl',
+	'page' => 'shared/partials/forms/domain_edit.tpl',
 	'page_message' => 'layout',
 	'ip_entry' => 'page',
 	'subdomain_limit_block' => 'page',
@@ -1106,6 +1131,7 @@ $tpl->define_dynamic(array(
 	'php_editor_default_values_block' => 'php_directives_editor_block',
 	'cgi_block' => 'page',
 	'custom_dns_records_feature' => 'page',
+	'aps_standard_feature' => 'page',
 	'backup_block' => 'page'
 ));
 

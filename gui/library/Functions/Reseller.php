@@ -723,6 +723,7 @@ function resellerHasFeature($featureName, $forceReload = false)
 			'php_editor' => ($resellerProps['php_ini_system'] == 'yes') ? true : false,
 			'cgi' => true,
 			'custom_dns_records' => ($cfg['NAMED_SERVER'] != 'external_server') ? true : false,
+			'aps_standard' => ($resellerProps['aps_standard'] == 'yes') ? true : false,
 			'external_mail' => true,
 			'backup' => ($cfg['BACKUP_DOMAINS'] != 'no') ? true : false,
 			'support' => ($cfg['IMSCP_SUPPORT_SYSTEM'] && $resellerProps['support_system'] == 'yes') ? true : false

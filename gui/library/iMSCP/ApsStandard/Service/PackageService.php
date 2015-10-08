@@ -16,26 +16,25 @@ use Zend_Session as SessionHandler;
 class PackageService extends ServiceAbstract
 {
 	/**
-	 * Return all packages
+	 * Find all packages
 	 *
 	 * @return PackageCollection
 	 */
 	public function findAllPackages()
 	{
-		$pkgCollection = new PackageCollection();
-		$this->eventManager->dispatch('beforeFindAllApsPackages', array('packageCollection' => $pkgCollection));
+		$packageCollection = new PackageCollection();
+		$this->eventManager->dispatch('beforeFindAllApsPackages', array('packageCollection' => $packageCollection));
 		$stmt = $this->db->query(sprintf('SELECT * FROM aps_packages WHERE status %s',
 			// Show only unlocked packages to clients and all packages to administrators
 			($this->identity->admin_type === 'admin') ? " IN('ok', 'disabled')" : " = 'ok'"
 		));
-		$pkgCollection->hydrate($stmt->fetchAll(\PDO::FETCH_ASSOC));
-		$this->eventManager->dispatch('afterFindAllApsPackages', array('packageCollection' => $pkgCollection));
-
-		return $pkgCollection;
+		$packageCollection->hydrate($stmt->fetchAll(\PDO::FETCH_ASSOC));
+		$this->eventManager->dispatch('afterFindAllApsPackages', array('packageCollection' => $packageCollection));
+		return $packageCollection;
 	}
 
 	/**
-	 * Return package matching the given id
+	 * Find package
 	 *
 	 * @param int $id Package identity
 	 * @return Package|null
@@ -47,7 +46,7 @@ class PackageService extends ServiceAbstract
 		$stmt = $this->db->query(
 			'SELECT * FROM aps_packages WHERE id = ? AND status %s', array(
 			$id,
-			// Show only unlocked packages to clients and all packages to administrators
+			// Clients are not allowed to see locked packages
 			($this->identity->admin_type === 'admin') ? " IN('ok', 'disabled')" : " = 'ok'"
 		));
 
@@ -61,7 +60,7 @@ class PackageService extends ServiceAbstract
 	}
 
 	/**
-	 * Return package details
+	 * Find package details
 	 *
 	 * @param int $id Package identity
 	 * @return PackageDetails|null
@@ -72,7 +71,7 @@ class PackageService extends ServiceAbstract
 		$this->eventManager->dispatch('beforeFindApsPackageDetails', array('package' => $packageDetails));
 		$stmt = $this->db->prepare(sprintf(
 			'SELECT * FROM aps_packages WHERE id = ? AND status %s',
-			// Client are not allowed to get details about locked packages
+			// Clients are not allowed to see locked packages
 			($this->identity->admin_type === 'admin') ? " IN('ok', 'disabled')" : " = 'ok'"
 		));
 		$stmt->execute(array($id));
