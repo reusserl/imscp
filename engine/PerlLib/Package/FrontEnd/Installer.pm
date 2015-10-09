@@ -331,7 +331,9 @@ sub askPorts
 
 sub preinstall
 {
-	iMSCP::Composer->getInstance()->registerPackage('symfony/validator', '~2.7.4');
+	my $composer = iMSCP::Composer->getInstance();
+	$composer->registerPackage('symfony/validator', '~2.7.4');
+	$composer->registerPackage('doctrine/orm', '2.4.*');
 }
 
 =item install()
@@ -1033,9 +1035,15 @@ sub _addDnsZone
 
 sub _installComposerPackages
 {
-	my $packagesDir = "$main::imscpConfig{'CACHE_DATA_DIR'}/packages/vendor/symfony";
-	-d $packagesDir or die('Could not find symfony packages at %s', $packagesDir);
-	iMSCP::Dir->new( dirname => $packagesDir )->rcopy("$main::imscpConfig{'GUI_ROOT_DIR'}/library/vendor/symfony");
+	my $packagesBaseDir = "$main::imscpConfig{'CACHE_DATA_DIR'}/packages/vendor";
+
+	for my $vendor(qw/symfony doctrine/) {
+		my $packagesDir = "$packagesBaseDir/$vendor";
+		-d $packagesDir or die(sprintf('Could not find $vendor packages at %s', $packagesDir));
+		iMSCP::Dir->new( dirname => $packagesDir )->rcopy("$main::imscpConfig{'GUI_ROOT_DIR'}/library/vendor/$vendor");
+	}
+
+	0;
 }
 
 =item _saveConfig()
