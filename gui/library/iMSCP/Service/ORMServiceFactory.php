@@ -22,6 +22,7 @@ namespace iMSCP\Service;
 
 use Doctrine\ORM\Tools\Setup;
 use Doctrine\ORM\EntityManager;
+use iMSCP_Registry as Registry;
 
 /**
  * Class ORMServiceFactory
@@ -31,7 +32,7 @@ class ORMServiceFactory
 {
 	/**
 	 * @var EntityManager
-	*/
+	 */
 	static $entityManager;
 
 	/**
@@ -45,9 +46,9 @@ class ORMServiceFactory
 	public static function create(\PDO $pdo)
 	{
 		if (static::$entityManager === null) {
-			$config = \iMSCP_Registry::get('config');
+			$devMode = Registry::get('config')->DEBUG;
 			$config = Setup::createAnnotationMetadataConfiguration(
-				array(LIBRARY_PATH . "/iMSCP/Entity"), $config['DEBUG'], CACHE_PATH . '/orm_proxy'
+				array(LIBRARY_PATH . '/iMSCP/Entity'), $config['DEBUG'], CACHE_PATH . '/orm_proxy'
 			);
 
 			//$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('Doctrine\DBAL\Driver\PDOStatement', array()));

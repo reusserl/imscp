@@ -18,7 +18,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+namespace iMSCP;
+
 use iMSCP\Service\ORMServiceFactory;
 use Doctrine\ORM\Tools\Console\ConsoleRunner;
+use iMSCP_Database as Db;
 
-return ConsoleRunner::createHelperSet(ORMServiceFactory::create(\iMSCP_Database::getRawInstance()));
+return ConsoleRunner::createHelperSet(ORMServiceFactory::create(Db::getRawInstance()));
