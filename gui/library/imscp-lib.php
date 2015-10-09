@@ -25,7 +25,6 @@ use iMSCP_Exception_Handler as ExceptionHandler;
 use iMSCP_Config_Handler_File as ConfigHandlerFile;
 use iMSCP_Initializer as Initializer;
 use Zend_Loader_AutoloaderFactory as AutoloaderFactory;
-use iMSCP\Autoloader\Psr4Autoloader;
 
 // Set default error reporting level
 error_reporting(E_ALL | E_STRICT);
@@ -50,9 +49,8 @@ set_include_path(implode(PATH_SEPARATOR, array_unique(
 	array_merge(array(LIBRARY_PATH, LIBRARY_PATH . '/vendor'), explode(PATH_SEPARATOR, get_include_path()))
 )));
 
-// Setup autoloader
+// Setup core autoloader
 require_once LIBRARY_PATH . '/vendor/Zend/Loader/AutoloaderFactory.php';
-
 AutoloaderFactory::factory(
 	array(
 		'Zend_Loader_StandardAutoloader' => array(
@@ -70,13 +68,6 @@ AutoloaderFactory::factory(
 		)
 	)
 );
-
-// PSR4 autoloader
-$psr4Autoloader = new Psr4Autoloader();
-$psr4Autoloader->register();
-$psr4Autoloader->addNamespace('Symfony\\Component\\Validator\\', LIBRARY_PATH . '/vendor/symfony/validator');
-$psr4Autoloader->addNamespace('Symfony\\Component\\Translation\\', LIBRARY_PATH . '/vendor/symfony/translation');
-unset($psr4Autoloader);
 
 // Set handler for uncaught exceptions
 Registry::set('exceptionHandler', new ExceptionHandler());
@@ -277,6 +268,9 @@ if(is_readable(CONFIG_CACHE_FILE_PATH)) {
 		@file_put_contents(CONFIG_CACHE_FILE_PATH, serialize($config), LOCK_EX);
 	}
 }
+
+// Include composer autoloader for composer packages
+require_once $config['CACHE_DATA_DIR'] . '/packages/vendor/autoload.php';
 
 // Initialize application
 Initializer::run($config);

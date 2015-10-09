@@ -372,9 +372,6 @@ sub install
 	$rs = $self->_addDnsZone();
 	return $rs if $rs;
 
-	$rs = $self->_installComposerPackages();
-	return $rs if $rs;
-
 	$self->_saveConfig();
 }
 
@@ -1023,27 +1020,6 @@ sub _addDnsZone
 	return $rs if $rs;
 
 	$self->{'eventManager'}->trigger('afterNamedAddMasterZone');
-}
-
-=item _installComposerPackages()
-
- Install composer package
-
- Return int 0 on success, other on failure
-
-=cut
-
-sub _installComposerPackages
-{
-	my $packagesBaseDir = "$main::imscpConfig{'CACHE_DATA_DIR'}/packages/vendor";
-
-	for my $vendor(qw/symfony doctrine/) {
-		my $packagesDir = "$packagesBaseDir/$vendor";
-		-d $packagesDir or die(sprintf('Could not find $vendor packages at %s', $packagesDir));
-		iMSCP::Dir->new( dirname => $packagesDir )->rcopy("$main::imscpConfig{'GUI_ROOT_DIR'}/library/vendor/$vendor");
-	}
-
-	0;
 }
 
 =item _saveConfig()
