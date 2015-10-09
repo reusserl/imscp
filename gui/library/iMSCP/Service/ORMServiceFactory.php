@@ -46,9 +46,8 @@ class ORMServiceFactory
 	public static function create(\PDO $pdo)
 	{
 		if (static::$entityManager === null) {
-			$devMode = Registry::get('config')->DEBUG;
 			$config = Setup::createAnnotationMetadataConfiguration(
-				array(LIBRARY_PATH . '/iMSCP/Entity'), $config['DEBUG'], CACHE_PATH . '/orm_proxy'
+				array(LIBRARY_PATH . '/iMSCP/Entity'), Registry::get('config')->DEBUG, CACHE_PATH . '/orm_proxy'
 			);
 
 			//$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('Doctrine\DBAL\Driver\PDOStatement', array()));
