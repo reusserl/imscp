@@ -20,35 +20,36 @@
 
 namespace iMSCP\ApsStandard\Controller;
 
+use iMSCP\ApsStandard\Entity\ApsPackages;
+use iMSCP\ApsStandard\Service\ApsPackageService;
 use iMSCP_Authentication as Authentication;
-use iMSCP\ApsStandard\Model\Package as PackageModel;
-use iMSCP\ApsStandard\Service\PackageService;
+use JMS\Serializer\Serializer;
 
 /**
- * Class Package
+ * Class ApsPackageController
  * @package iMSCP\ApsStandard\Controller
  */
-class Package extends ControllerAbstract
+class ApsPackageController extends ApsAbstractController
 {
 	/**
-	 * @var PackageService
+	 * @var ApsPackageService
 	 */
 	protected $packageService;
 
 	/**
 	 * Constructor
 	 *
-	 * @param PackageService $packageService
+	 * @param Serializer $serializer
+	 * @param ApsPackageService $packageService
 	 */
-	public function __construct(PackageService $packageService)
+	public function __construct(Serializer $serializer, ApsPackageService $packageService)
 	{
+		parent::__construct($serializer);
 		$this->packageService = $packageService;
 	}
 
 	/**
-	 * Handle HTTP request
-	 *
-	 * @return void
+	 * {@inheritdoc}
 	 */
 	public function handleRequest()
 	{
@@ -78,10 +79,9 @@ class Package extends ControllerAbstract
 	protected function index()
 	{
 		try {
-			$this->sendResponse(200, $this->packageService->findAllPackages());
+			$this->sendResponse(200, $this->packageService->getPackages());
 		} catch (\Exception $e) {
 			write_log(sprintf('Could not get package list: %s', $e->getMessage()), E_USER_ERROR);
-
 			if (Authentication::getInstance()->getIdentity()->admin_type === 'admin') {
 				$this->sendResponse(500, array('message' => tr('Could not get package list: %s', $e->getMessage())));
 			} else {
@@ -98,7 +98,7 @@ class Package extends ControllerAbstract
 	protected function showDetails($packageId)
 	{
 		try {
-			$packageDetails = $this->packageService->findPackageDetails($packageId);
+			$packageDetails = $this->packageService->getPackageDetails($packageId);
 			if (!$packageDetails) {
 				$this->sendResponse(404);
 			}
@@ -106,7 +106,6 @@ class Package extends ControllerAbstract
 			$this->sendResponse(200, $packageDetails);
 		} catch (\Exception $e) {
 			write_log(sprintf('Could not get package details: %s', $e->getMessage()), E_USER_ERROR);
-
 			if (Authentication::getInstance()->getIdentity()->admin_type === 'admin') {
 				$this->sendResponse(500, array('message' => tr('Could not get package details: %s', $e->getMessage())));
 			} else {
@@ -127,14 +126,11 @@ class Package extends ControllerAbstract
 				$this->sendResponse(403); // Only administrators can change package status
 			}
 
-			$payload = @json_decode(@file_get_contents('php://input'), JSON_OBJECT_AS_ARRAY);
-
-			if ($payload && is_array($payload)) {
-				$package = new PackageModel();
-				$package->hydrate($payload);
-
+			if (($payload = @file_get_contents('php://input')) !== false) {
+				/** @var ApsPackages $package */
+				$package = $this->getSerializer()->deserialize($payload, 'iMSCP\ApsStandard\Entity\ApsPackages', 'json');
 				if (count($this->getValidator()->validate($package)) == 0) {
-					if ($this->packageService->updatePackageStatus($package)) {
+					if ($this->packageService->updatePackageStatus($package->getId(), $package->getStatus())) {
 						$this->sendResponse(204);
 					}
 				}
@@ -156,7 +152,7 @@ class Package extends ControllerAbstract
 	{
 		try {
 			if (Authentication::getInstance()->getIdentity()->admin_type !== 'admin') {
-				$this->sendResponse(400);
+				$this->sendResponse(403);
 			}
 
 			$this->packageService->updatePackageIndex();

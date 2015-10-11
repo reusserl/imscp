@@ -22,10 +22,9 @@ namespace iMSCP\ApsStandard\Service;
 
 use Doctrine\ORM\EntityManager;
 use iMSCP\ApsStandard\ApsDocument;
+use iMSCP\ApsStandard\Entity\ApsPackages;
 use iMSCP\ApsStandard\Entity\ApsPackageDetails;
 use iMSCP_Authentication as Authentication;
-use iMSCP\ApsStandard\Entity\ApsPackages;
-use iMSCP\ApsStandard\Model\PackageCollection;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend_Session as SessionHandler;
@@ -77,21 +76,21 @@ class ApsPackageService extends AbstractApsService implements ServiceLocatorAwar
 	}
 
 	/**
-	 * Find all packages
+	 * Get all packages
 	 *
-	 * @return PackageCollection[]
+	 * @return ApsPackages[]
 	 */
 	public function getPackages()
 	{
 		$packageCollection = $this->getEntityManager()->getRepository('ApsStandard:ApsPackages')->findBy(
 			array('status' => ($this->getUserIdentity()->admin_type === 'admin') ? array('ok', 'disabled') : 'ok')
 		);
-		$this->getEventManager()->dispatch('onFindApsPackages', array('packages' => $packageCollection));
+		$this->getEventManager()->dispatch('onGetApsPackages', array('packages' => $packageCollection));
 		return $packageCollection;
 	}
 
 	/**
-	 * Find package details
+	 * Get package details
 	 *
 	 * @param int $id Package identity
 	 * @return ApsPackageDetails|null
@@ -117,7 +116,7 @@ class ApsPackageService extends AbstractApsService implements ServiceLocatorAwar
 		$packageDetails->setPackager($doc->getXPathValue("//root:packager/root:name") ?:
 			parse_url($doc->getXPathValue("//root:package-homepage"), PHP_URL_HOST) ?: tr('Unknown')
 		);
-		$this->eventManager->dispatch('onFindApsPackageDetails', array('package_details' => $packageDetails));
+		$this->eventManager->dispatch('onGetApsPackageDetails', array('package_details' => $packageDetails));
 		return $packageDetails;
 	}
 
@@ -149,6 +148,7 @@ class ApsPackageService extends AbstractApsService implements ServiceLocatorAwar
 	public function updatePackageIndex()
 	{
 		SessionHandler::writeClose();
+		/** @var ApsSpiderService $spider */
 		$spider = $this->getServiceLocator()->get('ApsSpiderService');
 		$spider->exploreCatalog();
 		$this->getEventManager()->dispatch('onUpdateApsPackageIndex');

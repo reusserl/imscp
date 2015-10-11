@@ -23,7 +23,6 @@ namespace iMSCP\ApsStandard\Controller;
 use iMSCP\Validate\ValidatorProviderInterface;
 use JMS\Serializer\Serializer;
 use Symfony\Component\Validator\Validation;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * Class ApsAbstractController
@@ -46,7 +45,6 @@ abstract class ApsAbstractController implements ValidatorProviderInterface
 		$this->serialiser = $serializer;
 	}
 
-
 	/**
 	 * Handle HTTP request
 	 *
@@ -55,9 +53,7 @@ abstract class ApsAbstractController implements ValidatorProviderInterface
 	abstract function handleRequest();
 
 	/**
-	 * Return Validator
-	 *
-	 * @return ValidatorInterface
+	 * {@inheritdoc}
 	 */
 	public function getValidator()
 	{
@@ -122,6 +118,6 @@ abstract class ApsAbstractController implements ValidatorProviderInterface
 				header('Status: 200 OK');
 		}
 
-		exit($this->getSerializer()->serialize((array)$data, 'json'));
+		exit($this->getSerializer()->serialize($data, 'json'));
 	}
 }
