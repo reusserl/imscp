@@ -18,21 +18,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-// Service manager configuration
-return array(
-	'factories' => array(
-		'Annotation' => 'iMSCP\Service\AnnotationServiceFactory',
-		'Database' => 'iMSCP\Service\DatabaseServiceFactory',
-		'ORM' => 'iMSCP\Service\ORMServiceFactory',
-		'Serializer' => 'iMSCP\Service\SerializerServiceFactory',
+namespace iMSCP\ApsStandard\Controller;
 
-		// APS Standard services
-		'ApsPackageController' => 'iMSCP\ApsStandard\Controller\ApsPackageControllerFactory',
-		'ApsPackageService' => 'iMSCP\ApsStandard\Service\ApsPackageServiceFactory',
-		'ApsSpiderService' => 'iMSCP\ApsStandard\Service\ApsSpiderServiceFactory',
-	),
+use iMSCP\ApsStandard\Service\ApsPackageService;
+use JMS\Serializer\Serializer;
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
 
-	'aliases' => array(
-		'EntityManager' => 'ORM'
-	)
-);
+/**
+ * Class ApsPackageControllerFactory
+ * @package iMSCP\ApsStandard\Controller
+ */
+class ApsPackageControllerFactory implements FactoryInterface
+{
+	/**
+	 * Create service
+	 *
+	 * @param ServiceLocatorInterface $serviceLocator
+	 * @return mixed
+	 */
+	public function createService(ServiceLocatorInterface $serviceLocator)
+	{
+		/** @var ApsPackageService $apsPackageService */
+		$apsPackageService = $serviceLocator->get('ApsPackageService');
+		/** @var Serializer $serializerService */
+		$serializerService = $serviceLocator->get('Serializer');
+		return new ApsPackageController($serializerService, $apsPackageService);
+	}
+}

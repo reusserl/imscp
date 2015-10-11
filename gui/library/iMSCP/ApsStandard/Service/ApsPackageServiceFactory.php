@@ -20,41 +20,26 @@
 
 namespace iMSCP\ApsStandard\Service;
 
-use iMSCP\ApsStandard\ApsStandardAbstract;
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
 use iMSCP_Authentication as Authentication;
-use iMSCP_Database as Database;
-use iMSCP_Events_Aggregator as EventManager;
 
 /**
- * Class PackageService
+ * Class ApsPackageServiceFactory
  * @package iMSCP\ApsStandard\Service
  */
-abstract class ServiceAbstract extends ApsStandardAbstract
+class ApsPackageServiceFactory implements FactoryInterface
 {
 	/**
-	 * @var \stdClass $identity User identity
+	 * Create APS package service
+	 *
+	 * @param ServiceLocatorInterface $serviceLocator
+	 * @return mixed
 	 */
-	protected $identity;
-
-	/**
-	 * @var EventManager
-	 */
-	protected $eventManager;
-
-	/**
-	 * @var \PDO
-	 */
-	protected $db;
-
-	/**
-	 * Constructor
-	 */
-	public function __construct()
+	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		parent::__construct();
-
-		$this->eventManager = EventManager::getInstance();
-		$this->identity = Authentication::getInstance()->getIdentity();
-		$this->db = Database::getRawInstance();
+		/** @var \Doctrine\ORM\EntityManager $entityManager */
+		$entityManager = $serviceLocator->get('EntityManager');
+		return new ApsPackageService($entityManager, Authentication::getInstance());
 	}
 }

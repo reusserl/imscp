@@ -18,21 +18,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-// Service manager configuration
-return array(
-	'factories' => array(
-		'Annotation' => 'iMSCP\Service\AnnotationServiceFactory',
-		'Database' => 'iMSCP\Service\DatabaseServiceFactory',
-		'ORM' => 'iMSCP\Service\ORMServiceFactory',
-		'Serializer' => 'iMSCP\Service\SerializerServiceFactory',
+namespace iMSCP\ApsStandard\Service;
 
-		// APS Standard services
-		'ApsPackageController' => 'iMSCP\ApsStandard\Controller\ApsPackageControllerFactory',
-		'ApsPackageService' => 'iMSCP\ApsStandard\Service\ApsPackageServiceFactory',
-		'ApsSpiderService' => 'iMSCP\ApsStandard\Service\ApsSpiderServiceFactory',
-	),
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
+use iMSCP_Authentication as Authentication;
 
-	'aliases' => array(
-		'EntityManager' => 'ORM'
-	)
-);
+/**
+ * Class ApsSpiderServiceFactory
+ * @package iMSCP\ApsStandard\Service
+ */
+class ApsSpiderServiceFactory implements FactoryInterface
+{
+	/**
+	 * Create APS Spider service
+	 *
+	 * @param ServiceLocatorInterface $serviceLocator
+	 * @return mixed
+	 */
+	public function createService(ServiceLocatorInterface $serviceLocator)
+	{
+		/** @var \Doctrine\ORM\EntityManager $entityManager */
+		$entityManager = $serviceLocator->get('EntityManager');
+		return new ApsSpiderService($entityManager, Authentication::getInstance());
+	}
+}
