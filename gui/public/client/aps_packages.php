@@ -20,11 +20,11 @@
 
 namespace iMSCP\ApsStandard;
 
-use iMSCP\ApsStandard\Controller\Package as PackageController;
-use iMSCP\ApsStandard\Service\PackageService;
+use iMSCP\ApsStandard\Controller\ApsPackageController;
 use iMSCP_Events_Aggregator as EventManager;
 use iMSCP_Events as Events;
 use iMSCP_pTemplate as TemplateEngine;
+use iMSCP_Registry as Registry;
 
 require 'imscp-lib.php';
 
@@ -32,9 +32,10 @@ $eventManager = EventManager::getInstance();
 $eventManager->dispatch(Events::onClientScriptStart);
 check_login('user');
 
-if(customerHasFeature('aps_standard')) {
+if (customerHasFeature('aps_standard')) {
 	if (is_xhr()) {
-		$controller = new PackageController(new PackageService());
+		/** @var ApsPackageController $controller */
+		$controller = Registry::get('ServiceManager')->get('ApsPackageController');
 		$controller->handleRequest();
 	}
 
@@ -56,6 +57,7 @@ if(customerHasFeature('aps_standard')) {
 	));
 
 	$eventManager->registerListener('onGetJsTranslations', function ($e) {
+		/** @var $e \iMSCP_Events_Event */
 		$e->getParam('translations')->core['aps_standard'] = array(
 			'no_package_available' => tr('No package available.'),
 			'package_details' => tr('Package details')

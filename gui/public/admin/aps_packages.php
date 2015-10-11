@@ -20,11 +20,11 @@
 
 namespace iMSCP\ApsStandard;
 
-use iMSCP\ApsStandard\Controller\Package as PackageController;
-use iMSCP\ApsStandard\Service\PackageService;
+use iMSCP\ApsStandard\Controller\ApsPackageController;
 use iMSCP_Events_Aggregator as EventManager;
 use iMSCP_Events as Events;
 use iMSCP_pTemplate as TemplateEngine;
+use iMSCP_Registry as Registry;
 
 require 'imscp-lib.php';
 
@@ -33,8 +33,15 @@ $eventManager->dispatch(Events::onAdminScriptStart);
 check_login('admin');
 
 if (is_xhr()) {
-	$controller = new PackageController(new PackageService());
-	$controller->handleRequest();
+	try {
+		/** @var ApsPackageController $controller */
+		$controller = Registry::get('ServiceManager')->get('ApsPackageController');
+		$controller->handleRequest();
+	} catch (\Exception $e) {
+		header('Status: 500 Internal Server Error');
+		print $e->getMessage();
+		exit;
+	}
 }
 
 $tpl = new TemplateEngine();
@@ -53,7 +60,9 @@ $tpl->assign(array(
 	'CLIENT_BTN1' => ''
 ));
 
+
 $eventManager->registerListener('onGetJsTranslations', function ($e) {
+	/** @var $e \iMSCP_Events_Event */
 	$e->getParam('translations')->core['aps_standard'] = array(
 		'no_package_available' => tr('No package available. You should update package index.'),
 		'update_in_progress' => tr('Update of package index is in progress. This task can take several minutes.'),
