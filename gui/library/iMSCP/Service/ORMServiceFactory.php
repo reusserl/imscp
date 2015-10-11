@@ -77,7 +77,7 @@ class ORMServiceFactory
 				'/^admin|(?:aps_(?:packages|instances))$/'
 			);
 
-			// Add namespace for acccessing APS Standard entities
+			// Add namespace for accessing the APS Standard entities
 			// FIXME: Not the right place do do that !
 			$config->addEntityNamespace('ApsStandard', '\\iMSCP\\ApsStandard\Entity\\');
 		}
