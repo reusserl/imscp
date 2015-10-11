@@ -18,16 +18,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\ApsStandard;
+namespace iMSCP\ApsStandard\Service;
 
+use Doctrine\ORM\EntityManager;
+use iMSCP\ApsStandard\ApsDocument;
 use iMSCP_Registry as Registry;
 
 /**
- * Class Spider
- *
- * @package iMSCP\ApsStandard
+ * Class ApsSpiderService
+ * @package iMSCP\ApsStandard\Service
  */
-class Spider extends ApsStandardAbstract
+class ApsSpiderService extends AbstractApsService
 {
 	/**
 	 * @var array Known packages
@@ -46,11 +47,14 @@ class Spider extends ApsStandardAbstract
 
 	/**
 	 * Constructor
+	 *
+	 * @param EntityManager $entityManager
+	 * @throws \Exception
 	 */
-	public function __construct()
+	public function __construct(EntityManager $entityManager)
 	{
 		try {
-			parent::__construct();
+			parent::__construct($entityManager);
 
 			// Ensure that all needed functions are available
 			$this->checkRequirements();
@@ -59,9 +63,11 @@ class Spider extends ApsStandardAbstract
 			$this->setupEnvironment();
 
 			// Retrieves list of known packages
-			$stmt = exec_query('SELECT `name`, `version`, `aps_version`, `release`, `status` FROM `aps_packages`');
+			$stmt = $this->getEntityManager()->getConnection()->executeQuery(
+				'SELECT `name`, `version`, `aps_version`, `release`, `status` FROM `aps_packages`'
+			);
 			if ($stmt->rowCount()) {
-				while ($row = $stmt->fetchRow(\PDO::FETCH_ASSOC)) {
+				while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 					$this->packages[$row['aps_version']][$row['name']] = array(
 						'version' => $row['version'],
 						'release' => $row['release']
@@ -100,7 +106,7 @@ class Spider extends ApsStandardAbstract
 	{
 		try {
 			$serviceUrl = $this->getServiceURL();
-			$systemIndex = new Document($serviceUrl, 'html');
+			$systemIndex = new ApsDocument($serviceUrl, 'html');
 
 			// Parse system index to retrieve list of available repositories
 			// See: https://doc.apsstandard.org/2.1/portal/cat/browsing/#retrieving-repository-index
@@ -114,19 +120,19 @@ class Spider extends ApsStandardAbstract
 				if (in_array($repositoryId, $this->supportedRepositories)) {
 					// Discover repository feed
 					// See: https://doc.apsstandard.org/2.1/portal/cat/browsing/#discovering-repository-feed
-					$repositoryIndex = new Document($serviceUrl . '/' . $repositoryUrl, 'html');
+					$repositoryIndex = new ApsDocument($serviceUrl . '/' . $repositoryUrl, 'html');
 					$repositoryFeedUrl = $repositoryIndex->getXPathValue("//a[@id='feedLink']/@href");
 					unset($repositoryIndex);
 
 					if ($repositoryFeedUrl != '') { // Ignore invalid repository entry
 						// Parse the repository feed by chunk of 100 entries (we fetch only latest package versions)
 						// See: https://doc.apsstandard.org/2.1/portal/cat/search/#search-description-arguments
-						$repositoryFeed = new Document(
+						$repositoryFeed = new ApsDocument(
 							$serviceUrl . str_replace('../', '/', $repositoryFeedUrl) . '?pageSize=100&latest=1'
 						);
 						$this->parseRepositoryFeedPage($repositoryFeed, $repositoryId);
 						while ($repositoryFeedUrl = $repositoryFeed->getXPathValue("root:link[@rel='next']/@href")) {
-							$repositoryFeed = new Document($repositoryFeedUrl);
+							$repositoryFeed = new ApsDocument($repositoryFeedUrl);
 							$this->parseRepositoryFeedPage($repositoryFeed, $repositoryId);
 						}
 						unset($repositoryFeed);
@@ -149,83 +155,84 @@ class Spider extends ApsStandardAbstract
 	/**
 	 * Parse the given repository feed page and extract/download package metadata
 	 *
-	 * @param Document $repositoryFeed Document representing APS repository feed
+	 * @param ApsDocument $repositoryFeed Document representing APS repository feed
 	 * @param string $repositoryId Repository unique identifier (e.g. 1, 1.1, 1.2, 2.0 ...)
 	 * @return void
 	 */
-	protected function parseRepositoryFeedPage(Document $repositoryFeed, $repositoryId)
+	protected function parseRepositoryFeedPage(ApsDocument $repositoryFeed, $repositoryId)
 	{
 		$metaFiles = array();
 		$metadataDir = $this->getPackageMetadataDir() . '/' . $repositoryId;
-		$knownPkgs = isset($this->packages[$repositoryId]) ? $this->packages[$repositoryId] : array();
+		$knownPackages = isset($this->packages[$repositoryId]) ? $this->packages[$repositoryId] : array();
 
 		// Parse all package entries
 		foreach ($repositoryFeed->getXPathValue("root:entry", null, false) as $entry) {
 			// Retrieves needed data
-			$pkgName = $repositoryFeed->getXPathValue("a:name/text()", $entry);
-			$pkgVersion = $repositoryFeed->getXPathValue("a:version/text()", $entry);
-			$pkgRelease = $repositoryFeed->getXPathValue("a:release/text()", $entry);
-			$vendor = $repositoryFeed->getXPathValue("a:vendor/text()", $entry);
-			$vendorUri = $repositoryFeed->getXPathValue("a:vendor_uri/text()", $entry) ?:
+			$packageName = $repositoryFeed->getXPathValue("a:name/text()", $entry);
+			$packageVersion = $repositoryFeed->getXPathValue("a:version/text()", $entry);
+			$packageRelease = $repositoryFeed->getXPathValue("a:release/text()", $entry);
+			$packageVendor = $repositoryFeed->getXPathValue("a:vendor/text()", $entry);
+			$packageVendorUri = $repositoryFeed->getXPathValue("a:vendor_uri/text()", $entry) ?:
 				$repositoryFeed->getXPathValue("a:homepage/text()", $entry);
-			$pkgUrl = $repositoryFeed->getXPathValue("root:link[@a:type='aps']/@href", $entry);
-			$pkgMetaUrl = $repositoryFeed->getXPathValue("root:link[@a:type='meta']/@href", $entry);
-			$pkgIconUrl = $repositoryFeed->getXPathValue("root:link[@a:type='icon']/@href", $entry);
-			$pkgCertLevel = $repositoryFeed->getXPathValue("root:link[@a:type='certificate']/a:level/text()", $entry) ?: 'none';
+			$packageUrl = $repositoryFeed->getXPathValue("root:link[@a:type='aps']/@href", $entry);
+			$packageMetaUrl = $repositoryFeed->getXPathValue("root:link[@a:type='meta']/@href", $entry);
+			$packageIconUrl = $repositoryFeed->getXPathValue("root:link[@a:type='icon']/@href", $entry);
+			$packageCertLevel = $repositoryFeed->getXPathValue(
+				"root:link[@a:type='certificate']/a:level/text()", $entry
+			) ?: 'none';
 
 			// Continue only if all data are available
 			if (
-				$pkgName != '' && $pkgVersion != '' && $pkgRelease != '' && $vendor != '' && $vendorUri != '' &&
-				$pkgUrl != '' && $pkgMetaUrl != ''
+				$packageName != '' && $packageVersion != '' && $packageRelease != '' && $packageVendor != '' &&
+				$packageVendorUri != '' && $packageUrl != '' && $packageMetaUrl != ''
 			) {
 				// Package metadata directory
-				$pkgMetadataDir = "$metadataDir/$pkgName";
+				$packageMetadataDir = "$metadataDir/$packageName";
 
-				$pkgCversion = null;
-				$pkgCrelease = null;
-				if (isset($knownPkgs[$pkgName])) {
-					$pkgCversion = $knownPkgs[$pkgName]['version'];
-					$pkgCrelease = $knownPkgs[$pkgName]['release'];
+				$packageCurrentVersion = null;
+				$packageCurrentRelease = null;
+				if (isset($knownPackages[$packageName])) {
+					$packageCurrentVersion = $knownPackages[$packageName]['version'];
+					$packageCurrentRelease = $knownPackages[$packageName]['release'];
 				}
 
-				$isKnowVersion = !is_null($pkgCversion);
-				$isOutDatedVersion = ($isKnowVersion)
-					? (version_compare($pkgCversion, $pkgVersion, '<') || version_compare($pkgCrelease, $pkgRelease, '<'))
-					: false;
+				$isKnowVersion = !is_null($packageCurrentVersion);
+				$isOutDatedVersion = ($isKnowVersion) ? (
+					version_compare($packageCurrentVersion, $packageVersion, '<') ||
+					version_compare($packageCurrentRelease, $packageRelease, '<')
+				) : false;
 
 				// Continue only if a newer version is available, or if there is no valid APP-META.xml or APP-DATA.json file
 				if (
 					(!$isKnowVersion || $isOutDatedVersion) ||
-					!file_exists("$pkgMetadataDir/APP-META.xml") || filesize("$pkgMetadataDir/APP-META.xml") == 0 ||
-					!file_exists("$pkgMetadataDir/APP-META.json") || filesize("$pkgMetadataDir/APP-META.json") == 0
+					!file_exists("$packageMetadataDir/APP-META.xml") || filesize("$packageMetadataDir/APP-META.xml") == 0 ||
+					!file_exists("$packageMetadataDir/APP-META.json") || filesize("$packageMetadataDir/APP-META.json") == 0
 				) {
 					// Delete out-dated version if any
 					if ($isOutDatedVersion) {
-						utils_removeDir("$metadataDir/$pkgName");
-						exec_query(
+						utils_removeDir("$metadataDir/$packageName");
+						$stmt = $this->entityManager->getConnection()->prepare(
 							'
 								DELETE FROM `aps_packages`
 								WHERE `name` = ? AND aps_version = ? AND `version` = ? AND `release` = ?
-							',
-							array($pkgName, $repositoryId, $pkgCversion, $pkgCrelease)
+							'
 						);
-						unset($metaFiles[$pkgName]);
+						$stmt->execute(array($packageName, $repositoryId, $packageCurrentVersion, $packageCurrentRelease));
+						unset($metaFiles[$packageName]);
 					}
 
 					// Marks this package as seen
-					$knownPkgs[$pkgName] = array('version' => $pkgVersion, 'release' => $pkgRelease);
-
+					$knownPackages[$packageName] = array('version' => $packageVersion, 'release' => $packageRelease);
 					// Create package metadata directory
-					@mkdir($pkgMetadataDir, 0750, true);
-
+					@mkdir($packageMetadataDir, 0750, true);
 					// Save intermediate metadata
-					@file_put_contents("$pkgMetadataDir/APP-META.json", json_encode(array(
-						'app_url' => $pkgUrl, 'app_icon_url' => $pkgIconUrl, 'app_cert_level' => $pkgCertLevel,
-						'app_vendor' => $vendor, 'app_vendor_uri' => $vendorUri
+					@file_put_contents("$packageMetadataDir/APP-META.json", json_encode(array(
+						'app_url' => $packageUrl, 'app_icon_url' => $packageIconUrl, 'app_cert_level' => $packageCertLevel,
+						'app_vendor' => $packageVendor, 'app_vendor_uri' => $packageVendorUri
 					)));
 
 					// Schedule download of APP-META.xml file
-					$metaFiles[$pkgName] = array('src' => $pkgMetaUrl, 'trg' => "$pkgMetadataDir/APP-META.xml");
+					$metaFiles[$packageName] = array('src' => $packageMetaUrl, 'trg' => "$packageMetadataDir/APP-META.xml");
 				}
 			}
 		}
@@ -243,80 +250,87 @@ class Spider extends ApsStandardAbstract
 	 */
 	public function updatePackageIndex($repoId)
 	{
-		$newPkgs = array();
-		$knownPkgs = isset($this->packages[$repoId]) ? array_keys($this->packages[$repoId]) : array();
+		$newPackages = array();
+		$knownPackages = isset($this->packages[$repoId]) ? array_keys($this->packages[$repoId]) : array();
 		$metadataDir = $this->getPackageMetadataDir() . '/' . $repoId;
 
 		// Retrieve list of packages
 		$directoryIterator = new \DirectoryIterator($metadataDir);
 		foreach ($directoryIterator as $fileInfo) {
 			if (!$fileInfo->isDot() && $fileInfo->isDir()) {
-				$newPkgs[] = $fileInfo->getFileName();
+				$newPackages[] = $fileInfo->getFileName();
 			}
 		}
 
-		// Find packages for which metadata are no longer available and removes them from database
+		// Find obsolete packages and removes them from database
 		if (isset($this->packages[$repoId])) {
-			$pkgsToDelete = array_diff($knownPkgs, $newPkgs);
-			foreach ($pkgsToDelete as $pkgName) {
-				exec_query('DELETE FROM `aps_packages` WHERE `name` = ? AND aps_version = ?', array($pkgName, $repoId));
+			$obsoletePackages = array_diff($knownPackages, $newPackages);
+			if (!empty($obsoletePackages)) {
+				$stmt = $this->getEntityManager()->getConnection()->prepare(
+					'DELETE FROM `aps_packages` WHERE `name` = ? AND aps_version = ?'
+				);
+
+				foreach ($obsoletePackages as $packageName) {
+					$stmt->execute(array($packageName, $repoId));
+				}
 			}
-			unset($pkgsToDelete);
+			unset($obsoletePackages);
 		}
 
 		// Add new packages in database
-		if (!empty($newPkgs)) {
-			$newPkgs = array_diff($newPkgs, $knownPkgs);
-			foreach ($newPkgs as $pkg) {
-				$metaFilePath = $metadataDir . '/' . $pkg . '/APP-META.xml';
-				$dataFilePath = $metadataDir . '/' . $pkg . '/APP-META.json';
+		$newPackages = array_diff($newPackages, $knownPackages);
+		if (!empty($newPackages)) {
+			$stmt = $this->getEntityManager()->getConnection()->prepare(
+				'
+					INSERT INTO aps_packages (
+						`name`, `summary`, `version`, `aps_version`, `release`, `category`, `vendor`, `vendor_uri`,
+						`url`, `icon_url`, `cert`, `status`
+					) VALUES(
+						?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+					)
+				'
+			);
+
+			foreach ($newPackages as $package) {
+				$packageMetaFilePath = $metadataDir . '/' . $package . '/APP-META.xml';
+				$packageIntermediateMetaFilePath = $metadataDir . '/' . $package . '/APP-META.json';
 
 				// Retrieves needed data
 				if (
-					file_exists($metaFilePath) && filesize($metaFilePath) != 0 &&
-					file_exists($dataFilePath) && filesize($dataFilePath) != 0
+					file_exists($packageMetaFilePath) && filesize($packageMetaFilePath) != 0 &&
+					file_exists($packageIntermediateMetaFilePath) && filesize($packageIntermediateMetaFilePath) != 0
 				) {
-					$metaDoc = new Document($metadataDir . '/' . $pkg . '/APP-META.xml');
-					$pkgName = $metaDoc->getXPathValue('root:name/text()');
-					$pkgSummary = $metaDoc->getXPathValue('//root:summary/text()');
-					$pkgVersion = $metaDoc->getXPathValue('root:version/text()');
-					$pkgRelease = $metaDoc->getXPathValue('root:release/text()');
-					$pkgCategory = $metaDoc->getXPathValue('//root:category/text()');
+					$metadata = new ApsDocument($metadataDir . '/' . $package . '/APP-META.xml');
+					$packageName = $metadata->getXPathValue('root:name/text()');
+					$packageSummary = $metadata->getXPathValue('//root:summary/text()');
+					$packageVersion = $metadata->getXPathValue('root:version/text()');
+					$packageRelease = $metadata->getXPathValue('root:release/text()');
+					$packageCategory = $metadata->getXPathValue('//root:category/text()');
 
 					// Get intermediate metadata
-					$data = json_decode(file_get_contents($dataFilePath), JSON_OBJECT_AS_ARRAY);
-					$pkgVendor = isset($data['app_vendor']) ? $data['app_vendor'] : '';
-					$pkgVendorURI = isset($data['app_vendor_uri']) ? $data['app_vendor_uri'] : '';
-					$pkgUrl = isset($data['app_url']) ? $data['app_url'] : '';
-					$pkgIconUrl = isset($data['app_icon_url']) ? $data['app_icon_url'] : '';
-					$pkgCertLevel = isset($data['app_cert_level']) ? $data['app_cert_level'] : '';
+					$metadata = json_decode(file_get_contents($packageIntermediateMetaFilePath), JSON_OBJECT_AS_ARRAY);
+					$packageVendor = isset($metadata['app_vendor']) ? $metadata['app_vendor'] : '';
+					$packageVendorURI = isset($metadata['app_vendor_uri']) ? $metadata['app_vendor_uri'] : '';
+					$packageUrl = isset($metadata['app_url']) ? $metadata['app_url'] : '';
+					$packageIconUrl = isset($metadata['app_icon_url']) ? $metadata['app_icon_url'] : '';
+					$packageCertLevel = isset($metadata['app_cert_level']) ? $metadata['app_cert_level'] : '';
 
 					// Only add valid packages
 					if (
-						$pkgName != '' && $pkgSummary != '' && $pkgVersion != '' && $pkgRelease != '' &&
-						$pkgCategory != '' && $pkgVendor != '' && $pkgVendorURI != '' && $pkgUrl && $pkgIconUrl &&
-						$pkgCertLevel
+						$packageName != '' && $packageSummary != '' && $packageVersion != '' && $packageRelease != '' &&
+						$packageCategory != '' && $packageVendor != '' && $packageVendorURI != '' && $packageUrl &&
+						$packageIconUrl && $packageCertLevel
 					) {
-						exec_query(
-							'
-								INSERT INTO aps_packages (
-									`name`, `summary`, `version`, `aps_version`, `release`, `category`, `vendor`,
-									`vendor_uri`, `url`, `icon_url`, `cert`, `status`
-								) VALUES(
-									?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-								)
-							',
-							array(
-								$pkgName, $pkgSummary, $pkgVersion, $repoId, $pkgRelease, $pkgCategory, $pkgVendor,
-								$pkgVendorURI, $pkgUrl, $pkgIconUrl, $pkgCertLevel,
-								(isset($this->unlockedPackages[$pkgName])) ? 'ok' : 'disabled'
-							)
-						);
+						$stmt->execute(array(
+							$packageName, $packageSummary, $packageVersion, $repoId, $packageRelease, $packageCategory,
+							$packageVendor, $packageVendorURI, $packageUrl, $packageIconUrl, $packageCertLevel,
+							(isset($this->unlockedPackages[$packageName])) ? 'ok' : 'disabled'
+						));
 					} else {
-						utils_removeDir($metadataDir . '/' . $pkg); // Remove invalid package
+						utils_removeDir($metadataDir . '/' . $package); // Remove invalid package
 					}
 				} else {
-					utils_removeDir($metadataDir . '/' . $pkg); // Remove invalid package
+					utils_removeDir($metadataDir . '/' . $package); // Remove invalid package
 				}
 			}
 		}
@@ -356,7 +370,7 @@ class Spider extends ApsStandardAbstract
 					CURLOPT_BINARYTRANSFER => true,
 					CURLOPT_RETURNTRANSFER => true,
 					CURLOPT_FILE => $fileHandle,
-					CURLOPT_TIMEOUT => 300,
+					CURLOPT_TIMEOUT => 600,
 					CURLOPT_FAILONERROR => true,
 					CURLOPT_FOLLOWLOCATION => false, // Cannot be true when safe_mode or open_basedir are in effect
 					CURLOPT_HEADER => false,

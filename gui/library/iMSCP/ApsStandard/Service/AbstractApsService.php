@@ -18,16 +18,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\ApsStandard;
+namespace iMSCP\ApsStandard\Service;
 
+use Doctrine\ORM\EntityManager;
+use iMSCP\Events\EventManagerAwareInterface;
+use iMSCP_Events_Aggregator as EventManager;
+use iMSCP_Events_Manager_Interface as EventManagerInterface;
 use iMSCP_Registry as Registry;
 
 /**
- * Class ApsStandard
- * @package iMSCP\ApsStandard
+ * Class AbstractApsStandardService
+ * @package iMSCP\ApsStandard\Service
  */
-abstract class ApsStandardAbstract
+abstract class AbstractApsService implements EventManagerAwareInterface
 {
+	/**
+	 * @var \stdClass $identity User identity
+	 */
+	protected $identity;
+
+	/**
+	 * @var EventManager
+	 */
+	protected $eventManager;
+
+	/**
+	 * @var EntityManager
+	 */
+	protected $entityManager;
+
 	/**
 	 * @var array List of supported repositories (APS format specifications)
 	 */
@@ -55,12 +74,47 @@ abstract class ApsStandardAbstract
 
 	/**
 	 * Constructor
+	 *
+	 * @param EntityManager $entityManager
+	 * @throws \iMSCP_Exception
 	 */
-	public function __construct()
+	public function __construct(EntityManager $entityManager)
 	{
+		$this->entityManager = $entityManager;
 		$config = Registry::get('config');
 		$this->setPackageMetadataDir($config['CACHE_DATA_DIR'] . '/aps_standard/metadata');
 		$this->setPackageDir($config['CACHE_DATA_DIR'] . '/aps_standard/packages');
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getEventManager()
+	{
+		if (null === $this->eventManager) {
+			$this->eventManager = $this->eventManager = EventManager::getInstance();
+		}
+
+		return $this->eventManager;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function setEventManager(EventManagerInterface $eventManager)
+	{
+		$this->eventManager = $eventManager;
+	}
+
+	/**
+	 * Get entity manager
+	 *
+	 * @return EntityManager
+	 * @throws \iMSCP_Exception_Database
+	 */
+	public function getEntityManager()
+	{
+		return $this->entityManager;
 	}
 
 	/**

@@ -22,7 +22,6 @@ namespace iMSCP\ApsStandard\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-use iMSCP_Authentication as Authentication;
 
 /**
  * Class ApsSpiderServiceFactory
@@ -40,6 +39,6 @@ class ApsSpiderServiceFactory implements FactoryInterface
 	{
 		/** @var \Doctrine\ORM\EntityManager $entityManager */
 		$entityManager = $serviceLocator->get('EntityManager');
-		return new ApsSpiderService($entityManager, Authentication::getInstance());
+		return new ApsSpiderService($entityManager);
 	}
 }
