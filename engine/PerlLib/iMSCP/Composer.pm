@@ -50,7 +50,7 @@ use parent 'Common::SingletonClass';
 
  Param string $package Package name
  Param string $packageVersion OPTIONAL Package version
- Param bool $devonly OPTIONAL When set to true, indicate that the package is required in dev environement only
+ Param bool $devonly OPTIONAL When set to true, indicate that the package is required in dev environment only
  Return undef
 
 =cut
