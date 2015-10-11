@@ -18,15 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\ApsStandard;
+namespace iMSCP\Validate;
 
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 
 /**
- * Interface EntityValidation
- * @package iMSCP\ApsStandard\Entity
+ * Interface ValidationInterface
+ * @package iMSCP\Validate
  */
-interface Validation
+interface ValidationInterface
 {
 	/**
 	 * Load validation metadata
