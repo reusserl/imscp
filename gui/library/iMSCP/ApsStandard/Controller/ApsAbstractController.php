@@ -31,7 +31,7 @@ use Symfony\Component\Validator\Validation;
 abstract class ApsAbstractController implements ValidatorProviderInterface
 {
 	/**
-	 * @var \JMS\Serializer\Serializer
+	 * @var Serializer
 	 */
 	protected $serialiser;
 
@@ -46,19 +46,19 @@ abstract class ApsAbstractController implements ValidatorProviderInterface
 	}
 
 	/**
-	 * Handle HTTP request
-	 *
-	 * @return void
-	 */
-	abstract function handleRequest();
-
-	/**
 	 * {@inheritdoc}
 	 */
 	public function getValidator()
 	{
 		return Validation::createValidatorBuilder()->addMethodMapping('loadValidationMetadata')->getValidator();
 	}
+
+	/**
+	 * Handle HTTP request
+	 *
+	 * @return void
+	 */
+	abstract function handleRequest();
 
 	/**
 	 * Get serializer
