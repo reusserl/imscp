@@ -21,10 +21,10 @@
 namespace iMSCP\ApsStandard;
 
 /**
- * Class Document
+ * Class ApsDocument
  * @package iMSCP\ApsStandard
  */
-class Document
+class ApsDocument
 {
 	/**
 	 * @var \DOMDocument Associated Document Model Object
