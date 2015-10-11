@@ -19,6 +19,7 @@
  */
 
 namespace iMSCP\Service;
+
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 

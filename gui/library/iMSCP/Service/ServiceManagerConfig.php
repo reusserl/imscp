@@ -20,12 +20,14 @@
 
 namespace iMSCP\Service;
 
+use iMSCP\Events\EventManagerAwareInterface;
 use Zend\ServiceManager\Config;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\ServiceManager\ServiceManagerAwareInterface;
 use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\ArrayUtils;
+use iMSCP_Events_Manager_Interface as EventManagerInterface;
 
 /**
  * Class ServiceManagerConfig
@@ -45,7 +47,9 @@ class ServiceManagerConfig extends Config
 	 *
 	 * @var array
 	 */
-	protected $factories = array();
+	protected $factories = array(
+		'EventManager' => 'iMSCP\Service\EventManagerFactory',
+	);
 
 	/**
 	 * Abstract factories
@@ -60,6 +64,7 @@ class ServiceManagerConfig extends Config
 	 * @var array
 	 */
 	protected $aliases = array(
+		'iMSCP\Events\EventManagerInterface' => 'EventManager',
 		'Zend\ServiceManager\ServiceLocatorInterface' => 'ServiceManager',
 		'Zend\ServiceManager\ServiceManager' => 'ServiceManager',
 	);
@@ -97,6 +102,13 @@ class ServiceManagerConfig extends Config
 	public function __construct(array $configuration = array())
 	{
 		$this->initializers = array(
+			'EventManagerAwareInitializer' => function ($instance, ServiceLocatorInterface $serviceLocator) {
+				if ($instance instanceof EventManagerAwareInterface) {
+					/** @var  EventManagerInterface $eventManager */
+					$eventManager = $serviceLocator->get('EventManager');
+					$instance->setEventManager($eventManager);
+				}
+			},
 			'ServiceManagerAwareInitializer' => function ($instance, ServiceLocatorInterface $serviceLocator) {
 				if ($serviceLocator instanceof ServiceManager && $instance instanceof ServiceManagerAwareInterface) {
 					$instance->setServiceManager($serviceLocator);
@@ -121,7 +133,7 @@ class ServiceManagerConfig extends Config
 				'aliases' => $this->aliases,
 				'shared' => $this->shared,
 				'delegators' => $this->delegators,
-				'initializers' => $this->initializers,
+				'initializers' => $this->initializers
 			),
 			$configuration
 		));
