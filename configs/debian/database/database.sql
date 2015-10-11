@@ -690,10 +690,10 @@ CREATE TABLE IF NOT EXISTS `user_gui_props` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `aps_packages`
+-- Table structure for table `aps_package`
 --
 
-CREATE TABLE IF NOT EXISTS `aps_packages` (
+CREATE TABLE IF NOT EXISTS `aps_package` (
   `id` int(11) unsigned NOT NULL auto_increment,
   `name` varchar(255) collate utf8_unicode_ci NOT NULL,
   `summary` text collate utf8_unicode_ci NOT NULL,
@@ -713,10 +713,10 @@ CREATE TABLE IF NOT EXISTS `aps_packages` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `aps_instances`
+-- Table structure for table `aps_instance`
 --
 
-CREATE TABLE IF NOT EXISTS `aps_instances` (
+CREATE TABLE IF NOT EXISTS `aps_instance` (
   `id` int(11) unsigned NOT NULL auto_increment,
   `pid` int(11) unsigned DEFAULT NULL,
   `uid` int(10) unsigned NOT NULL,

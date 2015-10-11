@@ -27,13 +27,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 use iMSCP\Validate\ValidationInterface;
 
 /**
- * ApsPackages
+ * ApsPackage
  *
- * @ORM\Table(name="aps_packages")
+ * @ORM\Table(name="aps_package")
  * @ORM\Entity
  * @JMS\AccessType("public_method")
  */
-class ApsPackages implements ValidationInterface
+class ApsPackage implements ValidationInterface
 {
 	/**
 	 * @var integer
@@ -156,7 +156,7 @@ class ApsPackages implements ValidationInterface
 	 * Set name
 	 *
 	 * @param string $name
-	 * @return ApsPackages
+	 * @return ApsPackage
 	 */
 	public function setName($name)
 	{
@@ -179,7 +179,7 @@ class ApsPackages implements ValidationInterface
 	 * Set summary
 	 *
 	 * @param string $summary
-	 * @return ApsPackages
+	 * @return ApsPackage
 	 */
 	public function setSummary($summary)
 	{
@@ -202,7 +202,7 @@ class ApsPackages implements ValidationInterface
 	 * Set version
 	 *
 	 * @param string $version
-	 * @return ApsPackages
+	 * @return ApsPackage
 	 */
 	public function setVersion($version)
 	{
@@ -225,7 +225,7 @@ class ApsPackages implements ValidationInterface
 	 * Set release
 	 *
 	 * @param integer $release
-	 * @return ApsPackages
+	 * @return ApsPackage
 	 */
 	public function setRelease($release)
 	{
@@ -248,7 +248,7 @@ class ApsPackages implements ValidationInterface
 	 * Set apsVersion
 	 *
 	 * @param string $apsVersion
-	 * @return ApsPackages
+	 * @return ApsPackage
 	 */
 	public function setApsVersion($apsVersion)
 	{
@@ -271,7 +271,7 @@ class ApsPackages implements ValidationInterface
 	 * Set category
 	 *
 	 * @param string $category
-	 * @return ApsPackages
+	 * @return ApsPackage
 	 */
 	public function setCategory($category)
 	{
@@ -294,7 +294,7 @@ class ApsPackages implements ValidationInterface
 	 * Set vendor
 	 *
 	 * @param string $vendor
-	 * @return ApsPackages
+	 * @return ApsPackage
 	 */
 	public function setVendor($vendor)
 	{
@@ -317,7 +317,7 @@ class ApsPackages implements ValidationInterface
 	 * Set vendorUri
 	 *
 	 * @param string $vendorUri
-	 * @return ApsPackages
+	 * @return ApsPackage
 	 */
 	public function setVendorUri($vendorUri)
 	{
@@ -340,7 +340,7 @@ class ApsPackages implements ValidationInterface
 	 * Set url
 	 *
 	 * @param string $url
-	 * @return ApsPackages
+	 * @return ApsPackage
 	 */
 	public function setUrl($url)
 	{
@@ -363,7 +363,7 @@ class ApsPackages implements ValidationInterface
 	 * Set iconUrl
 	 *
 	 * @param string $iconUrl
-	 * @return ApsPackages
+	 * @return ApsPackage
 	 */
 	public function setIconUrl($iconUrl)
 	{
@@ -386,7 +386,7 @@ class ApsPackages implements ValidationInterface
 	 * Set cert
 	 *
 	 * @param string $cert
-	 * @return ApsPackages
+	 * @return ApsPackage
 	 */
 	public function setCert($cert)
 	{
@@ -409,7 +409,7 @@ class ApsPackages implements ValidationInterface
 	 * Set status
 	 *
 	 * @param string $status
-	 * @return ApsPackages
+	 * @return ApsPackage
 	 */
 	public function setStatus($status)
 	{

@@ -3168,14 +3168,14 @@ class iMSCP_Update_Database extends iMSCP_Update
 	}
 
 	/**
-	 * Create aps_packages table (APS Standard)
+	 * Create aps_package table (APS Standard)
 	 *
 	 * @return string SQL statement to be executed
 	 */
 	protected function r224()
 	{
 		return '
-			CREATE TABLE IF NOT EXISTS `aps_packages` (
+			CREATE TABLE IF NOT EXISTS `aps_package` (
 				`id` int(11) unsigned NOT NULL auto_increment,
 				`name` varchar(255) collate utf8_unicode_ci NOT NULL,
 				`summary` text collate utf8_unicode_ci NOT NULL,
@@ -3195,14 +3195,14 @@ class iMSCP_Update_Database extends iMSCP_Update
 	}
 
 	/**
-	 * Create aps_instances table (APS Standard)
+	 * Create aps_instance table (APS Standard)
 	 *
 	 * @return string SQL statement to be executed
 	 */
 	protected function r225()
 	{
 		return '
-			CREATE TABLE IF NOT EXISTS `aps_instances` (
+			CREATE TABLE IF NOT EXISTS `aps_instance` (
 				`id` int(11) unsigned NOT NULL auto_increment,
 				`pid` int(11) unsigned DEFAULT NULL,
 				`uid` int(10) unsigned NOT NULL,

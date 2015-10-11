@@ -22,7 +22,7 @@ namespace iMSCP\ApsStandard\Service;
 
 use Doctrine\ORM\EntityManager;
 use iMSCP\ApsStandard\ApsDocument;
-use iMSCP\ApsStandard\Entity\ApsPackages;
+use iMSCP\ApsStandard\Entity\ApsPackage;
 use iMSCP\ApsStandard\Entity\ApsPackageDetails;
 use iMSCP_Authentication as Authentication;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
@@ -78,11 +78,11 @@ class ApsPackageService extends AbstractApsService implements ServiceLocatorAwar
 	/**
 	 * Get all packages
 	 *
-	 * @return ApsPackages[]
+	 * @return ApsPackage[]
 	 */
 	public function getPackages()
 	{
-		$packageCollection = $this->getEntityManager()->getRepository('ApsStandard:ApsPackages')->findBy(
+		$packageCollection = $this->getEntityManager()->getRepository('ApsStandard:ApsPackage')->findBy(
 			array('status' => ($this->getUserIdentity()->admin_type === 'admin') ? array('ok', 'disabled') : 'ok')
 		);
 		$this->getEventManager()->dispatch('onGetApsPackages', array('packages' => $packageCollection));
@@ -97,7 +97,7 @@ class ApsPackageService extends AbstractApsService implements ServiceLocatorAwar
 	 */
 	public function getPackageDetails($id)
 	{
-		$package = $this->getEntityManager()->getRepository('ApsStandard:ApsPackages')->find($id);
+		$package = $this->getEntityManager()->getRepository('ApsStandard:ApsPackage')->find($id);
 		if (!$package) {
 			return null;
 		}
@@ -125,11 +125,11 @@ class ApsPackageService extends AbstractApsService implements ServiceLocatorAwar
 	 *
 	 * @param int $packageId Package identity
 	 * @param string $status New package status
-	 * @return ApsPackages|null
+	 * @return ApsPackage|null
 	 */
 	public function updatePackageStatus($packageId, $status)
 	{
-		$package = $this->getEntityManager()->getRepository('ApsStandard:ApsPackages')->find($packageId);
+		$package = $this->getEntityManager()->getRepository('ApsStandard:ApsPackage')->find($packageId);
 		if (!$package) {
 			return null;
 		}

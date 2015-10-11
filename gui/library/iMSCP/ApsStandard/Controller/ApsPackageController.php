@@ -20,7 +20,7 @@
 
 namespace iMSCP\ApsStandard\Controller;
 
-use iMSCP\ApsStandard\Entity\ApsPackages;
+use iMSCP\ApsStandard\Entity\ApsPackage;
 use iMSCP\ApsStandard\Service\ApsPackageService;
 use iMSCP_Authentication as Authentication;
 use JMS\Serializer\Serializer;
@@ -127,8 +127,8 @@ class ApsPackageController extends ApsAbstractController
 			}
 
 			if (($payload = @file_get_contents('php://input')) !== false) {
-				/** @var ApsPackages $package */
-				$package = $this->getSerializer()->deserialize($payload, 'iMSCP\ApsStandard\Entity\ApsPackages', 'json');
+				/** @var ApsPackage $package */
+				$package = $this->getSerializer()->deserialize($payload, 'iMSCP\ApsStandard\Entity\ApsPackage', 'json');
 				if (count($this->getValidator()->validate($package)) == 0) {
 					if ($this->packageService->updatePackageStatus($package->getId(), $package->getStatus())) {
 						$this->sendResponse(204);
