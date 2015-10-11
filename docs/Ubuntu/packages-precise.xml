@@ -143,7 +143,11 @@
             <package>mysql-common</package>
         </remote_server>
     </sql>
-    <php>
+    <php
+            repository="http://ppa.launchpad.net/ondrej/php5-oldstable/ubuntu precise main"
+            repository_key_srv="keyserver.ubuntu.com"
+            repository_key_id="0x4f4ea0aae5267a6c"
+            >
         <package>php5</package>
         <package>php5-cli</package>
         <package>php5-curl</package>
