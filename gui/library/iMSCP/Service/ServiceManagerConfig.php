@@ -27,6 +27,10 @@ use Zend\ServiceManager\ServiceManagerAwareInterface;
 use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\ArrayUtils;
 
+/**
+ * Class ServiceManagerConfig
+ * @package iMSCP\Service
+ */
 class ServiceManagerConfig extends Config
 {
 	/**
@@ -63,8 +67,7 @@ class ServiceManagerConfig extends Config
 	/**
 	 * Shared services
 	 *
-	 * Services are shared by default; this is primarily to indicate services
-	 * that should NOT be shared
+	 * Services are shared by default; this is primarily to indicate services that should NOT be shared
 	 *
 	 * @var array
 	 */

@@ -35,7 +35,7 @@ class AnnotationServiceFactory implements FactoryInterface
 	 * Create service
 	 *
 	 * @param ServiceLocatorInterface $serviceLocator
-	 * @return mixed
+	 * @return true
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
@@ -43,5 +43,7 @@ class AnnotationServiceFactory implements FactoryInterface
 		AnnotationRegistry::registerAutoloadNamespace(
 			'JMS\Serializer\Annotation', $config['CACHE_DATA_DIR'] . '/packages/vendor/jms/serializer/src'
 		);
+
+		return true;
 	}
 }

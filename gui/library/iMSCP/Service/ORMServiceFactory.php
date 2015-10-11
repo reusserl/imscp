@@ -42,9 +42,7 @@ class ORMServiceFactory implements FactoryInterface
 	{
 		/** @var \iMSCP_Database $databaseService */
 		$databaseService = $serviceLocator->get('Database');
-
-		AnnotationServiceFactory::create(); // FIXME: Service should be created by service manager
-
+		$serviceLocator->get('Annotation'); // Fixme: We should get annotation reader
 		$devmode = (bool)Registry::get('config')->DEVMODE;
 		$config = Setup::createAnnotationMetadataConfiguration( // TODO make the path list configurable
 			array(LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'), // Entity directory

@@ -40,7 +40,7 @@ class SerializerServiceFactory implements FactoryInterface
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		AnnotationServiceFactory::create(); // FIXME: Service should be created by service manager
+		$serviceLocator->get('Annotation'); // Fixme: We should get annotation reader
 		$config = Registry::get('config');
 		return SerializerBuilder::create()
 			->setCacheDir(CACHE_PATH . '/serializer')
