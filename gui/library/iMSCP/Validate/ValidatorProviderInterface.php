@@ -26,7 +26,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  * Interface ValidatorProvider
  * @package iMSCP\Validate
  */
-interface ValidatorProvider
+interface ValidatorProviderInterface
 {
 	/**
 	 * Returns a new validator object
