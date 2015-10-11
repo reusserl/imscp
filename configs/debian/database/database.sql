@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS `admin` (
   `uniqkey` varchar(255) collate utf8_unicode_ci DEFAULT NULL,
   `uniqkey_time` timestamp NULL DEFAULT NULL,
   `admin_status` varchar(255) collate utf8_unicode_ci NOT NULL DEFAULT 'ok',
-  UNIQUE KEY `admin_id` (`admin_id`),
+  PRIMARY KEY `admin_id` (`admin_id`),
   UNIQUE KEY `admin_name` (`admin_name`),
   KEY `created_by` (`created_by`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -83,7 +83,7 @@ INSERT IGNORE INTO `config` (`name`, `value`) VALUES
 ('PREVENT_EXTERNAL_LOGIN_ADMIN', '1'),
 ('PREVENT_EXTERNAL_LOGIN_RESELLER', '1'),
 ('PREVENT_EXTERNAL_LOGIN_CLIENT', '1'),
-('DATABASE_REVISION', '226'),
+('DATABASE_REVISION', '227'),
 ('PHPINI_ALLOW_URL_FOPEN', 'off'),
 ('PHPINI_DISPLAY_ERRORS', 'off'),
 ('PHPINI_UPLOAD_MAX_FILESIZE', '10'),

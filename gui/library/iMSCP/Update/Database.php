@@ -46,7 +46,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	/**
 	 * @var int Last database update revision
 	 */
-	protected $lastUpdate = 226;
+	protected $lastUpdate = 227;
 
 	/**
 	 * Singleton - Make new unavailable
@@ -373,11 +373,10 @@ class iMSCP_Update_Database extends iMSCP_Update
 	{
 		$table = quoteIdentifier($table);
 		$indexType = strtoupper($indexType);
-
 		$indexName = ($indexType == 'PRIMARY KEY')
 			? 'PRIMARY' : (($indexName == '') ? ((is_array($columns)) ? $columns[0] : $columns) : $indexName);
 
-		$stmt = exec_query("SHOW INDEX FROM $table WHERE KEY_NAME = ?", $indexName);
+		$stmt = exec_query("SHOW INDEX FROM $table WHERE key_name = ?", $indexName);
 
 		if (!$stmt->rowCount()) {
 			if (is_array($columns)) {
@@ -395,9 +394,39 @@ class iMSCP_Update_Database extends iMSCP_Update
 	}
 
 	/**
+	 * Update the given index
+	 *
+	 * @throws iMSCP_Exception_Database
+	 * @param string $table Table name
+	 * @param string $column Column name
+	 * @param string $indexName Index name
+	 * @param string $newIndexType New index type (PRIMARY KEY (default), UNIQUE, INDEX ...)
+	 * @return null|string SQL statement to be executed
+	 */
+	protected function updateIndex($table, $column, $indexName, $newIndexType = 'PRIMARY KEY')
+	{
+		$stmt = exec_query(sprintf('SHOW INDEX FROM %s WHERE column_name = ?', quoteIdentifier($table)), $column);
+
+		if ($stmt->rowCount()) {
+			$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+			$row = array_change_key_case($row, CASE_LOWER);
+			$table = quoteIdentifier($table);
+			$indexName = quoteIdentifier($indexName);
+			$newIndexName = quoteIdentifier(($row['key_name'] == 'PRIMARY') ? $column : $row['key_name']);
+			$column = quoteIdentifier($column);
+
+			return sprintf(
+				'ALTER TABLE %s DROP INDEX %s, ADD %s %s (%s)', $table, $indexName, $newIndexType, $newIndexName, $column
+			);
+		}
+
+		return null;
+	}
+
+	/**
 	 * Drop any index which belong to the given column in the given table
 	 *
-	 * Be aware that no check is made for duplicate rows. Thus, if by remove an index, this can result to du
+	 * Be aware that no check is made for duplicate rows.
 	 *
 	 * @param string $table Table name
 	 * @param string $column Column name
@@ -408,12 +437,12 @@ class iMSCP_Update_Database extends iMSCP_Update
 		$sqlUpd = array();
 
 		$table = quoteIdentifier($table);
-		$stmt = exec_query("SHOW INDEX FROM $table WHERE COLUMN_NAME = ?", $column);
+		$stmt = exec_query("SHOW INDEX FROM $table WHERE column_name = ?", $column);
 
 		if ($stmt->rowCount()) {
 			while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
-				$row = array_change_key_case($row, CASE_UPPER);
-				$sqlUpd[] = sprintf('ALTER TABLE %s DROP INDEX %s', $table, quoteIdentifier($row['KEY_NAME']));
+				$row = array_change_key_case($row, CASE_LOWER);
+				$sqlUpd[] = sprintf('ALTER TABLE %s DROP INDEX %s', $table, quoteIdentifier($row['key_name']));
 			}
 		}
 
@@ -430,7 +459,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	protected function dropIndexByName($table, $indexName = 'PRIMARY')
 	{
 		$table = quoteIdentifier($table);
-		$stmt = exec_query("SHOW INDEX FROM $table WHERE KEY_NAME = ?", $indexName);
+		$stmt = exec_query("SHOW INDEX FROM $table WHERE key_name = ?", $indexName);
 
 		if ($stmt->rowCount()) {
 			return sprintf('ALTER TABLE %s DROP INDEX %s', $table, quoteIdentifier($indexName));
@@ -3129,11 +3158,21 @@ class iMSCP_Update_Database extends iMSCP_Update
 	}
 
 	/**
+	 * Change admin.admin_id column key type (UNIQUE to PRIMARY KEY)
+	 *
+	 * @return tring SQL statements to be executed
+	 */
+	protected function r223()
+	{
+		return $this->updateIndex('admin', 'admin_id', 'admin_id', 'PRIMARY KEY');
+	}
+
+	/**
 	 * Create aps_packages table (APS Standard)
 	 *
 	 * @return string SQL statement to be executed
 	 */
-	protected function r223()
+	protected function r224()
 	{
 		return '
 			CREATE TABLE IF NOT EXISTS `aps_packages` (
@@ -3160,7 +3199,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	 *
 	 * @return string SQL statement to be executed
 	 */
-	protected function r224()
+	protected function r225()
 	{
 		return '
 			CREATE TABLE IF NOT EXISTS `aps_instances` (
@@ -3181,7 +3220,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	 *
 	 * @return string SQL statement to be executed
 	 */
-	protected function r225()
+	protected function r226()
 	{
 		return $this->addColumn(
 			'reseller_props',
@@ -3195,7 +3234,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	 *
 	 * @return string SQL statement to be executed
 	 */
-	protected function r226()
+	protected function r227()
 	{
 		return $this->addColumn(
 			'domain',
