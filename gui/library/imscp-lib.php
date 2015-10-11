@@ -23,7 +23,6 @@ namespace iMSCP;
 use iMSCP_Registry as Registry;
 use iMSCP_Exception_Handler as ExceptionHandler;
 use iMSCP_Config_Handler_File as ConfigHandlerFile;
-use iMSCP_Initializer as Initializer;
 use Zend_Loader_AutoloaderFactory as AutoloaderFactory;
 
 // Set default error reporting level
