@@ -20,8 +20,7 @@
 
 namespace iMSCP;
 
-use iMSCP\Service\ORMServiceFactory;
 use Doctrine\ORM\Tools\Console\ConsoleRunner;
-use iMSCP_Database as Db;
+use iMSCP_Registry as Registry;
 
-return ConsoleRunner::createHelperSet(ORMServiceFactory::create(Db::getRawInstance()));
+return ConsoleRunner::createHelperSet(Registry::get('ServiceManager')->get('EntityManager'));
