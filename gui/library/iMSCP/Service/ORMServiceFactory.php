@@ -46,14 +46,40 @@ class ORMServiceFactory
 	public static function create(\PDO $pdo)
 	{
 		if (static::$entityManager === null) {
+			$devmode = (bool)Registry::get('config')->DEVMODE;
+
+			// TODO make the paths list configurable
 			$config = Setup::createAnnotationMetadataConfiguration(
-				array(LIBRARY_PATH . '/iMSCP/Entity'), Registry::get('config')->DEBUG, CACHE_PATH . '/orm_proxy'
+				array(LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'), // Entity directory
+				$devmode,
+				CACHE_PATH . '/orm_proxy', // Proxy classes directory
+				null, // Will use best available caching driver (none if devmode)
+				false // Do not use simple annotation driver which is not compatible with auto-generated entities
 			);
 
 			//$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('Doctrine\DBAL\Driver\PDOStatement', array()));
 			static::$entityManager = $entityManager = EntityManager::create(
-				array('driver' => 'pdo_mysql', 'pdo' => $pdo), $config
+				array(
+					'driver' => 'pdo_mysql',
+					'pdo' => $pdo // Reuse PDO instance that has been created by i-MSCP
+				),
+				$config
 			);
+
+			//$config->getMetadataDriverImpl()->addPaths(array(LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'));
+			// Map MySQL ENUM type to varchar (Not needed ATM)
+			//$connection = $entityManager->getConnection();
+			//$platform = $connection->getDatabasePlatform();
+			//$platform->registerDoctrineTypeMapping('enum', 'string');
+
+			// Right now, we use Doctrine for APS Standard feature only. Thus, we ignore most of tables
+			$entityManager->getConnection()->getConfiguration()->setFilterSchemaAssetsExpression(
+				'/^admin|(?:aps_(?:packages|instances))$/'
+			);
+
+			// Add namespace for acccessing APS Standard entities
+			// FIXME: Not the right place do do that !
+			$config->addEntityNamespace('ApsStandard', '\\iMSCP\\ApsStandard\Entity\\');
 		}
 
 		return static::$entityManager;
