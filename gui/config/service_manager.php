@@ -24,6 +24,6 @@ return array(
 		'Annotation' => 'iMSCP\Service\AnnotationServiceFactory',
 		'Database' => 'iMSCP\Service\DatabaseServiceFactory',
 		'ORM' => 'iMSCP\Service\ORMServiceFactory',
-		'Serializer' => 'iMSCP\Service\SerializeServiceFactory'
+		'Serializer' => 'iMSCP\Service\SerializerServiceFactory'
 	)
 );
