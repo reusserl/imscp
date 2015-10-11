@@ -20,41 +20,31 @@
 
 namespace iMSCP\Service;
 
-use Doctrine\Common\Annotations\AnnotationRegistry;
 use iMSCP_Registry as Registry;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Class SerializerServiceFactory
  * @package iMSCP\Service
  */
-class SerializerServiceFactory
+class SerializerServiceFactory implements FactoryInterface
 {
 	/**
-	 * @var Serializer
-	 */
-	static $serializer;
-
-	/**
-	 * Create JMS serializer service
+	 * Create service
 	 *
+	 * @param ServiceLocatorInterface $serviceLocator
 	 * @return Serializer
-	 * @throws \iMSCP_Exception
 	 */
-	public static function create()
+	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		if (static::$serializer === null) {
-			$config = Registry::get('config');
-			AnnotationRegistry::registerAutoloadNamespace(
-				'JMS\Serializer\Annotation', $config['CACHE_DATA_DIR'] . '/packages/vendor/jms/serializer/src'
-			);
-			static::$serializer = SerializerBuilder::create()
-				->setCacheDir(CACHE_PATH . '/serializer')
-				->setDebug($config['DEVMODE'])
-				->build();
-		}
-
-		return static::$serializer;
+		AnnotationServiceFactory::create(); // FIXME: Service should be created by service manager
+		$config = Registry::get('config');
+		return SerializerBuilder::create()
+			->setCacheDir(CACHE_PATH . '/serializer')
+			->setDebug($config['DEVMODE'])
+			->build();
 	}
 }
