@@ -110,7 +110,6 @@ abstract class AbstractApsService implements EventManagerAwareInterface
 	 * Get entity manager
 	 *
 	 * @return EntityManager
-	 * @throws \iMSCP_Exception_Database
 	 */
 	public function getEntityManager()
 	{
