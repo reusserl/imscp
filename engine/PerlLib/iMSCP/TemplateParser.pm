@@ -56,10 +56,10 @@ sub process
 	my ($data, $tplContent) = @_;
 	$data = { } if ref $data ne 'HASH';
 
-	for (keys %{$data}) {
-		next unless defined $data->{$_};
-		my $regexp = sprintf('\\{%s\\}', quotemeta($_));
-		$tplContent =~ s/$regexp/$data->{$_}/gim
+	while (my($placeholder, $value) = each(%{$data})) {
+		next unless defined $value;
+		$placeholder = quotemeta('{' . $placeholder . '}');
+		$tplContent =~ s/$placeholder/$value/gim
 	}
 
 	$tplContent;

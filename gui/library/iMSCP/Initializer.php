@@ -102,6 +102,7 @@ class iMSCP_Initializer
 	protected function processAll()
 	{
 		$this->setDisplayErrors();
+		$this->initializeServiceManager();
 		$this->initializeSession();
 		$this->initializeDatabase();
 		$this->loadConfig();
@@ -129,6 +130,7 @@ class iMSCP_Initializer
 	protected function processAjax()
 	{
 		$this->setDisplayErrors();
+		$this->initializeServiceManager();
 		$this->initializeSession();
 		$this->initializeDatabase();
 		$this->loadConfig();
@@ -151,6 +153,7 @@ class iMSCP_Initializer
 	 */
 	protected function processCLI()
 	{
+		$this->initializeServiceManager();
 		$this->initializeDatabase();
 		$this->loadConfig();
 		$this->initializeLocalization(); // Needed for rebuilt of languages index
@@ -221,6 +224,23 @@ class iMSCP_Initializer
 	}
 
 	/**
+	 * Initialize service manager
+	 *
+	 * @çeturn void
+	 */
+	protected function initializeServiceManager()
+	{
+		if(class_exists('\Zend\ServiceManager\ServiceManager')) { // Test needed because on upgrade, class is not here
+			$serviceManagerConfig = include_once(GUI_ROOT_DIR . '/config/service_manager.php');
+			$serviceManager = new \Zend\ServiceManager\ServiceManager(new \iMSCP\Service\ServiceManagerConfig(
+				$serviceManagerConfig
+			));
+
+			iMSCP_Registry::set('ServiceManager', $serviceManager);
+		}
+	}
+
+	/**
 	 * Initialize the session
 	 *
 	 * @throws iMSCP_Exception in case session directory is not writable
@@ -266,38 +286,8 @@ class iMSCP_Initializer
 	 */
 	protected function initializeDatabase()
 	{
-		try {
-			$imscpDbKeys = new iMSCP_Config_Handler_File($this->config['CONF_DIR'] . '/imscp-db-keys');
-
-			if(isset($imscpDbKeys['KEY']) && isset($imscpDbKeys['IV'])) {
-				iMSCP_Registry::set('MCRYPT_KEY', $imscpDbKeys['KEY']);
-				iMSCP_Registry::set('MCRYPT_IV', $imscpDbKeys['IV']);
-
-				$connection = iMSCP_Database::connect(
-					$this->config['DATABASE_USER'],
-					\iMSCP\Crypt::decryptRijndaelCBC(
-						$imscpDbKeys['KEY'], $imscpDbKeys['IV'], $this->config['DATABASE_PASSWORD']
-					),
-					$this->config['DATABASE_TYPE'],
-					$this->config['DATABASE_HOST'],
-					$this->config['DATABASE_NAME']
-				);
-
-				if(!$connection->execute('SET NAMES `utf8`')) {
-					throw new iMSCP_Exception(sprintf(
-						'Unable to set charset for database communication. SQL returned: %s', $connection->errorMsg()
-					));
-				}
-
-				iMSCP_Registry::set('db', $connection);
-			} else {
-				throw new iMSCP_Exception('imscp-db-keys file is corrupted.');
-			}
-		} catch(PDOException $e) {
-			throw new iMSCP_Exception_Database(
-				'Unable to establish the connection to the database. SQL returned: ' . $e->getMessage()
-			);
-		}
+		// For backward compatibility only (components accessing database service using registry
+		iMSCP_Registry::set('db', iMSCP_Registry::get('ServiceManager')->get('Database'));
 	}
 
 	/**

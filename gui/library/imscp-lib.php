@@ -73,7 +73,7 @@ AutoloaderFactory::factory(
 Registry::set('exceptionHandler', new ExceptionHandler());
 
 // Check for PHP version
-if (version_compare(phpversion(), '5.3.10', '<')) {
+if (version_compare(phpversion(), '5.4.0', '<')) {
 	throw new \RuntimeException('i-MSCP require PHP version >= 5.3.10');
 }
 
@@ -270,7 +270,9 @@ if(is_readable(CONFIG_CACHE_FILE_PATH)) {
 }
 
 // Include composer autoloader for composer packages
-require_once $config['CACHE_DATA_DIR'] . '/packages/vendor/autoload.php';
+if(file_exists($config['CACHE_DATA_DIR'] . '/packages/vendor/autoload.php')) {
+	require_once $config['CACHE_DATA_DIR'] . '/packages/vendor/autoload.php';
+}
 
 // Initialize application
 Initializer::run($config);
