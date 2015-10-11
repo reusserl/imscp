@@ -23,65 +23,61 @@ namespace iMSCP\Service;
 use Doctrine\ORM\Tools\Setup;
 use Doctrine\ORM\EntityManager;
 use iMSCP_Registry as Registry;
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Class ORMServiceFactory
  * @package iMSCP\Service
  */
-class ORMServiceFactory
+class ORMServiceFactory implements FactoryInterface
 {
 	/**
-	 * @var EntityManager
-	 */
-	static $entityManager;
-
-	/**
-	 * Create doctrine entity manager service
+	 * Create service
 	 *
-	 * @throws \Doctrine\ORM\ORMException
-	 * @throws \iMSCP_Exception
-	 * @param \PDO $pdo
-	 * @return EntityManager
+	 * @param ServiceLocatorInterface $serviceLocator
+	 * @return mixed
 	 */
-	public static function create(\PDO $pdo)
+	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		if (static::$entityManager === null) {
-			$devmode = (bool)Registry::get('config')->DEVMODE;
+		/** @var \iMSCP_Database $databaseService */
+		$databaseService = $serviceLocator->get('Database');
 
-			// TODO make the paths list configurable
-			$config = Setup::createAnnotationMetadataConfiguration(
-				array(LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'), // Entity directory
-				$devmode,
-				CACHE_PATH . '/orm_proxy', // Proxy classes directory
-				null, // Will use best available caching driver (none if devmode)
-				false // Do not use simple annotation driver which is not compatible with auto-generated entities
-			);
+		AnnotationServiceFactory::create(); // FIXME: Service should be created by service manager
 
-			//$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('Doctrine\DBAL\Driver\PDOStatement', array()));
-			static::$entityManager = $entityManager = EntityManager::create(
-				array(
-					'driver' => 'pdo_mysql',
-					'pdo' => $pdo // Reuse PDO instance that has been created by i-MSCP
-				),
-				$config
-			);
+		$devmode = (bool)Registry::get('config')->DEVMODE;
+		$config = Setup::createAnnotationMetadataConfiguration( // TODO make the path list configurable
+			array(LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'), // Entity directory
+			$devmode,
+			CACHE_PATH . '/orm_proxy', // Proxy classes directory
+			null, // Will use best available caching driver (none if devmode)
+			false // Do not use simple annotation driver which is not compatible with auto-generated entities
+		);
 
-			//$config->getMetadataDriverImpl()->addPaths(array(LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'));
-			// Map MySQL ENUM type to varchar (Not needed ATM)
-			//$connection = $entityManager->getConnection();
-			//$platform = $connection->getDatabasePlatform();
-			//$platform->registerDoctrineTypeMapping('enum', 'string');
+		//$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('Doctrine\DBAL\Driver\PDOStatement', array()));
+		$entityManager = EntityManager::create(
+			array(
+				'driver' => 'pdo_mysql',
+				'pdo' => $databaseService::getRawInstance() // Reuse PDO instance that has been created by i-MSCP
+			),
+			$config
+		);
 
-			// Right now, we use Doctrine for APS Standard feature only. Thus, we ignore most of tables
-			$entityManager->getConnection()->getConfiguration()->setFilterSchemaAssetsExpression(
-				'/^admin|(?:aps_(?:packages|instances))$/'
-			);
+		//$config->getMetadataDriverImpl()->addPaths(array(LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'));
+		// Map MySQL ENUM type to varchar (Not needed ATM)
+		//$connection = $entityManager->getConnection();
+		//$platform = $connection->getDatabasePlatform();
+		//$platform->registerDoctrineTypeMapping('enum', 'string');
 
-			// Add namespace for accessing the APS Standard entities
-			// FIXME: Not the right place do do that !
-			$config->addEntityNamespace('ApsStandard', '\\iMSCP\\ApsStandard\Entity\\');
-		}
+		// Right now, we use Doctrine for APS Standard feature only. Thus, we ignore most of tables
+		$entityManager->getConnection()->getConfiguration()->setFilterSchemaAssetsExpression(
+			'/^admin|(?:aps_(?:packages|instances))$/'
+		);
 
-		return static::$entityManager;
+		// Add namespace for accessing the APS Standard entities
+		// FIXME: Not the right place do do that !
+		$config->addEntityNamespace('ApsStandard', '\\iMSCP\\ApsStandard\Entity\\');
+
+		return $entityManager;
 	}
 }
