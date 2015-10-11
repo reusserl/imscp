@@ -20,15 +20,33 @@
 
 namespace iMSCP\ApsStandard\Controller;
 
+use iMSCP\Validate\ValidatorProviderInterface;
+use JMS\Serializer\Serializer;
 use Symfony\Component\Validator\Validation;
-use iMSCP\ApsStandard\Hydrator;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
- * Class ActionController
+ * Class ApsAbstractController
  * @package iMSCP\ApsStandard\Controller
  */
-abstract class ControllerAbstract
+abstract class ApsAbstractController implements ValidatorProviderInterface
 {
+	/**
+	 * @var \JMS\Serializer\Serializer
+	 */
+	protected $serialiser;
+
+	/**
+	 * Constructor
+	 *
+	 * @param Serializer $serializer
+	 */
+	public function __construct(Serializer $serializer)
+	{
+		$this->serialiser = $serializer;
+	}
+
+
 	/**
 	 * Handle HTTP request
 	 *
@@ -39,18 +57,28 @@ abstract class ControllerAbstract
 	/**
 	 * Return Validator
 	 *
-	 * @return \Symfony\Component\Validator\ValidatorInterface
+	 * @return ValidatorInterface
 	 */
-	protected function getValidator()
+	public function getValidator()
 	{
 		return Validation::createValidatorBuilder()->addMethodMapping('loadValidationMetadata')->getValidator();
+	}
+
+	/**
+	 * Get serializer
+	 *
+	 * @return \JMS\Serializer\Serializer
+	 */
+	protected function getSerializer()
+	{
+		return $this->serialiser;
 	}
 
 	/**
 	 * Send Json response
 	 *
 	 * @param int $statusCode HTTP status code
-	 * @param Hydrator|array|string $data JSON data
+	 * @param array|string $data JSON data
 	 * @return void
 	 */
 	protected function sendResponse($statusCode = 200, $data = '')
@@ -94,10 +122,6 @@ abstract class ControllerAbstract
 				header('Status: 200 OK');
 		}
 
-		if ($data instanceof Hydrator) {
-			$data = $data->extract();
-		}
-
-		exit(json_encode($data));
+		exit($this->getSerializer()->serialize((array)$data, 'json'));
 	}
 }
