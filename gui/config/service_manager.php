@@ -25,5 +25,9 @@ return array(
 		'Database' => 'iMSCP\Service\DatabaseServiceFactory',
 		'ORM' => 'iMSCP\Service\ORMServiceFactory',
 		'Serializer' => 'iMSCP\Service\SerializerServiceFactory'
+	),
+
+	'aliases' => array(
+		'EntityManager' => 'ORM'
 	)
 );
