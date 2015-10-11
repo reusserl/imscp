@@ -44,22 +44,28 @@ use parent 'Common::SingletonClass';
 
 =over 4
 
-=item registerPackage($package [, $packageVersion = 'dev-master' ])
+=item registerPackage($package [, $packageVersion = 'dev-master', [$devonly = undef]])
 
  Register the given composer package for installation
 
  Param string $package Package name
  Param string $packageVersion OPTIONAL Package version
+ Param bool $devonly OPTIONAL When set to true, indicate that the package is required in dev environement only
  Return undef
 
 =cut
 
 sub registerPackage
 {
-	my ($self, $package, $packageVersion) = @_;
-
+	my ($self, $package, $packageVersion, $devonly) = @_;
 	$packageVersion ||= 'dev-master';
-	push @{$self->{'toInstall'}}, "        \"$package\": \"$packageVersion\"";
+
+	unless($devonly) {
+		push @{$self->{'required_packages'}}, "        \"$package\": \"$packageVersion\"";
+	} else {
+		push @{$self->{'required_dev_packages'}}, "        \"$package\": \"$packageVersion\"";
+	}
+
 	undef;
 }
 
@@ -81,14 +87,15 @@ sub _init
 {
 	my $self = shift;
 
-	$self->{'toInstall'} = [];
+	$self->{'required_packages'} = [];
+	$self->{'required_dev_packages'} = [];
 	$self->{'pkgDir'} = "$main::imscpConfig{'CACHE_DATA_DIR'}/packages";
 	$self->{'phpCmd'} = 'php -d allow_url_fopen=1 -d suhosin.executor.include.whitelist=phar';
 
 	$ENV{'COMPOSER_HOME'} = "$self->{'pkgDir'}/.composer"; # Override default composer home directory
-	$ENV{'COMPOSER_PROCESS_TIMEOUT'} = 2000; # Increase composer process timeout for slow connections
+	#$ENV{'COMPOSER_PROCESS_TIMEOUT'} = 2000; # Increase composer process timeout for slow connections
 	$ENV{'COMPOSER_NO_INTERACTION'} = '1'; # Disable user interaction
-	$ENV{'COMPOSER_DISCARD_CHANGES'} = 'true'; # Discard any change made in vendor
+	#$ENV{'COMPOSER_DISCARD_CHANGES'} = 'true'; # Discard any change made in vendor
 
 	iMSCP::EventManager->getInstance()->register(
 		'afterSetupPreInstallPackages', sub {
@@ -172,7 +179,8 @@ sub _installPackages
 	# The update option is used here but composer will automatically fallback to install mode when needed
 	# Note: Any progress/status info goes to stderr (See https://github.com/composer/composer/issues/3795)
 	executeNoWait(
-		"$self->{'phpCmd'} $self->{'pkgDir'}/composer.phar --no-ansi -d=$self->{'pkgDir'} update --prefer-dist",
+		"$self->{'phpCmd'} $self->{'pkgDir'}/composer.phar --no-ansi -d=$self->{'pkgDir'} update" .
+			(!$main::imscpConfig{'DEVMODE'} ? ' --no-dev' : ''),
 		sub { my $str = shift; $$str = '' },
 		sub {
 			my $str = shift;
@@ -209,16 +217,34 @@ sub _buildComposerFile
 {
     "name": "imscp/packages",
     "description": "i-MSCP composer packages",
-    "licence": "GPL-2.0+",
+    "license": "GPL-2.0+",
+    "type": "metapackage",
     "require": {
-{PACKAGES}
+{REQUIRE}
     },
-    "minimum-stability": "dev"
+    "require-dev": {
+{REQUIRE_DEV}
+    },
+    "config": {
+        "preferred-install": "dist",
+        "process-timeout": 2000,
+        "classmap-authoritative": true,
+        "optimize-autoloader": true,
+        "discard-changes": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
 TPL
 
 	my $file = iMSCP::File->new( filename => "$self->{'pkgDir'}/composer.json" );
-	$file->set(process({ PACKAGES => join ",\n", @{$self->{'toInstall'}} }, $tpl));
+	$file->set(process(
+		{
+			REQUIRE => (join ",\n", @{$self->{'required_packages'}}),
+			REQUIRE_DEV => (join ",\n", @{$self->{'required_dev_packages'}})
+		},
+		$tpl
+	));
 	$file->save();
 }
 
@@ -251,7 +277,8 @@ sub _checkRequirements
 
 	return 0 unless -d $self->{'pkgDir'};
 
-	for(@{$self->{'toInstall'}}) {
+	# Check for required packages
+	for(@{$self->{'required_packages'}}) {
 		my ($package, $version) = $_ =~ /"(.*)":\s*"(.*)"/;
 		my $rs = execute(
 			"$self->{'phpCmd'} $self->{'pkgDir'}/composer.phar --no-ansi -d=$self->{'pkgDir'} show --installed " .
@@ -260,6 +287,20 @@ sub _checkRequirements
 		);
 		debug($stdout) if $stdout;
 		return 0 if $rs;
+	}
+
+	# Check for required development package only in development environment
+	if($main::imscpConfig{'DEVMODE'}) {
+		for(@{$self->{'required_dev_packages'}}) {
+			my ($package, $version) = $_ =~ /"(.*)":\s*"(.*)"/;
+			my $rs = execute(
+				"$self->{'phpCmd'} $self->{'pkgDir'}/composer.phar --no-ansi -d=$self->{'pkgDir'} show --installed " .
+					escapeShell($package) . ' ' . escapeShell($version),
+				\my $stdout, \my $stderr
+			);
+			debug($stdout) if $stdout;
+			return 0 if $rs;
+		}
 	}
 
 	1;

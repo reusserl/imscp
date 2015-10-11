@@ -332,8 +332,12 @@ sub askPorts
 sub preinstall
 {
 	my $composer = iMSCP::Composer->getInstance();
+	$composer->registerPackage('zendframework/zend-stdlib', '2.5.1');
+	$composer->registerPackage('zendframework/zend-servicemanager', '~2.5.1');
 	$composer->registerPackage('symfony/validator', '~2.7.4');
-	$composer->registerPackage('doctrine/orm', '2.4.*');
+	$composer->registerPackage('doctrine/orm', '~2.5.1');
+	$composer->registerPackage('jms/serializer', '~1.0.0');
+	$composer->registerPackage('phpunit/phpunit', '4.*', 'devonly');
 }
 
 =item install()
