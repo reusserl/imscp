@@ -22,4 +22,6 @@ namespace iMSCP;
 
 use iMSCP_Registry as Registry;
 
+require_once '../library/imscp-lib.php';
+
 Registry::get('ServiceManager')->get('ApsSpiderService')->exploreCatalog();
