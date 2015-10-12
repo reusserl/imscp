@@ -294,7 +294,7 @@ class Initializer
 	 */
 	protected function initializeDatabase()
 	{
-		// For backward compatibility only (components accessing database service using registry
+		// For backward compatibility only (components accessing database service using registry)
 		Registry::set('db', Registry::get('ServiceManager')->get('Database'));
 	}
 

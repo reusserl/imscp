@@ -20,24 +20,24 @@
 
 namespace iMSCP\Service;
 
-use iMSCP_Events_Aggregator as EventManager;
+use Symfony\Component\HttpFoundation\Request;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class EventManagerFactory
+ * Class HttpRequestServiceFactory
  * @package iMSCP\Service
  */
-class EventManagerFactory implements FactoryInterface
+class HttpRequestServiceFactory implements FactoryInterface
 {
 	/**
-	 * Create event manager service
+	 * Create HTTP request service
 	 *
 	 * @param ServiceLocatorInterface $serviceLocator
-	 * @return mixed
+	 * @return Request
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		return EventManager::getInstance();
+		return Request::createFromGlobals();
 	}
 }

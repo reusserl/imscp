@@ -20,24 +20,24 @@
 
 namespace iMSCP\Service;
 
-use iMSCP_Events_Aggregator as EventManager;
+use Symfony\Component\Validator\Validation;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class EventManagerFactory
+ * Class ValidatorServiceFactory
  * @package iMSCP\Service
  */
-class EventManagerFactory implements FactoryInterface
+class ValidatorServiceFactory implements FactoryInterface
 {
 	/**
-	 * Create event manager service
+	 * Create validator service
 	 *
 	 * @param ServiceLocatorInterface $serviceLocator
 	 * @return mixed
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		return EventManager::getInstance();
+		return Validation::createValidatorBuilder()->addMethodMapping('loadValidationMetadata')->getValidator();
 	}
 }

@@ -67,6 +67,7 @@ class ServiceManagerConfig extends Config
 		'iMSCP\Events\EventManagerInterface' => 'EventManager',
 		'Zend\ServiceManager\ServiceLocatorInterface' => 'ServiceManager',
 		'Zend\ServiceManager\ServiceManager' => 'ServiceManager',
+		'ServiceLocator' => 'ServiceManager'
 	);
 
 	/**
