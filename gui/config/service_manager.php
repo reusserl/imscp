@@ -23,13 +23,15 @@ return array(
 	'factories' => array(
 		'Annotation' => 'iMSCP\Service\AnnotationServiceFactory',
 		'Database' => 'iMSCP\Service\DatabaseServiceFactory',
+		'Request' => 'iMSCP\Service\HttpRequestServiceFactory',
 		'ORM' => 'iMSCP\Service\ORMServiceFactory',
 		'Serializer' => 'iMSCP\Service\SerializerServiceFactory',
+		'Validator' => 'iMSCP\Service\ValidatorServiceFactory',
 
 		// APS Standard services
 		'ApsPackageController' => 'iMSCP\ApsStandard\Controller\ApsPackageControllerFactory',
 		'ApsPackageService' => 'iMSCP\ApsStandard\Service\ApsPackageServiceFactory',
-		'ApsSpiderService' => 'iMSCP\ApsStandard\Service\ApsSpiderServiceFactory',
+		'ApsSpiderService' => 'iMSCP\ApsStandard\Service\ApsSpiderServiceFactory'
 	),
 
 	'aliases' => array(
