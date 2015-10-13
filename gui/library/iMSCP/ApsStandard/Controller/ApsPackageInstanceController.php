@@ -18,26 +18,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\ApsStandard;
+namespace iMSCP\ApsStandard\Controller;
+
+use PDO;
+use Exception;
 
 /**
- * Interface Hydrator
- * @package iMSCP\ApsStandard
+ * Class PackageInstance
+ * @package iMSCP\ApsStandard\Controller
  */
-interface Hydrator
+class ApsPackageInstanceController extends ApsPackageController
 {
 	/**
-	 * Hydrate object with the provided values
+	 * Handle HTTP request
 	 *
-	 * @param  array $values
-	 * @return Hydrator
+	 * @return void
 	 */
-	public function hydrate(array $values);
-
-	/**
-	 * Extract values from object
-	 *
-	 * @return array
-	 */
-	public function extract();
+	function handleRequest()
+	{
+		// TODO: Implement handleRequest() method.
+	}
 }
