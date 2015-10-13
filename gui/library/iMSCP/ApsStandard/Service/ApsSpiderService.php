@@ -60,7 +60,7 @@ class ApsSpiderService extends AbstractApsService
 
 			// Retrieves list of known packages
 			$stmt = $this->getEntityManager()->getConnection()->executeQuery(
-				'SELECT `name`, `version`, `aps_version`, `release`, `status` FROM `aps_packages`'
+				'SELECT `name`, `version`, `aps_version`, `release`, `status` FROM `aps_package`'
 			);
 			if ($stmt->rowCount()) {
 				while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -206,7 +206,7 @@ class ApsSpiderService extends AbstractApsService
 						utils_removeDir("$metadataDir/$packageName");
 						$stmt = $this->entityManager->getConnection()->prepare(
 							'
-								DELETE FROM `aps_packages`
+								DELETE FROM `aps_package`
 								WHERE `name` = ? AND aps_version = ? AND `version` = ? AND `release` = ?
 							'
 						);
@@ -259,7 +259,7 @@ class ApsSpiderService extends AbstractApsService
 			$obsoletePackages = array_diff($knownPackages, $newPackages);
 			if (!empty($obsoletePackages)) {
 				$stmt = $this->getEntityManager()->getConnection()->prepare(
-					'DELETE FROM `aps_packages` WHERE `name` = ? AND `aps_version` = ?'
+					'DELETE FROM `aps_package` WHERE `name` = ? AND `aps_version` = ?'
 				);
 
 				foreach ($obsoletePackages as $packageName) {
@@ -274,7 +274,7 @@ class ApsSpiderService extends AbstractApsService
 		if (!empty($newPackages)) {
 			$stmt = $this->getEntityManager()->getConnection()->prepare(
 				'
-					INSERT INTO aps_packages (
+					INSERT INTO aps_package (
 						`name`, `summary`, `version`, `aps_version`, `release`, `category`, `vendor`, `vendor_uri`,
 						`url`, `icon_url`, `cert`, `status`
 					) VALUES(
