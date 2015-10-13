@@ -26,8 +26,6 @@ use iMSCP_Config_Handler_File as ConfigFileHandler;
 use iMSCP_Registry as Registry;
 use iMSCP_Database as Database;
 use iMSCP\Crypt;
-use iMSCP_Exception as Exception;
-use iMSCP_Exception_Database as DatabaseException;
 
 /**
  * Class DatabaseServiceFactory
@@ -40,8 +38,6 @@ class DatabaseServiceFactory implements FactoryInterface
 	 *
 	 * @param ServiceLocatorInterface $serviceLocator
 	 * @return Database
-	 * @throws DatabaseException
-	 * @throws Exception
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
@@ -49,32 +45,23 @@ class DatabaseServiceFactory implements FactoryInterface
 			$config = Registry::get('config');
 			$imscpDbKeys = new ConfigFileHandler($config['CONF_DIR'] . '/imscp-db-keys');
 
-			if (isset($imscpDbKeys['KEY']) && isset($imscpDbKeys['IV'])) {
-				Registry::set('MCRYPT_KEY', $imscpDbKeys['KEY']); // FIXME: Not the right place
-				Registry::set('MCRYPT_IV', $imscpDbKeys['IV']); // FIXME: Not the right place
-
-				$database = Database::connect(
-					$config['DATABASE_USER'],
-					Crypt::decryptRijndaelCBC($imscpDbKeys['KEY'], $imscpDbKeys['IV'], $config['DATABASE_PASSWORD']),
-					$config['DATABASE_TYPE'],
-					$config['DATABASE_HOST'],
-					$config['DATABASE_NAME']
-				);
-
-				if (!$database->execute('SET NAMES `utf8`')) {
-					throw new Exception(sprintf(
-						'Could not set charset for database communication. SQL returned: %s', $database->errorMsg()
-					));
-				}
-			} else {
-				throw new Exception('imscp-db-keys file is corrupted.');
+			if (!isset($imscpDbKeys['KEY']) || !isset($imscpDbKeys['IV'])) {
+				throw new \RuntimeException('imscp-db-keys file is corrupted.');
 			}
+
+			$db = Database::connect(
+				$config['DATABASE_USER'],
+				Crypt::decryptRijndaelCBC($imscpDbKeys['KEY'], $imscpDbKeys['IV'], $config['DATABASE_PASSWORD']),
+				$config['DATABASE_TYPE'],
+				$config['DATABASE_HOST'],
+				$config['DATABASE_NAME'],
+				array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES `UTF8`')
+			);
 		} catch (\PDOException $e) {
-			throw new DatabaseException(sprintf(
-				'Could not establish connection to the database. SQL returned: %s' . $e->getMessage()
-			));
+			// We need enforce int. See https://github.com/zendframework/zend-servicemanager/issues/41
+			throw new \RuntimeException($e->getMessage(), (int)$e->getCode(), $e);
 		}
 
-		return $database;
+		return $db;
 	}
 }

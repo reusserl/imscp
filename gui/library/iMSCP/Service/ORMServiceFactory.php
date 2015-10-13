@@ -72,10 +72,6 @@ class ORMServiceFactory implements FactoryInterface
 			'/^admin|(?:aps_(?:packages|instances))$/'
 		);
 
-		// Add namespace for accessing the APS Standard entities
-		// FIXME: Not the right place do do that !
-		$config->addEntityNamespace('ApsStandard', '\\iMSCP\\ApsStandard\Entity\\');
-
 		return $entityManager;
 	}
 }

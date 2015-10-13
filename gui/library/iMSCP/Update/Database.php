@@ -545,9 +545,12 @@ class iMSCP_Update_Database extends iMSCP_Update
 	{
 		$sqlUpd = array();
 
-		// Decrypt all mail passwords
-		$key = iMSCP_Registry::get('MCRYPT_KEY');
-		$iv = iMSCP_Registry::get('MCRYPT_IV');
+		$config = Registry::get('config');
+		$imscpDbKeys = new ConfigFileHandler($config['CONF_DIR'] . '/imscp-db-keys');
+
+		if (!isset($imscpDbKeys['KEY']) || !isset($imscpDbKeys['IV'])) {
+			throw new \RuntimeException('imscp-db-keys file is corrupted.');
+		}
 
 		$stmt = execute_query(
 			"
@@ -562,7 +565,9 @@ class iMSCP_Update_Database extends iMSCP_Update
 
 		if ($stmt->rowCount()) {
 			while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
-				$password = quoteValue(\iMSCP\Crypt::decryptRijndaelCBC($key, $iv, $row['mail_pass']));
+				$password = quoteValue(\iMSCP\Crypt::decryptRijndaelCBC(
+					$imscpDbKeys['KEY'], $imscpDbKeys['IV'], $row['mail_pass'])
+				);
 				$status = quoteValue('tochange');
 				$mailId = quoteValue($row['mail_id'], PDO::PARAM_INT);
 				$sqlUpd[] = "UPDATE mail_users SET mail_pass = $password, status = $status WHERE mail_id = $mailId";
@@ -3209,7 +3214,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 				`settings` text COLLATE utf8_unicode_ci NOT NULL,
 				`status` varchar(255) collate utf8_unicode_ci NOT NULL,
 				PRIMARY KEY (`id`),
-				FOREIGN KEY (pid) REFERENCES aps_packages(id) ON DELETE SET NULL,
+				FOREIGN KEY (pid) REFERENCES aps_package(id) ON DELETE SET NULL,
 				FOREIGN KEY (uid) REFERENCES admin(admin_id) ON DELETE CASCADE
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 		';
