@@ -21,6 +21,7 @@
 namespace iMSCP\ApsStandard\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use iMSCP\Entity\Admin;
 
 /**
  * Class ApsInstance
@@ -126,7 +127,7 @@ class ApsInstance
 	/**
 	 * Set pid
 	 *
-	 * @param \iMSCP\ApsStandard\Entity\ApsPackage|null $package
+	 * @param ApsPackage|null $package
 	 * @return ApsInstance
 	 */
 	public function setPackage(ApsPackage $package = null)
@@ -138,7 +139,7 @@ class ApsInstance
 	/**
 	 * Get package
 	 *
-	 * @return \iMSCP\ApsStandard\Entity\ApsPackage
+	 * @return ApsPackage
 	 */
 	public function getPid()
 	{
@@ -148,7 +149,7 @@ class ApsInstance
 	/**
 	 * Set owner
 	 *
-	 * @param \iMSCP\ApsStandard\Entity\Admin $owner
+	 * @param Admin $owner
 	 * @return ApsInstance
 	 */
 	public function setUid(Admin $owner = null)
@@ -160,7 +161,7 @@ class ApsInstance
 	/**
 	 * Get owner
 	 *
-	 * @return \iMSCP\ApsStandard\Entity\Admin
+	 * @return Admin
 	 */
 	public function getOwner()
 	{
