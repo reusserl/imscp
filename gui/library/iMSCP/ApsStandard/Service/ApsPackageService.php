@@ -24,55 +24,40 @@ use Doctrine\ORM\EntityManager;
 use iMSCP\ApsStandard\ApsDocument;
 use iMSCP\ApsStandard\Entity\ApsPackage;
 use iMSCP\ApsStandard\Entity\ApsPackageDetails;
-use iMSCP_Authentication as Authentication;
-use Zend\ServiceManager\ServiceLocatorAwareInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use iMSCP_Authentication as Auth;
 use Zend_Session as SessionHandler;
 
 /**
  * Class ApsPackageService
  * @package iMSCP\ApsStandard\Service
  */
-class ApsPackageService extends AbstractApsService implements ServiceLocatorAwareInterface
+class ApsPackageService extends AbstractApsService
 {
 	/***
-	 * @var Authentication
+	 * @var Auth
 	 */
-	protected $authentication;
-
-	/** @var  ServiceLocatorInterface */
-	protected $serviceLocator;
+	protected $auth;
 
 	/**
 	 * Constructor
 	 *
 	 * @param EntityManager $entityManager
-	 * @param Authentication $auth
+	 * @param Auth $auth
 	 */
-	public function __construct(EntityManager $entityManager, Authentication $auth)
+	public function __construct(EntityManager $entityManager, Auth $auth)
 	{
 		parent::__construct($entityManager);
-		$this->authentication = $auth;
+		$this->auth = $auth;
 	}
 
 	/**
-	 * Set service locator
+	 * Get authentication object
 	 *
-	 * @param ServiceLocatorInterface $serviceLocator
+	 * @return Auth
 	 */
-	public function setServiceLocator(ServiceLocatorInterface $serviceLocator)
+	public function getAuth()
 	{
-		$this->serviceLocator = $serviceLocator;
-	}
-
-	/**
-	 * Get service locator
-	 *
-	 * @return ServiceLocatorInterface
-	 */
-	public function getServiceLocator()
-	{
-		return $this->serviceLocator;
+		return $this->auth;
 	}
 
 	/**
@@ -82,85 +67,93 @@ class ApsPackageService extends AbstractApsService implements ServiceLocatorAwar
 	 */
 	public function getPackages()
 	{
-		$packageCollection = $this->getEntityManager()->getRepository('ApsStandard:ApsPackage')->findBy(
-			array('status' => ($this->getUserIdentity()->admin_type === 'admin') ? array('ok', 'disabled') : 'ok')
-		);
-		$this->getEventManager()->dispatch('onGetApsPackages', array('packages' => $packageCollection));
-		return $packageCollection;
+		$this->getEventManager()->dispatch('onGetApsPackages', array('context' => $this));
+		$packages = $this->getEntityManager()->getRepository('ApsStandard:ApsPackage')->findBy(array(
+			'status' => ($this->getAuth()->getIdentity()->admin_type === 'admin') ? array('ok', 'disabled') : 'ok'
+		));
+		return $packages;
 	}
 
 	/**
 	 * Get package details
 	 *
-	 * @param int $id Package identity
-	 * @return ApsPackageDetails|null
+	 * @param int $id Package identifier
+	 * @return ApsPackageDetails
 	 */
 	public function getPackageDetails($id)
 	{
+		$this->getEventManager()->dispatch('onGetApsPackageDetails', array('id' => $id, 'context' => $this));
 		$package = $this->getEntityManager()->getRepository('ApsStandard:ApsPackage')->find($id);
+
 		if (!$package) {
-			return null;
+			throw new \InvalidArgumentException(tr('Package not found.'), 404);
 		}
 
-		// Retrieve missing data by parsing package metadata file
-		$packageMetaFile = $this->getPackageMetadataDir() . '/' . $package->getApsVersion() . '/' .
-			$package->getName() . '/APP-META.xml';
+		$meta = $this->getMetadataDir() . '/' . $package->getApsVersion() . '/' . $package->getName() . '/APP-META.xml';
 
-		if (!file_exists($packageMetaFile) || filesize($packageMetaFile) == 0) {
-			throw new \RuntimeException(tr('The %s package META file is missing or invalid.', $packageMetaFile));
+		if (!file_exists($meta) || filesize($meta) == 0) {
+			throw new \RuntimeException(tr('The %s package META file is missing or invalid.', $meta), 500);
 		}
 
-		$doc = new ApsDocument($packageMetaFile);
+		$doc = new ApsDocument($meta);
 		$packageDetails = new ApsPackageDetails();
 		$packageDetails->setDescription($doc->getXPathValue("//root:description"));
 		$packageDetails->setPackager($doc->getXPathValue("//root:packager/root:name") ?:
 			parse_url($doc->getXPathValue("//root:package-homepage"), PHP_URL_HOST) ?: tr('Unknown')
 		);
-		$this->eventManager->dispatch('onGetApsPackageDetails', array('package_details' => $packageDetails));
 		return $packageDetails;
 	}
 
 	/**
 	 * Update package status
 	 *
-	 * @param int $packageId Package identity
+	 * @throws \Exception
+	 * @param int $id Package identitier
 	 * @param string $status New package status
-	 * @return ApsPackage|null
+	 * @return ApsPackage
 	 */
-	public function updatePackageStatus($packageId, $status)
+	public function updatePackageStatus($id, $status)
 	{
-		$package = $this->getEntityManager()->getRepository('ApsStandard:ApsPackage')->find($packageId);
+		$this->getEventManager()->dispatch('onUpdateApsPackageStatus', array(
+				'id' => $id, 'status' => $status, 'context' => $this)
+		);
+		/** @var ApsPackage $package */
+		$package = $this->getEntityManager()->getRepository('ApsStandard:ApsPackage')->find($id);
+		$entityManager = $this->getEntityManager();
+
 		if (!$package) {
-			return null;
+			throw new \Exception(tr('Package not found.'), 404);
 		}
 
 		$package->setStatus($status);
-		$this->getEventManager()->dispatch('onUpdateApsPackageStatus', array('package' => $package));
-		$this->getEntityManager()->flush($package);
+		$this->validatePackage($package);
+		$entityManager->flush($package);
 		return $package;
 	}
 
 	/**
 	 * Update package index
 	 *
-	 * @throws \Exception
+	 * @return void
 	 */
 	public function updatePackageIndex()
 	{
+		$this->getEventManager()->dispatch('onUpdateApsPackageIndex', array('context' => $this));
 		SessionHandler::writeClose();
-		/** @var ApsSpiderService $spider */
-		$spider = $this->getServiceLocator()->get('ApsSpiderService');
-		$spider->exploreCatalog();
-		$this->getEventManager()->dispatch('onUpdateApsPackageIndex');
+		$this->getServiceLocator()->get('ApsSpiderService')->exploreCatalog();
 	}
 
 	/**
-	 * Get user identity
+	 * Validate package
 	 *
-	 * @return null|\stdClass
+	 * @throws \DomainException
+	 * @param ApsPackage $package
+	 * @return void
 	 */
-	protected function getUserIdentity()
+	public function validatePackage(ApsPackage $package)
 	{
-		return $this->authentication->getIdentity();
+		if (count($this->getValidator()->validate($package)) > 0) {
+			throw new \DomainException(tr('Invalid data provided.'), 400);
+		}
 	}
 }

@@ -55,11 +55,7 @@ class ApsSpiderService extends AbstractApsService
 	{
 		try {
 			parent::__construct($entityManager);
-
-			// Ensure that all needed functions are available
 			$this->checkRequirements();
-
-			// Setup environment
 			$this->setupEnvironment();
 
 			// Retrieves list of known packages
@@ -80,7 +76,7 @@ class ApsSpiderService extends AbstractApsService
 			}
 		} catch (\Exception $e) {
 			if (PHP_SAPI == 'cli') {
-				fwrite(STDERR, sprintf(tr("Runtime error: %s\n"), $e->getMessage()));
+				fwrite(STDERR, sprintf($e->getMessage()));
 				exit(1);
 			}
 
@@ -144,7 +140,7 @@ class ApsSpiderService extends AbstractApsService
 			}
 		} catch (\Exception $e) {
 			if (PHP_SAPI == 'cli') {
-				fwrite(STDERR, sprintf(tr("Runtime error: %s\n"), $e->getMessage()));
+				fwrite(STDERR, sprintf($e->getMessage()));
 				exit(1);
 			}
 
@@ -162,7 +158,7 @@ class ApsSpiderService extends AbstractApsService
 	protected function parseRepositoryFeedPage(ApsDocument $repositoryFeed, $repositoryId)
 	{
 		$metaFiles = array();
-		$metadataDir = $this->getPackageMetadataDir() . '/' . $repositoryId;
+		$metadataDir = $this->getMetadataDir() . '/' . $repositoryId;
 		$knownPackages = isset($this->packages[$repositoryId]) ? $this->packages[$repositoryId] : array();
 
 		// Parse all package entries
@@ -186,9 +182,7 @@ class ApsSpiderService extends AbstractApsService
 				$packageName != '' && $packageVersion != '' && $packageRelease != '' && $packageVendor != '' &&
 				$packageVendorUri != '' && $packageUrl != '' && $packageMetaUrl != ''
 			) {
-				// Package metadata directory
 				$packageMetadataDir = "$metadataDir/$packageName";
-
 				$packageCurrentVersion = null;
 				$packageCurrentRelease = null;
 				if (isset($knownPackages[$packageName])) {
@@ -208,8 +202,7 @@ class ApsSpiderService extends AbstractApsService
 					!file_exists("$packageMetadataDir/APP-META.xml") || filesize("$packageMetadataDir/APP-META.xml") == 0 ||
 					!file_exists("$packageMetadataDir/APP-META.json") || filesize("$packageMetadataDir/APP-META.json") == 0
 				) {
-					// Delete out-dated version if any
-					if ($isOutDatedVersion) {
+					if ($isOutDatedVersion) { // Delete out-dated version if any
 						utils_removeDir("$metadataDir/$packageName");
 						$stmt = $this->entityManager->getConnection()->prepare(
 							'
@@ -252,7 +245,7 @@ class ApsSpiderService extends AbstractApsService
 	{
 		$newPackages = array();
 		$knownPackages = isset($this->packages[$repoId]) ? array_keys($this->packages[$repoId]) : array();
-		$metadataDir = $this->getPackageMetadataDir() . '/' . $repoId;
+		$metadataDir = $this->getMetadataDir() . '/' . $repoId;
 
 		// Retrieve list of packages
 		$directoryIterator = new \DirectoryIterator($metadataDir);
@@ -262,12 +255,11 @@ class ApsSpiderService extends AbstractApsService
 			}
 		}
 
-		// Find obsolete packages and removes them from database
-		if (isset($this->packages[$repoId])) {
+		if (isset($this->packages[$repoId])) { // Find obsolete packages and removes them from database
 			$obsoletePackages = array_diff($knownPackages, $newPackages);
 			if (!empty($obsoletePackages)) {
 				$stmt = $this->getEntityManager()->getConnection()->prepare(
-					'DELETE FROM `aps_packages` WHERE `name` = ? AND aps_version = ?'
+					'DELETE FROM `aps_packages` WHERE `name` = ? AND `aps_version` = ?'
 				);
 
 				foreach ($obsoletePackages as $packageName) {
@@ -295,8 +287,7 @@ class ApsSpiderService extends AbstractApsService
 				$packageMetaFilePath = $metadataDir . '/' . $package . '/APP-META.xml';
 				$packageIntermediateMetaFilePath = $metadataDir . '/' . $package . '/APP-META.json';
 
-				// Retrieves needed data
-				if (
+				if ( // Retrieves needed data
 					file_exists($packageMetaFilePath) && filesize($packageMetaFilePath) != 0 &&
 					file_exists($packageIntermediateMetaFilePath) && filesize($packageIntermediateMetaFilePath) != 0
 				) {
@@ -315,8 +306,7 @@ class ApsSpiderService extends AbstractApsService
 					$packageIconUrl = isset($metadata['app_icon_url']) ? $metadata['app_icon_url'] : '';
 					$packageCertLevel = isset($metadata['app_cert_level']) ? $metadata['app_cert_level'] : '';
 
-					// Only add valid packages
-					if (
+					if ( // Only add valid packages
 						$packageName != '' && $packageSummary != '' && $packageVersion != '' && $packageRelease != '' &&
 						$packageCategory != '' && $packageVendor != '' && $packageVendorURI != '' && $packageUrl &&
 						$packageIconUrl && $packageCertLevel
@@ -344,13 +334,10 @@ class ApsSpiderService extends AbstractApsService
 	 */
 	protected function downloadFiles(array $files)
 	{
-		# Get needed configuration parameters
 		$config = Registry::get('config');
 		$distroCAbundle = $config['DISTRO_CA_BUNDLE'];
 		$distroCApath = $config['DISTRO_CA_PATH'];
-
-		// Download by chunk of 20 files at once
-		$files = array_chunk($files, 20);
+		$files = array_chunk($files, 20); // Download by chunk of 20 files at once
 
 		foreach ($files as $chunk) {
 			$fileHandles = array();
@@ -363,7 +350,7 @@ class ApsSpiderService extends AbstractApsService
 				$curlHandle = curl_init($chunk[$i]['src']);
 
 				if (!$curlHandle || !$fileHandle) {
-					throw new \RuntimeException(tr("Runtime error: %s\n", tr('Could not create cURL or file handle')));
+					throw new \RuntimeException(tr('Could not create cURL or file handle'));
 				}
 
 				curl_setopt_array($curlHandle, array(
@@ -406,8 +393,7 @@ class ApsSpiderService extends AbstractApsService
 				}
 			} while ($running > 0);
 
-			// Close cURL and file handles
-			for ($i = 0, $size = count($chunk); $i < $size; $i++) {
+			for ($i = 0, $size = count($chunk); $i < $size; $i++) { // Close cURL and file handles
 				curl_multi_remove_handle($curlMultiHandle, $curlHandles[$i]);
 				curl_close($curlHandles[$i]);
 				fclose($fileHandles[$i]);
@@ -426,23 +412,23 @@ class ApsSpiderService extends AbstractApsService
 	protected function checkRequirements()
 	{
 		if (!ini_get('allow_url_fopen')) {
-			throw new \RuntimeException(tr("Runtime error: %s\n", tr('allow_url_fopen is disabled')));
+			throw new \RuntimeException(tr('allow_url_fopen is disabled'));
 		}
 
 		if (!function_exists('curl_version')) {
-			throw new \RuntimeException(tr("Runtime error: %s\n", tr('cURL extension is not available')));
+			throw new \RuntimeException(tr('cURL extension is not available'));
 		}
 
 		if (!function_exists('json_encode')) {
-			throw new \RuntimeException(tr("Runtime error: %s\n", tr('JSON support is not available')));
+			throw new \RuntimeException(tr('JSON support is not available'));
 		}
 
 		if (!function_exists('posix_getuid')) {
-			throw new \RuntimeException(tr("Runtime error: %s\n", tr('Support for POSIX functions is not available')));
+			throw new \RuntimeException(tr('Support for POSIX functions is not available'));
 		}
 
 		if (PHP_SAPI == 'cli' && 0 != posix_getuid()) {
-			throw new \RuntimeException(tr("Runtime error: %s\n", tr('This script must be run as root user.')));
+			throw new \RuntimeException(tr('This script must be run as root user.'));
 		}
 	}
 
@@ -454,7 +440,7 @@ class ApsSpiderService extends AbstractApsService
 	protected function setupEnvironment()
 	{
 		ignore_user_abort(1); // Do not abort on a client disconnection
-		set_time_limit(0); // Tasks made by this object can take up several minutes to finish
+		set_time_limit(0); // Tasks made by this service can take up several minutes to finish
 		umask(027); // Set umask
 
 		if (PHP_SAPI == 'cli') {
@@ -463,26 +449,25 @@ class ApsSpiderService extends AbstractApsService
 			$panelUser = $config['SYSTEM_USER_PREFIX'] . $config['SYSTEM_USER_MIN_UID'];
 			if (($info = @posix_getpwnam($panelUser)) === false) {
 				throw new \RuntimeException(tr(
-					"Runtime error: %s\n", tr("Could not get info about the '%s' user.", $panelUser)
+					'Runtime error: %s', tr("Could not get info about the '%s' user.", $panelUser)
 				));
 			}
 
 			if (!@posix_initgroups($panelUser, $info['gid'])) {
 				throw new \RuntimeException(tr(
-					"Runtime error: %s\n", tr("could not calculates the group access list for the '%s' user", $panelUser)
+					'Runtime error: %s', tr("could not calculates the group access list for the '%s' user", $panelUser)
 				));
 			}
 
 			// setgid must be called first, else it will fail
 			if (!@posix_setgid($info['gid']) || !@posix_setuid($info['uid'])) {
 				throw new \RuntimeException(tr(
-					"Runtime error: %s \n", tr('Could not change real user uid/gid of current process')
+					'Runtime error: %s', tr('Could not change real user uid/gid of current process')
 				));
 			}
 		}
 
-		// Acquire exclusive lock to prevent multiple run
-		$this->acquireLock();
+		$this->acquireLock(); // Acquire exclusive lock to prevent multiple run
 	}
 
 	/**

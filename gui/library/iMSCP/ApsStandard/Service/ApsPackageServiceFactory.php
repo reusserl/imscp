@@ -20,9 +20,9 @@
 
 namespace iMSCP\ApsStandard\Service;
 
+use iMSCP_Authentication as Authentication;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-use iMSCP_Authentication as Authentication;
 
 /**
  * Class ApsPackageServiceFactory
@@ -40,6 +40,8 @@ class ApsPackageServiceFactory implements FactoryInterface
 	{
 		/** @var \Doctrine\ORM\EntityManager $entityManager */
 		$entityManager = $serviceLocator->get('EntityManager');
+		// Add namespace for APS standard entities
+		$entityManager->getConfiguration()->addEntityNamespace('ApsStandard', '\\iMSCP\\ApsStandard\\Entity\\');
 		return new ApsPackageService($entityManager, Authentication::getInstance());
 	}
 }

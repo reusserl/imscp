@@ -22,25 +22,31 @@ namespace iMSCP\ApsStandard\Service;
 
 use Doctrine\ORM\EntityManager;
 use iMSCP\Events\EventManagerAwareInterface;
+use iMSCP\Validate\ValidatorProviderInterface;
 use iMSCP_Events_Aggregator as EventManager;
 use iMSCP_Events_Manager_Interface as EventManagerInterface;
 use iMSCP_Registry as Registry;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Class AbstractApsStandardService
  * @package iMSCP\ApsStandard\Service
  */
-abstract class AbstractApsService implements EventManagerAwareInterface
+abstract class AbstractApsService implements
+	EventManagerAwareInterface,
+	ServiceLocatorAwareInterface,
+	ValidatorProviderInterface
 {
-	/**
-	 * @var \stdClass $identity User identity
-	 */
-	protected $identity;
-
 	/**
 	 * @var EventManager
 	 */
 	protected $eventManager;
+
+	/**
+	 * @var ServiceLocatorInterface
+	 */
+	protected $serviceLocator;
 
 	/**
 	 * @var EntityManager
@@ -82,7 +88,7 @@ abstract class AbstractApsService implements EventManagerAwareInterface
 	{
 		$this->entityManager = $entityManager;
 		$config = Registry::get('config');
-		$this->setPackageMetadataDir($config['CACHE_DATA_DIR'] . '/aps_standard/metadata');
+		$this->setMetadataDir($config['CACHE_DATA_DIR'] . '/aps_standard/metadata');
 		$this->setPackageDir($config['CACHE_DATA_DIR'] . '/aps_standard/packages');
 	}
 
@@ -104,6 +110,30 @@ abstract class AbstractApsService implements EventManagerAwareInterface
 	public function setEventManager(EventManagerInterface $eventManager)
 	{
 		$this->eventManager = $eventManager;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function setServiceLocator(ServiceLocatorInterface $serviceLocator)
+	{
+		$this->serviceLocator = $serviceLocator;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getServiceLocator()
+	{
+		return $this->serviceLocator;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getValidator()
+	{
+		return $this->getServiceLocator()->get('Validator');
 	}
 
 	/**
@@ -142,7 +172,7 @@ abstract class AbstractApsService implements EventManagerAwareInterface
 	 *
 	 * @return string
 	 */
-	public function getPackageMetadataDir()
+	public function getMetadataDir()
 	{
 		return $this->packageMetadataDir;
 	}
@@ -152,7 +182,7 @@ abstract class AbstractApsService implements EventManagerAwareInterface
 	 *
 	 * @param string $packageMetadataDir
 	 */
-	public function setPackageMetadataDir($packageMetadataDir)
+	public function setMetadataDir($packageMetadataDir)
 	{
 		$packageMetadataDir = (string)$packageMetadataDir;
 		$this->packageMetadataDir = rtrim($packageMetadataDir, '/');
