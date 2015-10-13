@@ -22,8 +22,9 @@ namespace iMSCP\ApsStandard\Controller;
 
 use iMSCP\ApsStandard\Entity\ApsPackage;
 use iMSCP\ApsStandard\Service\ApsPackageService;
-use iMSCP_Authentication as Authentication;
-use JMS\Serializer\Serializer;
+use iMSCP_Authentication as Auth;
+use Symfony\Component\HttpFoundation\JsonResponse as Response;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Class ApsPackageController
@@ -31,21 +32,35 @@ use JMS\Serializer\Serializer;
  */
 class ApsPackageController extends ApsAbstractController
 {
+	const PACKAGE_ENTITY_CLASS = 'iMSCP\ApsStandard\Entity\ApsPackage';
+
 	/**
 	 * @var ApsPackageService
 	 */
-	protected $packageService;
+	protected $apsPackageService;
 
 	/**
 	 * Constructor
 	 *
-	 * @param Serializer $serializer
-	 * @param ApsPackageService $packageService
+	 * @param Request $request
+	 * @param Response $response
+	 * @param Auth $auth
+	 * @param ApsPackageService $apsPackageService
 	 */
-	public function __construct(Serializer $serializer, ApsPackageService $packageService)
+	public function __construct(Request $request, Response $response, Auth $auth, ApsPackageService $apsPackageService)
 	{
-		parent::__construct($serializer);
-		$this->packageService = $packageService;
+		parent::__construct($request, $response, $auth);
+		$this->apsPackageService = $apsPackageService;
+	}
+
+	/**
+	 * Get package service
+	 *
+	 * @return ApsPackageService
+	 */
+	public function getApsPackageService()
+	{
+		return $this->apsPackageService;
 	}
 
 	/**
@@ -53,22 +68,30 @@ class ApsPackageController extends ApsAbstractController
 	 */
 	public function handleRequest()
 	{
-		switch ($_SERVER['REQUEST_METHOD']) {
-			case 'GET':
-				if (!isset($_GET['id'])) {
-					$this->index();
-				} else {
-					$this->showDetails(intval($_GET['id']));
-				}
-				break;
-			case 'PUT':
-				$this->changeStatus();
-				break;
-			case 'POST':
-				$this->updateIndex();
+		try {
+			switch ($this->getRequest()->getMethod()) {
+				case Request::METHOD_GET:
+					if ($this->getRequest()->query->has('id')) {
+						$this->showDetails($this->getRequest()->query->getInt('id'));
+					} else {
+						$this->index();
+					}
+					break;
+				case Request::METHOD_PUT:
+					$this->changeStatus();
+					break;
+				case Request::METHOD_POST:
+					$this->updateIndex();
+					break;
+				default:
+					$this->getResponse()->setStatusCode(405);
+			}
+		} catch (\Exception $e) {
+			write_log(sprintf('Could not handle request: %s', $e->getMessage()), E_USER_ERROR);
+			$this->createResponseFromException($e);
 		}
 
-		$this->sendResponse(400);
+		$this->getResponse()->prepare($this->request)->send();
 	}
 
 	/**
@@ -78,88 +101,57 @@ class ApsPackageController extends ApsAbstractController
 	 */
 	protected function index()
 	{
-		try {
-			$this->sendResponse(200, $this->packageService->getPackages());
-		} catch (\Exception $e) {
-			write_log(sprintf('Could not get package list: %s', $e->getMessage()), E_USER_ERROR);
-			if (Authentication::getInstance()->getIdentity()->admin_type === 'admin') {
-				$this->sendResponse(500, array('message' => tr('Could not get package list: %s', $e->getMessage())));
-			} else {
-				$this->sendResponse(500, array('message' => tr('Could not get package list. Please contact your reseller.')));
-			}
-		}
+		$this->getResponse()->setContent(
+			$this->getSerializer()->serialize($this->getApsPackageService()->getPackages(), 'json')
+		);
 	}
 
 	/**
 	 * Show package details
 	 *
-	 * @param $packageId
+	 * @param int $id Package identity
+	 * @return void
 	 */
-	protected function showDetails($packageId)
+	protected function showDetails($id)
 	{
-		try {
-			$packageDetails = $this->packageService->getPackageDetails($packageId);
-			if (!$packageDetails) {
-				$this->sendResponse(404);
-			}
-
-			$this->sendResponse(200, $packageDetails);
-		} catch (\Exception $e) {
-			write_log(sprintf('Could not get package details: %s', $e->getMessage()), E_USER_ERROR);
-			if (Authentication::getInstance()->getIdentity()->admin_type === 'admin') {
-				$this->sendResponse(500, array('message' => tr('Could not get package details: %s', $e->getMessage())));
-			} else {
-				$this->sendResponse(500, array('message' => tr('Could not get package details. Please contact your reseller.')));
-			}
-		}
+		$this->getResponse()->setContent(
+			$this->getSerializer()->serialize($this->getApsPackageService()->getPackageDetails($id), 'json')
+		);
 	}
 
 	/**
 	 * Change package status
 	 *
+	 * @throws \Exception
 	 * @return void
 	 */
 	protected function changeStatus()
 	{
-		try {
-			if (Authentication::getInstance()->getIdentity()->admin_type !== 'admin') {
-				$this->sendResponse(403); // Only administrators can change package status
-			}
-
-			if (($payload = @file_get_contents('php://input')) !== false) {
-				/** @var ApsPackage $package */
-				$package = $this->getSerializer()->deserialize($payload, 'iMSCP\ApsStandard\Entity\ApsPackage', 'json');
-				if (count($this->getValidator()->validate($package)) == 0) {
-					if ($this->packageService->updatePackageStatus($package->getId(), $package->getStatus())) {
-						$this->sendResponse(204);
-					}
-				}
-			}
-
-			$this->sendResponse(400);
-		} catch (\Exception $e) {
-			write_log(sprintf('Could not change package status: %s', $e->getMessage()), E_USER_ERROR);
-			$this->sendResponse(500, array('message' => tr('Could not change package status: %s', $e->getMessage())));
+		if ($this->getAuth()->getIdentity()->admin_type !== 'admin') {
+			throw new \Exception(tr('Action not allowed.'), 403);
 		}
+
+		/** @var ApsPackage $package */
+		$package = $this->getSerializer()->deserialize(
+			$this->getRequest()->getContent(), self::PACKAGE_ENTITY_CLASS, 'json'
+		);
+		$this->getApsPackageService()->updatePackageStatus($package->getId(), $package->getStatus());
+		$this->getResponse()->setStatusCode(204);
 	}
 
 	/**
 	 * Update package index
 	 *
+	 * @throws \Exception
 	 * @return void
 	 */
 	protected function updateIndex()
 	{
-		try {
-			if (Authentication::getInstance()->getIdentity()->admin_type !== 'admin') {
-				$this->sendResponse(403);
-			}
-
-			$this->packageService->updatePackageIndex();
-			$this->sendResponse(200, array('message' => tr('Package index has been updated.')));
-		} catch (\Exception $e) {
-			write_log(sprintf('Could not update package index: %s', $e->getMessage()), E_USER_ERROR);
-			$this->sendResponse(500, array('message' => tr('Could not update package index: %s', $e->getMessage())));
+		if ($this->getAuth()->getIdentity()->admin_type !== 'admin') {
+			throw new \Exception(tr('Action not allowed.'), 403);
 		}
+
+		$this->getApsPackageService()->updatePackageIndex();
+		$this->getResponse()->setData(array('message' => tr('Package index has been updated.')));
 	}
 }

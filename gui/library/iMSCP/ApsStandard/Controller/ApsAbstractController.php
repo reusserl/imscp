@@ -20,37 +20,53 @@
 
 namespace iMSCP\ApsStandard\Controller;
 
-use iMSCP\Validate\ValidatorProviderInterface;
+use iMSCP_Authentication as Auth;
+use iMSCP_Exception_Production as ProductionException;
 use JMS\Serializer\Serializer;
-use Symfony\Component\Validator\Validation;
+use Symfony\Component\HttpFoundation\JsonResponse as Response;
+use Symfony\Component\HttpFoundation\Request;
+use Zend\ServiceManager\Exception;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Class ApsAbstractController
  * @package iMSCP\ApsStandard\Controller
  */
-abstract class ApsAbstractController implements ValidatorProviderInterface
+abstract class ApsAbstractController implements ServiceLocatorAwareInterface
 {
 	/**
-	 * @var Serializer
+	 * @var Request
 	 */
-	protected $serialiser;
+	protected $request;
+
+	/**
+	 * @var Response
+	 */
+	protected $response;
+
+	/**
+	 * @var Auth
+	 */
+	protected $auth;
+
+	/**
+	 * @var ServiceLocatorInterface
+	 */
+	protected $serviceLocator;
 
 	/**
 	 * Constructor
 	 *
-	 * @param Serializer $serializer
+	 * @param Request $request
+	 * @param Response $response
+	 * @param Auth $auth
 	 */
-	public function __construct(Serializer $serializer)
+	public function __construct(Request $request, Response $response, Auth $auth)
 	{
-		$this->serialiser = $serializer;
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getValidator()
-	{
-		return Validation::createValidatorBuilder()->addMethodMapping('loadValidationMetadata')->getValidator();
+		$this->request = $request;
+		$this->response = $response;
+		$this->auth = $auth;
 	}
 
 	/**
@@ -58,66 +74,87 @@ abstract class ApsAbstractController implements ValidatorProviderInterface
 	 *
 	 * @return void
 	 */
-	abstract function handleRequest();
+	public abstract function handleRequest();
 
 	/**
-	 * Get serializer
+	 * Set service locator
 	 *
-	 * @return \JMS\Serializer\Serializer
+	 * @param ServiceLocatorInterface $serviceLocator
 	 */
-	protected function getSerializer()
+	public function setServiceLocator(ServiceLocatorInterface $serviceLocator)
 	{
-		return $this->serialiser;
+		$this->serviceLocator = $serviceLocator;
 	}
 
 	/**
-	 * Send Json response
+	 * Get service locator
 	 *
-	 * @param int $statusCode HTTP status code
-	 * @param array|string $data JSON data
+	 * @return ServiceLocatorInterface
+	 */
+	public function getServiceLocator()
+	{
+		return $this->serviceLocator;
+	}
+
+	/**
+	 * Get request object
+	 *
+	 * @return Request
+	 */
+	public function getRequest()
+	{
+		return $this->request;
+	}
+
+	/**
+	 * Get response object
+	 *
+	 * @return Response
+	 */
+	public function getResponse()
+	{
+		return $this->response;
+	}
+
+	/**
+	 * Get authentication service
+	 *
+	 * @return Auth
+	 */
+	public function getAuth()
+	{
+		return $this->auth;
+	}
+
+	/**
+	 * Get serializer service
+	 *
+	 * @return Serializer
+	 */
+	public function getSerializer()
+	{
+		return $this->getServiceLocator()->get('Serializer');
+	}
+
+	/**
+	 * Create response from the given exception
+	 *
+	 * @throws \Exception
+	 * @param \Exception $e
 	 * @return void
 	 */
-	protected function sendResponse($statusCode = 200, $data = '')
+	public function createResponseFromException(\Exception $e)
 	{
-		header('Cache-Control: no-cache, must-revalidate');
-		header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
-		header('Content-type: application/json');
+		$code = $e->getCode();
 
-		switch ($statusCode) {
-			case 200:
-				header('Status: 200 OK');
-				break;
-			case 201:
-				header('Status: 201 Created');
-				break;
-			case 202:
-				header('Status: 202 Accepted');
-				break;
-			case 204:
-				header('Status: 204 No Content');
-				break;
-			case 400:
-				header('Status: 400 Bad Request');
-				break;
-			case 403:
-				header('Status: 403 Forbidden');
-				break;
-			case 404:
-				header('Status: 404 Not Found');
-				break;
-			case 409:
-				header('Status: 409 Conflict');
-				break;
-			case 500:
-				header('Status: 500 Internal Server Error');
-				break;
-			case 501:
-				header('Status: 501 Not Implemented');
-				break;
-			default:
-				header('Status: 200 OK');
+		if (!is_int($code) || $code < 100 || $code >= 600) {
+			$code = 500;
+
+			if ($this->getAuth()->getIdentity() !== 'admin') {
+				$e = new ProductionException('', 500, $e);
+			}
 		}
 
-		exit($this->getSerializer()->serialize($data, 'json'));
+		$this->getResponse()->setData(array('message' => $e->getMessage()))->setStatusCode($code);
 	}
 }
