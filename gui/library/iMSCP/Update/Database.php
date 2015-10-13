@@ -3181,20 +3181,20 @@ class iMSCP_Update_Database extends iMSCP_Update
 	{
 		return '
 			CREATE TABLE IF NOT EXISTS `aps_package` (
-				`id` int(11) unsigned NOT NULL auto_increment,
-				`name` varchar(255) collate utf8_unicode_ci NOT NULL,
-				`summary` text collate utf8_unicode_ci NOT NULL,
-				`version` varchar(255) collate utf8_unicode_ci NOT NULL,
-				`release` varchar(255) collate utf8_unicode_ci NOT NULL,
-				`aps_version` varchar(255) collate utf8_unicode_ci NOT NULL,
-				`category` varchar(255) collate utf8_unicode_ci NOT NULL,
-				`vendor` varchar(255) collate utf8_unicode_ci NOT NULL,
-				`vendor_uri` varchar(255) collate utf8_unicode_ci NOT NULL,
-				`url` varchar(255) collate utf8_unicode_ci NOT NULL,
-				`icon_url` varchar(255) collate utf8_unicode_ci NOT NULL,
-				`cert` varchar(255) collate utf8_unicode_ci NOT NULL,
-				`status` varchar(255) collate utf8_unicode_ci NOT NULL,
-				PRIMARY KEY (`id`)
+				`id` int(10) unsigned NOT NULL auto_increment,
+				`name` varchar(255) NOT NULL,
+				`summary` text NOT NULL,
+				`version` varchar(255) NOT NULL,
+				`release` int(10) unsigned NOT NULL,
+				`aps_version` varchar(255) NOT NULL,
+				`category` varchar(255) NOT NULL,
+				`vendor` varchar(255) NOT NULL,
+				`vendor_uri` varchar(255) NOT NULL,
+				`url` varchar(255) NOT NULL,
+				`icon_url` varchar(255) NOT NULL,
+				`cert` varchar(255) NOT NULL,
+				`status` varchar(255) NOT NULL,
+				PRIMARY KEY  (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 		';
 	}
@@ -3206,18 +3206,18 @@ class iMSCP_Update_Database extends iMSCP_Update
 	 */
 	protected function r225()
 	{
-		return '
+		return "
 			CREATE TABLE IF NOT EXISTS `aps_instance` (
-				`id` int(11) unsigned NOT NULL auto_increment,
-				`pid` int(11) unsigned DEFAULT NULL,
+				`id` int(10) unsigned NOT NULL auto_increment,
+				`pid` int(10) unsigned DEFAULT NULL,
 				`uid` int(10) unsigned NOT NULL,
-				`settings` text COLLATE utf8_unicode_ci NOT NULL,
-				`status` varchar(255) collate utf8_unicode_ci NOT NULL,
+				`settings` text NOT NULL COMMENT '(DC2Type:json_array)',
+				`status` varchar(255) NOT NULL,
 				PRIMARY KEY (`id`),
 				FOREIGN KEY (pid) REFERENCES aps_package(id) ON DELETE SET NULL,
 				FOREIGN KEY (uid) REFERENCES admin(admin_id) ON DELETE CASCADE
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-		';
+		";
 	}
 
 	/**

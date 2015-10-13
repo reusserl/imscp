@@ -27,8 +27,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 use iMSCP\Validate\ValidationInterface;
 
 /**
- * ApsPackage
+ * Class ApsPackage
  *
+ * @package iMSCP\ApsStandard\Entity
  * @ORM\Table(name="aps_package")
  * @ORM\Entity
  * @JMS\AccessType("public_method")
@@ -38,7 +39,7 @@ class ApsPackage implements ValidationInterface
 	/**
 	 * @var integer
 	 *
-	 * @ORM\Column(name="id", type="integer", nullable=false)
+	 * @ORM\Column(name="id", type="integer", nullable=false, options={"unsigned":true})
 	 * @ORM\Id
 	 * @ORM\GeneratedValue(strategy="IDENTITY")
 	 * @JMS\Type("integer")
@@ -73,7 +74,7 @@ class ApsPackage implements ValidationInterface
 	/**
 	 * @var integer
 	 *
-	 * @ORM\Column(name="release", type="integer", nullable=false)
+	 * @ORM\Column(name="release", type="integer", nullable=false, options={"unsigned":true})
 	 * @JMS\Type("integer")
 	 */
 	private $release;
@@ -161,7 +162,6 @@ class ApsPackage implements ValidationInterface
 	public function setName($name)
 	{
 		$this->name = $name;
-
 		return $this;
 	}
 
@@ -184,7 +184,6 @@ class ApsPackage implements ValidationInterface
 	public function setSummary($summary)
 	{
 		$this->summary = $summary;
-
 		return $this;
 	}
 
@@ -207,7 +206,6 @@ class ApsPackage implements ValidationInterface
 	public function setVersion($version)
 	{
 		$this->version = $version;
-
 		return $this;
 	}
 
@@ -230,7 +228,6 @@ class ApsPackage implements ValidationInterface
 	public function setRelease($release)
 	{
 		$this->release = $release;
-
 		return $this;
 	}
 
@@ -253,7 +250,6 @@ class ApsPackage implements ValidationInterface
 	public function setApsVersion($apsVersion)
 	{
 		$this->apsVersion = $apsVersion;
-
 		return $this;
 	}
 
@@ -276,7 +272,6 @@ class ApsPackage implements ValidationInterface
 	public function setCategory($category)
 	{
 		$this->category = $category;
-
 		return $this;
 	}
 
@@ -299,7 +294,6 @@ class ApsPackage implements ValidationInterface
 	public function setVendor($vendor)
 	{
 		$this->vendor = $vendor;
-
 		return $this;
 	}
 
@@ -322,7 +316,6 @@ class ApsPackage implements ValidationInterface
 	public function setVendorUri($vendorUri)
 	{
 		$this->vendorUri = $vendorUri;
-
 		return $this;
 	}
 
@@ -345,7 +338,6 @@ class ApsPackage implements ValidationInterface
 	public function setUrl($url)
 	{
 		$this->url = $url;
-
 		return $this;
 	}
 
@@ -368,7 +360,6 @@ class ApsPackage implements ValidationInterface
 	public function setIconUrl($iconUrl)
 	{
 		$this->iconUrl = $iconUrl;
-
 		return $this;
 	}
 
@@ -391,7 +382,6 @@ class ApsPackage implements ValidationInterface
 	public function setCert($cert)
 	{
 		$this->cert = $cert;
-
 		return $this;
 	}
 
@@ -414,7 +404,6 @@ class ApsPackage implements ValidationInterface
 	public function setStatus($status)
 	{
 		$this->status = $status;
-
 		return $this;
 	}
 

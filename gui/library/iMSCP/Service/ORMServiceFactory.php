@@ -45,7 +45,10 @@ class ORMServiceFactory implements FactoryInterface
 		$serviceLocator->get('Annotation'); // Fixme: We should get annotation reader
 		$devmode = (bool)Registry::get('config')->DEVMODE;
 		$config = Setup::createAnnotationMetadataConfiguration( // TODO make the path list configurable
-			array(LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'), // Entity directory
+			array(
+				LIBRARY_PATH . '/iMSCP/Entity',
+				LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'
+			),
 			$devmode,
 			CACHE_PATH . '/orm_proxy', // Proxy classes directory
 			null, // Will use best available caching driver (none if devmode)
@@ -69,7 +72,7 @@ class ORMServiceFactory implements FactoryInterface
 
 		// Right now, we use Doctrine for APS Standard feature only. Thus, we ignore most of tables
 		$entityManager->getConnection()->getConfiguration()->setFilterSchemaAssetsExpression(
-			'/^admin|(?:aps_(?:packages|instances))$/'
+			'/^admin|(?:aps_(?:package|instance))$/'
 		);
 
 		return $entityManager;
