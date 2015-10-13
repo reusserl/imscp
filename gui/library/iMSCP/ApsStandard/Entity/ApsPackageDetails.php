@@ -34,31 +34,31 @@ class ApsPackageDetails
 	 * @var string Package description
 	 * @JMS\Type("string")
 	 */
-	protected $description;
+	private $description;
 
 	/**
 	 * @var array Package screenshots
 	 * @JMS\Type("array")
 	 */
-	protected $screenshots = array();
+	private $screenshots = array();
 
 	/**
 	 * @var string Package packager
 	 * @JMS\Type("string")
 	 */
-	protected $packager;
+	private $packager;
 
 	/**
 	 * @var string Package license
 	 * @JMS\Type("string")
 	 */
-	protected $license_name;
+	private $licenseName;
 
 	/**
 	 * @var string Package license text
 	 * @JMS\Type("string")
 	 */
-	protected $licence_text;
+	private $licenseText;
 
 	/**
 	 * Get package description
@@ -122,34 +122,41 @@ class ApsPackageDetails
 	}
 
 	/**
+	 * Get package license name
+	 *
 	 * @return string
 	 */
 	public function getLicenseName()
 	{
-		return $this->license_name;
+		return $this->licenseName;
 	}
 
 	/**
+	 * Set package license name
+	 *
 	 * @param string $licenseName
 	 */
 	public function setLicenseName($licenseName)
 	{
-		$this->license_name = $licenseName;
+		$this->licenseName = $licenseName;
 	}
 
 	/**
+	 * Get package license text
 	 * @return string
 	 */
-	public function getLicenceText()
+	public function getLicenseText()
 	{
-		return $this->licence_text;
+		return $this->licenseText;
 	}
 
 	/**
+	 * Set package license text
+	 *
 	 * @param string $licenseText
 	 */
-	public function setLicenceText($licenseText)
+	public function setLicenseText($licenseText)
 	{
-		$this->licence_text = $licenseText;
+		$this->licenseText = $licenseText;
 	}
 }
