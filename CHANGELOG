@@ -53,7 +53,6 @@ CONTRIB
 	Updated: Listener::Postfix::Smarthost listener file - Usage of cdb map instead of hash map
 
 FRONTEND
-	Added: PSR4 autoloader
 	Added: SMTP submission port in list of service ports
 	Added: Symfony/Validator component (composer package)
 	Fixed: Load time issues in several pages (jQuery)
