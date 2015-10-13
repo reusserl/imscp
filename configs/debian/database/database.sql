@@ -723,6 +723,6 @@ CREATE TABLE IF NOT EXISTS `aps_instance` (
   `settings` text COLLATE utf8_unicode_ci NOT NULL,
   `status` varchar(255) collate utf8_unicode_ci NOT NULL,
   PRIMARY KEY (`id`),
-  FOREIGN KEY (pid) REFERENCES aps_packages(id) ON DELETE SET NULL,
+  FOREIGN KEY (pid) REFERENCES aps_package(id) ON DELETE SET NULL,
   FOREIGN KEY (uid) REFERENCES admin(admin_id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
