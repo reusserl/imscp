@@ -34,9 +34,14 @@ check_login('user');
 
 if (customerHasFeature('aps_standard')) {
 	if (is_xhr()) {
-		/** @var ApsPackageController $controller */
-		$controller = Registry::get('ServiceManager')->get('ApsPackageController');
-		$controller->handleRequest();
+		try {
+			/** @var ApsPackageController $controller */
+			$controller = Registry::get('ServiceManager')->get('ApsPackageController');
+			$controller->handleRequest();
+		} catch (\Exception $e) {
+			header('Status: 500 Internal Server Error');
+		}
+		exit;
 	}
 
 	$tpl = new TemplateEngine();

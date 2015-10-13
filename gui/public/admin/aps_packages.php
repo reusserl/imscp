@@ -39,9 +39,8 @@ if (is_xhr()) {
 		$controller->handleRequest();
 	} catch (\Exception $e) {
 		header('Status: 500 Internal Server Error');
-		print $e->getMessage();
-		exit;
 	}
+	exit;
 }
 
 $tpl = new TemplateEngine();
