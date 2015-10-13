@@ -91,13 +91,13 @@ class ApsPackageController extends ApsAbstractController
 			$this->createResponseFromException($e);
 		}
 
-		$this->getResponse()->prepare($this->request)->send();
+		$this->getResponse()->prepare($this->getRequest())->send();
 	}
 
 	/**
 	 * Lists all packages
 	 *
-	 * @void
+	 * @return void
 	 */
 	protected function index()
 	{
@@ -109,7 +109,7 @@ class ApsPackageController extends ApsAbstractController
 	/**
 	 * Show package details
 	 *
-	 * @param int $id Package identity
+	 * @param int $id Package identifier
 	 * @return void
 	 */
 	protected function showDetails($id)

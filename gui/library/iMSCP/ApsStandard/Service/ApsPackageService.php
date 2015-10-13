@@ -77,6 +77,7 @@ class ApsPackageService extends AbstractApsService
 	/**
 	 * Get package details
 	 *
+	 * @throws \Exception
 	 * @param int $id Package identifier
 	 * @return ApsPackageDetails
 	 */
@@ -86,7 +87,7 @@ class ApsPackageService extends AbstractApsService
 		$package = $this->getEntityManager()->getRepository('ApsStandard:ApsPackage')->find($id);
 
 		if (!$package) {
-			throw new \InvalidArgumentException(tr('Package not found.'), 404);
+			throw new \Exception(tr('Package not found.'), 404);
 		}
 
 		$meta = $this->getMetadataDir() . '/' . $package->getApsVersion() . '/' . $package->getName() . '/APP-META.xml';
@@ -115,8 +116,8 @@ class ApsPackageService extends AbstractApsService
 	public function updatePackageStatus($id, $status)
 	{
 		$this->getEventManager()->dispatch('onUpdateApsPackageStatus', array(
-				'id' => $id, 'status' => $status, 'context' => $this)
-		);
+			'id' => $id, 'status' => $status, 'context' => $this
+		));
 		/** @var ApsPackage $package */
 		$package = $this->getEntityManager()->getRepository('ApsStandard:ApsPackage')->find($id);
 		$entityManager = $this->getEntityManager();
