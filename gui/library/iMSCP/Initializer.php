@@ -244,11 +244,9 @@ class Initializer
 	 */
 	protected function initializeServiceManager()
 	{
-		if (class_exists('\Zend\ServiceManager\ServiceManager')) { // Test needed because on upgrade, class is not here
-			$serviceManagerConfig = include_once(GUI_ROOT_DIR . '/config/service_manager.php');
-			$serviceManager = new ServiceManager(new ServiceManagerConfig($serviceManagerConfig));
-			Registry::set('ServiceManager', $serviceManager);
-		}
+		$serviceManagerConfig = include_once(GUI_ROOT_DIR . '/config/service_manager.php');
+		$serviceManager = new ServiceManager(new ServiceManagerConfig($serviceManagerConfig));
+		Registry::set('ServiceManager', $serviceManager);
 	}
 
 	/**
