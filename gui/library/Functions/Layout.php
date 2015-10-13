@@ -424,7 +424,7 @@ function layout_getUserLogo($searchForCreator = true, $returnDefault = true)
 				`user_gui_props` `b` ON (`b`.`user_id` = `a`.`created_by`)
 			WHERE
 				`a`.`admin_id`= ?
-        ';
+		';
 		$stmt = exec_query($query, $userId);
 	}
 
