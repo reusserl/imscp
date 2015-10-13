@@ -53,6 +53,19 @@ sub registerSetupListeners
 {
 	my ($self, $eventManager) = @_;
 
+	my @packages = split ',', main::setupGetQuestion('WEBMAIL_PACKAGES');
+	if(not 'No' ~~ @packages) {
+		for(@packages) {
+			my $package = "Package::Webmail::${_}::${_}";
+			eval "require $package";
+			$package = $package->getInstance();
+			if($package->can('registerSetupListeners')) {
+				debug(sprintf('Calling action registerSetupListeners on %s', ref $package));
+				$package->registerSetupListeners($eventManager);
+			}
+		}
+	}
+
 	$eventManager->register('beforeSetupDialog', sub { push @{$_[0]}, sub { $self->showDialog(@_) }; 0; });
 	$eventManager->register('afterFrontEndPreInstall', sub { $self->preinstallListener(); } );
 	$eventManager->register('afterFrontEndInstall', sub { $self->installListener(); });

@@ -259,13 +259,14 @@ EOF
 	}
 
 	my @steps = (
-		[ \&_installFiles,                'Installing files' ],
-		[ \&_systemCleanup,               'Cleaning system' ],
-		[ \&main::setupBoot,              'Setup bootstrapping' ],
-		[ \&main::setupRegisterListeners, 'Registering servers/packages event listeners' ],
-		[ \&main::setupDialog,            'Processing setup dialog' ],
-		[ \&main::setupTasks,             'Processing setup tasks' ],
-		[ \&_deleteBuildDir,              'Deleting Build directory' ]
+		[ \&_installFiles,                      'Installing files' ],
+		[ \&_systemCleanup,                     'Cleaning system' ],
+		[ \&main::setupBoot,                    'Setup bootstrapping' ],
+		[ \&main::setupRegisterListeners,       'Registering servers/packages listeners' ],
+		[ \&main::setupDialog,                  'Processing setup dialog' ],
+		[ \&main::setupComposerPackages,        'Processing composer packages' ],
+		[ \&main::setupTasks,                   'Processing setup tasks' ],
+		[ \&_deleteBuildDir,                    'Deleting Build directory' ]
 	);
 
 	iMSCP::EventManager->getInstance()->trigger('beforeInstall', \@steps);

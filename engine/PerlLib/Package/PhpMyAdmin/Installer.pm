@@ -32,7 +32,6 @@ use iMSCP::Config;
 use Package::PhpMyAdmin;
 use iMSCP::EventManager;
 use iMSCP::TemplateParser;
-use iMSCP::Composer;
 use iMSCP::Execute;
 use iMSCP::Rights;
 use iMSCP::File;
@@ -41,7 +40,6 @@ use Package::FrontEnd;
 use Servers::sqld;
 use File::Basename;
 use JSON;
-use version;
 use parent 'Common::SingletonClass';
 
 %main::sqlUsers = () unless %main::sqlUsers;
@@ -68,9 +66,12 @@ sub registerSetupListeners
 {
 	my ($self, $eventManager) = @_;
 
+	$eventManager->register('beforeSetupComposerPackages', sub {
+		my $composer = shift; $composer->registerPackage('imscp/phpmyadmin', '0.4.0.*@dev');
+	});
 	$eventManager->register( 'beforeSetupDialog', sub { push @{$_[0]}, sub { $self->showDialog(@_) }; 0; } );
-	$eventManager->register( 'afterFrontEndPreInstall', sub { $self->preinstall(); } );
-	$eventManager->register( 'afterFrontEndInstall', sub { $self->install(); } );
+	$eventManager->register( 'afterFrontEndPreInstall', sub { $self->preinstall() } );
+	$eventManager->register( 'afterFrontEndInstall', sub { $self->install() } );
 }
 
 =item showDialog(\%dialog)
@@ -172,10 +173,6 @@ sub preinstall
 {
 	my $self = shift;
 
-	my $sqldVersion = Servers::sqld->factory()->getVersion();
-	my $version = (version->parse($sqldVersion) >= version->parse('5.5.0')) ? '0.4.0.*@dev' : '0.2.0.*@dev';
-
-	iMSCP::Composer->getInstance()->registerPackage('imscp/phpmyadmin', $version);
 	$self->{'eventManager'}->register('afterFrontEndBuildConfFile', \&afterFrontEndBuildConfFile);
 }
 

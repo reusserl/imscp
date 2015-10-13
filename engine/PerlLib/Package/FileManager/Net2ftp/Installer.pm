@@ -31,7 +31,6 @@ use iMSCP::Debug;
 use iMSCP::EventManager;
 use iMSCP::Execute;
 use iMSCP::Rights;
-use iMSCP::Composer;
 use iMSCP::TemplateParser;
 use iMSCP::File;
 use iMSCP::Dir;
@@ -48,6 +47,24 @@ our $VERSION = '0.1.1.*@dev';
 
 =over 4
 
+=item registerSetupListeners(\%eventManager)
+
+ Register setup event listeners
+
+ Param iMSCP::EventManager \%eventManager
+ Return int 0 on success, other on failure
+
+=cut
+
+sub registerSetupListeners
+{
+	my ($self, $eventManager) = @_;
+
+	$eventManager->register('beforeSetupComposerPackages', sub {
+		my $composer = shift; $composer->registerPackage('imscp/net2ftp', $VERSION);
+	});
+}
+
 =item preinstall()
 
  Process preinstall tasks
@@ -60,7 +77,6 @@ sub preinstall
 {
 	my $self = shift;
 
-	iMSCP::Composer->getInstance()->registerPackage('imscp/net2ftp', $VERSION);
 	$self->{'eventManager'}->register('afterFrontEndBuildConfFile', \&afterFrontEndBuildConfFile);
 }
 

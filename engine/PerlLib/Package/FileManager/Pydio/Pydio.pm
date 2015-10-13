@@ -41,6 +41,23 @@ alternative to mainstream cloud storage providers.
 
 =over 4
 
+=item registerSetupListeners(\%eventManager)
+
+ Register setup event listeners
+
+ Param iMSCP::EventManager \%eventManager
+ Return int 0 on success, other on failure
+
+=cut
+
+sub registerSetupListeners
+{
+	my ($self, $eventManager) = @_;
+
+	require Package::FileManager::Pydio::Installer;
+	Package::FileManager::Pydio::Installer->getInstance()->registerSetupListeners($eventManager);
+}
+
 =item preinstall()
 
  Process preinstall tasks

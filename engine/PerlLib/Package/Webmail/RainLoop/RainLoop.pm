@@ -46,6 +46,23 @@ my $dbInitialized = undef;
 
 =over 4
 
+=item registerSetupListeners(\%eventManager)
+
+ Register setup event listeners
+
+ Param iMSCP::EventManager \%eventManager
+ Return int 0 on success, die on failure
+
+=cut
+
+sub registerSetupListeners
+{
+	my ($self, $eventManager) = @_;
+
+	require Package::Webmail::RainLoop::Installer;
+	Package::Webmail::RainLoop::Installer->getInstance()->registerSetupListeners($eventManager);
+}
+
 =item showDialog(\%dialog)
 
  Show dialog

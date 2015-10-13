@@ -20,37 +20,39 @@
 use strict;
 use warnings;
 no if $] >= 5.017011, warnings => 'experimental::smartmatch';
-use FindBin;
+
 use DateTime;
 use DateTime::TimeZone;
-use Net::LibIDN qw/idn_to_ascii idn_to_unicode/;
 use Data::Validate::Domain qw/is_domain/;
-use Scalar::Util qw(openhandle);
+use Email::Valid;
 use File::Basename;
-use iMSCP::LsbRelease;
-use iMSCP::Debug;
-use iMSCP::Net;
+use FindBin;
+use Net::LibIDN qw/idn_to_ascii idn_to_unicode/;
+use Scalar::Util qw(openhandle);
 use iMSCP::Bootstrapper;
-use iMSCP::Dialog;
-use iMSCP::Stepper;
+use iMSCP::Composer;
 use iMSCP::Crypt qw/bcrypt decryptRijndaelCBC encryptRijndaelCBC/;
 use iMSCP::Database;
+use iMSCP::DbTasksProcessor;
+use iMSCP::Debug;
+use iMSCP::Dialog;
 use iMSCP::Dir;
-use iMSCP::File;
 use iMSCP::Execute;
 use iMSCP::EventManager;
+use iMSCP::File;
+use iMSCP::Getopt;
+use iMSCP::LsbRelease;
 use iMSCP::Mount 'umount';
+use iMSCP::Net;
+use iMSCP::OpenSSL;
+use iMSCP::Packages;
 use iMSCP::Rights;
-use iMSCP::TemplateParser;
+use iMSCP::Servers;
+use iMSCP::Service;
+use iMSCP::Stepper;
 use iMSCP::SystemGroup;
 use iMSCP::SystemUser;
-use iMSCP::OpenSSL;
-use Email::Valid;
-use iMSCP::Servers;
-use iMSCP::Packages;
-use iMSCP::Getopt;
-use iMSCP::Service;
-use iMSCP::DbTasksProcessor;
+use iMSCP::TemplateParser;
 
 sub setupBoot
 {
@@ -141,6 +143,14 @@ sub setupDialog
 	}
 
 	iMSCP::EventManager->getInstance()->trigger('afterSetupDialog');
+}
+
+sub setupComposerPackages
+{
+	iMSCP::Dialog->getInstance()->endGauge();
+	my $composer = iMSCP::Composer->getInstance();
+	iMSCP::EventManager->getInstance()->trigger('beforeSetupComposerPackages', $composer);
+	$composer->installPackages();
 }
 
 sub setupTasks

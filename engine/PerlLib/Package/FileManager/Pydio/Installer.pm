@@ -30,7 +30,6 @@ use iMSCP::Debug;
 use iMSCP::EventManager;
 use iMSCP::Execute;
 use iMSCP::Rights;
-use iMSCP::Composer;
 use iMSCP::TemplateParser;
 use iMSCP::Dir;
 use Package::FrontEnd;
@@ -46,6 +45,24 @@ our $VERSION = '0.2.0.*@dev';
 
 =over 4
 
+=item registerSetupListeners(\%eventManager)
+
+ Register setup event listeners
+
+ Param iMSCP::EventManager \%eventManager
+ Return int 0 on success, other on failure
+
+=cut
+
+sub registerSetupListeners
+{
+	my ($self, $eventManager) = @_;
+
+	$eventManager->register('beforeSetupComposerPackages', sub {
+		my $composer = shift; $composer->registerPackage('imscp/ajaxplorer', $VERSION);
+	});
+}
+
 =item preinstall()
 
  Process preinstall tasks
@@ -58,7 +75,6 @@ sub preinstall
 {
 	my $self = shift;
 
-	iMSCP::Composer->getInstance()->registerPackage('imscp/ajaxplorer', $VERSION);
 	$self->{'eventManager'}->register('afterFrontEndBuildConfFile', \&afterFrontEndBuildConfFile);
 }
 

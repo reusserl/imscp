@@ -45,13 +45,22 @@ use parent 'Common::SingletonClass';
  Register setup event listeners
 
  Param iMSCP::EventManager \%eventManager
- Return int 0 on success, other on failure
+ Return int 0 on success, die on failure
 
 =cut
 
 sub registerSetupListeners
 {
 	my ($self, $eventManager) = @_;
+
+	my $package = main::setupGetQuestion('FILEMANAGER_PACKAGE');
+	$package = "Package::FileManager::${package}::${package}";
+	eval "require $package";
+	$package = $package->getInstance();
+	if($package->can('registerSetupListeners')) {
+		debug(sprintf('Calling action registerSetupListeners on %s', ref $package));
+		$package->registerSetupListeners($eventManager);
+	}
 
 	$eventManager->register('beforeSetupDialog', sub { push @{$_[0]}, sub { $self->showDialog(@_) }; 0; });
 	$eventManager->register('afterFrontEndPreInstall', sub { $self->preinstallListener(); } );

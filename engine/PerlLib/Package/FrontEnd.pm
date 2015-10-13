@@ -74,8 +74,6 @@ sub preinstall
 
 	$self->{'eventManager'}->trigger('beforeFrontEndPreInstall');
 	$self->stop();
-	require Package::FrontEnd::Installer;
-	Package::FrontEnd::Installer->getInstance()->preinstall();
 	$self->{'eventManager'}->trigger('afterFrontEndPreInstall');
 }
 

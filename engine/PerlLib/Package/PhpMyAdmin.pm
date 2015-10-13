@@ -69,7 +69,7 @@ use parent 'Common::SingletonClass';
  Register setup event listeners
 
  Param iMSCP::EventManager \%eventManager
- Return int 0 on success, other or die on failure
+ Return int 0 on success, die on failure
 
 =cut
 

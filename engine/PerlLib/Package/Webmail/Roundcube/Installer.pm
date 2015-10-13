@@ -31,7 +31,6 @@ use iMSCP::Debug;
 use iMSCP::Config;
 use iMSCP::EventManager;
 use iMSCP::TemplateParser;
-use iMSCP::Composer;
 use iMSCP::Execute;
 use iMSCP::Rights;
 use iMSCP::File;
@@ -55,6 +54,24 @@ our $VERSION = '0.6.0.*@dev';
 =head1 PUBLIC METHODS
 
 =over 4
+
+=item registerSetupListeners(\%eventManager)
+
+ Register setup event listeners
+
+ Param iMSCP::EventManager \%eventManager
+ Return int 0 on success, die on failure
+
+=cut
+
+sub registerSetupListeners
+{
+	my ($self, $eventManager) = @_;
+
+	$eventManager->register('beforeInstallComposerPackages', sub {
+		my $composer = shift; $composer->registerPackage('imscp/roundcube', $VERSION);
+	});
+}
 
 =item showDialog(\%dialog)
 
@@ -154,7 +171,6 @@ sub preinstall
 {
 	my $self = shift;
 
-	iMSCP::Composer->getInstance()->registerPackage('imscp/roundcube', $VERSION);
 	$self->{'eventManager'}->register('afterFrontEndBuildConfFile', \&afterFrontEndBuildConfFile);
 }
 

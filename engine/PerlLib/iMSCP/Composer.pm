@@ -66,7 +66,30 @@ sub registerPackage
 		push @{$self->{'required_dev_packages'}}, "        \"$package\": \"$packageVersion\"";
 	}
 
-	undef;
+	0;
+}
+
+=item installPackages()
+
+ Install composer packages that were registered for installation
+
+ Return int 0 on success, die on faiure;
+
+=cut
+
+sub installPackages
+{
+	my $self = shift;
+
+	$ENV{'COMPOSER_HOME'} = "$self->{'pkgDir'}/.composer"; # Override default composer home directory
+	$ENV{'COMPOSER_NO_INTERACTION'} = '1'; # Disable user interaction
+
+	$self->_cleanPackageCache() if iMSCP::Getopt->cleanPackageCache;
+	iMSCP::Dir->new( dirname => $self->{'pkgDir'} )->make();
+	$self->_getComposer() unless iMSCP::Getopt->skipPackageUpdate && -x "$self->{'pkgDir'}/composer.phar";
+	$self->_installPackages() unless iMSCP::Getopt->skipPackageUpdate && $self->_checkRequirements();
+
+	0;
 }
 
 =back
@@ -91,23 +114,6 @@ sub _init
 	$self->{'required_dev_packages'} = [];
 	$self->{'pkgDir'} = "$main::imscpConfig{'CACHE_DATA_DIR'}/packages";
 	$self->{'phpCmd'} = 'php -d allow_url_fopen=1 -d suhosin.executor.include.whitelist=phar';
-
-	$ENV{'COMPOSER_HOME'} = "$self->{'pkgDir'}/.composer"; # Override default composer home directory
-	#$ENV{'COMPOSER_PROCESS_TIMEOUT'} = 2000; # Increase composer process timeout for slow connections
-	$ENV{'COMPOSER_NO_INTERACTION'} = '1'; # Disable user interaction
-	#$ENV{'COMPOSER_DISCARD_CHANGES'} = 'true'; # Discard any change made in vendor
-
-	iMSCP::EventManager->getInstance()->register(
-		'afterSetupPreInstallPackages', sub {
-			iMSCP::Dialog->getInstance()->endGauge();
-			$self->_cleanPackageCache() if iMSCP::Getopt->cleanPackageCache;
-			iMSCP::Dir->new( dirname => $self->{'pkgDir'} )->make();
-			$self->_getComposer() unless iMSCP::Getopt->skipPackageUpdate && -x "$self->{'pkgDir'}/composer.phar";
-			$self->_installPackages() unless iMSCP::Getopt->skipPackageUpdate && $self->_checkRequirements();
-			0;
-		}
-	);
-
 	$self;
 }
 

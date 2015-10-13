@@ -28,7 +28,6 @@ use warnings;
 no if $] >= 5.017011, warnings => 'experimental::smartmatch';
 use iMSCP::Debug;
 use iMSCP::Config;
-use iMSCP::Composer;
 use iMSCP::Dir;
 use iMSCP::Execute;
 use iMSCP::File;
@@ -63,6 +62,17 @@ use parent 'Common::SingletonClass';
 sub registerSetupListeners
 {
 	my ($self, $eventManager) = @_;
+
+	$eventManager->register('beforeSetupComposerPackages', sub {
+		my $composer = shift;
+		$composer->registerPackage('doctrine/orm', '~2.5.1');
+		$composer->registerPackage('jms/serializer', '~1.0.0');
+		$composer->registerPackage('phpunit/phpunit', '4.*', 'devonly');
+		$composer->registerPackage('symfony/http-foundation', '~2.7.5');
+		$composer->registerPackage('symfony/validator', '~2.7.4');
+		$composer->registerPackage('zendframework/zend-servicemanager', '~2.5.1');
+		$composer->registerPackage('zendframework/zend-stdlib', '2.5.1');
+	});
 
 	$eventManager->register('beforeSetupDialog', sub {
 		push @{$_[0]}, sub { $self->askHostname(@_) }, sub { $self->askSsl(@_) }, sub { $self->askPorts(@_) }; 0;
@@ -319,25 +329,6 @@ sub askPorts
 	}
 
 	$rs;
-}
-
-=item preinstall()
-
- Process preinstall tasks
-
- Return int 0 on success, die on failure
-
-=cut
-
-sub preinstall
-{
-	my $composer = iMSCP::Composer->getInstance();
-	$composer->registerPackage('zendframework/zend-stdlib', '2.5.1');
-	$composer->registerPackage('zendframework/zend-servicemanager', '~2.5.1');
-	$composer->registerPackage('symfony/validator', '~2.7.4');
-	$composer->registerPackage('doctrine/orm', '~2.5.1');
-	$composer->registerPackage('jms/serializer', '~1.0.0');
-	$composer->registerPackage('phpunit/phpunit', '4.*', 'devonly');
 }
 
 =item install()
