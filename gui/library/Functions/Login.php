@@ -194,6 +194,13 @@ function check_login($userLevel = '', $preventExternalLogin = true)
 
 		if (is_xhr()) {
 			header('HTTP/1.0 403 Forbidden');
+			/** @var \Symfony\Component\HttpFoundation\Request $request */
+			$request = iMSCP_Registry::get('ServiceManager')->get('Request');
+
+			if(in_array('application/json', $request->getAcceptableContentTypes())) {
+				header("Content-type: application/json");
+				echo json_encode(array('redirect' => '/index.php'));
+			}
 			exit;
 		}
 

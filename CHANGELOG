@@ -33,6 +33,13 @@ BACKEND
 	Rewritten: iMSCP::SetRights library (usage of chown and chmod perl-functions instead of system commands)
 	Rewritten: Servers::mta::postfix
 
+COMPOSER
+	Added: doctrine/orm  package (~2.5.1)
+	Added: jms/serializer package (~1.0.0)
+	Added: symfony/http-foundation package (~2.7.5)
+	Added: Symfony/Validator package (~2.7.5)
+	Added: zendframework/zend-servicemanager package (~2.5.1)
+
 CONFIGS
 	Added: build-essential package
 	Added: cron package (Debian/Ubuntu)
@@ -54,7 +61,6 @@ CONTRIB
 
 FRONTEND
 	Added: SMTP submission port in list of service ports
-	Added: Symfony/Validator component (composer package)
 	Fixed: Load time issues in several pages (jQuery)
 	Fixed: Possible ERR_INCOMPLETE_CHUNKED_ENCODING error due to wrong permissions on nginx tmp (fastcgi) directory
 	Fixed: Wrong issue tracker links in admin/database_update.php
@@ -63,8 +69,9 @@ FRONTEND
 INSTALLER
 	Changed: Required minimum PHP version is now 5.3.7
 	Fixed: Avoid call of external commands whenever possible
-	Fixed: The update notices are always shown even when they are out-dated
+	Fixed: Composer packages must be intalled as soon as possible
 	Fixed: Enable source repositories when available
+	Fixed: The update notices are always shown even when they are out-dated
 
 PLUGINS
 	Updated: API to version 1.0.1
