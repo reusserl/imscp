@@ -67,11 +67,10 @@ sub registerSetupListeners
 		my $composer = shift;
 		$composer->registerPackage('doctrine/orm', '~2.5.1');
 		$composer->registerPackage('jms/serializer', '~1.0.0');
-		$composer->registerPackage('phpunit/phpunit', '4.*', 'devonly');
+		#$composer->registerPackage('phpunit/phpunit', '4.*', 'devonly');
 		$composer->registerPackage('symfony/http-foundation', '~2.7.5');
-		$composer->registerPackage('symfony/validator', '~2.7.4');
+		$composer->registerPackage('symfony/validator', '~2.7.5');
 		$composer->registerPackage('zendframework/zend-servicemanager', '~2.5.1');
-		$composer->registerPackage('zendframework/zend-stdlib', '2.5.1');
 	});
 
 	$eventManager->register('beforeSetupDialog', sub {

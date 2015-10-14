@@ -93,7 +93,7 @@ class ApsPackageService extends AbstractApsService
 		$meta = $this->getMetadataDir() . '/' . $package->getApsVersion() . '/' . $package->getName() . '/APP-META.xml';
 
 		if (!file_exists($meta) || filesize($meta) == 0) {
-			throw new \RuntimeException(tr('The %s package META file is missing or invalid.', $meta), 500);
+			throw new \RuntimeException(tr('The %s package META file is missing or invalid.', $meta));
 		}
 
 		$doc = new ApsDocument($meta);
@@ -118,9 +118,9 @@ class ApsPackageService extends AbstractApsService
 		$this->getEventManager()->dispatch('onUpdateApsPackageStatus', array(
 			'id' => $id, 'status' => $status, 'context' => $this
 		));
-		/** @var ApsPackage $package */
-		$package = $this->getEntityManager()->getRepository('ApsStandard:ApsPackage')->find($id);
 		$entityManager = $this->getEntityManager();
+		/** @var ApsPackage $package */
+		$package = $entityManager->getRepository('ApsStandard:ApsPackage')->find($id);
 
 		if (!$package) {
 			throw new \Exception(tr('Package not found.'), 404);

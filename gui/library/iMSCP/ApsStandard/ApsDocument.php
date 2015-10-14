@@ -94,9 +94,7 @@ class ApsDocument
 		@$ret = ($type == 'xml') ? $doc->load($path, LIBXML_PARSEHUGE) : $doc->loadHTMLFile($path);
 
 		if (!$ret) {
-			throw new \RuntimeException(tr(
-				"Runtime error: %s\n", tr('Could not load HTML/XML document: %s', $php_errormsg)
-			));
+			throw new \RuntimeException(tr('Could not load HTML/XML document: %s', $php_errormsg));
 		}
 
 		// Create associated DOM XPath object
@@ -112,8 +110,7 @@ class ApsDocument
 
 			if (!$xpath->registerNamespace($prefix, $node->nodeValue)) {
 				throw new \RuntimeException(tr(
-					"Runtime error: %s\n",
-					tr("Could not register '%s' XPath namespace with '%s' as prefix", $prefix, $node->nodeValue)
+					"Could not register '%s' XPath namespace with '%s' as prefix", $prefix, $node->nodeValue
 				));
 			}
 		}

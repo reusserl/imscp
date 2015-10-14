@@ -83,6 +83,7 @@ class ApsPackageDetails
 
 	/**
 	 * Get package screenshots
+	 *
 	 * @return array
 	 */
 	public function getScreenshots()
@@ -143,6 +144,7 @@ class ApsPackageDetails
 
 	/**
 	 * Get package license text
+	 *
 	 * @return string
 	 */
 	public function getLicenseText()

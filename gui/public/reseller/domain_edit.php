@@ -89,7 +89,7 @@ function reseller_getResellerProps($resellerId)
 				reseller_id, current_sub_cnt, max_sub_cnt, current_als_cnt, max_als_cnt, current_mail_cnt, max_mail_cnt,
 				current_ftp_cnt, max_ftp_cnt, current_sql_db_cnt, max_sql_db_cnt, current_sql_user_cnt, max_sql_user_cnt,
 				current_disk_amnt, max_disk_amnt, current_traff_amnt, max_traff_amnt,
-				php_ini_system AS reseller_php_ini_system, aps_standard as domain_aps_standard
+				php_ini_system AS reseller_php_ini_system, aps_standard AS reseller_aps_standard
 			FROM
 				reseller_props
 			WHERE
@@ -117,7 +117,7 @@ function reseller_getDomainProps($domainId)
 				domain_sqlu_limit, domain_disk_limit, domain_disk_usage, domain_traffic_limit, domain_php,
 				domain_cgi, domain_dns, allowbackup, phpini_perm_system AS customer_php_ini_system,
 				domain_external_mail, web_folder_protection, (mail_quota / 1048576) AS mail_quota,
-				aps_standard AS reseller_aps_standard
+				aps_standard AS domain_aps_standard
 			FROM
 				domain
 			WHERE
@@ -559,7 +559,7 @@ function _reseller_generateFeaturesForm($tpl, &$data)
 	}
 
 	// APS Standard
-	if(resellerHasFeature('aps_standard')) {
+	if($data['reseller_aps_standard'] == 'yes') {
 		$tplVars['TR_APS_STANDARD'] = tr('APS Standard');
 		$tplVars['APS_STANDARD_YES'] = ($data['domain_aps_standard'] == 'yes') ? $htmlChecked : '';
 		$tplVars['APS_STANDARD_NO'] = ($data['domain_aps_standard'] != 'yes') ? $htmlChecked : '';

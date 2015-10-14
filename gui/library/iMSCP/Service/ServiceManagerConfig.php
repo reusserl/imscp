@@ -21,13 +21,12 @@
 namespace iMSCP\Service;
 
 use iMSCP\Events\EventManagerAwareInterface;
+use iMSCP_Events_Manager_Interface as EventManagerInterface;
 use Zend\ServiceManager\Config;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\ServiceManager\ServiceManagerAwareInterface;
 use Zend\ServiceManager\ServiceManager;
-use Zend\Stdlib\ArrayUtils;
-use iMSCP_Events_Manager_Interface as EventManagerInterface;
 
 /**
  * Class ServiceManagerConfig
@@ -126,7 +125,7 @@ class ServiceManagerConfig extends Config
 			return $serviceLocator;
 		};
 
-		parent::__construct(ArrayUtils::merge(
+		parent::__construct(array_merge_recursive(
 			array(
 				'invokables' => $this->invokables,
 				'factories' => $this->factories,

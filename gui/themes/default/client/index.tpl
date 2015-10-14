@@ -82,6 +82,10 @@
 		<td>{CUSTOM_DNS_RECORDS_FEATURE_STATUS}</td>
 	</tr>
 	<tr>
+		<td>{TR_APS_STANDARD}</td>
+		<td>{APS_STANDARD}</td>
+	</tr>
+	<tr>
 		<td>{TR_EXTERNAL_MAIL_SERVER_FEATURE}</td>
 		<td>{EXTERNAL_MAIL_SERVERS_FEATURE_STATUS}</td>
 	</tr>
