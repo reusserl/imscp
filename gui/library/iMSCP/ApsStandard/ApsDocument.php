@@ -20,6 +20,11 @@
 
 namespace iMSCP\ApsStandard;
 
+use DOMDocument;
+use DOMXPath;
+use DOMNodeList;
+use DOMNode;
+
 /**
  * Class ApsDocument
  * @package iMSCP\ApsStandard
@@ -27,14 +32,29 @@ namespace iMSCP\ApsStandard;
 class ApsDocument
 {
 	/**
-	 * @var \DOMDocument Associated Document Model Object
+	 * @var DOMDocument Associated Document Model Object
 	 */
 	protected $dom;
 
 	/**
-	 * @var \DOMXPath Associated Document Object Model XPath
+	 * @var DOMXPath Associated Document Object Model XPath
 	 */
 	protected $xpath;
+
+	/**
+	 * @var array namespaces
+	 */
+	protected $namespacePrefixes = array();
+
+	/**
+	 * @var array List of default registered namespaces
+	 */
+	protected $defaultNamespaces = array(
+		'xml' => 'http://www.w3.org/XML/1998/namespace',
+		'root' => 'http://apstandard.com/ns/1',
+		'php' => 'http://apstandard.com/ns/1/php',
+		'db' => 'http://apstandard.com/ns/1/db'
+	);
 
 	/**
 	 * Constructor
@@ -60,7 +80,7 @@ class ApsDocument
 	/**
 	 * Get underlying DOM XPath object associated with this document
 	 *
-	 * @return \DOMXPath
+	 * @return DOMXPath
 	 */
 	public function getXpath()
 	{
@@ -71,11 +91,11 @@ class ApsDocument
 	 * Get document value by executing the givenXPath expression
 	 *
 	 * @param string $XPathExpression The XPath expression to execute
-	 * @param \DOMNode $contextNode OPTIONAL Context node
+	 * @param DOMNode $contextNode OPTIONAL Context node
 	 * @param bool $asString OPTIONAL Tells whether or not only the first node value must be returned (default: true)
-	 * @return \DOMNodeList|string
+	 * @return DOMNodeList|string
 	 */
-	public function getXPathValue($XPathExpression, \DOMNode $contextNode = null, $asString = true)
+	public function getXPathValue($XPathExpression, DOMNode $contextNode = null, $asString = true)
 	{
 		$ret = $this->xpath->query($XPathExpression, $contextNode);
 		return ($asString) ? (($ret->length) ? $ret->item(0)->nodeValue : '') : $ret;
@@ -90,7 +110,8 @@ class ApsDocument
 	 */
 	protected function load($path, $type = 'xml')
 	{
-		$doc = new \DOMDocument();
+		$doc = new DOMDocument();
+		$doc->preserveWhiteSpace = false;
 		@$ret = ($type == 'xml') ? $doc->load($path, LIBXML_PARSEHUGE) : $doc->loadHTMLFile($path);
 
 		if (!$ret) {
@@ -98,19 +119,13 @@ class ApsDocument
 		}
 
 		// Create associated DOM XPath object
-		$xpath = new \DOMXPath($doc);
+		$xpath = new DOMXPath($doc);
 
-		// Set namespaces
-		foreach ($xpath->query('namespace::*') as $node) {
-			$prefix = $doc->lookupPrefix($node->nodeValue);
-
-			if ($prefix == '') {
-				$prefix = 'root';
-			}
-
-			if (!$xpath->registerNamespace($prefix, $node->nodeValue)) {
+		// Register default namespaces
+		foreach ($this->defaultNamespaces as $prefix => $uri) {
+			if (!$xpath->registerNamespace($prefix, $uri)) {
 				throw new \RuntimeException(tr(
-					"Could not register '%s' XPath namespace with '%s' as prefix", $prefix, $node->nodeValue
+					"Could not register the '%s' XPath namespace with '%s' as prefix", $uri, $prefix
 				));
 			}
 		}
