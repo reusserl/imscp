@@ -74,7 +74,6 @@ class ApsSettingFormService extends AbstractApsService
 			throw new \RuntimeException(tr('The %s package META file is missing or invalid.', $meta));
 		}
 
-		$settingGroups = array();
 		$doc = new ApsDocument($meta);
 
 		// Get domain list
@@ -83,7 +82,7 @@ class ApsSettingFormService extends AbstractApsService
 			$choices[$choice['id'] . '_' . $choice['type']] = encode_idna($choice['name']);
 		}
 
-		$settingGroups[] = array('legend' => tr('Installation target'), 'settings' => array(
+		$settingGroups = array(array('legend' => tr('Installation target'), 'settings' => array(
 			array(
 				'id' => 'base_url_host',
 				'type' => 'enum',
@@ -101,9 +100,9 @@ class ApsSettingFormService extends AbstractApsService
 				'min_length' => '',
 				'max_length' => '255'
 			)
-		));
+		)));
 
-		// Add database password field if required
+		// Add database password fields if required
 		if ($doc->getXPathValue('//db:id')) {
 			$config = Registry::get('config');
 			if ($config['PASSWD_CHARS'] < 6) {
@@ -134,6 +133,7 @@ class ApsSettingFormService extends AbstractApsService
 			));
 		}
 
+		// Get settings from package metadata file
 		return array_merge($settingGroups, $this->getSettingsFromMetaFile($doc));
 	}
 
@@ -204,7 +204,8 @@ class ApsSettingFormService extends AbstractApsService
 		$stmt = $this->entityManager->getConnection()->prepare(
 			"
 				SELECT
-					CONCAT(`t1`.`subdomain_name`, '.', `t2`.`domain_name`) AS `name`, `t1`.`subdomain_id` AS `id`,
+					CONCAT(`t1`.`subdomain_name`, '.', `t2`.`domain_name`) AS `name`,
+					`t1`.`subdomain_id` AS `id`,
 					'sub' AS `type`
 				FROM
 					`subdomain` AS `t1`
@@ -216,7 +217,9 @@ class ApsSettingFormService extends AbstractApsService
 					`t1`.`subdomain_status` = :status_ok
 				UNION
 				SELECT
-					`alias_name` AS `name`, `alias_id` AS `id`, 'als' AS `type`
+					`alias_name` AS `name`,
+					`alias_id` AS `id`,
+					'als' AS `type`
 				FROM
 					`domain_aliasses`
 				WHERE
@@ -225,7 +228,8 @@ class ApsSettingFormService extends AbstractApsService
 					`alias_status` = :status_ok
 				UNION
 				SELECT
-					CONCAT(`t1`.`subdomain_alias_name`, '.', `t2`.`alias_name`) AS `name`, `t1`.`subdomain_alias_id` AS `id`,
+					CONCAT(`t1`.`subdomain_alias_name`, '.', `t2`.`alias_name`) AS `name`,
+					`t1`.`subdomain_alias_id` AS `id`,
 					'alssub' AS `type`
 				FROM
 					`subdomain_alias` AS `t1`
@@ -238,14 +242,12 @@ class ApsSettingFormService extends AbstractApsService
 		");
 
 		$stmt->execute(array('domain_id' => $mainDmnProps['domain_id'], 'status_ok' => 'ok'));
-		if (!$stmt->rowCount()) {
-			throw new \Exception('Could not find domain list');
+		if ($stmt->rowCount()) {
+			$domainsList = array_merge($domainsList, $stmt->fetchAll(\PDO::FETCH_ASSOC));
+			usort($domainsList, function ($a, $b) {
+				return strnatcmp(decode_idna($a['name']), decode_idna($b['name']));
+			});
 		}
-
-		$domainsList = array_merge($domainsList, $stmt->fetchAll(\PDO::FETCH_ASSOC));
-		usort($domainsList, function ($a, $b) {
-			return strnatcmp(decode_idna($a['name']), decode_idna($b['name']));
-		});
 
 		return $domainsList;
 	}
