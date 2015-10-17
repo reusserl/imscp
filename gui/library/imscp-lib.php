@@ -267,8 +267,8 @@ if(is_readable(CONFIG_CACHE_FILE_PATH)) {
 		@file_put_contents(CONFIG_CACHE_FILE_PATH, serialize($config), LOCK_EX);
 	}
 }
-// Include composer autoloader for composer packages
-require_once $config['CACHE_DATA_DIR'] . '/packages/vendor/autoload.php';
+// Include composer autoloader for composer packages (register it in registry for later use)
+Registry::set('ComposerLoader', include_once($config['CACHE_DATA_DIR'] . '/packages/vendor/autoload.php'));
 
 // Initialize application
 Initializer::run($config);

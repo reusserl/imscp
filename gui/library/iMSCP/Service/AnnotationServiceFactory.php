@@ -39,11 +39,7 @@ class AnnotationServiceFactory implements FactoryInterface
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		$config = Registry::get('config');
-		AnnotationRegistry::registerAutoloadNamespace(
-			'JMS\Serializer\Annotation', $config['CACHE_DATA_DIR'] . '/packages/vendor/jms/serializer/src'
-		);
-
+		AnnotationRegistry::registerLoader(array(Registry::get('ComposerLoader'), 'loadClass'));
 		return true;
 	}
 }
