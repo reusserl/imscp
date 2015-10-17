@@ -18,24 +18,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\ApsStandard\Controller;
+namespace iMSCP\ApsStandard\Service;
 
-use PDO;
-use Exception;
+use iMSCP_Authentication as Auth;
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class PackageInstance
- * @package iMSCP\ApsStandard\Controller
+ * Class ApsSettingFormServiceFactory
+ * @package iMSCP\ApsStandard\Service
  */
-class ApsPackageInstanceController extends ApsPackageController
+class ApsSettingFormServiceFactory implements FactoryInterface
 {
 	/**
-	 * Handle HTTP request
+	 * Create schema form builder service
 	 *
-	 * @return void
+	 * @param ServiceLocatorInterface $serviceLocator
+	 * @return ApsSettingFormService
 	 */
-	function handleRequest()
+	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		// TODO: Implement handleRequest() method.
+		/** @var \Doctrine\ORM\EntityManager $entityManager */
+		$entityManager = $serviceLocator->get('EntityManager');
+		return new ApsSettingFormService($entityManager, Auth::getInstance());
 	}
 }
