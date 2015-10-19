@@ -59,7 +59,7 @@ class ApsSettingFormService extends AbstractApsService
 	}
 
 	/**
-	 * Build schema form for the given package identitier
+	 * Build schema form for the given package identifier
 	 *
 	 * @param int $id Package identitier
 	 * @return array
@@ -76,33 +76,30 @@ class ApsSettingFormService extends AbstractApsService
 
 		$doc = new ApsDocument($meta);
 
-		// Get domain list
-		$choices = array();
-		foreach ($this->getDomainList() as $choice) {
-			$choices[$choice['id'] . '_' . $choice['type']] = encode_idna($choice['name']);
-		}
-
-		$settingGroups = array(array('legend' => tr('Installation target'), 'settings' => array(
+		// Installation target settings
+		$options = $this->getDomainList();
+		$fieldsets = array(array('legend' => tr('Installation target'), 'fields' => array(
 			array(
 				'id' => 'base_url_host',
-				'type' => 'enum',
+				'tpl' => 'enum',
 				'label' => tr('Target domain'),
-				'value' => key($choices),
+				'value' => $options[0]['value'],
 				'tooltip' => tr('The domain under which the application must be installed.'),
-				'choices' => $choices,
+				'options' => $options,
 			),
 			array(
 				'id' => 'base_url_path',
-				'type' => 'string',
+				'tpl' => 'string',
+				'type' => 'text',
 				'label' => tr('Target folder'),
 				'tooltip' => tr('An optional subfolder in which the application must be installed.'),
 				'value' => '/',
-				'min_length' => '',
-				'max_length' => '255'
+				'min_length' => 0,
+				'max_length' => 255
 			)
 		)));
 
-		// Add database password fields if required
+		// Database settings (if required)
 		if ($doc->getXPathValue('//db:id')) {
 			$config = Registry::get('config');
 			if ($config['PASSWD_CHARS'] < 6) {
@@ -111,9 +108,10 @@ class ApsSettingFormService extends AbstractApsService
 				$config['PASSWD_CHARS'] = 30;
 			}
 
-			$settingGroups[] = array('legend' => tr('Database'), 'settings' => array(
+			$fieldsets[] = array('legend' => tr('Database'), 'settings' => array(
 				array(
 					'id' => 'db_password',
+					'tpl' => 'string',
 					'type' => 'password',
 					'label' => tr('Password'),
 					'value' => '',
@@ -123,6 +121,7 @@ class ApsSettingFormService extends AbstractApsService
 				),
 				array(
 					'id' => 'db_password_c',
+					'tpl' => 'string',
 					'type' => 'password',
 					'label' => tr('Password confirmation'),
 					'value' => '',
@@ -133,56 +132,80 @@ class ApsSettingFormService extends AbstractApsService
 			));
 		}
 
-		// Get settings from package metadata file
-		return array_merge($settingGroups, $this->getSettingsFromMetaFile($doc));
+		// application settings
+		$fieldsets = array_merge($fieldsets, $this->getFieldsetsFromMetaFile($doc));
+
+		return array(
+			'id' => $id,
+			'fieldsets' => $fieldsets
+		);
 	}
 
 	/**
-	 * Get settings from metadata file
+	 * Get form fieldsets from metadata file
 	 *
 	 * @param ApsDocument $doc
 	 * @return array
 	 */
-	protected function getSettingsFromMetaFile($doc)
+	protected function getFieldsetsFromMetaFile($doc)
 	{
 		$intLang = str_replace('_', '-', $_SESSION['user_def_lang']);
 
 		// Retrieve all setting groups from the package metadata file
-		$settingGroups = array();
+		$fieldsets = array();
 		foreach ($doc->getXPathValue('//root:settings/root:group', null, false) as $group) {
 			// Retrieve all settings in current setting group (or subgroup)
-			$settings = array();
+			$fieldset = array();
 			foreach ($doc->getXPathValue('(root:group/root:setting|root:setting)', $group, false) as $setting) {
+				$field = array();
 				$settingType = $doc->getXPathValue('@type', $setting);
 
-				$choices = array();
-				if ($settingType == 'enum') {
-					foreach ($doc->getXPathValue('root:choice', $setting, false) as $choice) {
-						$choices[strval($doc->getXPathValue('@id', $choice))] = $doc->getXPathValue('root:name', $choice);
-					}
+				switch ($settingType) {
+					case 'enum':
+						$field['tpl'] = 'select';
+						$options = array();
+						foreach ($doc->getXPathValue('root:choice', $setting, false) as $choice) {
+							$options[] = array(
+								'name' => $doc->getXPathValue('root:name', $choice),
+								'value' => strval($doc->getXPathValue('@id', $choice))
+							);
+						}
+						$field['options'] = $options;
+						$field['value'] = $doc->getXPathValue('@default-value', $setting) ?: $options[0]['value'];
+						break;
+					case 'boolean':
+						$field['tpl'] = 'boolean';
+						$field['value'] = $doc->getXPathValue('@default-value', $setting);
+						break;
+					default:
+						$field['tpl'] = 'string';
+
+						if (in_array($settingType, array('string', 'integer', 'float', 'domain-name'))) {
+							$field['type'] = 'text';
+						} else { // email, password
+							$field['type'] = $settingType;
+						}
+
+						$field['value'] = $doc->getXPathValue('@default-value', $setting);
 				}
 
-				$settings[] = array(
-					'id' => $doc->getXPathValue('@id', $setting),
-					'type' => $doc->getXPathValue('@type', $setting),
-					'label' => $doc->getXPathValue("root:name[@xml:lang='$intLang']/text()", $setting) ?:
-						$doc->getXPathValue("root:name/text()", $setting),
-					'value' => strval($doc->getXPathValue('@default-value', $setting)),
-					'regexp' => $doc->getXPathValue('@regex', $setting),
-					'min_length' => $doc->getXPathValue('@min-length', $setting),
-					'max_length' => $doc->getXPathValue('@max-length', $setting),
-					'choices' => $choices ?: ''
-				);
+				$field['id'] = $doc->getXPathValue('@id', $setting);
+				$field['label'] = $doc->getXPathValue("root:name[@xml:lang='$intLang']/text()", $setting) ?:
+					$doc->getXPathValue("root:name/text()", $setting);
+				$field['regexp'] = $doc->getXPathValue('@regex', $setting);
+				$field['min_length'] = $doc->getXPathValue('@min-length', $setting) ?: 0;
+				$field['max_length'] = $doc->getXPathValue('@max-length', $setting);
+				$fieldset[] = $field;
 			}
 
-			$settingGroups[] = array(
+			$fieldsets[] = array(
 				'legend' => $doc->getXPathValue("root:name[@xml:lang='$intLang']/text()", $group) ?:
 					$doc->getXPathValue("root:name/text()", $group) ?: tr('Other settings'),
-				'settings' => $settings
+				'fields' => $fieldset
 			);
 		}
 
-		return $settingGroups;
+		return $fieldsets;
 	}
 
 	/**
@@ -197,16 +220,14 @@ class ApsSettingFormService extends AbstractApsService
 		$mainDmnProps = get_domain_default_props($this->getAuthService()->getIdentity()->admin_id);
 		$domainsList = array(array(
 			'name' => $mainDmnProps['domain_name'],
-			'id' => $mainDmnProps['domain_id'],
-			'type' => 'dmn'
+			'value' => $mainDmnProps['domain_id'] . '_' . 'dmn'
 		));
 
 		$stmt = $this->entityManager->getConnection()->prepare(
 			"
 				SELECT
 					CONCAT(`t1`.`subdomain_name`, '.', `t2`.`domain_name`) AS `name`,
-					`t1`.`subdomain_id` AS `id`,
-					'sub' AS `type`
+					CONCAT(`t1`.`subdomain_id`, '_sub') AS `value`
 				FROM
 					`subdomain` AS `t1`
 				INNER JOIN
@@ -217,9 +238,8 @@ class ApsSettingFormService extends AbstractApsService
 					`t1`.`subdomain_status` = :status_ok
 				UNION
 				SELECT
-					`alias_name` AS `name`,
-					`alias_id` AS `id`,
-					'als' AS `type`
+					`alias_name`,
+					CONCAT(`alias_id`, '_als')
 				FROM
 					`domain_aliasses`
 				WHERE
@@ -228,9 +248,8 @@ class ApsSettingFormService extends AbstractApsService
 					`alias_status` = :status_ok
 				UNION
 				SELECT
-					CONCAT(`t1`.`subdomain_alias_name`, '.', `t2`.`alias_name`) AS `name`,
-					`t1`.`subdomain_alias_id` AS `id`,
-					'alssub' AS `type`
+					CONCAT(`t1`.`subdomain_alias_name`, '.', `t2`.`alias_name`),
+					CONCAT(`t1`.`subdomain_alias_id`, '_alssub')
 				FROM
 					`subdomain_alias` AS `t1`
 				INNER JOIN
