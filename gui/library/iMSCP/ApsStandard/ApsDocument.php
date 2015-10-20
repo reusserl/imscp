@@ -42,11 +42,6 @@ class ApsDocument
 	protected $xpath;
 
 	/**
-	 * @var array namespaces
-	 */
-	protected $namespacePrefixes = array();
-
-	/**
 	 * @var array List of default registered namespaces
 	 */
 	protected $defaultNamespaces = array(
@@ -115,7 +110,7 @@ class ApsDocument
 		@$ret = ($type == 'xml') ? $doc->load($path, LIBXML_PARSEHUGE) : $doc->loadHTMLFile($path);
 
 		if (!$ret) {
-			throw new \RuntimeException(tr('Could not load HTML/XML document: %s', $php_errormsg));
+			throw new \RuntimeException(sprintf('Could not load HTML/XML document: %s', $php_errormsg));
 		}
 
 		// Create associated DOM XPath object
@@ -124,7 +119,7 @@ class ApsDocument
 		// Register default namespaces
 		foreach ($this->defaultNamespaces as $prefix => $uri) {
 			if (!$xpath->registerNamespace($prefix, $uri)) {
-				throw new \RuntimeException(tr(
+				throw new \RuntimeException(sprintf(
 					"Could not register the '%s' XPath namespace with '%s' as prefix", $uri, $prefix
 				));
 			}
