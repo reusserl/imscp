@@ -20,10 +20,8 @@
 
 namespace iMSCP\ApsStandard\Controller;
 
-use iMSCP\ApsStandard\Service\ApsInstanceService AS instanceService;
-use iMSCP\ApsStandard\Service\ApsSettingFormService AS SettingFormService;
-
-;
+use iMSCP\ApsStandard\Service\ApsInstanceService as InstanceService;
+use iMSCP\ApsStandard\Service\ApsSettingFormService as SettingFormService;
 use iMSCP_Authentication as Auth;
 use Symfony\Component\HttpFoundation\JsonResponse as Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -37,7 +35,7 @@ class ApsInstanceController extends ApsAbstractController
 	const INSTANCE_ENTITY_CLASS = 'iMSCP\ApsStandard\Entity\ApsInstance';
 
 	/**
-	 * @var instanceService
+	 * @var InstanceService
 	 */
 	protected $instanceService;
 
@@ -49,7 +47,7 @@ class ApsInstanceController extends ApsAbstractController
 	 * @param Auth $auth
 	 * @param instanceService $instanceService
 	 */
-	public function __construct(Request $request, Response $response, Auth $auth, instanceService $instanceService)
+	public function __construct(Request $request, Response $response, Auth $auth, InstanceService $instanceService)
 	{
 		parent::__construct($request, $response, $auth);
 		$this->instanceService = $instanceService;
@@ -100,8 +98,8 @@ class ApsInstanceController extends ApsAbstractController
 	 */
 	protected function indexAtion()
 	{
-		$instances = $this->getSerializer()->serialize($this->getInstanceService()->getInstances(), 'json');
-		$this->getResponse()->setContent($instances);
+		$instances = $this->getInstanceService()->getInstances();
+		$this->getResponse()->setContent($this->getSerializer()->serialize($instances, 'json'));
 	}
 
 	/**

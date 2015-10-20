@@ -21,8 +21,8 @@
 namespace iMSCP\ApsStandard\Controller;
 
 use iMSCP\ApsStandard\Service\ApsPackageService;
-use iMSCP_Authentication as Authentication;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use iMSCP_Authentication as Auth;
+use Symfony\Component\HttpFoundation\JsonResponse as Response;
 use Symfony\Component\HttpFoundation\Request;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
@@ -43,10 +43,10 @@ class ApsPackageControllerFactory implements FactoryInterface
 	{
 		/** @var Request $request */
 		$request = $serviceLocator->get('Request');
-		$response = new JsonResponse();
+		$response = new Response();
 		$response->headers->set('Content-Type', 'application/json');
 		/** @var ApsPackageService $apsPackageService */
 		$apsPackageService = $serviceLocator->get('ApsPackageService');
-		return new ApsPackageController($request, $response, Authentication::getInstance(), $apsPackageService);
+		return new ApsPackageController($request, $response, Auth::getInstance(), $apsPackageService);
 	}
 }

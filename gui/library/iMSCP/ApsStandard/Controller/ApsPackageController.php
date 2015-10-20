@@ -20,7 +20,7 @@
 
 namespace iMSCP\ApsStandard\Controller;
 
-use iMSCP\ApsStandard\Service\ApsPackageService AS PackageService;
+use iMSCP\ApsStandard\Service\ApsPackageService as PackageService;
 use iMSCP_Authentication as Auth;
 use Symfony\Component\HttpFoundation\JsonResponse as Response;
 use Symfony\Component\HttpFoundation\Request;
