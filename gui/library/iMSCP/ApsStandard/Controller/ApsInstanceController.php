@@ -123,9 +123,9 @@ class ApsInstanceController extends ApsAbstractController
 	 */
 	protected function createAction()
 	{
-		$this->getInstanceService()->createInstance(array());
+		$this->getInstanceService()->createInstance($this->getRequest()->getContent());
 		set_page_message(tr('Instance has been scheduled for creation.'), 'success');
-		$this->getResponse()->setData(array('redirect' => 'instances.php'))->setStatusCode(201);
+		$this->getResponse()->setStatusCode(201);
 	}
 
 	/**
