@@ -150,7 +150,12 @@ abstract class ApsAbstractController implements ServiceLocatorAwareInterface
 		if (!is_int($code) || $code < 100 || $code >= 600) {
 			$code = 500;
 
-			if ($this->getAuth()->getIdentity()->admin_type !== 'admin') {
+			$identity = $this->getAuth()->getIdentity();
+
+			if (
+				$identity->admin_type !== 'admin' &&
+				(!isset($identity->logged_from_admin_type) || $identity->logged_from_admin_type !== 'admin')
+			) {
 				$e = new ProductionException('', 500, $e);
 			}
 		}

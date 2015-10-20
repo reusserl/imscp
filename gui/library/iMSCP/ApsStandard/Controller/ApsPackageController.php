@@ -20,8 +20,7 @@
 
 namespace iMSCP\ApsStandard\Controller;
 
-use iMSCP\ApsStandard\Entity\ApsPackage;
-use iMSCP\ApsStandard\Service\ApsPackageService;
+use iMSCP\ApsStandard\Service\ApsPackageService AS PackageService;
 use iMSCP_Authentication as Auth;
 use Symfony\Component\HttpFoundation\JsonResponse as Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -32,12 +31,10 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class ApsPackageController extends ApsAbstractController
 {
-	const PACKAGE_ENTITY_CLASS = 'iMSCP\ApsStandard\Entity\ApsPackage';
-
 	/**
-	 * @var ApsPackageService
+	 * @var PackageService
 	 */
-	protected $apsPackageService;
+	protected $packageService;
 
 	/**
 	 * Constructor
@@ -45,22 +42,12 @@ class ApsPackageController extends ApsAbstractController
 	 * @param Request $request
 	 * @param Response $response
 	 * @param Auth $auth
-	 * @param ApsPackageService $apsPackageService
+	 * @param PackageService $packageService
 	 */
-	public function __construct(Request $request, Response $response, Auth $auth, ApsPackageService $apsPackageService)
+	public function __construct(Request $request, Response $response, Auth $auth, PackageService $packageService)
 	{
 		parent::__construct($request, $response, $auth);
-		$this->apsPackageService = $apsPackageService;
-	}
-
-	/**
-	 * Get package service
-	 *
-	 * @return ApsPackageService
-	 */
-	public function getApsPackageService()
-	{
-		return $this->apsPackageService;
+		$this->packageService = $packageService;
 	}
 
 	/**
@@ -72,16 +59,16 @@ class ApsPackageController extends ApsAbstractController
 			switch ($this->getRequest()->getMethod()) {
 				case Request::METHOD_GET:
 					if ($this->getRequest()->query->has('id')) {
-						$this->showDetails($this->getRequest()->query->getInt('id'));
+						$this->showAction();
 					} else {
-						$this->index();
+						$this->indexAction();
 					}
 					break;
 				case Request::METHOD_PUT:
-					$this->changeStatus();
+					$this->updateAction();
 					break;
 				case Request::METHOD_POST:
-					$this->updateIndex();
+					$this->updateIndexAction();
 					break;
 				default:
 					$this->getResponse()->setStatusCode(405);
@@ -95,47 +82,42 @@ class ApsPackageController extends ApsAbstractController
 	}
 
 	/**
-	 * Lists all packages
+	 * List all packages
 	 *
 	 * @return void
 	 */
-	protected function index()
+	protected function indexAction()
 	{
-		$this->getResponse()->setContent(
-			$this->getSerializer()->serialize($this->getApsPackageService()->getPackages(), 'json')
-		);
+		$packages = $this->getSerializer()->serialize($this->getPackageService()->getPackages(), 'json');
+		$this->getResponse()->setContent($packages);
 	}
 
 	/**
 	 * Show package details
 	 *
-	 * @param int $id Package identifier
 	 * @return void
 	 */
-	protected function showDetails($id)
+	protected function showAction()
 	{
-		$this->getResponse()->setContent(
-			$this->getSerializer()->serialize($this->getApsPackageService()->getPackageDetails($id), 'json')
-		);
+		$packageDetails = $this->getPackageService()->getPackageDetails($this->getRequest()->query->getInt('id'));
+		$this->getResponse()->setContent($this->getSerializer()->serialize($packageDetails, 'json'));
 	}
 
 	/**
-	 * Change package status
+	 * Update package
 	 *
 	 * @throws \Exception
 	 * @return void
 	 */
-	protected function changeStatus()
+	protected function updateAction()
 	{
 		if ($this->getAuth()->getIdentity()->admin_type !== 'admin') {
 			throw new \Exception(tr('Action not allowed.'), 403);
 		}
 
-		/** @var ApsPackage $package */
-		$package = $this->getSerializer()->deserialize(
-			$this->getRequest()->getContent(), self::PACKAGE_ENTITY_CLASS, 'json'
-		);
-		$this->getApsPackageService()->updatePackageStatus($package->getId(), $package->getStatus());
+		$packageService = $this->getPackageService();
+		$package = $packageService->getPackageFromPayload($this->getRequest()->getContent());
+		$packageService->updatePackageStatus($package->getId(), $package->getStatus());
 		$this->getResponse()->setStatusCode(204);
 	}
 
@@ -145,13 +127,23 @@ class ApsPackageController extends ApsAbstractController
 	 * @throws \Exception
 	 * @return void
 	 */
-	protected function updateIndex()
+	protected function updateIndexAction()
 	{
 		if ($this->getAuth()->getIdentity()->admin_type !== 'admin') {
 			throw new \Exception(tr('Action not allowed.'), 403);
 		}
 
-		$this->getApsPackageService()->updatePackageIndex();
+		$this->getPackageService()->updatePackageIndex();
 		$this->getResponse()->setData(array('message' => tr('Package index has been updated.')));
+	}
+
+	/**
+	 * Get package service
+	 *
+	 * @return PackageService
+	 */
+	protected function getPackageService()
+	{
+		return $this->packageService;
 	}
 }
