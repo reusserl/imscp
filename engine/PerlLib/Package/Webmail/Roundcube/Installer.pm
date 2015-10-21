@@ -68,7 +68,7 @@ sub registerSetupListeners
 {
 	my ($self, $eventManager) = @_;
 
-	$eventManager->register('beforeInstallComposerPackages', sub {
+	$eventManager->register('beforeSetupComposerPackages', sub {
 		my $composer = shift; $composer->registerPackage('imscp/roundcube', $VERSION);
 	});
 }

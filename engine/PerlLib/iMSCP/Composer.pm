@@ -51,7 +51,7 @@ use parent 'Common::SingletonClass';
  Param string $package Package name
  Param string $packageVersion OPTIONAL Package version
  Param bool $devonly OPTIONAL When set to true, indicate that the package is required in dev environment only
- Return undef
+ Return 0
 
 =cut
 
@@ -64,6 +64,26 @@ sub registerPackage
 		push @{$self->{'required_packages'}}, "        \"$package\": \"$packageVersion\"";
 	} else {
 		push @{$self->{'required_dev_packages'}}, "        \"$package\": \"$packageVersion\"";
+	}
+
+	0;
+}
+
+=item registerPackages(\%packages)
+
+ Register the given composer packages for installation
+
+ Param hash \%packages
+ Return 0
+
+=cut
+
+sub registerPackages
+{
+	my ($self, $packages) = @_;
+
+	while(my ($package, $version) = each(%{$packages})) {
+		$self->registerPackage($package, $version);
 	}
 
 	0;
