@@ -33,16 +33,13 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class ORMServiceFactory implements FactoryInterface
 {
 	/**
-	 * Create service
-	 *
-	 * @param ServiceLocatorInterface $serviceLocator
-	 * @return mixed
+	 * {@inheritdoc}
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
 		/** @var \iMSCP_Database $databaseService */
 		$databaseService = $serviceLocator->get('Database');
-		$serviceLocator->get('Annotation'); // Fixme: We should get annotation reader
+		$serviceLocator->get('Annotation');
 		$devmode = (bool)Registry::get('config')->DEVMODE;
 		$config = Setup::createAnnotationMetadataConfiguration( // TODO make the path list configurable
 			array(

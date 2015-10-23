@@ -32,10 +32,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class AnnotationServiceFactory implements FactoryInterface
 {
 	/**
-	 * Create service
-	 *
-	 * @param ServiceLocatorInterface $serviceLocator
-	 * @return true
+	 * {@inheritdoc}
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{

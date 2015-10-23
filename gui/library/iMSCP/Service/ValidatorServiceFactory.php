@@ -31,13 +31,11 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class ValidatorServiceFactory implements FactoryInterface
 {
 	/**
-	 * Create validator service
-	 *
-	 * @param ServiceLocatorInterface $serviceLocator
-	 * @return mixed
+	 * {@inheritdoc}
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		return Validation::createValidatorBuilder()->addMethodMapping('loadValidationMetadata')->getValidator();
+		$serviceLocator->get('Annotation');
+		return Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
 	}
 }

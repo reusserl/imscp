@@ -21,7 +21,6 @@
 namespace iMSCP\Service;
 
 use iMSCP_Registry as Registry;
-use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
@@ -33,14 +32,11 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class SerializerServiceFactory implements FactoryInterface
 {
 	/**
-	 * Create service
-	 *
-	 * @param ServiceLocatorInterface $serviceLocator
-	 * @return Serializer
+	 * {@inheritdoc}
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		$serviceLocator->get('Annotation'); // Fixme: We should get annotation reader
+		$serviceLocator->get('Annotation');
 		$config = Registry::get('config');
 		return SerializerBuilder::create()
 			->setCacheDir(CACHE_PATH . '/serializer')

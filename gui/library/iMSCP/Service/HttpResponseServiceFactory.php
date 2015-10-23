@@ -18,21 +18,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Validate;
+namespace iMSCP\Service;
 
-use Symfony\Component\Validator\Mapping\ClassMetadata;
+use Symfony\Component\HttpFoundation\JsonResponse as Response;
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Interface ValidationInterface
- * @package iMSCP\Validate
+ * Class HttpResponseServiceFactory
+ * @package iMSCP\Service
  */
-interface ValidationInterface
+class HttpResponseServiceFactory implements FactoryInterface
 {
 	/**
-	 * Load validation metadata
-	 *
-	 * @param ClassMetadata $metadata
-	 * @return void
+	 * {@inheritdoc}
 	 */
-	public static function loadValidationMetadata(ClassMetadata $metadata);
+	public function createService(ServiceLocatorInterface $serviceLocator)
+	{
+		$response = new Response();
+		$response->headers->set('Content-Type', 'application/json');
+		return $response;
+	}
 }

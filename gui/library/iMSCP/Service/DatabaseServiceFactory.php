@@ -34,10 +34,7 @@ use iMSCP\Crypt;
 class DatabaseServiceFactory implements FactoryInterface
 {
 	/**
-	 * Create database service
-	 *
-	 * @param ServiceLocatorInterface $serviceLocator
-	 * @return Database
+	 * {@inheritdoc}
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{

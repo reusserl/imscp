@@ -31,10 +31,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class EventManagerFactory implements FactoryInterface
 {
 	/**
-	 * Create event manager service
-	 *
-	 * @param ServiceLocatorInterface $serviceLocator
-	 * @return mixed
+	 * {@inheritdoc}
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{

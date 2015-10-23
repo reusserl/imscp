@@ -31,10 +31,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class HttpRequestServiceFactory implements FactoryInterface
 {
 	/**
-	 * Create HTTP request service
-	 *
-	 * @param ServiceLocatorInterface $serviceLocator
-	 * @return Request
+	 * {@inheritdoc}
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
