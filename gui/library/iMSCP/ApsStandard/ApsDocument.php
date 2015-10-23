@@ -42,13 +42,21 @@ class ApsDocument
 	protected $xpath;
 
 	/**
-	 * @var array List of default registered namespaces
+	 * @var array List of APS namespaces
 	 */
-	protected $defaultNamespaces = array(
-		'xml' => 'http://www.w3.org/XML/1998/namespace',
-		'root' => 'http://apstandard.com/ns/1',
+	protected $apsNamespaces = array(
+		'apache' => 'apache="http://apstandard.com/ns/1/apache',
+		'aspnet' => 'http://apstandard.com/ns/1/aspnet',
+		'cgi' => 'http://apstandard.com/ns/1/cgi',
+		'db' => 'http://apstandard.com/ns/1/db',
+		'dns' => 'http://apstandard.com/ns/1/dns',
+		'env' => 'http://apstandard.com/ns/1/environment',
+		'h' => 'http://apstandard.com/ns/1/cgi/handlers',
+		'l' => 'http://apstandard.com/ns/1/licensing',
+		'mail' => 'http://apstandard.com/ns/1/mail',
 		'php' => 'http://apstandard.com/ns/1/php',
-		'db' => 'http://apstandard.com/ns/1/db'
+		'pvc', 'http://apstandard.com/ns/1/pvc',
+		'svc' => 'http://apstandard.com/ns/1/service'
 	);
 
 	/**
@@ -87,13 +95,13 @@ class ApsDocument
 	 *
 	 * @param string $XPathExpression The XPath expression to execute
 	 * @param DOMNode $contextNode OPTIONAL Context node
-	 * @param bool $asString OPTIONAL Tells whether or not only the first node value must be returned (default: true)
+	 * @param bool $firstNodeOnly OPTIONAL Tells whether or not only the first node value must be returned (default: true)
 	 * @return DOMNodeList|string
 	 */
-	public function getXPathValue($XPathExpression, DOMNode $contextNode = null, $asString = true)
+	public function getXPathValue($XPathExpression, DOMNode $contextNode = null, $firstNodeOnly = true)
 	{
 		$ret = $this->xpath->query($XPathExpression, $contextNode);
-		return ($asString) ? (($ret->length) ? $ret->item(0)->nodeValue : '') : $ret;
+		return $firstNodeOnly ? ($ret->length ? $ret->item(0)->nodeValue : '') : $ret;
 	}
 
 	/**
@@ -116,11 +124,27 @@ class ApsDocument
 		// Create associated DOM XPath object
 		$xpath = new DOMXPath($doc);
 
-		// Register default namespaces
-		foreach ($this->defaultNamespaces as $prefix => $uri) {
-			if (!$xpath->registerNamespace($prefix, $uri)) {
+		// Register root namespaces
+		foreach ($xpath->query('namespace::*') as $node) {
+			$namespaceURI = $node->nodeValue;
+			$prefix = $doc->lookupPrefix($namespaceURI);
+
+			if ($prefix == '') {
+				$prefix = 'root';
+			}
+
+			if (!$xpath->registerNamespace($prefix, $namespaceURI)) {
 				throw new \RuntimeException(sprintf(
-					"Could not register the '%s' XPath namespace with '%s' as prefix", $uri, $prefix
+					"Could not register the '%s' namespace with '%s' as prefix", $namespaceURI, $prefix
+				));
+			}
+		}
+
+		// Register APS namespaces
+		foreach ($this->apsNamespaces as $prefix => $namespaceURI) {
+			if (!$xpath->registerNamespace($prefix, $namespaceURI)) {
+				throw new \RuntimeException(sprintf(
+					"Could not register the '%s' namespace with '%s' as prefix", $namespaceURI, $prefix
 				));
 			}
 		}
