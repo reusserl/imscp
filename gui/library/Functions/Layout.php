@@ -593,8 +593,7 @@ function layout_LoadNavigation()
 	if (isset($_SESSION['user_type'])) {
 		/** @var $cfg iMSCP_Config_Handler_File */
 		$cfg = iMSCP_Registry::get('config');
-
-		$locale = iMSCP_Registry::get('translator') ->getLocale();
+		$locale = iMSCP_Registry::get('ServiceManager')->get('Translator')->getLocale();
 
 		switch ($_SESSION['user_type']) {
 			case 'admin':

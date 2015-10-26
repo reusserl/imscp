@@ -27,12 +27,9 @@ use iMSCP_Registry as Registry;
 use iMSCP_Events as Events;
 use Zend_Session as SessionHandler;
 use iMSCP_Exception_Database as DatabaseException;
-use Zend_Locale as Locale;
-use Zend_Cache as CacheHandler;
 use iMSCP_Plugin_Manager as PluginManager;
 use iMSCP_Events_Event as Event;
 use iMSCP_Update_Database as DatabaseUpdater;
-use Zend_Translate as Translator;
 use iMSCP_Filter_Compress_Gzip as GzipFilterCompressor;
 use iMSCP_Config_Handler_Db as ConfigDbHandler;
 use iMSCP\Service\ServiceManagerConfig;
@@ -247,6 +244,7 @@ class Initializer
 		$serviceManagerConfig = include_once(GUI_ROOT_DIR . '/config/service_manager.php');
 		$serviceManager = new ServiceManager(new ServiceManagerConfig($serviceManagerConfig));
 		Registry::set('ServiceManager', $serviceManager);
+		Registry::set('ServiceLocator', $serviceManager);
 	}
 
 	/**
@@ -434,71 +432,8 @@ class Initializer
 	 */
 	protected function initializeLocalization()
 	{
-		$trFilePathPattern = $this->config['GUI_ROOT_DIR'] . '/i18n/locales/%s/LC_MESSAGES/%s.mo';
-
-		if (PHP_SAPI != 'cli') {
-			$lang = Registry::set(
-				'user_def_lang', isset($_SESSION['user_def_lang'])
-				? $_SESSION['user_def_lang']
-				: ((isset($this->config['USER_INITIAL_LANG'])) ? $this->config['USER_INITIAL_LANG'] : 'auto')
-			);
-
-			if (Locale::isLocale($lang)) {
-				$locale = new Locale($lang);
-
-				if ($lang == 'auto') {
-					$locale->setLocale('en_GB');
-					$browser = $locale->getBrowser();
-
-					arsort($browser);
-					foreach ($browser as $language => $quality) {
-						if (file_exists(sprintf($trFilePathPattern, $language, $language))) {
-							$locale->setLocale($language);
-							break;
-						}
-					}
-				} elseif (!file_exists(sprintf($trFilePathPattern, $locale, $locale))) {
-					$locale->setLocale('en_GB');
-				}
-			} else {
-				$locale = new Locale('en_GB');
-			}
-		} else {
-			$locale = new Locale('en_GB');
-		}
-
-		// Setup cache object for translations
-		$cache = CacheHandler::factory(
-			'Core',
-			'File',
-			array(
-				'caching' => true,
-				'lifetime' => null, // Translation cache is never flushed automatically
-				'automatic_serialization' => true,
-				'automatic_cleaning_factor' => 0,
-				'ignore_user_abort' => true,
-				'cache_id_prefix' => 'iMSCP_Translate'
-			),
-			array(
-				'hashed_directory_level' => 0,
-				'cache_dir' => CACHE_PATH . '/translations'
-			)
-		);
-
-		if ($this->config['DEBUG']) {
-			$cache->clean(CacheHandler::CLEANING_MODE_ALL);
-		} else {
-			Translator::setCache($cache);
-		}
-
-		// Setup primary translator for iMSCP core translations
-		Registry::set('translator', new Translator(array(
-			'adapter' => 'gettext',
-			'content' => sprintf($trFilePathPattern, $locale, $locale),
-			'locale' => $locale,
-			'disableNotices' => true,
-			'tag' => 'iMSCP'
-		)));
+		// For backward compatibility only (components accessing Translator service using registry)
+		Registry::set('translator', Registry::get('ServiceManager')->get('Translator'));
 	}
 
 	/**

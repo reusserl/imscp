@@ -418,8 +418,8 @@ return array(
 				'uri' => '/client/aps_packages.php',
 				'title_class' => 'packages'
 			),
-			'package_instances' => array(
-				'label' => tr('Package instances'),
+			'application_instances' => array(
+				'label' => tr('Application instances'),
 				'uri' => '/client/aps_instances.php',
 				'title_class' => 'packages'
 			)

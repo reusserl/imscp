@@ -104,7 +104,7 @@ class ServiceManagerConfig extends Config
 		$this->initializers = array(
 			'EventManagerAwareInitializer' => function ($instance, ServiceLocatorInterface $serviceLocator) {
 				if ($instance instanceof EventManagerAwareInterface) {
-					/** @var  EventManagerInterface $eventManager */
+					/** @var EventManagerInterface $eventManager */
 					$eventManager = $serviceLocator->get('EventManager');
 					$instance->setEventManager($eventManager);
 				}

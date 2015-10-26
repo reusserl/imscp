@@ -38,7 +38,7 @@ function tr($messageId, $substitution = null)
 
 	if(null == $translator) {
 		/** @var Zend_Translate_Adapter $translator */
-		$translator = iMSCP_Registry::get('translator');
+		$translator = iMSCP_Registry::get('ServiceManager')->get('Translator');
 	}
 
 	$message = $translator->translate($messageId);
@@ -68,7 +68,7 @@ function ntr($singular, $plural, $number)
 
 	if(null == $translator) {
 		/** @var Zend_Translate_Adapter $translator */
-		$translator = iMSCP_Registry::get('translator');
+		$translator = iMSCP_Registry::get('ServiceManager')->get('Translator');
 	}
 
 	$message = $translator->plural($singular, $plural, $number);
@@ -115,7 +115,7 @@ function i18n_buildLanguageIndex()
 
 	// Clear translation cache
 	/** @var Zend_Translate $translator */
-	$translator = iMSCP_Registry::get('translator');
+	$translator = iMSCP_Registry::get('ServiceManager')->get('Translator');
 	if($translator->hasCache()) {
 		$translator->clearCache('iMSCP');
 	}
@@ -332,7 +332,7 @@ function i18n_changeDefaultLanguage()
 function l10n_addTranslations($dirpath, $type = 'Array', $tag = 'iMSCP', $scan = Zend_Translate::LOCALE_FILENAME)
 {
 	/** @var Zend_Translate_Adapter $primaryTranslator */
-	$primaryTranslator = iMSCP_Registry::get('translator')->getAdapter();
+	$primaryTranslator = iMSCP_Registry::get('ServiceManager')->get('Translator')->getAdapter();
 
 	$locale = $primaryTranslator->getLocale();
 

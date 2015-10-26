@@ -45,6 +45,11 @@ class iMSCP_Authentication
 	protected $eventManager = null;
 
 	/**
+	 * @var StdClass identity
+	 */
+	protected $identity;
+
+	/**
 	 * Singleton pattern implementation -  makes "new" unavailable
 	 */
 	protected function __construct()
@@ -160,18 +165,24 @@ class iMSCP_Authentication
 	 */
 	public function getIdentity()
 	{
-		$identity = null;
+		if($this->identity === null) {
+			if ($this->hasIdentity()) {
+				$this->identity = new stdClass();
+				$this->identity->admin_id = $_SESSION['user_id'];
+				$this->identity->admin_name = $_SESSION['user_logged'];
+				$this->identity->admin_type = $_SESSION['user_type'];
+				$this->identity->email = $_SESSION['user_email'];
+				$this->identity->created_by = $_SESSION['user_created_by'];
 
-		if($this->hasIdentity()) {
-			$identity = new stdClass();
-			$identity->admin_id = $_SESSION['user_id'];
-			$identity->admin_name = $_SESSION['user_logged'];
-			$identity->admin_type = $_SESSION['user_type'];
-			$identity->email = $_SESSION['user_email'];
-			$identity->created_by = $_SESSION['user_created_by'];
+				if (isset($_SESSION['logged_from_type'])) {
+					$this->identity->logged_from_admin_id = $_SESSION['logged_from_id'];
+					$this->identity->logged_from_admin_name = $_SESSION['logged_from'];
+					$this->identity->logged_from_admin_type = $_SESSION['logged_from_type'];
+				}
+			}
 		}
 
-		return $identity;
+		return $this->identity;
 	}
 
 	/**
@@ -188,7 +199,6 @@ class iMSCP_Authentication
 		);
 
 		session_regenerate_id();
-
 		$lastAccess = time();
 
 		exec_query(
@@ -230,6 +240,7 @@ class iMSCP_Authentication
 			}
 		}
 
+		$this->identity = null;
 		$this->getEventManager()->dispatch(iMSCP_Events::onAfterUnsetIdentity, array('context' => $this));
 	}
 }
