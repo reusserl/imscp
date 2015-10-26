@@ -37,8 +37,8 @@ class ORMServiceFactory implements FactoryInterface
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		/** @var \iMSCP_Database $databaseService */
-		$databaseService = $serviceLocator->get('Database');
+		/** @var \iMSCP_Database $db */
+		$db = $serviceLocator->get('Database');
 		$serviceLocator->get('Annotation');
 		$devmode = (bool)Registry::get('config')->DEVMODE;
 		$config = Setup::createAnnotationMetadataConfiguration( // TODO make the path list configurable
@@ -47,16 +47,18 @@ class ORMServiceFactory implements FactoryInterface
 				LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'
 			),
 			$devmode,
-			CACHE_PATH . '/orm_proxy', // Proxy classes directory
+			CACHE_PATH . '/orm/proxies', // Proxy classes directory
 			null, // Will use best available caching driver (none if devmode)
 			false // Do not use simple annotation driver which is not compatible with auto-generated entities
 		);
+
+		$config->setProxyNamespace('iMSCP\\Proxies');
 
 		//$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('Doctrine\DBAL\Driver\PDOStatement', array()));
 		$entityManager = EntityManager::create(
 			array(
 				'driver' => 'pdo_mysql',
-				'pdo' => $databaseService::getRawInstance() // Reuse PDO instance that has been created by i-MSCP
+				'pdo' => $db::getRawInstance() // Reuse PDO instance that has been created by i-MSCP
 			),
 			$config
 		);
@@ -68,9 +70,10 @@ class ORMServiceFactory implements FactoryInterface
 		//$platform->registerDoctrineTypeMapping('enum', 'string');
 
 		// Right now, we use Doctrine for APS Standard feature only. Thus, we ignore most of tables
-		$entityManager->getConnection()->getConfiguration()->setFilterSchemaAssetsExpression(
-			'/^admin|(?:aps_(?:package|instance))$/'
-		);
+		$entityManager->getConfiguration()->setFilterSchemaAssetsExpression('/^(?:admin|aps_.*)$/');
+
+		// Add namespace for core entities
+		$entityManager->getConfiguration()->addEntityNamespace('Core', '\\iMSCP\\Entity\\');
 
 		return $entityManager;
 	}
