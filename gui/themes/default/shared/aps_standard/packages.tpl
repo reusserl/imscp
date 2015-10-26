@@ -1,25 +1,27 @@
 
 <link rel="stylesheet" href="{THEME_ASSETS_PATH}/css/aps_standard.css?v={THEME_ASSETS_VERSION}">
 <script src="{THEME_ASSETS_PATH}/js/vendor/angular.min.js"></script>
+<script src="{THEME_ASSETS_PATH}/js/vendor/angular.sanitize.min.js"></script>
+<script src="{THEME_ASSETS_PATH}/js/vendor/angular-filter.min.js"></script>
 <script src="{THEME_ASSETS_PATH}/js/vendor/angular-resource.min.js"></script>
 <script src="{THEME_ASSETS_PATH}/js/vendor/ng-table.min.js"></script>
 <script src="{THEME_ASSETS_PATH}/js/aps_standard.js?v={THEME_ASSETS_VERSION}"></script>
 
-<div data-ng-app="apsStandard">
+<div data-ng-app="aps">
 	<div class="PackageList" ajax-loader ng-cloak>
-		<div ng-controller="PackageController as Ctrl">
-			<table ng-table="Ctrl.tableParams" data-template-header="custom/header" data-template-pagination="custom/pager" ng-show="total_packages">
+		<div ng-controller="PackageController as PkgCtrl">
+			<table ng-table="PkgCtrl.tableParams" data-template-header="custom/header" data-template-pagination="custom/pager" ng-show="total_packages">
 				<tbody>
 				<tr ng-repeat-start="package in $data">
 					<td class="Logo" data-filter="{nbpages: 'custom/filters/nbpages'}">
-						<a data-ng-click="showDetails()"><img data-ng-src="{{package.icon_url}}" alt=""/></a>
+						<a data-ng-click="showAction()"><img data-ng-src="{{package.icon_url}}" alt=""/></a>
 					</td>
-					<td class="Description" data-filter="{category: 'select'}" data-filter-data="Ctrl.categories">
-						<h4><a data-ng-click="showDetails()">{{package.name + ' - ' + package.version}}</a></h4>
+					<td class="Description" data-filter="{category: 'select'}" data-filter-data="PkgCtrl.categories">
+						<h4><a data-ng-click="showAction()">{{package.name + ' - ' + package.version}}</a></h4>
 						{{package.summary}}
 					</td>
 					<td class="Details" ng-class="{ 'Locked': package.status == 'disabled' }" data-filter="{search: 'custom/filters/globalsearch'}">
-						<a data-ng-click="showDetails()"><?= tohtml(tr('Details'))?></a>
+						<a data-ng-click="showAction()"><?= tohtml(tr('Details'))?></a>
 					</td>
 				</tr>
 				<tr ng-repeat-end>
@@ -27,14 +29,16 @@
 					<td class="Info">
 						<span ng-if="package.package_cert != 'none'"><?= tohtml(tr('Certified'))?></span>
 						<?= tohtml(tr('Category'))?>: <b>{{package.category}}</b>
-						<?= tohtml(tr('Vendor'))?>: <a data-ng-href="{{package.vendor_uri}}">{{package.vendor}}</a>
+						<?= tohtml(tr('Vendor'))?>: <a target="_blank" data-ng-href="{{package.vendor_uri}}">{{package.vendor}}</a>
 					</td>
 					<td class="Details">
 						<!-- BDP: adm_btn1 -->
-						<jq-button data-ng-click="changeStatus(package.status == 'ok' ? 'disabled' : 'ok', package.status)" data-ng-value="package.status == 'ok' ? '<?= tohtml(tr('Lock'), 'htmlAttr')?>' : '<?= tohtml(tr('Unlock'), 'htmlAttr')?>'"></jq-button>
+						<jq-button data-ng-click="updateAction(package.status == 'ok' ? 'disabled' : 'ok', package.status)" data-ng-value="package.status == 'ok' ? '<?= tohtml(tr('Lock'), 'htmlAttr')?>' : '<?= tohtml(tr('Unlock'), 'htmlAttr')?>'"></jq-button>
 						<!-- EDP: adm_btn1 -->
 						<!-- BDP: client_btn1 -->
-						<jq-button data-ng-click="install()" value="<?= tohtml(tr('Install'))?>"></jq-button>
+						<div ng-controller="WriteInstanceController as WrtInstCtrl">
+						<jq-button data-ng-click="WrtInstCtrl.newAction(package)" value="<?= tohtml(tr('Install'))?>"></jq-button>
+						</div>
 						<!-- EDP: client_btn1 -->
 					</td>
 				</tr>
@@ -56,7 +60,7 @@
 				</label>
 			</script>
 			<script type="text/ng-template" id="custom/filters/globalsearch">
-				<label><input type="text" placeholder="<?= tohtml(tr('Global search'))?>" ng-model="Ctrl.search"></label>
+				<label><input type="text" placeholder="<?= tohtml(tr('Global search'))?>" ng-model="PkgCtrl.search"></label>
 			</script>
 			<script type="text/ng-template" id="custom/pager">
 				<div class="paginator" ng-if="pages.length">
@@ -65,7 +69,7 @@
 				</div>
 			</script>
 			<!-- BDP: adm_btn2 -->
-			<button data-ng-click="Ctrl.updateIndex()"><?= tohtml(tr('Update package index'))?></button>
+			<button data-ng-click="updateIndexAction()"><?= tohtml(tr('Update package index'))?></button>
 			<!-- EDP: adm_btn2 -->
 		</div>
 	</div>
