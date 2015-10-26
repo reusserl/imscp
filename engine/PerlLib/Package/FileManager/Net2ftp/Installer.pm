@@ -37,8 +37,6 @@ use iMSCP::Dir;
 use Package::FrontEnd;
 use parent 'Common::SingletonClass';
 
-our $VERSION = '0.1.1.*@dev';
-
 =head1 DESCRIPTION
 
  i-MSCP Net2ftp package installer.
@@ -61,7 +59,7 @@ sub registerSetupListeners
 	my ($self, $eventManager) = @_;
 
 	$eventManager->register('beforeSetupComposerPackages', sub {
-		my $composer = shift; $composer->registerPackage('imscp/net2ftp', $VERSION);
+		my $composer = shift; $composer->registerPackage('imscp/net2ftp', '0.1.1.*@dev');
 	});
 }
 

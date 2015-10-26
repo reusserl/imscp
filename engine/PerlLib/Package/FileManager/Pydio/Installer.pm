@@ -35,8 +35,6 @@ use iMSCP::Dir;
 use Package::FrontEnd;
 use parent 'Common::SingletonClass';
 
-our $VERSION = '0.2.0.*@dev';
-
 =head1 DESCRIPTION
 
  i-MSCP Pydio package installer.
@@ -59,7 +57,7 @@ sub registerSetupListeners
 	my ($self, $eventManager) = @_;
 
 	$eventManager->register('beforeSetupComposerPackages', sub {
-		my $composer = shift; $composer->registerPackage('imscp/ajaxplorer', $VERSION);
+		my $composer = shift; $composer->registerPackage('imscp/ajaxplorer', '0.2.0.*@dev');
 	});
 }
 

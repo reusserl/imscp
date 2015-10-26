@@ -40,8 +40,6 @@ use JSON;
 use Package::FrontEnd;
 use parent 'Common::SingletonClass';
 
-our $VERSION = '0.1.0.*@dev';
-
 %main::sqlUsers = () unless %main::sqlUsers;
 @main::createdSqlUsers = () unless @main::createdSqlUsers;
 
@@ -69,7 +67,7 @@ sub registerSetupListeners
 	my ($self, $eventManager) = @_;
 
 	$eventManager->register('beforeSetupComposerPackages', sub {
-		my $composer = shift; $composer->registerPackage('imscp/rainloop', $VERSION);
+		my $composer = shift; $composer->registerPackage('imscp/rainloop', '0.1.0.*@dev');
 	});
 }
 
