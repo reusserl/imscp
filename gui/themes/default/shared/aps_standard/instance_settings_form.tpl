@@ -1,53 +1,64 @@
-<form id="{{model.id | escapeHtml}}" class="form-horizontal" role="form">
-	<div ng-repeat="(key, value) in model | groupBy: 'group'">
-		<fieldset form="{{key | escapeHtml}}">
-			<legend>{{key}}</legend>
-			<div ng-repeat="field in value">
+<form id="{{model.id | escapeHtml}}" class="form-horizontal" role="form" ng-submit="alert('submit')" novalidate>
+	<div ng-repeat="(group, fields) in model | groupBy: 'metadata.group'">
+		<fieldset form="{{group | escapeHtml}}">
+			<legend>{{group}}</legend>
+			<div ng-repeat="field in fields">
 				<imscp-form-field field="field"></imscp-form-field>
 			</div>
 		</fieldset>
 	</div>
-	{{model |json}}
 </form>
 
-<script type="text/ng-template" id="template/form/field/string.html">
+<script type="text/ng-template" id="template/form/fields/string.html">
 	<div class="form-group">
-		<label for="{{field.id | escapeHtml}}" class="col-sm-2 control-label" style="vertical-align: middle;">
-			{{field.label}}
-			<jq-tooltip ng-show="field.tooltip" class="tips icon i_help" ng-attr-title="{{field.tooltip | escapeHtml}}"></jq-tooltip>
+		<label for="{{field.name | escapeHtml}}" class="col-sm-2 control-label">
+			{{field.metadata.label}}
+			<jq-tooltip ng-show="field.metadata.tooltip" class="tips icon i_help"
+			            ng-attr-title="{{field.metadata.tooltip | escapeHtml}}"></jq-tooltip>
 		</label>
-		<input type="{{field.type}}" ng-model="field.value" id="{{field.id | escapeHtml}}" name="{{field.id | escapeHtml}}" ng-value="field.value">
+		<input type="{{field.metadata.type}}" ng-model="field.value" id="{{field.name | escapeHtml}}"
+		       name="{{field.name | escapeHtml}}" ng-value="field.value"
+		       ng-pattern="field.metadata.regexp | strToRegexp"
+		       ng-minlength="{{field.metadata.min_length}}" ng-maxlength="{{field.metadata.max_length}}" required>
 	</div>
-	<div ng-show="{{field.type == 'password'}}" class="form-group">
-		<label for="{{field.id | escapeHtml}}_repeat" class="col-sm-2 control-label" style="vertical-align: middle;">
+	<div ng-show="{{field.metadata.type == 'password'}}" class="form-group">
+		<label for="{{field.name | escapeHtml}}_repeat" class="col-sm-2 control-label">
 			<?= tohtml(tr('Password Confirmation'))?>
 		</label>
-		<input identicalTo="{{field.id}}" type="{{field.type}}" ng-model="field.value_confirmation" id="{{field.id | escapeHtml}}_repeat" name="{{field.id | escapeHtml}}_repeat">
-	</<div>
+		<input identicalTo="{{field.name}}" type="{{field.metadata.type}}" ng-model="field.value_confirmation"
+		       id="{{field.name | escapeHtml}}_repeat" name="{{field.name | escapeHtml}}_repeat"
+		       ng-pattern="field.metadata.regexp | strToRegexp" ng-minlength="{{field.metadata.min_length}}"
+		       ng-maxlength="{{field.metadata.max_length}}" required>
+	</
+	<div>
 </script>
-<script type="text/ng-template" id="template/form/field/boolean.html">
+<script type="text/ng-template" id="template/form/fields/boolean.html">
 	<div class="form-group">
-	<div class="col-sm-offset-2 col-sm-10">
-		<div class="checkbox">
-			<label>
-				<input type="checkbox" ng-model="field.value" id="{{field.id | escapeHtml}}" name="{{field.id | escapeHtml}}" ng-value="field.value">
-				{{field.label}}
-				<jq-tooltip ng-show="field.tooltip" class="tips icon i_help" ng-attr-title="{{field.tooltip | escapeHtml}}"></jq-tooltip>
-			</label>
+		<div class="col-sm-offset-2 col-sm-10">
+			<div class="checkbox">
+				<label>
+					<input type="checkbox" ng-model="field.value" id="{{field.name | escapeHtml}}"
+					       name="{{field.name | escapeHtml}}" ng-value="field.value">
+					{{field.metadata.label}}
+					<jq-tooltip ng-show="field.metadata.tooltip" class="tips icon i_help"
+					            ng-attr-title="{{field.metadata.tooltip | escapeHtml}}"></jq-tooltip>
+				</label>
+			</div>
 		</div>
 	</div>
-	</div>
 </script>
-<script type="text/ng-template" id="template/form/field/enum.html">
+<script type="text/ng-template" id="template/form/fields/enum.html">
 	<div class="form-group">
-	<label for="{{field.id | escapeHtml}}" class="col-sm-2 control-label">
-		{{field.label}}
-		<jq-tooltip ng-show="field.tooltip" class="tips icon i_help" ng-attr-title="{{field.tooltip | escapeHtml}}"></jq-tooltip>
-	</label>
-	<select name="{{field.id | escapeHtml}}" ng-model="field.value">
-		<option ng-repeat="opt in field.choices" ng-selected="opt.value == field.value" value="{{opt.value | escapeHtml}}">
-			{{opt.name}}
-		</option>
-	</select>
+		<label for="{{field.name | escapeHtml}}" class="col-sm-2 control-label">
+			{{field.metadata.label}}
+			<jq-tooltip ng-show="field.metadata.tooltip" class="tips icon i_help"
+			            ng-attr-title="{{field.metadata.tooltip | escapeHtml}}"></jq-tooltip>
+		</label>
+		<select name="{{field.name | escapeHtml}}" ng-model="field.value">
+			<option ng-repeat="opt in field.metadata.choices" ng-selected="opt.value == field.value"
+			        value="{{opt.value | escapeHtml}}" required>
+				{{opt.name}}
+			</option>
+		</select>
 	</div>
 </script>
