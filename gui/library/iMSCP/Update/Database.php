@@ -46,7 +46,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	/**
 	 * @var int Last database update revision
 	 */
-	protected $lastUpdate = 227;
+	protected $lastUpdate = 228;
 
 	/**
 	 * Singleton - Make new unavailable
@@ -3163,11 +3163,26 @@ class iMSCP_Update_Database extends iMSCP_Update
 	}
 
 	/**
+	 * Remove escaping of underscore in mysql.db
+	 *
+	 * @return array SQL statements to be executed
+	 */
+	protected function r223()
+	{
+		return "
+			UPDATE mysql.db AS dst
+			INNER JOIN sql_database AS src
+			ON dst.Db = REPLACE(src.sqld_name, '_', '\_')
+			SET dst.Db = REPLACE(src.sqld_name, '\_', '_')
+		";
+	}
+
+	/**
 	 * Change admin.admin_id column key type (UNIQUE to PRIMARY KEY)
 	 *
 	 * @return tring SQL statements to be executed
 	 */
-	protected function r223()
+	protected function r224()
 	{
 		return $this->updateIndex('admin', 'admin_id', 'admin_id', 'PRIMARY KEY');
 	}
@@ -3177,7 +3192,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	 *
 	 * @return string SQL statement to be executed
 	 */
-	protected function r224()
+	protected function r225()
 	{
 		return '
 			CREATE TABLE IF NOT EXISTS `aps_package` (
@@ -3204,7 +3219,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	 *
 	 * @return string SQL statement to be executed
 	 */
-	protected function r225()
+	protected function r226()
 	{
 		return "
 			CREATE TABLE IF NOT EXISTS `aps_instance` (
@@ -3225,7 +3240,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	 *
 	 * @return string SQL statement to be executed
 	 */
-	protected function r226()
+	protected function r227()
 	{
 		return $this->addColumn(
 			'reseller_props',
@@ -3239,7 +3254,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	 *
 	 * @return string SQL statement to be executed
 	 */
-	protected function r227()
+	protected function r228()
 	{
 		return $this->addColumn(
 			'domain',
