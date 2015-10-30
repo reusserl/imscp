@@ -20,7 +20,7 @@
 
 define('IMSCP_SETUP', true);
 
-$guiRootDir = rtrim('{GUI_ROOT_DIR}', '/');
+$guiRootDir = rtrim('/var/www/imscp/gui', '/');
 
 if(strpos($guiRootDir, 'GUI_ROOT_DIR') === false) {
 	require_once "$guiRootDir/library/imscp-lib.php";
@@ -30,6 +30,18 @@ if(strpos($guiRootDir, 'GUI_ROOT_DIR') === false) {
 		if(!iMSCP_Update_Database::getInstance()->applyUpdates()) {
 			fwrite(STDERR, sprintf("[ERROR] %s\n", iMSCP_Update_Database::getInstance()->getError()));
 			exit(1);
+		}
+
+		// Update database schema using Doctrine ORM schema tool (transitional)
+		system('php ' . GUI_ROOT_DIR . '/bin/doctrine.php orm:schema-tool:update -q --no-ansi -f', $ret);
+		if($ret) {
+			throw new \Exception('Could not update database schema using doctrine ORM schema tool');
+		}
+
+		// Generate proxy classes for entity classes  (transitional)
+		system('php ' . GUI_ROOT_DIR . '/bin/doctrine.php orm:generate:proxies -q --no-ansi', $ret);
+		if($ret) {
+			throw new \Exception('Could not generate Doctrine proxy classes for entity classes');
 		}
 
 		i18n_buildLanguageIndex();

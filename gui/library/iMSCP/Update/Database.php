@@ -46,7 +46,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	/**
 	 * @var int Last database update revision
 	 */
-	protected $lastUpdate = 228;
+	protected $lastUpdate = 226;
 
 	/**
 	 * Singleton - Make new unavailable
@@ -3188,59 +3188,11 @@ class iMSCP_Update_Database extends iMSCP_Update
 	}
 
 	/**
-	 * Create aps_package table (APS Standard)
-	 *
-	 * @return string SQL statement to be executed
-	 */
-	protected function r225()
-	{
-		return '
-			CREATE TABLE IF NOT EXISTS `aps_package` (
-				`id` int(10) unsigned NOT NULL auto_increment,
-				`name` varchar(255) NOT NULL,
-				`summary` text NOT NULL,
-				`version` varchar(255) NOT NULL,
-				`release` int(10) unsigned NOT NULL,
-				`aps_version` varchar(255) NOT NULL,
-				`category` varchar(255) NOT NULL,
-				`vendor` varchar(255) NOT NULL,
-				`vendor_uri` varchar(255) NOT NULL,
-				`url` varchar(255) NOT NULL,
-				`icon_url` varchar(255) NOT NULL,
-				`cert` varchar(255) NOT NULL,
-				`status` varchar(255) NOT NULL,
-				PRIMARY KEY  (`id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-		';
-	}
-
-	/**
-	 * Create aps_instance table (APS Standard)
-	 *
-	 * @return string SQL statement to be executed
-	 */
-	protected function r226()
-	{
-		return "
-			CREATE TABLE IF NOT EXISTS `aps_instance` (
-				`id` int(10) unsigned NOT NULL auto_increment,
-				`pid` int(10) unsigned DEFAULT NULL,
-				`uid` int(10) unsigned NOT NULL,
-				`settings` text NOT NULL COMMENT '(DC2Type:json_array)',
-				`status` varchar(255) NOT NULL,
-				PRIMARY KEY (`id`),
-				FOREIGN KEY (pid) REFERENCES aps_package(id) ON DELETE SET NULL,
-				FOREIGN KEY (uid) REFERENCES admin(admin_id) ON DELETE CASCADE
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-		";
-	}
-
-	/**
 	 * Add reseller_props.aps_standard column
 	 *
 	 * @return string SQL statement to be executed
 	 */
-	protected function r227()
+	protected function r225()
 	{
 		return $this->addColumn(
 			'reseller_props',
@@ -3254,7 +3206,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 	 *
 	 * @return string SQL statement to be executed
 	 */
-	protected function r228()
+	protected function r226()
 	{
 		return $this->addColumn(
 			'domain',

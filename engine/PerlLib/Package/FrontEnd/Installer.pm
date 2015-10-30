@@ -68,7 +68,6 @@ sub registerSetupListeners
 		$composer->registerPackages({
 			'doctrine/orm' => '~2.5.1',
 			'jms/serializer' => '~1.0.0',
-			'symfony/form' => '~2.7.5',
 			'symfony/http-foundation' => '~2.7.5',
 			'symfony/validator' => '~2.7.5',
 			'zendframework/zend-servicemanager' => '~2.5.1'
