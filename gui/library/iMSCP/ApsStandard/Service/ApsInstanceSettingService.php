@@ -37,7 +37,7 @@ class ApsInstanceSettingService extends ApsAbstractService
 	/**
 	 * Get settings definition for the given package
 	 *
-	 * @param ApsPackage $package Package from which instance settings
+	 * @param ApsPackage $package Package for which instance settings
 	 * @return array
 	 */
 	public function getSettingsFromMetadataFile(ApsPackage $package)
@@ -160,7 +160,7 @@ class ApsInstanceSettingService extends ApsAbstractService
 	 * Get settings from the given JSON payload
 	 *
 	 * @throws \Exception
-	 * @param ApsPackage $package Package from which instance setting must be retrieved
+	 * @param ApsPackage $package Package for which instance settings must be retrieved
 	 * @param string $payload JSON payload
 	 * @return ApsInstanceSetting[]
 	 */

@@ -1,16 +1,16 @@
-
 <link rel="stylesheet" href="{THEME_ASSETS_PATH}/css/aps_standard.css?v={THEME_ASSETS_VERSION}">
-<script src="{THEME_ASSETS_PATH}/js/vendor/angular.min.js"></script>
-<script src="{THEME_ASSETS_PATH}/js/vendor/angular.sanitize.min.js"></script>
-<script src="{THEME_ASSETS_PATH}/js/vendor/angular-filter.min.js"></script>
-<script src="{THEME_ASSETS_PATH}/js/vendor/angular-resource.min.js"></script>
-<script src="{THEME_ASSETS_PATH}/js/vendor/ng-table.min.js"></script>
+<script src="{THEME_ASSETS_PATH}/js/vendor/angular.min.js?v={THEME_ASSETS_VERSION}"></script>
+<script src="{THEME_ASSETS_PATH}/js/vendor/angular-sanitize.min.js?v={THEME_ASSETS_VERSION}"></script>
+<script src="{THEME_ASSETS_PATH}/js/vendor/angular-filter.min.js?v={THEME_ASSETS_VERSION}"></script>
+<script src="{THEME_ASSETS_PATH}/js/vendor/angular-resource.min.js?v={THEME_ASSETS_VERSION}"></script>
+<script src="{THEME_ASSETS_PATH}/js/vendor/ng-table.min.js?v={THEME_ASSETS_VERSION}"></script>
 <script src="{THEME_ASSETS_PATH}/js/aps_standard.js?v={THEME_ASSETS_VERSION}"></script>
 
 <div data-ng-app="aps">
 	<div class="PackageList" ajax-loader ng-cloak>
 		<div ng-controller="PackageController as PkgCtrl">
-			<table ng-table="PkgCtrl.tableParams" data-template-header="custom/header" data-template-pagination="custom/pager" ng-show="total_packages">
+			<table ng-table="PkgCtrl.tableParams" data-template-header="custom/header"
+			       data-template-pagination="custom/pager" ng-show="total_packages">
 				<tbody>
 				<tr ng-repeat-start="package in $data">
 					<td class="Logo" data-filter="{nbpages: 'custom/filters/nbpages'}">
@@ -20,7 +20,7 @@
 						<h4><a data-ng-click="showAction()">{{package.name + ' - ' + package.version}}</a></h4>
 						{{package.summary}}
 					</td>
-					<td class="Details" ng-class="{ 'Locked': package.status == 'disabled' }" data-filter="{search: 'custom/filters/globalsearch'}">
+					<td class="Details" ng-class="{ 'Locked': package.status == 'locked' }" data-filter="{search: 'custom/filters/globalsearch'}">
 						<a data-ng-click="showAction()"><?= tohtml(tr('Details'))?></a>
 					</td>
 				</tr>
@@ -33,11 +33,14 @@
 					</td>
 					<td class="Details">
 						<!-- BDP: adm_btn1 -->
-						<jq-button data-ng-click="updateAction(package.status == 'ok' ? 'disabled' : 'ok', package.status)" data-ng-value="package.status == 'ok' ? '<?= tohtml(tr('Lock'), 'htmlAttr')?>' : '<?= tohtml(tr('Unlock'), 'htmlAttr')?>'"></jq-button>
+						<jq-button
+							data-ng-click="updateAction(package.status == 'unlocked' ? 'locked' : 'unlocked', package.status)"
+							data-ng-value="package.status == 'unlocked' ? '<?= tohtml(tr('Lock'), 'htmlAttr')?>' : '<?= tohtml(tr('Unlock'), 'htmlAttr')?>'"></jq-button>
 						<!-- EDP: adm_btn1 -->
 						<!-- BDP: client_btn1 -->
 						<div ng-controller="WriteInstanceController as WrtInstCtrl">
-						<jq-button data-ng-click="WrtInstCtrl.newAction(package)" value="<?= tohtml(tr('Install'))?>"></jq-button>
+							<jq-button data-ng-click="WrtInstCtrl.newAction(package)"
+							           value="<?= tohtml(tr('Install'))?>"></jq-button>
 						</div>
 						<!-- EDP: client_btn1 -->
 					</td>
@@ -64,8 +67,12 @@
 			</script>
 			<script type="text/ng-template" id="custom/pager">
 				<div class="paginator" ng-if="pages.length">
-					<span class="icon" data-ng-class="{ 'i_prev': page.active, 'i_prev_gray': !page.active }" data-ng-repeat="page in pages" ng-if="page.type == 'prev'" data-ng-click="params.page(page.number)"></span>
-					<span class="icon" data-ng-class="{ 'i_next': page.active, 'i_next_gray': !page.active }" data-ng-repeat="page in pages" ng-if="page.type == 'next'" data-ng-click="params.page(page.number)"></span>
+					<span class="icon" data-ng-class="{ 'i_prev': page.active, 'i_prev_gray': !page.active }"
+					      data-ng-repeat="page in pages" ng-if="page.type == 'prev'"
+					      data-ng-click="params.page(page.number)"></span>
+					<span class="icon" data-ng-class="{ 'i_next': page.active, 'i_next_gray': !page.active }"
+					      data-ng-repeat="page in pages" ng-if="page.type == 'next'"
+					      data-ng-click="params.page(page.number)"></span>
 				</div>
 			</script>
 			<!-- BDP: adm_btn2 -->
@@ -74,4 +81,6 @@
 		</div>
 	</div>
 </div>
-<div class="loader"><div class="modal"></div></div>
+<div class="loader">
+	<div class="modal"></div>
+</div>

@@ -1,4 +1,4 @@
-<form id="{{model.id | escapeHtml}}" class="form-horizontal" role="form" ng-submit="alert('submit')" novalidate>
+<form class="form-horizontal" role="form" novalidate>
 	<div ng-repeat="(group, fields) in model | groupBy: 'metadata.group'">
 		<fieldset form="{{group | escapeHtml}}">
 			<legend>{{group}}</legend>
@@ -8,8 +8,7 @@
 		</fieldset>
 	</div>
 </form>
-
-<script type="text/ng-template" id="template/form/fields/string.html">
+<script type="text/ng-template" id="template/form/fields/string.tpl">
 	<div class="form-group">
 		<label for="{{field.name | escapeHtml}}" class="col-sm-2 control-label">
 			{{field.metadata.label}}
@@ -29,10 +28,9 @@
 		       id="{{field.name | escapeHtml}}_repeat" name="{{field.name | escapeHtml}}_repeat"
 		       ng-pattern="field.metadata.regexp | strToRegexp" ng-minlength="{{field.metadata.min_length}}"
 		       ng-maxlength="{{field.metadata.max_length}}" required>
-	</
-	<div>
+	</div>
 </script>
-<script type="text/ng-template" id="template/form/fields/boolean.html">
+<script type="text/ng-template" id="template/form/fields/boolean.tpl">
 	<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-10">
 			<div class="checkbox">
@@ -47,7 +45,7 @@
 		</div>
 	</div>
 </script>
-<script type="text/ng-template" id="template/form/fields/enum.html">
+<script type="text/ng-template" id="template/form/fields/enum.tpl">
 	<div class="form-group">
 		<label for="{{field.name | escapeHtml}}" class="col-sm-2 control-label">
 			{{field.metadata.label}}
@@ -56,9 +54,7 @@
 		</label>
 		<select name="{{field.name | escapeHtml}}" ng-model="field.value">
 			<option ng-repeat="opt in field.metadata.choices" ng-selected="opt.value == field.value"
-			        value="{{opt.value | escapeHtml}}" required>
-				{{opt.name}}
-			</option>
+			        value="{{opt.value | escapeHtml}}" required>{{opt.name}}</option>
 		</select>
 	</div>
 </script>

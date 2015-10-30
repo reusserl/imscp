@@ -17,14 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-// APS standard config phase
 (function () {
 	"use strict";
-
 	var iMSCP = iMSCP || {};
-	iMSCP.apsStandard = angular.module("apsStandard", ["ngTable", "ngResource", "jQueryUI", "dialogService"]);
-
-	iMSCP.apsStandard.config(['$httpProvider', function ($httpProvider) {
+	iMSCP.aps = angular.module("aps", ["ngTable", "ngResource", "jQueryUI", "dialogService", "angular.filter", "ngSanitize", "EscapeHtml"]).config(['$httpProvider', function ($httpProvider) {
 		// Make i-MSCP aware of XHR requests
 		$httpProvider.defaults.headers.common["X-Requested-With"] = 'XMLHttpRequest';
 		// Disable caching
@@ -36,6 +32,10 @@
 			return {
 				// Global XHR response (succes) handler
 				response: function (response) {
+					if(response.data.redirect) {
+						window.location.replace(response.data.redirect);
+					}
+
 					if (response.data.message) {
 						$window.scrollTo(0, 0);
 						$("<div>", {
@@ -45,17 +45,15 @@
 						}).prependTo(".body").trigger('message_timeout');
 					}
 
-					if (response.data.redirect) {
-						window.location.replace(response.data.redirect);
-					}
+
 
 					return response;
 				},
 
 				// Global XHR response (error) handler
 				responseError: function (rejection) {
-					if (rejection.status == 403) {
-						window.location.replace("/index.php");
+					if (rejection.data.redirect) {
+						window.location.replace(rejection.data.redirect);
 					}
 
 					if (rejection.data.message) {
@@ -73,31 +71,39 @@
 		})
 	}]);
 
-	// APS standard package resource
-	iMSCP.apsStandard.factory("PackageResource", function ($resource) {
+	// RESOURCES
+
+	// Package resource
+	iMSCP.aps.factory("PackageResource", function ($resource) {
 		return $resource("aps_packages.php", {id: '@id'}, {
-			query: {isArray: false},
 			update: {method: 'PUT'},
 			updateIndex: {method: 'POST'}
 		});
 	});
 
-	// APS standard package controller
-	iMSCP.apsStandard.controller("PackageController", packageController);
-	packageController.$inject = ["$scope", "NgTableParams", "PackageResource", "$window", 'dialogService'];
+	// Instance resource
+	iMSCP.aps.factory("InstanceResource", function ($resource) {
+		return $resource("aps_instances.php", {id: '@id'}, {
+			update: {method: 'PUT'},
+			"new":{method: 'GET', params: {action: "new"}, isArray: true }
+		});
+	});
 
+	// CONTROLLERS
+
+	// Package controller
+	iMSCP.aps.controller("PackageController", packageController);
+	packageController.$inject = ["$scope", "NgTableParams", "PackageResource", "$window", 'dialogService'];
 	function packageController($scope, NgTableParams, PackageResource, $window, dialogService) {
 		var vm = this;
 
 		// Load table data
 		vm.loadTable = function () {
 			vm.categories = PackageResource.query().$promise.then(function (data) {
-				if (data.total_packages) {
-					$scope.total_packages = data.total_packages;
-					vm.tableParams = new NgTableParams(
-						{count: 5},
-						{dataset: data.packages, counts: [5, 10, 25, 50]}
-					);
+				if (data.length) {
+					$scope.total_packages = data.length;
+					vm.tableParams = new NgTableParams({count: 5}, {dataset: data, counts: [5, 10, 25, 50]});
+
 					$scope.$watch(function watchSearch() {
 						return vm.search;
 					}, function (n) {
@@ -105,7 +111,7 @@
 					});
 
 					// Build category list
-					var categories = data.packages.reduce(function (results, item) {
+					var categories = data.reduce(function (results, item) {
 						var category = item.category.toUpperCase();
 						if (results.indexOf(category) < 0) {
 							results.push(category);
@@ -130,7 +136,7 @@
 				} else {
 					$("<div>", {
 						"class": "static_info",
-						"html": $.parseHTML(imscp_i18n.core.aps_standard.no_package_available),
+						"html": $.parseHTML(imscp_i18n.core.aps.no_package_available),
 						"hide": true
 					}).prependTo(".PackageList");
 					return [];
@@ -140,103 +146,158 @@
 
 		vm.loadTable();
 
-		// Show package details
-		$scope.showDetails = function () {
+		// Show package
+		$scope.showAction = function () {
+			var pkg = this.package;
 			PackageResource.get({}, {id: this.package.id}).$promise.then(function (data) {
-				dialogService.open("PackageDetails", "/templates.php?tpl=shared/partials/aps_standard/package_details.tpl", data, {
-					title: imscp_i18n.core.aps_standard.package_details,
+				data = angular.merge(data, pkg);
+				dialogService.open("PackageDetails", "/templates.php?tpl=shared/aps_standard/package_details.tpl", data, {
+					title: imscp_i18n.core.aps.package_details,
 					modal: true,
 					width: $($window).width() / 2
 				});
 			});
 		};
 
-		// Lock/Unlock package
-		$scope.changeStatus = function (newStatus, prevStatus) {
+		// Update package
+		$scope.updateAction = function (newStatus, prevStatus) {
 			var self = this;
 			self.package.status = newStatus;
-			return PackageResource.update({}, self.package, null, function () {
-				self.package.status = prevStatus;
-			});
+			self.package.$update(null, null, function() { self.package.status = prevStatus; vm.loadTable(); });
 		};
 
 		// Update package index
-		vm.updateIndex = function () {
+		$scope.updateIndexAction = function () {
+			/*
 			$window.scrollTo(0, 0);
 			$("<div>", {
 				"class": "static_warning",
-				"html": $.parseHTML(imscp_i18n.core.aps_standard.update_in_progress),
+				"html": $.parseHTML(imscp_i18n.core.aps.update_in_progress),
 				"hide": true
 			}).prependTo(".PackageList");
+			*/
 
-			return PackageResource.updateIndex(function () {
+			PackageResource.updateIndex(function () {
 				$('.static_warning').remove();
-				vm.loadTable();
-			}).$promise;
+			});
+		};
+	}
+
+	// Instance controller
+	iMSCP.aps.controller("WriteInstanceController", writeInstanceController);
+	writeInstanceController.$inject = ["InstanceResource", "$window", 'dialogService', "$q"];
+	function writeInstanceController( InstanceResource, $window, dialogService) {
+		var vm = this;
+
+		// Get new instance form
+		vm.newAction = function(pkg) {
+			InstanceResource.new({}, {id: pkg.id}).$promise.then(function(data) {
+				dialogService.open("InstanceNew", "/templates.php?tpl=shared/aps_standard/instance_new.tpl", data, {
+					title: sprintf(imscp_i18n.core.aps.new_app_instance, pkg.name),
+					modal: true,
+					width: $($window).width() / 2,
+					position: { 'my': 'center', 'at': 'top+190' },
+					buttons: {
+						"Cancel": function() {
+							$( this ).dialog( "close" );
+						}
+					}
+				});
+			});
 		};
 
-		// Install package
-		$scope.install = function() {
-			dialogService.open("PackageInstall", "/templates.php?tpl=shared/partials/aps_standard/package_install.tpl", { id: this.package.id }, {
-				title: imscp_i18n.core.aps_standard.package_details,
-				modal: true,
-				width: $($window).width() / 2
-			});
+		vm.createAction = function (data) {
+			console.log(data);
+			console.log(angular.toJson(data, true));
+			// TODO redirect to instances.php on success
 		}
 	}
 
-	// APS standard package instance resource
-	iMSCP.apsStandard.factory("PackageInstanceResource", function ($resource) {
-		return $resource("aps_instances.php", {id: '@id'}, {
-			query: {isArray: false},
-			update: {method: 'PUT'},
-			updateIndex: {method: 'POST'}
-		});
+	// Filter
+	iMSCP.aps.filter('strToRegexp', function() {
+		return function(str) {
+			if(str !== '') {
+				str = '/' + str + '/';
+				var flags = str.replace(/.*\/([gimy]*)$/, '$1');
+				var pattern = str.replace(new RegExp('^/(.*?)/' + flags + '$'), '$1');
+				return new RegExp(pattern, flags);
+			}
+
+			return undefined;
+		}
 	});
 
-	// APS standard package controller
-	iMSCP.apsStandard.controller("PackageInstallController", packageInstallController);
-	packageInstallController.$inject = ["$scope", "PackageInstanceResource", "$window", 'dialogService', '$rootScope'];
+	// FORM
 
-	function packageInstallController($scope,  PackageInstanceResource, $window, dialogService, $rootScope) {
-		var vm = this;
-		vm.package = $scope.model;
-		vm.create = create;
-
-		// Create package instance
-		function create() {
-
-		}
-	}
-
-
-
-
-
-
-
-
-
-
-	iMSCP.jQueryUI = angular.module("jQueryUI", []);
-
-	// jQuery directives
-	iMSCP.jQueryUI.directive('jqButton', function () {
+	iMSCP.aps.directive('imscpForm', function() {
 		return {
 			restrict: 'E', // says that this directive is only for html elements
-			replace: true,
-			template: '<input type="button">',
-			link: function (scope, element, attrs) {
-				element.button();
+			templateUrl: "/templates.php?tpl=shared/aps_standard/instance_settings_form.tpl"
+		}
+	}).directive('imscpFormField', function($q, $compile, $templateCache, $http) {
+		// Load the given template
+		var loadTemplate = function(fieldType) {
+			var deferred = $q.defer();
+			var template;
+
+			if(fieldType == 'text' || fieldType == 'email' ||  fieldType == 'password') {
+				template = 'template/form/fields/string.tpl';
+			} else if(fieldType == 'boolean') {
+				template = 'template/form/fields/boolean.tpl';
+			} else {
+				template = 'template/form/fields/enum.tpl';
 			}
+
+			template = $templateCache.get(template);
+
+			if (angular.isDefined(template)) {
+				deferred.resolve(template);
+			} else {
+				$http.get(tpl, {cache: $templateCache}).then(function (data) {
+					deferred.resolve(data);
+				}, function() {
+					deferred.reject("Template " + template + " was not found");
+				});
+			}
+
+			return deferred.promise;
 		};
+
+		// Compile the given template
+		var compileTemplate = function(template, scope) {
+			var deferred = $q.defer();
+
+			loadTemplate(template).then(function(template){
+				//deferred.resolve($compile(tpl));
+				deferred.resolve($compile(template)(scope));
+			});
+
+			return deferred.promise;
+		};
+
+		var linker = function(scope, elm) {
+			compileTemplate(scope.field.metadata.type, scope).then(function(template) {
+				//elm.html(template(scope));
+				elm.html(template);
+			});
+		};
+
+		return {
+			restrict: 'E', // says that this directive is only for html elements
+			template: '<div ng-bind="field"></div>',
+			scope: {
+				field: '='
+			},
+			link: linker
+		}
 	});
 
+	// AJAX LOADER
+
 	// Ajax loader
-	iMSCP.apsStandard.directive('ajaxLoader', function ($http) {
+	iMSCP.aps.directive('ajaxLoader', function ($http) {
 		return {
-			restrict: 'A',
-			scope: false,
+			restrict: 'A', // Say that this directive is only for html attributes
 			link: function (scope, elm, attrs) {
 				scope.isLoading = function () {
 					return $http.pendingRequests.length > 0;
@@ -250,6 +311,46 @@
 					}
 				});
 			}
+		}
+	});
+
+	// jQuery compat module
+	iMSCP.jQueryUI = angular.module("jQueryUI", []).
+		directive('jqButton', function () {
+			return {
+				restrict: 'E', // says that this directive is only for html elements
+				replace: true,
+				template: '<input type="button">',
+				link: function (scope, element, attrs) {
+					element.button();
+				}
+			};
+		}).
+		directive('jqTooltip', function() {
+			return {
+				restrict: 'E', // says that this directive is only for html elements
+				replace: true,
+				template: '<span>',
+				link: function(scope, element, attrs) {
+					element.tooltip({ tooltipClass: "ui-tooltip-notice", track: true });
+				}
+			}
+		});
+
+	angular.module("EscapeHtml", []).filter('escapeHtml', function () {
+		var entityMap = {
+			"&": "&amp;",
+			"<": "&lt;",
+			">": "&gt;",
+			'"': '&quot;',
+			"'": '&#39;',
+			"/": '&#x2F;'
+		};
+
+		return function(str) {
+			return String(str).replace(/[&<>"'\/]/g, function (s) {
+				return entityMap[s];
+			});
 		}
 	});
 })();
@@ -279,14 +380,14 @@
  * SOFTWARE.
  */
 (function () {
-	angular.module('dialogService', []).service('dialogService', ['$rootScope', '$q', '$compile', '$templateCache', '$http',
-		function ($rootScope, $q, $compile, $templateCache, $http) {
+	angular.module('dialogService', []).service('dialogService', ['$rootScope', '$q', '$compile', '$templateCache', '$http', "$timeout",
+		function ($rootScope, $q, $compile, $templateCache, $http, $timeout) {
 
 			var _this = this;
 			_this.dialogs = {};
+			$.ui.dialog.prototype._focusTabbable = function(){};
 
 			this.open = function (id, template, model, options) {
-
 				// Check our required arguments
 				if (!angular.isDefined(id)) {
 					throw "dialogService requires id in call to open";
@@ -301,19 +402,36 @@
 					model = null;
 				}
 
-				// Copy options so the change ot close isn't propogated back.
+				// Copy options so the change ot close isn't propagated back.
 				// Extend is used instead of copy because window references are
 				// often used in the options for positioning and they can't be deep
 				// copied.
-				var dialogOptions = {};
+				var dialogOptions = { autoOpen:false };
 				if (angular.isDefined(options)) {
-					angular.extend(dialogOptions, options);
+					//angular.extend(dialogOptions, options);
+					angular.merge(dialogOptions, options);
 				}
 
 				// Initialize our dialog structure
-				var dialog = {scope: null, ref: null, deferred: $q.defer()};
+				var dialog = { scope: null, ref: null, deferred: $q.defer() };
 
-				// Get the template from teh cache or url
+				// nxw
+				dialog.scope = $rootScope.$new();
+				dialog.scope.model = model;
+
+				compileTemplate(template, dialog.scope).then(function(html) {
+					dialog.ref = $(html);
+					// Initialize the dialog and open it
+					dialog.ref.dialog(dialogOptions);
+					//setTimeout(function(){dialog.ref.dialog("open");}, 3000);
+					dialog.ref.dialog("open");
+					// Cache the dialog
+					_this.dialogs[id] = dialog;
+				});
+				// nxw
+
+				/*
+				// Get the template from the cache or url
 				loadTemplate(template).then(
 					function (dialogTemplate) {
 						// Create a new scope, inherited from the parent.
@@ -335,6 +453,7 @@
 
 						// Initialize the dialog and open it
 						dialog.ref.dialog(dialogOptions);
+						//setTimeout(function(){ dialog.ref.dialog("open"); }, 1000);
 						dialog.ref.dialog("open");
 
 						// Cache the dialog
@@ -344,21 +463,19 @@
 						throw error;
 					}
 				);
+				*/
 
 				// Return our cached promise to complete later
 				return dialog.deferred.promise;
 			};
 
 			this.close = function (id, result) {
-
 				// Get the dialog and throw exception if not found
 				var dialog = getExistingDialog(id);
-
 				// Notify those waiting for the result
 				// This occurs first because the close calls the close handler on the
 				// dialog whose default action is to cancel.
 				dialog.deferred.resolve(result);
-
 				// Close the dialog (must be last)
 				dialog.ref.dialog("close");
 			};
@@ -366,12 +483,10 @@
 			this.cancel = function (id) {
 				// Get the dialog and throw exception if not found
 				var dialog = getExistingDialog(id);
-
 				// Notify those waiting for the result
 				// This occurs first because the cancel calls the close handler on the
 				// dialog whose default action is to cancel.
 				dialog.deferred.reject();
-
 				// Cancel and close the dialog (must be last)
 				dialog.ref.dialog("close");
 			};
@@ -379,16 +494,13 @@
 			function cleanup(id) {
 				// Get the dialog and throw exception if not found
 				var dialog = getExistingDialog(id);
-
 				// This is only called from the close handler of the dialog
 				// in case the x or escape are used to cancel the dialog. Don't
 				// call this from close, cancel, or externally.
 				dialog.deferred.reject();
 				dialog.scope.$destroy();
-
 				// Remove the object from the DOM
 				dialog.ref.remove();
-
 				// Delete the dialog from the cache
 				delete _this.dialogs[id];
 			}
@@ -436,6 +548,17 @@
 						}
 					);
 				}
+				return deferred.promise;
+			}
+
+			// NXW addon to defer
+			function compileTemplate(template, scope) {
+				var deferred = $q.defer();
+
+				loadTemplate(template).then(function(template){
+					deferred.resolve($compile(template)(scope));
+				});
+
 				return deferred.promise;
 			}
 		}

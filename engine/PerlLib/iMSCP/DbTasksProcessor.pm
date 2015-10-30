@@ -214,7 +214,7 @@ sub process
 		"
 	);
 
-	# Process toadd|tochange|toenable|todisable|todelete custom DNS records which belong to domains or domain aliases
+	# Process toadd|tochange|toenable|todisable|todelete custom DNS records which belong to domain aliases
 	# For each entitty, process only if the parent entity is in a consistent state
 	$self->_process(
 		'CustomDNS',
@@ -333,6 +333,21 @@ sub process
 				domain_status = 'ok'
 			ORDER BY
 				id ASC
+		"
+	);
+
+	# Process toadd|tochange|todelete APS instance tasks
+	$self->process(
+		'ApsInstance',
+		"
+			SELECT
+				id, name, status
+			FROM
+				aps_instance AS i
+			INNER JOIN
+				aps_package AS p ON(i.package_id = p.id)
+			WHERE
+				i.status IN('toadd', 'tochange', 'todelete')
 		"
 	);
 

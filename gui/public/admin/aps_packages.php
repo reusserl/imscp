@@ -46,7 +46,7 @@ if (is_xhr()) {
 $tpl = new TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
-	'page' => 'shared/partials/aps_standard/packages.tpl',
+	'page' => 'shared/aps_standard/packages.tpl',
 	'page_message' => 'layout',
 	'adm_btn1' => 'page',
 	'adm_btn2' => 'page',
@@ -55,14 +55,12 @@ $tpl->define_dynamic(array(
 
 $tpl->assign(array(
 	'TR_PAGE_TITLE' => tohtml(tr('Admin / APS Standard / Packages'), 'htmlAttr'),
-	'PAGE_MESSAGE' => '',
 	'CLIENT_BTN1' => ''
 ));
 
-
 $eventManager->registerListener('onGetJsTranslations', function ($e) {
 	/** @var $e \iMSCP_Events_Event */
-	$e->getParam('translations')->core['aps_standard'] = array(
+	$e->getParam('translations')->core['aps'] = array(
 		'no_package_available' => tr('No package available. You should update package index.'),
 		'update_in_progress' => tr('Update of package index is in progress. This task can take several minutes.'),
 		'package_details' => tr('Package details')
@@ -70,6 +68,7 @@ $eventManager->registerListener('onGetJsTranslations', function ($e) {
 });
 
 generateNavigation($tpl);
+generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 $eventManager->dispatch(Events::onAdminScriptEnd, array('templateEngine' => $tpl));

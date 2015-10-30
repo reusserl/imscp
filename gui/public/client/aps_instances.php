@@ -20,7 +20,7 @@
 
 namespace iMSCP\ApsStandard;
 
-use iMSCP\ApsStandard\Controller\ApsPackageController;
+use iMSCP\ApsStandard\Controller\ApsInstanceController;
 use iMSCP_Events_Aggregator as EventManager;
 use iMSCP_Events as Events;
 use iMSCP_pTemplate as TemplateEngine;
@@ -35,8 +35,8 @@ check_login('user');
 if (customerHasFeature('aps_standard')) {
 	if (is_xhr()) {
 		try {
-			/** @var ApsPackageController $controller */
-			$controller = Registry::get('ServiceManager')->get('ApsPackageController');
+			/** @var ApsInstanceController $controller */
+			$controller = Registry::get('ServiceManager')->get('ApsInstanceController');
 			$controller->handleRequest();
 		} catch (\Exception $e) {
 			header('Status: 500 Internal Server Error');
@@ -47,30 +47,16 @@ if (customerHasFeature('aps_standard')) {
 	$tpl = new TemplateEngine();
 	$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'shared/aps_standard/packages.tpl',
-		'page_message' => 'layout',
-		'adm_btn1' => 'page',
-		'adm_btn2' => 'page',
-		'client_btn1' => 'page'
+		'page' => 'shared/aps_standard/instances.tpl',
+		'page_message' => 'layout'
 	));
 
 	$tpl->assign(array(
-		'TR_PAGE_TITLE' => tohtml(tr('Client / APS Standard / Packages'), 'htmlAttr'),
-		'PAGE_MESSAGE' => '',
-		'ADM_BTN1' => '',
-		'ADM_BTN2' => ''
+		'TR_PAGE_TITLE' => tohtml(tr('Client / APS Standard / Instances'), 'htmlAttr'),
 	));
 
-	$eventManager->registerListener('onGetJsTranslations', function ($e) {
-		/** @var $e \iMSCP_Events_Event */
-		$e->getParam('translations')->core['aps'] = array(
-			'no_package_available' => tr('No package available.'),
-			'package_details' => tr('Package details'),
-			'new_app_instance' => tr('New %%s application instance')
-		);
-	});
-
 	generateNavigation($tpl);
+	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
 	$eventManager->dispatch(Events::onClientScriptEnd, array('templateEngine' => $tpl));

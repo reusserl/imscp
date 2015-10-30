@@ -718,11 +718,25 @@ CREATE TABLE IF NOT EXISTS `aps_package` (
 
 CREATE TABLE IF NOT EXISTS `aps_instance` (
   `id` int(10) unsigned NOT NULL auto_increment,
-  `pid` int(10) unsigned DEFAULT NULL,
-  `uid` int(10) unsigned NOT NULL,
-  `settings` text NOT NULL COMMENT '(DC2Type:json_array)',
+  `package_id` int(10) unsigned DEFAULT NULL,
+  `owner_id` int(10) unsigned NOT NULL;
   `status` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
-  FOREIGN KEY (pid) REFERENCES aps_package(id) ON DELETE SET NULL,
-  FOREIGN KEY (uid) REFERENCES admin(admin_id) ON DELETE CASCADE
+  FOREIGN KEY (package_id) REFERENCES aps_package(id) ON DELETE SET NULL,
+  FOREIGN KEY (owner_id) REFERENCES admin(admin_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `aps_instance_setting`
+--
+
+CREATE TABLE IF NOT EXISTS `aps_instance_setting` (
+  `id` int(10) unsigned NOT NULL auto_increment,
+  `instance_id` int(10) unsigned NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `value` text,
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (instance_id) REFERENCES aps_instance(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
