@@ -95,7 +95,7 @@ class ApsSpiderService extends ApsAbstractService
 						// Get list of known packages
 						$knownPackages = isset($this->packages[$repoId]) ? $this->packages[$repoId] : array();
 
-						// Parse the repository feed by chunk of 50 entries (we fetch only latest package versions)
+						// Parse the repository feed by chunk of 100 entries (we fetch only latest package versions)
 						// See: https://doc.apsstandard.org/2.1/portal/cat/search/#search-description-arguments
 						$repoFeed = new ApsDocument(
 							$serviceUrl . str_replace('../', '/', $repoFeedUrl) . '?pageSize=100&latest=1'

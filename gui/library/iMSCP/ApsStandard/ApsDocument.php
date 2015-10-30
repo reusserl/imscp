@@ -45,7 +45,7 @@ class ApsDocument
 	 * @var array List of APS namespaces
 	 */
 	protected $apsNamespaces = array(
-		'apache' => 'apache="http://apstandard.com/ns/1/apache',
+		'apache' => 'http://apstandard.com/ns/1/apache',
 		'aspnet' => 'http://apstandard.com/ns/1/aspnet',
 		'cgi' => 'http://apstandard.com/ns/1/cgi',
 		'db' => 'http://apstandard.com/ns/1/db',
