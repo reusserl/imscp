@@ -20,7 +20,7 @@
 
 define('IMSCP_SETUP', true);
 
-$guiRootDir = rtrim('/var/www/imscp/gui', '/');
+$guiRootDir = rtrim('{GUI_ROOT_DIR}', '/');
 
 if(strpos($guiRootDir, 'GUI_ROOT_DIR') === false) {
 	require_once "$guiRootDir/library/imscp-lib.php";
