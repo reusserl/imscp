@@ -22,22 +22,22 @@
 return array(
 	'factories' => array(
 		// Common services
-		'Annotation' => 'iMSCP\Service\AnnotationServiceFactory',
-		'Database' => 'iMSCP\Service\DatabaseServiceFactory',
-		'ORM' => 'iMSCP\Service\ORMServiceFactory',
-		'Request' => 'iMSCP\Service\HttpRequestServiceFactory',
-		'Serializer' => 'iMSCP\Service\SerializerServiceFactory',
-		'Validator' => 'iMSCP\Service\ValidatorServiceFactory',
+		'Annotation' => 'iMSCP\\Service\\AnnotationServiceFactory',
+		'Database' => 'iMSCP\\Service\\DatabaseServiceFactory',
+		'ORM' => 'iMSCP\\Service\\ORMServiceFactory',
+		'Request' => 'iMSCP\\Service\\HttpRequestServiceFactory',
+		'Response' => 'iMSCP\\Service\\HttpResponseServiceFactory',
+		'Serializer' => 'iMSCP\\Service\\SerializerServiceFactory',
+		'Translator' => 'iMSCP\\Service\\TranslatorServiceFactory',
+		'Validator' => 'iMSCP\\Service\\ValidatorServiceFactory'
+	),
 
-		// APS Standard controllers
-		'ApsPackageController' => 'iMSCP\ApsStandard\Controller\ApsPackageControllerFactory',
-		'ApsInstanceController' => 'iMSCP\ApsStandard\Controller\ApsInstanceControllerFactory',
+	'abstract_factories' => array(
+		// Abstract factory for APS standard controllers
+		'iMSCP\\ApsStandard\\Controller\\ApsControllerAbstractFactory',
 
-		// APS Standard services
-		'ApsPackageService' => 'iMSCP\ApsStandard\Service\ApsPackageServiceFactory',
-		'ApsInstanceService' => 'iMSCP\ApsStandard\Service\ApsInstanceServiceFactory',
-		'ApsSettingFormService' => 'iMSCP\ApsStandard\Service\ApsSettingFormServiceFactory',
-		'ApsSpiderService' => 'iMSCP\ApsStandard\Service\ApsSpiderServiceFactory'
+		// Abstract factory for APS standard services
+		'iMSCP\\ApsStandard\\Service\\ApsServiceAbstractFactory'
 	),
 
 	'aliases' => array(
