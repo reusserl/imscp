@@ -21,6 +21,7 @@
 namespace iMSCP\ApsStandard\Service;
 
 use iMSCP\ApsStandard\ApsDocument;
+use iMSCP\ApsStandard\Entity\ApsPackage;
 use iMSCP_Registry as Registry;
 
 /**
@@ -30,7 +31,7 @@ use iMSCP_Registry as Registry;
 class ApsSpiderService extends ApsAbstractService
 {
 	/**
-	 * @var array Known packages
+	 * @var ApsPackage[][] packages (grouped by repository)
 	 */
 	protected $packages = array();
 
@@ -56,18 +57,17 @@ class ApsSpiderService extends ApsAbstractService
 			$this->setupEnvironment();
 
 			// Retrieves list of known packages
-			$stmt = $this->getEntityManager()->getConnection()->executeQuery(
-				'SELECT `name`, `version`, `release`, `aps_version`, `status` FROM `aps_package`'
-			);
-			if ($stmt->rowCount()) {
-				while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-					$this->packages[$row['aps_version']][$row['name']] = array(
-						'version' => $row['version'],
-						'release' => $row['release']
-					);
+			/** @var ApsPackage[] $packages */
+			$packages = $this->getEntityManager()->getRepository('Aps:ApsPackage')->findBy(array(
+				'status' => array('ok', 'disabled')
+			));
 
-					if ($row['status'] == 'ok') {
-						$this->unlockedPackages[] = $row['name'];
+			if (!empty($packages)) {
+				foreach ($packages as $package) {
+					$this->packages[$package->getApsVersion()][$package->getName()] = $package;
+
+					if ($package->getStatus() == 'ok') {
+						$this->unlockedPackages[$package->getName()] = $package;
 					}
 				}
 			}
@@ -79,46 +79,47 @@ class ApsSpiderService extends ApsAbstractService
 			// See: https://doc.apsstandard.org/2.1/portal/cat/browsing/#retrieving-repository-index
 			$repositories = $systemIndex->getXPathValue("//a[@class='repository']/@href", null, false);
 
-			foreach ($repositories as $repository) {
-				$repositoryUrl = $repository->nodeValue;
-				$repositoryId = rtrim($repositoryUrl, '/');
+			foreach ($repositories as $repo) {
+				$repoUrl = $repo->nodeValue;
+				$repoId = rtrim($repoUrl, '/');
 
 				// Explores supported APS standard repositories only
-				if (in_array($repositoryId, $this->supportedRepositories)) {
+				if (in_array($repoId, $this->supportedRepositories)) {
 					// Discover repository feed
 					// See: https://doc.apsstandard.org/2.1/portal/cat/browsing/#discovering-repository-feed
-					$repositoryIndex = new ApsDocument($serviceUrl . '/' . $repositoryUrl, 'html');
-					$repositoryFeedUrl = $repositoryIndex->getXPathValue("//a[@id='feedLink']/@href");
-					unset($repositoryIndex);
+					$repoIndex = new ApsDocument($serviceUrl . '/' . $repoUrl, 'html');
+					$repoFeedUrl = $repoIndex->getXPathValue("//a[@id='feedLink']/@href");
+					unset($repoIndex);
 
-					if ($repositoryFeedUrl != '') { // Ignore invalid repository entry
+					if ($repoFeedUrl != '') { // Ignore invalid repository entry
 						// Get list of known packages
-						$knownPackages = isset($this->packages[$repositoryId]) ? $this->packages[$repositoryId] : array();
+						$knownPackages = isset($this->packages[$repoId]) ? $this->packages[$repoId] : array();
 
 						// Parse the repository feed by chunk of 50 entries (we fetch only latest package versions)
 						// See: https://doc.apsstandard.org/2.1/portal/cat/search/#search-description-arguments
-						$repositoryFeed = new ApsDocument(
-							$serviceUrl . str_replace('../', '/', $repositoryFeedUrl) . '?pageSize=100&latest=1'
+						$repoFeed = new ApsDocument(
+							$serviceUrl . str_replace('../', '/', $repoFeedUrl) . '?pageSize=100&latest=1'
 						);
-						$this->parseRepositoryFeedPage($repositoryFeed, $repositoryId, $knownPackages);
-						while ($repositoryFeedUrl = $repositoryFeed->getXPathValue("root:link[@rel='next']/@href")) {
-							$repositoryFeed = new ApsDocument($repositoryFeedUrl);
-							$this->parseRepositoryFeedPage($repositoryFeed, $repositoryId, $knownPackages);
+						$this->parseRepositoryFeedPage($repoFeed, $repoId, $knownPackages);
+						while ($repoFeedUrl = $repoFeed->getXPathValue("root:link[@rel='next']/@href")) {
+							$repoFeed = new ApsDocument($repoFeedUrl);
+							$this->parseRepositoryFeedPage($repoFeed, $repoId, $knownPackages);
 						}
-						unset($repositoryFeed);
+						unset($repoFeed);
 
 						// Update package index by exploring local metadata directories for the given repository
-						$this->updatePackageIndex($repositoryId);
+						$this->updatePackageIndex($repoId, $knownPackages);
+						unset($knownPackages);
 					}
 				}
 			}
 		} catch (\Exception $e) {
 			if (PHP_SAPI == 'cli') {
-				fwrite(STDERR, sprintf($e->getMessage()));
+				fwrite(STDERR, $e->getMessage() . "\n");
 				exit(1);
 			}
 
-			throw $e;
+			throw new \RuntimeException($e->getMessage(), $e->getCode(), $e);
 		}
 	}
 
@@ -137,11 +138,12 @@ class ApsSpiderService extends ApsAbstractService
 	 * @throws \Doctrine\DBAL\DBALException
 	 * @param ApsDocument $repositoryFeed Document representing APS repository feed
 	 * @param string $repositoryId Repository identifier (e.g. 1, 1.1, 1.2, 2.0 ...)
-	 * @param array &$knownPackages List of known packages in the repository
+	 * @param ApsPackage[] &$knownPackages List of known packages in the repository
 	 * @çeturn void
 	 */
 	protected function parseRepositoryFeedPage(ApsDocument $repositoryFeed, $repositoryId, &$knownPackages)
 	{
+		$entityManager = $this->getEntityManager();
 		$metaFiles = array();
 		$metadataDir = $this->getMetadataDir() . '/' . $repositoryId;
 
@@ -169,56 +171,47 @@ class ApsSpiderService extends ApsAbstractService
 				$cRelease = null;
 				$isKnown = false;
 				if (isset($knownPackages[$name])) {
-					$cVersion = $knownPackages[$name]['version'];
-					$cRelease = $knownPackages[$name]['release'];
+					$cVersion = $knownPackages[$name]->getVersion();
+					$cRelease = $knownPackages[$name]->getRelease();
 					$isKnown = true;
 				}
 
 				$needUpdate = ($isKnown) ? (version_compare("$cVersion.$cRelease", "$version.$release", '<')) : false;
 				$isBroken = ($isKnown && !$needUpdate) ? (
-					!file_exists("$packageMetadataDir/APP-META.xml") || filesize("$packageMetadataDir/APP-META.xml") == 0 ||
-					!file_exists("$packageMetadataDir/APP-META.json") || filesize("$packageMetadataDir/APP-META.json") == 0
+					!file_exists("$packageMetadataDir/APP-META.xml") || filesize("$packageMetadataDir/APP-META.xml") == 0
 				) : false;
 
 				// Continue only if a newer version is available, or if there is no valid APP-META.xml or APP-DATA.json file
 				if (!$isKnown || $needUpdate || $isBroken) {
 					if ($needUpdate || $isBroken) {
-						utils_removeDir("$metadataDir/$name");
+						$package = $knownPackages[$name];
 
 						if ($needUpdate) {
-							// Mark the package as outdated
-							$stmt = $this->getEntityManager()->getConnection()->prepare(
-								"
-									UPDATE `aps_package` SET `status` = 'outdated' WHERE `name` = ? AND `version` = ?
-									AND `release` = ? AND `aps_version` = ?
-								"
-							);
+							$package->setStatus('outdated'); // Mark the package as outdated
 						} else {
-							// Delete broken package (it will be re-indexed)
-							$stmt = $this->getEntityManager()->getConnection()->prepare(
-								"
-									DELETE FROM `aps_package` WHERE `name` = ? AND `version` = ? AND `release` = ?
-									AND `aps_version` = ?
-								"
-							);
+							$entityManager->remove($package); // Delete broken package (it will be re-indexed)
 						}
-						$stmt->execute(array($name, $cVersion, $cRelease, $repositoryId));
 					}
 
-					// Marks this package as seen
-					$knownPackages[$name] = array('version' => $version, 'release' => $release);
+					// Create new package object
+					$package = new ApsPackage();
+					$package
+						->setName($name)
+						->setVersion($version)
+						->setRelease($release)
+						->setApsVersion($repositoryId)
+						->setVendor($vendor)
+						->setVendorUri($vendorURI)
+						->setUrl($url)
+						->setIconUrl($iconURL)
+						->setCert($certLevel)
+						->setStatus(isset($this->unlockedPackages[$name]) ? 'ok' : 'disabled');
+					$knownPackages[$name] = $package;
+
 					// Create package metadata directory
 					@mkdir($packageMetadataDir, 0750, true);
-					// Save intermediate metadata
-					@file_put_contents("$packageMetadataDir/APP-META.json", json_encode(array(
-						'app_url' => $url,
-						'app_icon_url' => $iconURL,
-						'app_cert_level' => $certLevel,
-						'app_vendor' => $vendor,
-						'app_vendor_uri' => $vendorURI
-					)));
 
-					// Schedule download of APP-META.xml file
+					// Schedule download of package APP-META.xml file
 					$metaFiles[$name] = array('src' => $metaURL, 'trg' => "$packageMetadataDir/APP-META.xml");
 				}
 			}
@@ -230,97 +223,66 @@ class ApsSpiderService extends ApsAbstractService
 	}
 
 	/**
-	 * Update package index by exploring package metadata directories for the given repository
+	 * Update package index
 	 *
 	 * @param string $repoId Repository unique identifier (e.g. 1, 1.1, 1.2, .2.0)
+	 * @param ApsPackage[] $packages Packages
 	 * @return void
 	 */
-	public function updatePackageIndex($repoId)
+	public function updatePackageIndex($repoId, $packages)
 	{
-		$db = $this->getEntityManager()->getConnection();
-		$newPackages = array();
-		$knownPackages = isset($this->packages[$repoId]) ? array_keys($this->packages[$repoId]) : array();
 		$metaDir = $this->getMetadataDir() . '/' . $repoId;
+		$entityManager = $this->getEntityManager();
 
 		// Retrieve list of all available packages
-		$directoryIterator = new \DirectoryIterator($metaDir);
-		foreach ($directoryIterator as $fileInfo) {
+		$packageNames = array();
+		foreach (new \DirectoryIterator($metaDir) as $fileInfo) {
 			if (!$fileInfo->isDot() && $fileInfo->isDir()) {
-				$newPackages[] = $fileInfo->getFileName();
+				$packageNames[] = $fileInfo->getFileName();
 			}
 		}
 
-		if (isset($this->packages[$repoId])) { // Find obsolete packages and mark them as outdated
-			$obsoletePackages = array_diff($knownPackages, $newPackages);
-			if (!empty($obsoletePackages)) {
-				$stmt = $db->prepare('UPDATE `aps_package` SET status = ? WHERE `name` = ? AND `aps_version` = ?');
-				foreach ($obsoletePackages as $name) {
-					$stmt->execute(array('outdated', $name, $repoId));
-				}
-			}
-			unset($obsoletePackages);
-		}
+		foreach ($packages as $package) {
+			$name = $package->getName();
 
-		// Add new packages in database
-		$newPackages = array_diff($newPackages, $knownPackages);
-		if (!empty($newPackages)) {
-			$stmt = $db->prepare(
-				'
-					INSERT INTO aps_package (
-						`name`, `summary`, `version`, `release`, `aps_version`, `category`, `vendor`, `vendor_uri`,
-						`url`, `icon_url`, `cert`, `status`
-					) VALUES(
-						?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-					)
-				'
-			);
+			if (!in_array($package->getName(), $packageNames)) { // Obsolete package
+				$package->setStatus('outdated');
+			} elseif (!$entityManager->contains($package)) { // New package
+				$metaFilePath = $metaDir . '/' . $name . '/APP-META.xml';
 
-			foreach ($newPackages as $package) {
-				$metaFilePath = $metaDir . '/' . $package . '/APP-META.xml';
-				$intermediateMetaFilePath = $metaDir . '/' . $package . '/APP-META.json';
+				if (file_exists($metaFilePath) && filesize($metaFilePath) != 0) { // Retrieves needed data
+					$meta = new ApsDocument($metaDir . '/' . $name . '/APP-META.xml');
 
-				if ( // Retrieves needed data
-					file_exists($metaFilePath) && filesize($metaFilePath) != 0 &&
-					file_exists($intermediateMetaFilePath) && filesize($intermediateMetaFilePath) != 0
-				) {
-					$meta = new ApsDocument($metaDir . '/' . $package . '/APP-META.xml');
-
-					if ($meta->getXPathValue('//aspnet:*', null, false)->length == 0) { // Ignore .net packages
-						$name = $meta->getXPathValue('root:name/text()');
+					if ($meta->getXPathValue('//aspnet:*', null, false)->length == 0) { // Ignore aspnet packages
 						$summary = $meta->getXPathValue('//root:summary/text()');
-						$version = $meta->getXPathValue('root:version/text()');
-						$release = $meta->getXPathValue('root:release/text()');
 						$category = $meta->getXPathValue('//root:category/text()');
 
-						// Get intermediate metadata
-						$meta = json_decode(file_get_contents($intermediateMetaFilePath), JSON_OBJECT_AS_ARRAY);
-						$vendor = isset($meta['app_vendor']) ? $meta['app_vendor'] : '';
-						$vendorURI = isset($meta['app_vendor_uri']) ? $meta['app_vendor_uri'] : '';
-						$url = isset($meta['app_url']) ? $meta['app_url'] : '';
-						$iconURL = isset($meta['app_icon_url']) ? $meta['app_icon_url'] : '';
-						$certLevel = isset($meta['app_cert_level']) ? $meta['app_cert_level'] : '';
-
-						if ( // Only add valid packages
-							$name != '' && $summary != '' && $version != '' && $release != '' && $category != '' &&
-							$vendor != '' && $vendorURI != '' && $url && $iconURL && $certLevel
-						) {
-							$stmt->execute(array(
-								$name, $summary, $version, $release, $repoId, $category, $vendor, $vendorURI, $url,
-								$iconURL, $certLevel, (isset($this->unlockedPackages[$name])) ? 'ok' : 'disabled'
-							));
-
+						if ($summary != '' && $category != '') { // Only add valid packages
+							$package
+								->setSummary($summary)
+								->setCategory($category);
+							$entityManager->persist($package);
 							continue;
 						}
 					}
 				}
 
-				utils_removeDir($metaDir . '/' . $package); // Remove ignored/invalid package metadata
+				utils_removeDir($metaDir . '/' . $name); // Remove ignored/invalid package metadata
 			}
+		}
 
-			// Removes any outdated package which is not used
-			$db->exec(
-				"DELETE FROM `aps_package` WHERE `status` = 'outdated' AND `id` NOT IN(SELECT `package_id` FROM `aps_instance`)"
-			);
+		$entityManager->flush();
+
+		foreach ($packages as $package) {
+			if ($package->getStatus() == 'outdated') {
+				if (!$entityManager->getRepository('Aps:ApsInstance')->findOneBy(array('package' => $package))) {
+					utils_removeDir($metaDir . '/' . $package->getName());
+					utils_removeDir(
+						$this->getPackageDir() . '/' . $package->getName() . '-' . $package->getVersion() . '-' .
+						$package->getRelease() . '.app.zip'
+					);
+				}
+			}
 		}
 	}
 
@@ -480,6 +442,8 @@ class ApsSpiderService extends ApsAbstractService
 
 	/**
 	 * Release exclusive lock
+	 *
+	 * @return void
 	 */
 	public function releaseLock()
 	{
