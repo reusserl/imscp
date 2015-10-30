@@ -167,22 +167,21 @@ class ApsSpiderService extends ApsAbstractService
 				$packageMetadataDir = "$metadataDir/$name";
 				$cVersion = null;
 				$cRelease = null;
-				$isKnowVersion = false;
+				$isKnown = false;
 				if (isset($knownPackages[$name])) {
 					$cVersion = $knownPackages[$name]['version'];
 					$cRelease = $knownPackages[$name]['release'];
-					$isKnowVersion = true;
+					$isKnown = true;
 				}
 
-				$needUpdate = ($isKnowVersion) ? (version_compare("$cVersion.$cRelease", "$version.$release", '<')) : false;
-
-				$isBroken = ($isKnowVersion && !$needUpdate) ? (
+				$needUpdate = ($isKnown) ? (version_compare("$cVersion.$cRelease", "$version.$release", '<')) : false;
+				$isBroken = ($isKnown && !$needUpdate) ? (
 					!file_exists("$packageMetadataDir/APP-META.xml") || filesize("$packageMetadataDir/APP-META.xml") == 0 ||
 					!file_exists("$packageMetadataDir/APP-META.json") || filesize("$packageMetadataDir/APP-META.json") == 0
 				) : false;
 
 				// Continue only if a newer version is available, or if there is no valid APP-META.xml or APP-DATA.json file
-				if (!$isKnowVersion || $needUpdate || $isBroken) {
+				if (!$isKnown || $needUpdate || $isBroken) {
 					if ($needUpdate || $isBroken) {
 						utils_removeDir("$metadataDir/$name");
 
