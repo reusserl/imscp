@@ -55,7 +55,7 @@ class ApsDocument
 		'l' => 'http://apstandard.com/ns/1/licensing',
 		'mail' => 'http://apstandard.com/ns/1/mail',
 		'php' => 'http://apstandard.com/ns/1/php',
-		'pvc', 'http://apstandard.com/ns/1/pvc',
+		'pvc' => 'http://apstandard.com/ns/1/pvc',
 		'svc' => 'http://apstandard.com/ns/1/service'
 	);
 
