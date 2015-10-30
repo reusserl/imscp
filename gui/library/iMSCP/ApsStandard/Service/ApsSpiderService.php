@@ -67,7 +67,7 @@ class ApsSpiderService extends ApsAbstractService
 					$this->packages[$package->getApsVersion()][$package->getName()] = $package;
 
 					if ($package->getStatus() == 'ok') {
-						$this->unlockedPackages[$package->getName()] = $package;
+						$this->unlockedPackages[] = $package->getName();
 					}
 				}
 			}
@@ -205,7 +205,7 @@ class ApsSpiderService extends ApsAbstractService
 						->setUrl($url)
 						->setIconUrl($iconURL)
 						->setCert($certLevel)
-						->setStatus(isset($this->unlockedPackages[$name]) ? 'ok' : 'disabled');
+						->setStatus(in_array($name, $this->unlockedPackages) ? 'ok' : 'disabled');
 					$knownPackages[$name] = $package;
 
 					// Create package metadata directory
