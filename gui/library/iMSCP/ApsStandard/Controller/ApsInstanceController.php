@@ -20,10 +20,9 @@
 
 namespace iMSCP\ApsStandard\Controller;
 
-use iMSCP\ApsStandard\Service\ApsInstanceService as InstanceService;
-use iMSCP\ApsStandard\Service\ApsSettingFormService as SettingFormService;
-use iMSCP_Authentication as Auth;
-use Symfony\Component\HttpFoundation\JsonResponse as Response;
+use iMSCP\ApsStandard\Service\ApsInstanceService;
+use iMSCP\ApsStandard\Service\ApsInstanceSettingService;
+use iMSCP\ApsStandard\Service\ApsPackageService;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -32,26 +31,7 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class ApsInstanceController extends ApsAbstractController
 {
-	const INSTANCE_ENTITY_CLASS = 'iMSCP\ApsStandard\Entity\ApsInstance';
-
-	/**
-	 * @var InstanceService
-	 */
-	protected $instanceService;
-
-	/**
-	 * Constructor
-	 *
-	 * @param Request $request
-	 * @param Response $response
-	 * @param Auth $auth
-	 * @param instanceService $instanceService
-	 */
-	public function __construct(Request $request, Response $response, Auth $auth, InstanceService $instanceService)
-	{
-		parent::__construct($request, $response, $auth);
-		$this->instanceService = $instanceService;
-	}
+	const INSTANCE_ENTITY_CLASS = 'iMSCP\\ApsStandard\\Entity\\ApsInstance';
 
 	/**
 	 * {@inheritdoc}
@@ -85,7 +65,7 @@ class ApsInstanceController extends ApsAbstractController
 			}
 		} catch (\Exception $e) {
 			write_log(sprintf('Could not handle request: %s', $e->getMessage()), E_USER_ERROR);
-			$this->createResponseFromException($e);
+			$this->fillResponseFromException($e);
 		}
 
 		$this->getResponse()->prepare($this->getRequest())->send();
@@ -110,21 +90,21 @@ class ApsInstanceController extends ApsAbstractController
 	 */
 	protected function newAction()
 	{
-		$form = $this->getSettingFormService()->getForm($this->getRequest()->query->getInt('id'));
-		$this->getResponse()->setData($form);
+		$package = $this->getPackageService()->getPackage($this->getRequest()->query->getInt('id'));
+		$instanceSettings = $this->getInstanceSettingService()->getSettingsFromMetadataFile($package);
+		$this->getResponse()->setData($instanceSettings);
 	}
 
 	/**
 	 * Create a new application instance
-	 *
 	 * @throws \Exception
-	 * @throws \iMSCP_Exception
 	 * @return void
 	 */
 	protected function createAction()
 	{
-		$this->getInstanceService()->createInstance($this->getRequest()->getContent());
-		set_page_message(tr('Instance has been scheduled for creation.'), 'success');
+		$package = $this->getPackageService()->getPackage($this->getRequest()->query->getInt('id'));
+		$settings = $this->getInstanceSettingService()->getSettingsFromPayload($package, $this->getRequest()->getContent());
+		$this->getInstanceService()->createInstance($package, $settings);
 		$this->getResponse()->setStatusCode(201);
 	}
 
@@ -155,20 +135,30 @@ class ApsInstanceController extends ApsAbstractController
 	/**
 	 * Get package service
 	 *
-	 * @return InstanceService
+	 * @return ApsInstanceService
 	 */
 	protected function getInstanceService()
 	{
-		return $this->instanceService;
+		return $this->getServiceLocator()->get('ApsInstanceService');
 	}
 
 	/**
 	 * Get setting form service
 	 *
-	 * @return SettingFormService
+	 * @return ApsPackageService
 	 */
-	protected function getSettingFormService()
+	protected function getPackageService()
 	{
-		return $this->getServiceLocator()->get('ApsSettingFormService');
+		return $this->getServiceLocator()->get('ApsPackageService');
+	}
+
+	/**
+	 * Get setting form service
+	 *
+	 * @return ApsInstanceSettingService
+	 */
+	protected function getInstanceSettingService()
+	{
+		return $this->getServiceLocator()->get('ApsInstanceSettingService');
 	}
 }

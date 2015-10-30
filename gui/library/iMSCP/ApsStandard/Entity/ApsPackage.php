@@ -21,10 +21,8 @@
 namespace iMSCP\ApsStandard\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use JMS\Serializer\Annotation AS JMS;
-use Symfony\Component\Validator\Mapping\ClassMetadata;
+use JMS\Serializer\Annotation as JMS;
 use Symfony\Component\Validator\Constraints as Assert;
-use iMSCP\Validate\ValidationInterface;
 
 /**
  * Class ApsPackage
@@ -34,7 +32,7 @@ use iMSCP\Validate\ValidationInterface;
  * @ORM\Entity
  * @JMS\AccessType("public_method")
  */
-class ApsPackage implements ValidationInterface
+class ApsPackage
 {
 	/**
 	 * @var integer
@@ -74,8 +72,8 @@ class ApsPackage implements ValidationInterface
 	/**
 	 * @var integer
 	 *
-	 * @ORM\Column(name="release", type="integer", nullable=false, options={"unsigned":true})
-	 * @JMS\Type("integer")
+	 * @ORM\Column(name="`release`", type="string", length=255, nullable=false)
+	 * @JMS\Type("string")
 	 */
 	private $release;
 
@@ -140,6 +138,7 @@ class ApsPackage implements ValidationInterface
 	 *
 	 * @ORM\Column(name="status", type="string", length=255, nullable=false)
 	 * @JMS\Type("string")
+	 * @Assert\Choice(choices = {"locked", "unlocked", "outdated", "obsolete"}, message = "Invalid status.")
 	 */
 	private $status;
 
@@ -415,17 +414,5 @@ class ApsPackage implements ValidationInterface
 	public function getStatus()
 	{
 		return $this->status;
-	}
-
-	/**
-	 * Load validation metadata
-	 *
-	 * @param ClassMetadata $metadata
-	 * @return void
-	 */
-	public static function loadValidationMetadata(ClassMetadata $metadata)
-	{
-		// Right now, only the status field is mutable. Thus, we process validation only for that field.
-		$metadata->addPropertyConstraint('status', new Assert\Choice(array('choices' => array('ok', 'disabled'))));
 	}
 }

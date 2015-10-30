@@ -77,9 +77,7 @@ abstract class ApsAbstractController implements ServiceLocatorAwareInterface
 	public abstract function handleRequest();
 
 	/**
-	 * Set service locator
-	 *
-	 * @param ServiceLocatorInterface $serviceLocator
+	 * {@inheritdoc}
 	 */
 	public function setServiceLocator(ServiceLocatorInterface $serviceLocator)
 	{
@@ -87,9 +85,7 @@ abstract class ApsAbstractController implements ServiceLocatorAwareInterface
 	}
 
 	/**
-	 * Get service locator
-	 *
-	 * @return ServiceLocatorInterface
+	 * {@inheritdoc}
 	 */
 	public function getServiceLocator()
 	{
@@ -137,19 +133,18 @@ abstract class ApsAbstractController implements ServiceLocatorAwareInterface
 	}
 
 	/**
-	 * Create response from the given exception
+	 * Fill response from the given exception
 	 *
 	 * @throws \Exception
 	 * @param \Exception $e
 	 * @return void
 	 */
-	public function createResponseFromException(\Exception $e)
+	public function fillResponseFromException(\Exception $e)
 	{
 		$code = $e->getCode();
 
 		if (!is_int($code) || $code < 100 || $code >= 600) {
 			$code = 500;
-
 			$identity = $this->getAuth()->getIdentity();
 
 			if (

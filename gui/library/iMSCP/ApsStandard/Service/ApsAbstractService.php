@@ -21,8 +21,8 @@
 namespace iMSCP\ApsStandard\Service;
 
 use Doctrine\ORM\EntityManager;
+use iMSCP_Authentication as Auth;
 use iMSCP\Events\EventManagerAwareInterface;
-use iMSCP\Validate\ValidatorProviderInterface;
 use iMSCP_Events_Aggregator as EventManager;
 use iMSCP_Events_Manager_Interface as EventManagerInterface;
 use iMSCP_Registry as Registry;
@@ -30,23 +30,25 @@ use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class AbstractApsStandardService
+ * Class ApsAbstractService
  * @package iMSCP\ApsStandard\Service
  */
-abstract class AbstractApsService implements
-	EventManagerAwareInterface,
-	ServiceLocatorAwareInterface,
-	ValidatorProviderInterface
+abstract class ApsAbstractService implements EventManagerAwareInterface, ServiceLocatorAwareInterface
 {
+	/**
+	 * @var ServiceLocatorInterface
+	 */
+	protected $serviceLocator;
+
 	/**
 	 * @var EventManager
 	 */
 	protected $eventManager;
 
-	/**
-	 * @var ServiceLocatorInterface
+	/***
+	 * @var Auth
 	 */
-	protected $serviceLocator;
+	protected $auth;
 
 	/**
 	 * @var EntityManager
@@ -60,7 +62,7 @@ abstract class AbstractApsService implements
 		'1',
 		'1.1',
 		'1.2',
-		// '2.0' Not supported yet (must add routines to handle new schema)
+		// '2.0' Not supported yet
 	);
 
 	/**
@@ -81,15 +83,27 @@ abstract class AbstractApsService implements
 	/**
 	 * Constructor
 	 *
-	 * @param EntityManager $entityManager
 	 * @throws \iMSCP_Exception
+	 * @param EntityManager $entityManager
+	 * @param Auth $auth
 	 */
-	public function __construct(EntityManager $entityManager)
+	public function __construct(EntityManager $entityManager, Auth $auth)
 	{
 		$this->entityManager = $entityManager;
+		$this->auth = $auth;
 		$config = Registry::get('config');
 		$this->setMetadataDir($config['CACHE_DATA_DIR'] . '/aps_standard/metadata');
 		$this->setPackageDir($config['CACHE_DATA_DIR'] . '/aps_standard/packages');
+		$this->init();
+	}
+
+	/**
+	 * Initialize service (Allow child classes to not override constructor)
+	 *
+	 * @return void
+	 */
+	public function init()
+	{
 	}
 
 	/**
@@ -144,6 +158,16 @@ abstract class AbstractApsService implements
 	public function getEntityManager()
 	{
 		return $this->entityManager;
+	}
+
+	/**
+	 * Get authentication object
+	 *
+	 * @return Auth
+	 */
+	protected function getAuth()
+	{
+		return $this->auth;
 	}
 
 	/**

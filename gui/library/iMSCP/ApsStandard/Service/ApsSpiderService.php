@@ -59,14 +59,14 @@ class ApsSpiderService extends ApsAbstractService
 			// Retrieves list of known packages
 			/** @var ApsPackage[] $packages */
 			$packages = $this->getEntityManager()->getRepository('Aps:ApsPackage')->findBy(array(
-				'status' => array('ok', 'disabled')
+				'status' => array('locked', 'unlocked')
 			));
 
 			if (!empty($packages)) {
 				foreach ($packages as $package) {
 					$this->packages[$package->getApsVersion()][$package->getName()] = $package;
 
-					if ($package->getStatus() == 'ok') {
+					if ($package->getStatus() == 'unlocked') {
 						$this->unlockedPackages[] = $package->getName();
 					}
 				}
@@ -125,6 +125,7 @@ class ApsSpiderService extends ApsAbstractService
 
 	/**
 	 * Release lock file
+	 *
 	 * @return void
 	 */
 	public function __destruct()
@@ -181,7 +182,7 @@ class ApsSpiderService extends ApsAbstractService
 					!file_exists("$packageMetadataDir/APP-META.xml") || filesize("$packageMetadataDir/APP-META.xml") == 0
 				) : false;
 
-				// Continue only if a newer version is available, or if there is no valid APP-META.xml or APP-DATA.json file
+				// Continue only if a newer version is available, or if there is no valid APP-META.xml
 				if (!$isKnown || $needUpdate || $isBroken) {
 					if ($needUpdate || $isBroken) {
 						$package = $knownPackages[$name];
@@ -205,7 +206,7 @@ class ApsSpiderService extends ApsAbstractService
 						->setUrl($url)
 						->setIconUrl($iconURL)
 						->setCert($certLevel)
-						->setStatus(in_array($name, $this->unlockedPackages) ? 'ok' : 'disabled');
+						->setStatus(in_array($name, $this->unlockedPackages) ? 'unlocked' : 'locked');
 					$knownPackages[$name] = $package;
 
 					// Create package metadata directory
@@ -246,7 +247,7 @@ class ApsSpiderService extends ApsAbstractService
 			$name = $package->getName();
 
 			if (!in_array($package->getName(), $packageNames)) { // Obsolete package
-				$package->setStatus('outdated');
+				$package->setStatus('obsolete');
 			} elseif (!$entityManager->contains($package)) { // New package
 				$metaFilePath = $metaDir . '/' . $name . '/APP-META.xml';
 
@@ -274,16 +275,25 @@ class ApsSpiderService extends ApsAbstractService
 		$entityManager->flush();
 
 		foreach ($packages as $package) {
-			if ($package->getStatus() == 'outdated') {
+			$status = $package->getStatus();
+
+			if (in_array($status, array('outdated', 'obsolete'))) {
 				if (!$entityManager->getRepository('Aps:ApsInstance')->findOneBy(array('package' => $package))) {
-					utils_removeDir($metaDir . '/' . $package->getName());
+					if ($status == 'obsolete') {
+						utils_removeDir($metaDir . '/' . $package->getName());
+					}
+
 					utils_removeDir(
 						$this->getPackageDir() . '/' . $package->getName() . '-' . $package->getVersion() . '-' .
 						$package->getRelease() . '.app.zip'
 					);
+
+					$entityManager->remove($package);
 				}
 			}
 		}
+
+		$entityManager->flush();
 	}
 
 	/**

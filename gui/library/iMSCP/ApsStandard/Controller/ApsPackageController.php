@@ -20,9 +20,7 @@
 
 namespace iMSCP\ApsStandard\Controller;
 
-use iMSCP\ApsStandard\Service\ApsPackageService as PackageService;
-use iMSCP_Authentication as Auth;
-use Symfony\Component\HttpFoundation\JsonResponse as Response;
+use iMSCP\ApsStandard\Service\ApsPackageService;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -32,23 +30,9 @@ use Symfony\Component\HttpFoundation\Request;
 class ApsPackageController extends ApsAbstractController
 {
 	/**
-	 * @var PackageService
+	 * @var ApsPackageService
 	 */
 	protected $packageService;
-
-	/**
-	 * Constructor
-	 *
-	 * @param Request $request
-	 * @param Response $response
-	 * @param Auth $auth
-	 * @param PackageService $packageService
-	 */
-	public function __construct(Request $request, Response $response, Auth $auth, PackageService $packageService)
-	{
-		parent::__construct($request, $response, $auth);
-		$this->packageService = $packageService;
-	}
 
 	/**
 	 * {@inheritdoc}
@@ -75,7 +59,7 @@ class ApsPackageController extends ApsAbstractController
 			}
 		} catch (\Exception $e) {
 			write_log(sprintf('Could not handle request: %s', $e->getMessage()), E_USER_ERROR);
-			$this->createResponseFromException($e);
+			$this->fillResponseFromException($e);
 		}
 
 		$this->getResponse()->prepare($this->getRequest())->send();
@@ -134,16 +118,16 @@ class ApsPackageController extends ApsAbstractController
 		}
 
 		$this->getPackageService()->updatePackageIndex();
-		$this->getResponse()->setData(array('message' => tr('Package index has been updated.')));
+		$this->getResponse()->setData(array('redirect' =>  'aps_packages.php'));
 	}
 
 	/**
 	 * Get package service
 	 *
-	 * @return PackageService
+	 * @return ApsPackageService
 	 */
 	protected function getPackageService()
 	{
-		return $this->packageService;
+		return $this->getServiceLocator()->get('ApsPackageService');
 	}
 }

@@ -20,15 +20,22 @@
 
 namespace iMSCP\ApsStandard\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use iMSCP\Entity\Admin;
+use JMS\Serializer\Annotation AS JMS;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Class ApsInstance
  *
  * @package iMSCP\ApsStandard\Entity
- * @ORM\Table(name="aps_instance", indexes={@ORM\Index(name="pid", columns={"pid"}), @ORM\Index(name="uid", columns={"uid"})})
+ * @ORM\Table(
+ *   name="aps_instance",
+ *   indexes={@ORM\Index(name="package_id", columns={"package_id"}), @ORM\Index(name="owner_id", columns={"owner_id"})}
+ * )
  * @ORM\Entity
+ * @JMS\AccessType("public_method")
  */
 class ApsInstance
 {
@@ -37,27 +44,18 @@ class ApsInstance
 	 * @ORM\Column(name="id", type="integer", nullable=false, options={"unsigned":true})
 	 * @ORM\Id
 	 * @ORM\GeneratedValue(strategy="IDENTITY")
+	 * @JMS\Type("integer")
+	 * @JMS\AccessType("property")
 	 */
 	private $id;
-
-	/**
-	 * @var string
-	 * @ORM\Column(name="settings", type="json_array", length=65535, nullable=false)
-	 */
-	private $settings;
-
-	/**
-	 * @var string
-	 * @ORM\Column(name="status", type="string", length=255, nullable=false)
-	 */
-	private $status;
 
 	/**
 	 * @var \iMSCP\ApsStandard\Entity\ApsPackage
 	 * @ORM\ManyToOne(targetEntity="iMSCP\ApsStandard\Entity\ApsPackage")
 	 * @ORM\JoinColumns({
-	 *   @ORM\JoinColumn(name="pid", referencedColumnName="id", onDelete="SET NULL")
+	 *   @ORM\JoinColumn(name="package_id", referencedColumnName="id", onDelete="SET NULL")
 	 * })
+	 * @Assert\Valid()
 	 */
 	private $package;
 
@@ -65,15 +63,38 @@ class ApsInstance
 	 * @var \iMSCP\Entity\Admin
 	 * @ORM\ManyToOne(targetEntity="iMSCP\Entity\Admin")
 	 * @ORM\JoinColumns({
-	 *   @ORM\JoinColumn(name="uid", referencedColumnName="admin_id", nullable=false, onDelete="CASCADE")
+	 *   @ORM\JoinColumn(name="owner_id", referencedColumnName="admin_id", nullable=false, onDelete="CASCADE")
 	 * })
+	 * @Assert\Valid()
 	 */
 	private $owner;
 
 	/**
+	 * @var array
+	 * @ORM\OneToMany(targetEntity="iMSCP\ApsStandard\Entity\ApsInstanceSetting", mappedBy="instance", cascade={"persist"})
+	 */
+	private $settings;
+
+	/**
+	 * @var string
+	 * @ORM\Column(name="status", type="string", length=255, nullable=false)
+	 * @JMS\Type("string")
+	 * @Assert\Choice(choices = {"ok", "toadd", "tochange", "todelete"}, message = "Invalid status.")
+	 */
+	private $status;
+
+	/**
+	 * Constructor
+	 */
+	public function __construct()
+	{
+		$this->settings = new ArrayCollection();
+	}
+
+	/**
 	 * Get id
 	 *
-	 * @return integer
+	 * @return integer|null
 	 */
 	public function getId()
 	{
@@ -81,51 +102,7 @@ class ApsInstance
 	}
 
 	/**
-	 * Set settings
-	 *
-	 * @param array $settings
-	 * @return ApsInstance
-	 */
-	public function setSettings(array $settings)
-	{
-		$this->settings = $settings;
-		return $this;
-	}
-
-	/**
-	 * Get settings
-	 *
-	 * @return array
-	 */
-	public function getSettings()
-	{
-		return $this->settings;
-	}
-
-	/**
-	 * Set status
-	 *
-	 * @param string $status
-	 * @return ApsInstance
-	 */
-	public function setStatus($status)
-	{
-		$this->status = $status;
-		return $this;
-	}
-
-	/**
-	 * Get status
-	 *
-	 * @return string
-	 */
-	public function getStatus()
-	{
-		return $this->status;
-	}
-
-	/**
-	 * Set pid
+	 * Set package that belong to this instance
 	 *
 	 * @param ApsPackage|null $package
 	 * @return ApsInstance
@@ -137,34 +114,94 @@ class ApsInstance
 	}
 
 	/**
-	 * Get package
+	 * Get package that belongs to this instance
 	 *
 	 * @return ApsPackage
 	 */
-	public function getPid()
+	public function getPackage()
 	{
 		return $this->package;
 	}
 
 	/**
-	 * Set owner
+	 * Set owner of this instance
 	 *
 	 * @param Admin $owner
 	 * @return ApsInstance
 	 */
-	public function setUid(Admin $owner = null)
+	public function setOwner(Admin $owner = null)
 	{
 		$this->owner = $owner;
 		return $this;
 	}
 
 	/**
-	 * Get owner
+	 * Get owner of this instance
 	 *
 	 * @return Admin
 	 */
 	public function getOwner()
 	{
 		return $this->owner;
+	}
+
+	/**
+	 * Get settings that belongs to this instance
+	 *
+	 * @return ArrayCollection[ApsInstanceSetting]
+	 */
+	public function getSettings()
+	{
+		return $this->settings;
+	}
+
+	/**
+	 * Set settings that belongs to this instance
+	 *
+	 * @param array $settings
+	 * @return $this
+	 */
+	public function setSettings(array $settings)
+	{
+		foreach($settings as $setting) {
+			$this->addSetting($setting);
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Add the given setting
+	 *
+	 * @param ApsInstanceSetting $setting
+	 * @return $this
+	 */
+	public function addSetting(ApsInstanceSetting $setting)
+	{
+		$this->settings[] = $setting;
+		$setting->setInstance($this);
+		return $this;
+	}
+
+	/**
+	 * Set instance status
+	 *
+	 * @param string $status
+	 * @return ApsInstance
+	 */
+	public function setStatus($status)
+	{
+		$this->status = $status;
+		return $this;
+	}
+
+	/**
+	 * Get instance status
+	 *
+	 * @return string
+	 */
+	public function getStatus()
+	{
+		return $this->status;
 	}
 }

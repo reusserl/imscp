@@ -20,45 +20,19 @@
 
 namespace iMSCP\ApsStandard\Service;
 
-use Doctrine\ORM\EntityManager;
 use iMSCP\ApsStandard\ApsDocument;
 use iMSCP\ApsStandard\Entity\ApsPackage;
 use iMSCP\ApsStandard\Entity\ApsPackageDetails;
-use iMSCP_Authentication as Auth;
+use JMS\Serializer\Serializer;
 use Zend_Session as SessionHandler;
 
 /**
  * Class ApsPackageService
  * @package iMSCP\ApsStandard\Service
  */
-class ApsPackageService extends AbstractApsService
+class ApsPackageService extends ApsAbstractService
 {
-	/***
-	 * @var Auth
-	 */
-	protected $auth;
-
-	/**
-	 * Constructor
-	 *
-	 * @param EntityManager $entityManager
-	 * @param Auth $auth
-	 */
-	public function __construct(EntityManager $entityManager, Auth $auth)
-	{
-		parent::__construct($entityManager);
-		$this->auth = $auth;
-	}
-
-	/**
-	 * Get authentication object
-	 *
-	 * @return Auth
-	 */
-	public function getAuth()
-	{
-		return $this->auth;
-	}
+	const PACKAGE_ENTITY_CLASS = 'iMSCP\\ApsStandard\\Entity\\ApsPackage';
 
 	/**
 	 * Get all packages
@@ -68,10 +42,43 @@ class ApsPackageService extends AbstractApsService
 	public function getPackages()
 	{
 		$this->getEventManager()->dispatch('onGetApsPackages', array('context' => $this));
-		$packages = $this->getEntityManager()->getRepository('ApsStandard:ApsPackage')->findBy(array(
-			'status' => ($this->getAuth()->getIdentity()->admin_type === 'admin') ? array('ok', 'disabled') : 'ok'
+		$packages = $this->getEntityManager()->getRepository('Aps:ApsPackage')->findBy(array(
+			'status' => ($this->getAuth()->getIdentity()->admin_type === 'admin') ? array('locked', 'unlocked') : 'unlocked'
 		));
 		return $packages;
+	}
+
+	/**
+	 * Get one package
+	 *
+	 * @throws \Exception
+	 * @param int $id Package identifier
+	 * @return ApsPackage
+	 */
+	public function getPackage($id)
+	{
+		$this->getEventManager()->dispatch('onGetApsPackage', array('id' => $id, 'context' => $this));
+		$package = $this->getEntityManager()->getRepository('Aps:ApsPackage')->findOneBy(array(
+			'id' => $id,
+			'status' => ($this->getAuth()->getIdentity()->admin_type === 'admin') ? array('locked', 'unlocked') : 'unlocked'
+		));
+
+		if (!$package) {
+			throw new \Exception(tr('Package not found.'), 404);
+		}
+
+		return $package;
+	}
+
+	/**
+	 * Get package from the given JSON payload
+	 *
+	 * @param string $payload JSON payload
+	 * @return ApsPackage
+	 */
+	public function getPackageFromPayload($payload)
+	{
+		return $this->getSerializer()->deserialize($payload, self::PACKAGE_ENTITY_CLASS, 'json');
 	}
 
 	/**
@@ -83,13 +90,8 @@ class ApsPackageService extends AbstractApsService
 	 */
 	public function getPackageDetails($id)
 	{
-		$this->getEventManager()->dispatch('onGetApsPackageDetails', array('id' => $id, 'context' => $this));
-		$package = $this->getEntityManager()->getRepository('ApsStandard:ApsPackage')->find($id);
-
-		if (!$package) {
-			throw new \Exception(tr('Package not found.'), 404);
-		}
-
+		$package = $this->getPackage($id);
+		$this->getEventManager()->dispatch('onGetApsPackageDetails', array('package' => $package, 'context' => $this));
 		$meta = $this->getMetadataDir() . '/' . $package->getApsVersion() . '/' . $package->getName() . '/APP-META.xml';
 
 		if (!file_exists($meta) || filesize($meta) == 0) {
@@ -98,9 +100,9 @@ class ApsPackageService extends AbstractApsService
 
 		$doc = new ApsDocument($meta);
 		$packageDetails = new ApsPackageDetails();
-		$packageDetails->setDescription($doc->getXPathValue("//root:description"));
-		$packageDetails->setPackager($doc->getXPathValue("//root:packager/root:name") ?:
-			parse_url($doc->getXPathValue("//root:package-homepage"), PHP_URL_HOST) ?: tr('Unknown')
+		$packageDetails->setDescription(str_replace(array('  ', "\n"), '', trim($doc->getXPathValue('//root:description'))));
+		$packageDetails->setPackager($doc->getXPathValue('//root:packager/root:name') ?:
+			parse_url($doc->getXPathValue('//root:package-homepage'), PHP_URL_HOST) ?: tr('Unknown')
 		);
 		return $packageDetails;
 	}
@@ -108,28 +110,19 @@ class ApsPackageService extends AbstractApsService
 	/**
 	 * Update package status
 	 *
-	 * @throws \Exception
 	 * @param int $id Package identitier
 	 * @param string $status New package status
-	 * @return ApsPackage
+	 * @return void
 	 */
 	public function updatePackageStatus($id, $status)
 	{
+		$package = $this->getPackage($id);
 		$this->getEventManager()->dispatch('onUpdateApsPackageStatus', array(
-			'id' => $id, 'status' => $status, 'context' => $this
+			'package' => $package, 'status' => $status, 'context' => $this
 		));
-		$entityManager = $this->getEntityManager();
-		/** @var ApsPackage $package */
-		$package = $entityManager->getRepository('ApsStandard:ApsPackage')->find($id);
-
-		if (!$package) {
-			throw new \Exception(tr('Package not found.'), 404);
-		}
-
 		$package->setStatus($status);
 		$this->validatePackage($package);
-		$entityManager->flush($package);
-		return $package;
+		$this->getEntityManager()->flush($package);
 	}
 
 	/**
@@ -154,7 +147,17 @@ class ApsPackageService extends AbstractApsService
 	public function validatePackage(ApsPackage $package)
 	{
 		if (count($this->getValidator()->validate($package)) > 0) {
-			throw new \DomainException(tr('Invalid data provided.'), 400);
+			throw new \DomainException(tr('Invalid package.'), 400);
 		}
+	}
+
+	/**
+	 * Get serializer service
+	 *
+	 * @return Serializer
+	 */
+	protected function getSerializer()
+	{
+		return $this->getServiceLocator()->get('Serializer');
 	}
 }

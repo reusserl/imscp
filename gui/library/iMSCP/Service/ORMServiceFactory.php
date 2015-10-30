@@ -41,8 +41,8 @@ class ORMServiceFactory implements FactoryInterface
 		$db = $serviceLocator->get('Database');
 		$serviceLocator->get('Annotation');
 		$devmode = (bool)Registry::get('config')->DEVMODE;
-		$config = Setup::createAnnotationMetadataConfiguration( // TODO make the path list configurable
-			array(
+		$emConfig = Setup::createAnnotationMetadataConfiguration(
+			array( // TODO make the path list configurable (require config service)
 				LIBRARY_PATH . '/iMSCP/Entity',
 				LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'
 			),
@@ -52,29 +52,29 @@ class ORMServiceFactory implements FactoryInterface
 			false // Do not use simple annotation driver which is not compatible with auto-generated entities
 		);
 
-		$config->setProxyNamespace('iMSCP\\Proxies');
+		$emConfig->setProxyNamespace('iMSCP\\Proxies');
 
-		//$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('Doctrine\DBAL\Driver\PDOStatement', array()));
-		$entityManager = EntityManager::create(
-			array(
-				'driver' => 'pdo_mysql',
-				'pdo' => $db::getRawInstance() // Reuse PDO instance that has been created by i-MSCP
-			),
-			$config
-		);
-
-		//$config->getMetadataDriverImpl()->addPaths(array(LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'));
+		//$emConfig->getMetadataDriverImpl()->addPaths(array(LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'));
 		// Map MySQL ENUM type to varchar (Not needed ATM)
 		//$connection = $entityManager->getConnection();
 		//$platform = $connection->getDatabasePlatform();
 		//$platform->registerDoctrineTypeMapping('enum', 'string');
 
 		// Right now, we use Doctrine for APS Standard feature only. Thus, we ignore most of tables
-		$entityManager->getConfiguration()->setFilterSchemaAssetsExpression('/^(?:admin|aps_.*)$/');
+		$emConfig->setFilterSchemaAssetsExpression('/^(?:admin|aps_.*)$/');
 
 		// Add namespace for core entities
-		$entityManager->getConfiguration()->addEntityNamespace('Core', '\\iMSCP\\Entity\\');
+		$emConfig->addEntityNamespace('Core', '\\iMSCP\\Entity\\');
 
-		return $entityManager;
+		//$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('Doctrine\DBAL\Driver\PDOStatement', array()));
+		$em = EntityManager::create(
+			array(
+				'driver' => 'pdo_mysql',
+				'pdo' => $db::getRawInstance() // Reuse PDO instance from Database service
+			),
+			$emConfig
+		);
+
+		return $em;
 	}
 }

@@ -20,28 +20,36 @@
 
 namespace iMSCP\ApsStandard\Service;
 
-use iMSCP_Authentication as Authentication;
-use Zend\ServiceManager\FactoryInterface;
+use Doctrine\ORM\EntityManager;
+use iMSCP_Authentication as Auth;
+use Zend\ServiceManager\AbstractFactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class ApsPackageServiceFactory
+ * Class ApsServiceAbstractFactory
  * @package iMSCP\ApsStandard\Service
  */
-class ApsPackageServiceFactory implements FactoryInterface
+class ApsServiceAbstractFactory implements AbstractFactoryInterface
 {
 	/**
-	 * Create APS package service
-	 *
-	 * @param ServiceLocatorInterface $serviceLocator
-	 * @return mixed
+	 * {@inheritdoc}
 	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
+	public function canCreateServiceWithName(ServiceLocatorInterface $serviceLocator, $name, $requestedName)
 	{
-		/** @var \Doctrine\ORM\EntityManager $entityManager */
-		$entityManager = $serviceLocator->get('EntityManager');
-		// Add namespace for APS standard entities
-		$entityManager->getConfiguration()->addEntityNamespace('ApsStandard', '\\iMSCP\\ApsStandard\\Entity\\');
-		return new ApsPackageService($entityManager, Authentication::getInstance());
+		return class_exists(__NAMESPACE__ . '\\' . $requestedName);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function createServiceWithName(ServiceLocatorInterface $serviceLocator, $name, $requestedName)
+	{
+		/** @var $em $entityManager */
+		$em = $serviceLocator->get('EntityManager');
+		$em->getConfiguration()->addEntityNamespace('Aps', '\\iMSCP\\ApsStandard\\Entity\\');
+		$class = __NAMESPACE__ . '\\' . $requestedName;
+		/** @var ApsAbstractService $service */
+		$service = new $class($em, Auth::getInstance());
+		return $service;
 	}
 }

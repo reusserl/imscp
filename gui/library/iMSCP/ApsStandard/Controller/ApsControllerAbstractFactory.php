@@ -20,33 +20,32 @@
 
 namespace iMSCP\ApsStandard\Controller;
 
-use iMSCP\ApsStandard\Service\ApsInstanceService;
 use iMSCP_Authentication as Auth;
-use Symfony\Component\HttpFoundation\JsonResponse as Response;
-use Symfony\Component\HttpFoundation\Request;
-use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\AbstractFactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class ApsInstanceControllerFactory
+ * Class ApsControllerAbstractFactory
  * @package iMSCP\ApsStandard\Controller
  */
-class ApsInstanceControllerFactory implements FactoryInterface
+class ApsControllerAbstractFactory implements AbstractFactoryInterface
 {
 	/**
-	 * Create service
-	 *
-	 * @param ServiceLocatorInterface $serviceLocator
-	 * @return ApsInstanceController
+	 * {@inheritdoc}
 	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
+	public function canCreateServiceWithName(ServiceLocatorInterface $serviceLocator, $name, $requestedName)
 	{
-		/** @var Request $request */
+		return class_exists(__NAMESPACE__ . '\\' . $requestedName);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function createServiceWithName(ServiceLocatorInterface $serviceLocator, $name, $requestedName)
+	{
 		$request = $serviceLocator->get('Request');
-		$response = new Response();
-		$response->headers->set('Content-Type', 'application/json');
-		/** @var ApsInstanceService $apsInstanceService */
-		$apsInstanceService = $serviceLocator->get('ApsInstanceService');
-		return new ApsInstanceController($request, $response, Auth::getInstance(), $apsInstanceService);
+		$response = $serviceLocator->get('Response');
+		$class = __NAMESPACE__ . '\\' . $requestedName;
+		return new $class($request, $response, Auth::getInstance());
 	}
 }
