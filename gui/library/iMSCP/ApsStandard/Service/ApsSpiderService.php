@@ -255,7 +255,7 @@ class ApsSpiderService extends ApsAbstractService
 		foreach ($packages as $package) {
 			$name = $package->getName();
 
-			if (!in_array($package->getName(), $packageNames)) { // Obsolete package
+			if (!in_array($name, $packageNames)) { // Obsolete package
 				$package->setStatus('obsolete');
 			} elseif (!$entityManager->contains($package)) { // New package
 				$metaFilePath = $metaDir . '/' . $name . '/APP-META.xml';
@@ -292,7 +292,7 @@ class ApsSpiderService extends ApsAbstractService
 						utils_removeDir($metaDir . '/' . $package->getName());
 					}
 
-					utils_removeDir(
+					@unlink(
 						$this->getPackageDir() . '/' . $package->getName() . '-' . $package->getVersion() . '-' .
 						$package->getRelease() . '.app.zip'
 					);
