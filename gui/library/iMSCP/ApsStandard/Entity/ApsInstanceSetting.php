@@ -13,7 +13,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  * @package iMSCP\ApsStandard\Entity
  * @ORM\Table(
  *  name="aps_instance_setting",
- *  indexes={@ORM\Index(name="instance_id", columns={"instance_id"})}
+ *  indexes={@ORM\Index(columns={"instance_id"})}
  * )
  * @ORM\Entity
  * @JMS\AccessType("public_method")
@@ -59,7 +59,7 @@ class ApsInstanceSetting
 	private $metadata = array();
 
 	/**
-	 * Get identifier
+	 * Get instance setting identifier
 	 *
 	 * @return int
 	 */
@@ -91,7 +91,7 @@ class ApsInstanceSetting
 	}
 
 	/**
-	 * Get setting name
+	 * Get instance setting name
 	 *
 	 * @return string
 	 */
@@ -101,7 +101,7 @@ class ApsInstanceSetting
 	}
 
 	/**
-	 * Set setting name
+	 * Set instance setting name
 	 *
 	 * @param string $name
 	 * @return ApsInstanceSetting
@@ -113,17 +113,17 @@ class ApsInstanceSetting
 	}
 
 	/**
-	 * Get setting value
+	 * Get instance setting value
 	 *
 	 * @return string
 	 */
 	public function getValue()
 	{
-		return (string)$this->value;
+		return $this->value;
 	}
 
 	/**
-	 * Set setting value
+	 * Set instance setting value
 	 *
 	 * @param string $value
 	 * @return ApsInstanceSetting
@@ -135,7 +135,7 @@ class ApsInstanceSetting
 	}
 
 	/**
-	 * Get setting metadata
+	 * Get instance setting metadata
 	 *
 	 * @return array
 	 */
@@ -145,7 +145,7 @@ class ApsInstanceSetting
 	}
 
 	/**
-	 * Set setting metadata
+	 * Set instance setting metadata
 	 *
 	 * @param array $metadata
 	 */
@@ -155,7 +155,7 @@ class ApsInstanceSetting
 	}
 
 	/**
-	 * Validate setting value
+	 * Validate instance setting value
 	 *
 	 * @throws \Exception
 	 * @param ExecutionContextInterface $context
@@ -195,6 +195,11 @@ class ApsInstanceSetting
 			case 'float':
 				if (filter_var($value, FILTER_VALIDATE_FLOAT) === false) {
 					$errors[] = tr("Invalid '%s' setting. Float expected.", $metadata['label']);
+				}
+				break;
+			case 'boolean':
+				if(filter_var($value, FILTER_VALIDATE_BOOLEAN) === false) {
+					$errors[] = tr("Invalid '%s' setting. Boolean expected.", $metadata['label']);
 				}
 				break;
 			case 'domain-name':

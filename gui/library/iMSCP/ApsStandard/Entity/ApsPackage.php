@@ -28,7 +28,10 @@ use Symfony\Component\Validator\Constraints as Assert;
  * Class ApsPackage
  *
  * @package iMSCP\ApsStandard\Entity
- * @ORM\Table(name="aps_package")
+ * @ORM\Table(
+ *   name="aps_package",
+ *   indexes={@ORM\Index(columns={"name", "version", "release"}), @ORM\Index(columns={"status"})}
+ * )
  * @ORM\Entity
  * @JMS\AccessType("public_method")
  */
@@ -72,7 +75,7 @@ class ApsPackage
 	/**
 	 * @var integer
 	 *
-	 * @ORM\Column(name="`release`", type="string", length=255, nullable=false)
+	 * @ORM\Column(name="`release`", type="string", length=50, nullable=false)
 	 * @JMS\Type("string")
 	 */
 	private $release;
@@ -143,7 +146,7 @@ class ApsPackage
 	private $status;
 
 	/**
-	 * Get id
+	 * Get package identifier
 	 *
 	 * @return integer
 	 */
@@ -153,7 +156,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Set name
+	 * Set package name
 	 *
 	 * @param string $name
 	 * @return ApsPackage
@@ -165,7 +168,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Get name
+	 * Get package name
 	 *
 	 * @return string
 	 */
@@ -175,7 +178,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Set summary
+	 * Set package summary
 	 *
 	 * @param string $summary
 	 * @return ApsPackage
@@ -187,7 +190,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Get summary
+	 * Get package summary
 	 *
 	 * @return string
 	 */
@@ -197,7 +200,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Set version
+	 * Set package version
 	 *
 	 * @param string $version
 	 * @return ApsPackage
@@ -209,7 +212,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Get version
+	 * Get package version
 	 *
 	 * @return string
 	 */
@@ -219,7 +222,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Set release
+	 * Set package release
 	 *
 	 * @param integer $release
 	 * @return ApsPackage
@@ -231,7 +234,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Get release
+	 * Get package release
 	 *
 	 * @return integer
 	 */
@@ -241,7 +244,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Set apsVersion
+	 * Set package aps version
 	 *
 	 * @param string $apsVersion
 	 * @return ApsPackage
@@ -253,7 +256,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Get apsVersion
+	 * Get package aps version
 	 *
 	 * @return string
 	 */
@@ -263,7 +266,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Set category
+	 * Set package category
 	 *
 	 * @param string $category
 	 * @return ApsPackage
@@ -275,7 +278,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Get category
+	 * Get package category
 	 *
 	 * @return string
 	 */
@@ -285,7 +288,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Set vendor
+	 * Set package vendor
 	 *
 	 * @param string $vendor
 	 * @return ApsPackage
@@ -297,7 +300,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Get vendor
+	 * Get package vendor
 	 *
 	 * @return string
 	 */
@@ -307,7 +310,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Set vendorUri
+	 * Set package vendor URI
 	 *
 	 * @param string $vendorUri
 	 * @return ApsPackage
@@ -319,7 +322,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Get vendorUri
+	 * Get package vendor URI
 	 *
 	 * @return string
 	 */
@@ -329,7 +332,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Set url
+	 * Set package URL
 	 *
 	 * @param string $url
 	 * @return ApsPackage
@@ -341,7 +344,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Get url
+	 * Get package URL
 	 *
 	 * @return string
 	 */
@@ -351,7 +354,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Set iconUrl
+	 * Set package icon URL
 	 *
 	 * @param string $iconUrl
 	 * @return ApsPackage
@@ -363,7 +366,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Get iconUrl
+	 * Get package icon URL
 	 *
 	 * @return string
 	 */
@@ -373,7 +376,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Set cert
+	 * Set package cert
 	 *
 	 * @param string $cert
 	 * @return ApsPackage
@@ -385,7 +388,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Get cert
+	 * Get package cert
 	 *
 	 * @return string
 	 */
@@ -395,7 +398,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Set status
+	 * Set package status
 	 *
 	 * @param string $status
 	 * @return ApsPackage
@@ -407,7 +410,7 @@ class ApsPackage
 	}
 
 	/**
-	 * Get status
+	 * Get package status
 	 *
 	 * @return string
 	 */

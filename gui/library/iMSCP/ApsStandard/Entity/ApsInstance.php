@@ -32,7 +32,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @package iMSCP\ApsStandard\Entity
  * @ORM\Table(
  *   name="aps_instance",
- *   indexes={@ORM\Index(name="package_id", columns={"package_id"}), @ORM\Index(name="owner_id", columns={"owner_id"})}
+ *   indexes={@ORM\Index(columns={"package_id"}), @ORM\Index(columns={"owner_id"}), @ORM\Index(columns={"status"})}
  * )
  * @ORM\Entity
  * @JMS\AccessType("public_method")
@@ -92,9 +92,9 @@ class ApsInstance
 	}
 
 	/**
-	 * Get id
+	 * Get instance identifier
 	 *
-	 * @return integer|null
+	 * @return integer
 	 */
 	public function getId()
 	{
@@ -158,7 +158,7 @@ class ApsInstance
 	/**
 	 * Set settings that belongs to this instance
 	 *
-	 * @param array $settings
+	 * @param ApsInstanceSetting[] $settings
 	 * @return $this
 	 */
 	public function setSettings(array $settings)
