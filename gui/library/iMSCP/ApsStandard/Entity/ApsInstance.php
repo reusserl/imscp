@@ -32,7 +32,8 @@ use Symfony\Component\Validator\Constraints as Assert;
  * @package iMSCP\ApsStandard\Entity
  * @ORM\Table(
  *   name="aps_instance",
- *   indexes={@ORM\Index(columns={"package_id"}), @ORM\Index(columns={"owner_id"}), @ORM\Index(columns={"status"})}
+ *   indexes={@ORM\Index(columns={"package_id"}), @ORM\Index(columns={"owner_id"}), @ORM\Index(columns={"status"})},
+ *   options={"collate"="utf8_unicode_ci", "charset"="utf8", "engine"="InnoDB"}
  * )
  * @ORM\Entity
  * @JMS\AccessType("public_method")

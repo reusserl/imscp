@@ -13,7 +13,8 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  * @package iMSCP\ApsStandard\Entity
  * @ORM\Table(
  *  name="aps_instance_setting",
- *  indexes={@ORM\Index(columns={"instance_id"})}
+ *  indexes={@ORM\Index(columns={"instance_id"})},
+ *  options={"collate"="utf8_unicode_ci", "charset"="utf8", "engine"="InnoDB"}
  * )
  * @ORM\Entity
  * @JMS\AccessType("public_method")
