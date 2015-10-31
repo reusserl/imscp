@@ -26,6 +26,7 @@ use iMSCP_Registry as Registry;
 
 /**
  * Class ApsSpiderService
+ *
  * @package iMSCP\ApsStandard\Service
  */
 class ApsSpiderService extends ApsAbstractService
@@ -145,7 +146,7 @@ class ApsSpiderService extends ApsAbstractService
 	protected function parseRepositoryFeedPage(ApsDocument $repositoryFeed, $repositoryId, &$knownPackages)
 	{
 		$entityManager = $this->getEntityManager();
-		$metaFiles = array();
+		$toDownload = array();
 		$metadataDir = $this->getMetadataDir() . '/' . $repositoryId;
 
 		// Parse all package entries
@@ -161,6 +162,8 @@ class ApsSpiderService extends ApsAbstractService
 			$metaURL = $repositoryFeed->getXPathValue("root:link[@a:type='meta']/@href", $entry);
 			$iconURL = $repositoryFeed->getXPathValue("root:link[@a:type='icon']/@href", $entry);
 			$certLevel = $repositoryFeed->getXPathValue("root:link[@a:type='certificate']/a:level/text()", $entry) ?: 'none';
+			// License info (APS < 1.2)
+			$licenseURL = $repositoryFeed->getXPathValue("root:link[@a:type='eula']/@href", $entry);
 
 			// Continue only if all data are available
 			if (
@@ -179,7 +182,8 @@ class ApsSpiderService extends ApsAbstractService
 
 				$needUpdate = ($isKnown) ? (version_compare("$cVersion.$cRelease", "$version.$release", '<')) : false;
 				$isBroken = ($isKnown && !$needUpdate) ? (
-					!file_exists("$packageMetadataDir/APP-META.xml") || filesize("$packageMetadataDir/APP-META.xml") == 0
+					!file_exists("$packageMetadataDir/APP-META.xml") || filesize("$packageMetadataDir/APP-META.xml") == 0 ||
+					($licenseURL != '' && (!file_exists("$packageMetadataDir/LICENSE") || filesize("$packageMetadataDir/LICENSE") == 0))
 				) : false;
 
 				// Continue only if a newer version is available, or if there is no valid APP-META.xml
@@ -212,14 +216,19 @@ class ApsSpiderService extends ApsAbstractService
 					// Create package metadata directory
 					@mkdir($packageMetadataDir, 0750, true);
 
+					// Schedule download of package license if any
+					if ($licenseURL != '') {
+						$toDownload[$name . '_license'] = array('src' => $licenseURL, 'trg' => "$packageMetadataDir/LICENSE");
+					}
+
 					// Schedule download of package APP-META.xml file
-					$metaFiles[$name] = array('src' => $metaURL, 'trg' => "$packageMetadataDir/APP-META.xml");
+					$toDownload[$name . '_meta'] = array('src' => $metaURL, 'trg' => "$packageMetadataDir/APP-META.xml");
 				}
 			}
 		}
 
-		if (!empty($metaFiles)) {
-			$this->downloadFiles($metaFiles); // Download package APP-META.xml files
+		if (!empty($toDownload)) {
+			$this->downloadFiles($toDownload); // Download package APP-META.xml and license files
 		}
 	}
 
@@ -418,12 +427,12 @@ class ApsSpiderService extends ApsAbstractService
 			$config = Registry::get('config');
 			$panelUser = $config['SYSTEM_USER_PREFIX'] . $config['SYSTEM_USER_MIN_UID'];
 			if (($info = @posix_getpwnam($panelUser)) === false) {
-				throw new \RuntimeException(sprintf("Could not get info about the '%s' user.", $panelUser));
+				throw new \RuntimeException(sprintf("Could not get '%s' user info.", $panelUser));
 			}
 
 			if (!@posix_initgroups($panelUser, $info['gid'])) {
 				throw new \RuntimeException(sprintf(
-					"could not calculates the group access list for the '%s' user", $panelUser
+					"Could not calculates the group access list for the '%s' user", $panelUser
 				));
 			}
 
