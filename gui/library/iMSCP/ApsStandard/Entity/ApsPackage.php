@@ -67,7 +67,7 @@ class ApsPackage
 	/**
 	 * @var string
 	 *
-	 * @ORM\Column(name="version", type="string", length=255, nullable=false)
+	 * @ORM\Column(name="version", type="string", length=15, nullable=false)
 	 * @JMS\Type("string")
 	 */
 	private $version;
@@ -75,7 +75,7 @@ class ApsPackage
 	/**
 	 * @var integer
 	 *
-	 * @ORM\Column(name="`release`", type="string", length=50, nullable=false)
+	 * @ORM\Column(name="`release`", type="string", length=15, nullable=false)
 	 * @JMS\Type("string")
 	 */
 	private $release;
@@ -83,7 +83,7 @@ class ApsPackage
 	/**
 	 * @var string
 	 *
-	 * @ORM\Column(name="aps_version", type="string", length=255, nullable=false)
+	 * @ORM\Column(name="aps_version", type="string", length=15, nullable=false)
 	 * @JMS\Type("string")
 	 */
 	private $apsVersion;
@@ -91,7 +91,7 @@ class ApsPackage
 	/**
 	 * @var string
 	 *
-	 * @ORM\Column(name="category", type="string", length=255, nullable=false)
+	 * @ORM\Column(name="category", type="string", length=50, nullable=false)
 	 * @JMS\Type("string")
 	 */
 	private $category;
@@ -131,7 +131,7 @@ class ApsPackage
 	/**
 	 * @var string
 	 *
-	 * @ORM\Column(name="cert", type="string", length=255, nullable=false)
+	 * @ORM\Column(name="cert", type="string", length=15, nullable=false)
 	 * @JMS\Type("string")
 	 */
 	private $cert;
