@@ -9,7 +9,6 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
  * Class ApsInstance
- *
  * @package iMSCP\ApsStandard\Entity
  * @ORM\Table(
  *  name="aps_instance_setting",
@@ -18,6 +17,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  * )
  * @ORM\Entity
  * @JMS\AccessType("public_method")
+ * @Assert\Callback("validateSettingValue")
  */
 class ApsInstanceSetting
 {
@@ -26,7 +26,7 @@ class ApsInstanceSetting
 	 * @ORM\Column(name="id", type="integer", nullable=false, options={"unsigned":true})
 	 * @ORM\Id
 	 * @ORM\GeneratedValue(strategy="IDENTITY")
-	 * @JMS\Exclude()
+	 * @JMS\ReadOnly()
 	 */
 	private $id;
 
@@ -43,13 +43,14 @@ class ApsInstanceSetting
 	/**
 	 * @var string
 	 * @ORM\Column(name="name", type="string", length=255, nullable=false)
+	 * @JMS\Type("string")
 	 */
 	private $name;
 
 	/**
 	 * @var string
 	 * @ORM\Column(name="value", type="text", length=65535, nullable=false)
-	 * @Assert\Callback("validateSettingValue")
+	 * @JMS\Type("string")
 	 */
 	private $value;
 
@@ -149,10 +150,12 @@ class ApsInstanceSetting
 	 * Set instance setting metadata
 	 *
 	 * @param array $metadata
+	 * @return $this
 	 */
-	public function setMetadata($metadata)
+	public function setMetadata(array $metadata)
 	{
 		$this->metadata = $metadata;
+		return $this;
 	}
 
 	/**
@@ -175,11 +178,15 @@ class ApsInstanceSetting
 
 		switch ($metadata['aps_type']) {
 			case 'string':
+			case 'password':
 				if (isset($metadata['min_length']) && strlen($value) < intval($metadata['min_length'])) {
 					$errors[] = tr("Invalid '%s' setting length. Min. length: %s", $metadata['label'], $metadata['min_length']);
 				}
 
-				if (isset($metadata['max_length']) && strlen($value) > intval($metadata['max_length'])) {
+				if (
+					isset($metadata['max_length']) && $metadata['max_length'] !== '' &&
+					strlen($value) > intval($metadata['max_length'])
+				) {
 					$errors[] = tr("Invalid '%s' setting length. Max. length: %s", $metadata['label'], $metadata['max_length']);
 				}
 
@@ -199,7 +206,7 @@ class ApsInstanceSetting
 				}
 				break;
 			case 'boolean':
-				if(filter_var($value, FILTER_VALIDATE_BOOLEAN) === false) {
+				if(filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === NULL) {
 					$errors[] = tr("Invalid '%s' setting. Boolean expected.", $metadata['label']);
 				}
 				break;
@@ -214,7 +221,12 @@ class ApsInstanceSetting
 				}
 				break;
 			case 'enum':
-				if (!in_array($value, $metadata['choices'])) {
+				$choices = array();
+				foreach($metadata['choices'] as $choice) {
+					$choices[] = $choice['value'];
+				}
+
+				if (!in_array($value, $choices)) {
 					$errors[] = tr("Unexpected value for the '%s' setting.", $metadata['label']);
 				}
 		}

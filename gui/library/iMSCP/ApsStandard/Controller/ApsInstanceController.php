@@ -24,6 +24,7 @@ use iMSCP\ApsStandard\Service\ApsInstanceService;
 use iMSCP\ApsStandard\Service\ApsInstanceSettingService;
 use iMSCP\ApsStandard\Service\ApsPackageService;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Validator\ConstraintViolation;
 
 /**
  * Class ApsInstanceController
@@ -92,19 +93,38 @@ class ApsInstanceController extends ApsAbstractController
 	{
 		$package = $this->getPackageService()->getPackage($this->getRequest()->query->getInt('id'));
 		$instanceSettings = $this->getInstanceSettingService()->getSettingsFromMetadataFile($package);
-		$this->getResponse()->setData($instanceSettings);
+		$this->getResponse()->setData(array('package_id' => $package->getId(), 'settings' => $instanceSettings));
 	}
 
 	/**
 	 * Create a new application instance
-	 * @throws \Exception
+	 *
 	 * @return void
 	 */
 	protected function createAction()
 	{
-		$package = $this->getPackageService()->getPackage($this->getRequest()->query->getInt('id'));
-		$settings = $this->getInstanceSettingService()->getSettingsFromPayload($package, $this->getRequest()->getContent());
-		$this->getInstanceService()->createInstance($package, $settings);
+		$payload = @json_decode($this->getRequest()->getContent(), true);
+		if (json_last_error() != JSON_ERROR_NONE || !isset($payload['package_id']) || !isset($payload['settings'])) {
+			throw new \DomainException('Invalid payload.', 400);
+		}
+
+		$package = $this->getPackageService()->getPackage($payload['package_id']);
+		$settings = $this->getInstanceSettingService()->getSettingObjectsFromArray($package, $payload['settings']);
+		$errors = $this->getInstanceService()->createInstance($package, $settings);
+
+		if (count($errors) > 0) {
+			$errMessages = array();
+			/** @var ConstraintViolation $error */
+			foreach ($errors as $error) {
+				$errMessages[] = $error->getMessage();
+			}
+
+			$this->getResponse()
+				->setContent($this->getSerializer()->serialize(array('errors' => $errMessages), 'json'))
+				->setStatusCode(400);
+			return;
+		}
+
 		$this->getResponse()->setStatusCode(201);
 	}
 

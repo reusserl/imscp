@@ -24,7 +24,6 @@ use JMS\Serializer\Annotation AS JMS;
 
 /**
  * Class ApsPackageDetails
- *
  * @package iMSCP\ApsStandard\Model
  * @JMS\AccessType("public_method")
  */
@@ -52,13 +51,7 @@ class ApsPackageDetails
 	 * @var string Package license
 	 * @JMS\Type("string")
 	 */
-	private $licenseName;
-
-	/**
-	 * @var string Package license text
-	 * @JMS\Type("string")
-	 */
-	private $licenseText;
+	private $license;
 
 	/**
 	 * Get package description
@@ -123,42 +116,22 @@ class ApsPackageDetails
 	}
 
 	/**
-	 * Get package license name
+	 * Get package license
 	 *
 	 * @return string
 	 */
-	public function getLicenseName()
+	public function getLicense()
 	{
-		return $this->licenseName;
+		return $this->license;
 	}
 
 	/**
-	 * Set package license name
+	 * Set package license
 	 *
-	 * @param string $licenseName
+	 * @param string $license
 	 */
-	public function setLicenseName($licenseName)
+	public function setLicense($license)
 	{
-		$this->licenseName = $licenseName;
-	}
-
-	/**
-	 * Get package license text
-	 *
-	 * @return string
-	 */
-	public function getLicenseText()
-	{
-		return $this->licenseText;
-	}
-
-	/**
-	 * Set package license text
-	 *
-	 * @param string $licenseText
-	 */
-	public function setLicenseText($licenseText)
-	{
-		$this->licenseText = $licenseText;
+		$this->license = $license;
 	}
 }

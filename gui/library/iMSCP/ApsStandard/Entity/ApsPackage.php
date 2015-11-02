@@ -26,7 +26,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Class ApsPackage
- *
  * @package iMSCP\ApsStandard\Entity
  * @ORM\Table(
  *   name="aps_package",

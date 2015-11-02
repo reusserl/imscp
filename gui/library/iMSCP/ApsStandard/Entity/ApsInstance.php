@@ -28,7 +28,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Class ApsInstance
- *
  * @package iMSCP\ApsStandard\Entity
  * @ORM\Table(
  *   name="aps_instance",
@@ -73,6 +72,7 @@ class ApsInstance
 	/**
 	 * @var array
 	 * @ORM\OneToMany(targetEntity="iMSCP\ApsStandard\Entity\ApsInstanceSetting", mappedBy="instance", cascade={"persist"})
+	 * @Assert\Valid()
 	 */
 	private $settings;
 
