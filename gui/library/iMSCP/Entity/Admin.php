@@ -26,7 +26,11 @@ use Doctrine\ORM\Mapping as ORM;
  * Class Admin
  *
  * @package iMSCP\Entity
- * @ORM\Table(name="admin", uniqueConstraints={@ORM\UniqueConstraint(name="admin_name", columns={"admin_name"})}, indexes={@ORM\Index(name="created_by", columns={"created_by"})})
+ * @ORM\Table(
+ *   name="admin", uniqueConstraints={@ORM\UniqueConstraint(name="admin_name", columns={"admin_name"})},
+ *   indexes={@ORM\Index(name="created_by", columns={"created_by"})},
+ *   options={"collate"="utf8_unicode_ci", "charset"="utf8", "engine"="InnoDB"}
+ * )
  * @ORM\Entity
  */
 class Admin

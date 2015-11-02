@@ -26,13 +26,12 @@ use iMSCP_Registry as Registry;
 
 /**
  * Class ApsSpiderService
- *
  * @package iMSCP\ApsStandard\Service
  */
 class ApsSpiderService extends ApsAbstractService
 {
 	/**
-	 * @var ApsPackage[][] packages (grouped by repository)
+	 * @var ApsPackage[][] packages (grouped by repositories)
 	 */
 	protected $packages = array();
 
@@ -65,10 +64,11 @@ class ApsSpiderService extends ApsAbstractService
 
 			if (!empty($packages)) {
 				foreach ($packages as $package) {
-					$this->packages[$package->getApsVersion()][$package->getName()] = $package;
+					$name = $package->getName();
+					$this->packages[$package->getApsVersion()][$name] = $package;
 
 					if ($package->getStatus() == 'unlocked') {
-						$this->unlockedPackages[] = $package->getName();
+						$this->unlockedPackages[] = $name;
 					}
 				}
 			}
@@ -162,7 +162,7 @@ class ApsSpiderService extends ApsAbstractService
 			$metaURL = $repositoryFeed->getXPathValue("root:link[@a:type='meta']/@href", $entry);
 			$iconURL = $repositoryFeed->getXPathValue("root:link[@a:type='icon']/@href", $entry);
 			$certLevel = $repositoryFeed->getXPathValue("root:link[@a:type='certificate']/a:level/text()", $entry) ?: 'none';
-			// License info (APS < 1.2)
+			// License (APS < 1.2)
 			$licenseURL = $repositoryFeed->getXPathValue("root:link[@a:type='eula']/@href", $entry);
 
 			// Continue only if all data are available
@@ -180,13 +180,13 @@ class ApsSpiderService extends ApsAbstractService
 					$isKnown = true;
 				}
 
-				$needUpdate = ($isKnown) ? (version_compare("$cVersion.$cRelease", "$version.$release", '<')) : false;
-				$isBroken = ($isKnown && !$needUpdate) ? (
-					!file_exists("$packageMetadataDir/APP-META.xml") || filesize("$packageMetadataDir/APP-META.xml") == 0 ||
+				$needUpdate = $isKnown && version_compare("$cVersion.$cRelease", "$version.$release", '<');
+				$isBroken = $isKnown && !$needUpdate && (
+					(!file_exists("$packageMetadataDir/APP-META.xml") || filesize("$packageMetadataDir/APP-META.xml") == 0) ||
 					($licenseURL != '' && (!file_exists("$packageMetadataDir/LICENSE") || filesize("$packageMetadataDir/LICENSE") == 0))
-				) : false;
+				);
 
-				// Continue only if a newer version is available, or if there is no valid APP-META.xml
+				// Continue only if a newer version is available, or if a file is not valid
 				if (!$isKnown || $needUpdate || $isBroken) {
 					if ($needUpdate || $isBroken) {
 						$package = $knownPackages[$name];
@@ -239,7 +239,7 @@ class ApsSpiderService extends ApsAbstractService
 	 * @param ApsPackage[] $packages Packages
 	 * @return void
 	 */
-	public function updatePackageIndex($repoId, $packages)
+	protected function updatePackageIndex($repoId, $packages)
 	{
 		$metaDir = $this->getMetadataDir() . '/' . $repoId;
 		$entityManager = $this->getEntityManager();
@@ -293,7 +293,7 @@ class ApsSpiderService extends ApsAbstractService
 					}
 
 					@unlink(
-						$this->getPackageDir() . '/' . $package->getName() . '-' . $package->getVersion() . '-' .
+						$this->getPackageDir() . "/$repoId/" . $package->getName() . '-' . $package->getVersion() . '-' .
 						$package->getRelease() . '.app.zip'
 					);
 
@@ -451,7 +451,7 @@ class ApsSpiderService extends ApsAbstractService
 	 * @throws \Exception
 	 * @return void
 	 */
-	public function acquireLock()
+	protected function acquireLock()
 	{
 		$this->lockFile = @fopen(GUI_ROOT_DIR . '/data/tmp/aps_spider_lock', 'w');
 		if (!@flock($this->lockFile, LOCK_EX | LOCK_NB)) {
@@ -464,7 +464,7 @@ class ApsSpiderService extends ApsAbstractService
 	 *
 	 * @return void
 	 */
-	public function releaseLock()
+	protected function releaseLock()
 	{
 		if ($this->lockFile) {
 			@flock($this->lockFile, LOCK_UN);

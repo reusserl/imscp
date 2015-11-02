@@ -214,13 +214,13 @@ class ApsInstanceSettingService extends ApsAbstractService
 
 		$settingObjects = array();
 		foreach ($settings as $setting) {
-			/** @var ApsInstanceSetting $inputSetting */
-			$inputSetting = $serializer->fromArray($setting, self::INSTANCE_SETTING_ENTITY_CLASS);
-			$settingName = $inputSetting->getName();
+			/** @var ApsInstanceSetting $settingObject */
+			$settingObject = $serializer->fromArray($setting, self::INSTANCE_SETTING_ENTITY_CLASS);
+			$settingName = $settingObject->getName();
 
 			if (in_array($settingName, $expectedSettings)) {
-				$inputSetting->setMetadata($settingsFromMetadataFile[$settingName]['metadata']);
-				$settingObjects[] = $inputSetting;
+				$settingObject->setMetadata($settingsFromMetadataFile[$settingName]['metadata']);
+				$settingObjects[] = $settingObject;
 			}
 		}
 

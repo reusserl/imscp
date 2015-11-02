@@ -26,6 +26,7 @@ use iMSCP\Events\EventManagerAwareInterface;
 use iMSCP_Events_Aggregator as EventManager;
 use iMSCP_Events_Manager_Interface as EventManagerInterface;
 use iMSCP_Registry as Registry;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -143,7 +144,9 @@ abstract class ApsAbstractService implements EventManagerAwareInterface, Service
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * Get validator service
+	 *
+	 * @return ValidatorInterface
 	 */
 	public function getValidator()
 	{
