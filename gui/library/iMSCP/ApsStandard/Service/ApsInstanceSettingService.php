@@ -32,12 +32,12 @@ use JMS\Serializer\Serializer;
  */
 class ApsInstanceSettingService extends ApsAbstractService
 {
-	const INSTANCE_SETTING_ENTITY_CLASS = 'iMSCP\\ApsStandard\\Entity\\InstanceSetting';
+	const INSTANCE_SETTING_ENTITY_CLASS = 'iMSCP\\ApsStandard\\Entity\\ApsInstanceSetting';
 
 	/**
 	 * Get settings definition for the given package
 	 *
-	 * @param ApsPackage $package Package for which instance settings
+	 * @param ApsPackage $package Package from which instance settings are retrieved
 	 * @return array
 	 */
 	public function getSettingsFromMetadataFile(ApsPackage $package)
@@ -56,7 +56,7 @@ class ApsInstanceSettingService extends ApsAbstractService
 		$choices = $this->getDomainList();
 		$groupName = tr('Installation target');
 		$settings = array(
-			array(
+			'base_url_host' => array(
 				'name' => 'base_url_host',
 				'value' => strval($choices[0]['value']),
 				'metadata' => array(
@@ -67,7 +67,7 @@ class ApsInstanceSettingService extends ApsAbstractService
 					'type' => 'enum'
 				)
 			),
-			array(
+			'base_url_path' => array(
 				'name' => 'base_url_path',
 				'value' => '/',
 				'metadata' => array(
@@ -80,12 +80,15 @@ class ApsInstanceSettingService extends ApsAbstractService
 				)
 			)
 		);
+		unset($choices);
 
 		// Database settings (if required)
 		if ($doc->getXPathValue('//db:id')) {
 			$config = Registry::get('config');
 			$groupName = tr('Database');
-			$settings[] = array(
+			$settings['db_pwd'] = array(
+				'name' => 'db_pwd',
+				'value' => '',
 				'metadata' => array(
 					'group' => $groupName,
 					'label' => tr('Password'),
@@ -93,8 +96,7 @@ class ApsInstanceSettingService extends ApsAbstractService
 					'type' => 'password',
 					'min_length' => 6,
 					'max_length' => $config['PASSWD_CHARS']
-				),
-				'name' => 'db_pwd'
+				)
 			);
 		}
 
@@ -108,9 +110,10 @@ class ApsInstanceSettingService extends ApsAbstractService
 
 			// Retrieve all settings in current setting group (or subgroup)
 			foreach ($doc->getXPathValue('(root:group/root:setting|root:setting)', $group, false) as $item) {
+				$settingName = $doc->getXPathValue('@id', $item);
 				$type = $doc->getXPathValue('@type', $item);
 				$setting = array();
-				$setting['name'] = $doc->getXPathValue('@id', $item);
+				$setting['name'] = $settingName;
 				$setting['metadata']['group'] = $groupName;
 				$setting['metadata']['label'] = ucfirst(str_replace(
 					'_', ' ', $doc->getXPathValue("root:name[@xml:lang='$intLang']/text()", $item) ?:
@@ -132,7 +135,6 @@ class ApsInstanceSettingService extends ApsAbstractService
 					$setting['metadata']['min_length'] = $doc->getXPathValue('@min-length', $item);
 					$setting['metadata']['max_length'] = $doc->getXPathValue('@max-length', $item);
 				} elseif ($type == 'enum') {
-					$setting['value'] = strval($doc->getXPathValue('@default-value', $item) ?: $choices[0]['value']);
 					$choices = array();
 					foreach ($doc->getXPathValue('root:choice', $item, false) as $choice) {
 						$choices[] = array(
@@ -140,6 +142,7 @@ class ApsInstanceSettingService extends ApsAbstractService
 							'value' => strval($doc->getXPathValue('@id', $choice))
 						);
 					}
+					$setting['value'] = strval($doc->getXPathValue('@default-value', $item) ?: $choices[0]['value']);
 					$setting['metadata']['type'] = 'enum';
 					$setting['metadata']['choices'] = $choices;
 				} elseif ($type == 'boolean') {
@@ -149,8 +152,22 @@ class ApsInstanceSettingService extends ApsAbstractService
 					throw new \DomainException(sprintf("Unknown APS '%s' setting type.", $type));
 				}
 
-				$settings[] = $setting;
+				$settings[$settingName] = $setting;
 			}
+		}
+
+		// License aggrement (TODO > APS 1.2)
+		if (floatval($package->getApsVersion()) < 1.2 && $doc->getXPathValue("//root:license/@must-accept") == 'true') {
+			$settings['license_agreement'] = array(
+				'name' => 'license_agreement',
+				'value' => false,
+				'metadata' => array(
+					'group' => tr('License agreement'),
+					'label' => tr("Do you agree with the software's license?"),
+					'type' => 'boolean',
+					'tooltip' => tr('See package details for the license.')
+				)
+			);
 		}
 
 		return $settings;
@@ -166,28 +183,37 @@ class ApsInstanceSettingService extends ApsAbstractService
 	 */
 	public function getSettingsFromPayload($package, $payload)
 	{
-		$settings = $this->getSettingsFromMetadataFile($package);
+		$payload = @json_decode($payload, true);
+		if (json_last_error() != JSON_ERROR_NONE || !isset($payload['instance_settings'])) {
+			throw new \DomainException('Invalid payload.', 400);
+		}
+
+		$settingsFromMetadataFile = $this->getSettingsFromMetadataFile($package);
 		$expectedSettings = array_map(function ($setting) {
 			return $setting['name'];
-		}, $settings);
+		}, $settingsFromMetadataFile);
+
+		if (count($payload['instance_settings']) != count($expectedSettings)) {
+			throw new \DomainException('Invalid payload: Missing setting in payload.', 400);
+		}
 
 		/** @var Serializer $serializer */
 		$serializer = $this->getServiceLocator()->get('Serializer');
 
-		/** @var ApsInstanceSetting[] $settings */
-		$inputSettings = $serializer->deserialize($payload, self::INSTANCE_SETTING_ENTITY_CLASS, 'json');
+		$inputSettings = array();
+		foreach ($payload['instance_settings'] as $setting) {
+			/** @var ApsInstanceSetting $inputSetting */
+			$inputSetting = $serializer->fromArray($setting, self::INSTANCE_SETTING_ENTITY_CLASS);
+			$settingName = $inputSetting->getName();
 
-		/** @var ApsInstanceSetting $setting */
-		foreach ($inputSettings as $setting) {
-			if (!in_array($setting->getName(), $expectedSettings)) {
-				throw new \Exception('Invalid payload.', 400);
+			if (!in_array($settingName, $expectedSettings)) {
+				throw new \DomainException(sprintf(
+					"Invalid payload: Unexpected '%s' setting in payload.", $settingName), 400
+				);
 			}
 
-			$setting->setMetadata($setting['metadata']);
-		}
-
-		if (count($inputSettings) != count($expectedSettings)) {
-			throw new \Exception('Invalid payload.', 400);
+			$inputSetting->setMetadata($settingsFromMetadataFile[$settingName]['metadata']);
+			$inputSettings[] = $inputSetting;
 		}
 
 		return $inputSettings;
