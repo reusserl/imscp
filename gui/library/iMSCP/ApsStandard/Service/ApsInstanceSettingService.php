@@ -23,7 +23,6 @@ namespace iMSCP\ApsStandard\Service;
 use iMSCP\ApsStandard\ApsDocument;
 use iMSCP\ApsStandard\Entity\ApsInstanceSetting;
 use iMSCP\ApsStandard\Entity\ApsPackage;
-use iMSCP_Registry as Registry;
 use JMS\Serializer\Serializer;
 
 /**
@@ -56,24 +55,26 @@ class ApsInstanceSettingService extends ApsAbstractService
 		$choices = $this->getDomainList();
 		$groupName = tr('Installation target');
 		$settings = array(
-			'base_url_host' => array(
-				'name' => 'base_url_host',
+			'__base_url_host__' => array(
+				'name' => '__base_url_host__',
 				'value' => strval($choices[0]['value']),
 				'metadata' => array(
 					'group' => $groupName,
 					'label' => tr('Target domain'),
 					'tooltip' => tr('Domain under which the application must be installed.'),
 					'choices' => $choices,
+					'aps_type' => 'enum',
 					'type' => 'enum'
 				)
 			),
-			'base_url_path' => array(
-				'name' => 'base_url_path',
+			'__base_url_path__' => array(
+				'name' => '__base_url_path__',
 				'value' => '/',
 				'metadata' => array(
 					'group' => $groupName,
 					'label' => tr('Target folder'),
 					'tooltip' => tr('An optional subfolder in which the application must be installed.'),
+					'aps_type' => 'string',
 					'type' => 'text',
 					'regexp' => '^[\x21-\x7e\\/]+$',
 					'max_length' => 255
@@ -84,18 +85,40 @@ class ApsInstanceSettingService extends ApsAbstractService
 
 		// Database settings (if required)
 		if ($doc->getXPathValue('//db:id')) {
-			$config = Registry::get('config');
 			$groupName = tr('Database');
-			$settings['db_pwd'] = array(
-				'name' => 'db_pwd',
+			$settings['__db_name__'] = array(
+				'name' => '__db_name__',
 				'value' => '',
 				'metadata' => array(
 					'group' => $groupName,
-					'label' => tr('Password'),
-					'regexp' => '^[\x21-\x7e]+$',
+					'label' => tr('Database name'),
+					'tooltip' => tr('The database must exist.'),
+					'aps_type' => 'database-name',
+					'type' => 'text',
+					'min_length' => 1
+				)
+			);
+			$settings['__db_user__'] = array(
+				'name' => '__db_user__',
+				'value' => '',
+				'metadata' => array(
+					'group' => $groupName,
+					'label' => tr('Database user'),
+					'tooltip' => tr('The user must exist and must have privileges on the database.'),
+					'aps_type' => 'string',
+					'type' => 'text',
+					'min_length' => 1
+				)
+			);
+			$settings['__db_pwd__'] = array(
+				'name' => '__db_pwd__',
+				'value' => '',
+				'metadata' => array(
+					'group' => $groupName,
+					'label' => tr("Database password"),
+					'aps_type' => 'password',
 					'type' => 'password',
-					'min_length' => 6,
-					'max_length' => $config['PASSWD_CHARS']
+					'min_length' => 1
 				)
 			);
 		}
@@ -164,6 +187,7 @@ class ApsInstanceSettingService extends ApsAbstractService
 				'metadata' => array(
 					'group' => tr('License agreement'),
 					'label' => tr("Do you agree with the software's license?"),
+					'aps_type' => 'boolean',
 					'type' => 'boolean',
 					'tooltip' => tr('See package details for the license.')
 				)
@@ -174,47 +198,37 @@ class ApsInstanceSettingService extends ApsAbstractService
 	}
 
 	/**
-	 * Get settings from the given JSON payload
+	 * Get settings objects from the given array
 	 *
-	 * @throws \Exception
 	 * @param ApsPackage $package Package for which instance settings must be retrieved
-	 * @param string $payload JSON payload
+	 * @param array $settings payload
 	 * @return ApsInstanceSetting[]
 	 */
-	public function getSettingsFromPayload($package, $payload)
+	public function getSettingObjectsFromArray($package, $settings)
 	{
-		$payload = @json_decode($payload, true);
-		if (json_last_error() != JSON_ERROR_NONE || !isset($payload['instance_settings'])) {
-			throw new \DomainException('Invalid payload.', 400);
-		}
-
 		$settingsFromMetadataFile = $this->getSettingsFromMetadataFile($package);
 		$expectedSettings = array_keys($settingsFromMetadataFile);
-
-		if (count($payload['instance_settings']) != count($expectedSettings)) {
-			throw new \DomainException('Invalid payload: Missing setting in payload.', 400);
-		}
 
 		/** @var Serializer $serializer */
 		$serializer = $this->getServiceLocator()->get('Serializer');
 
-		$inputSettings = array();
-		foreach ($payload['instance_settings'] as $setting) {
+		$settingobjects = array();
+		foreach ($settings as $setting) {
 			/** @var ApsInstanceSetting $inputSetting */
 			$inputSetting = $serializer->fromArray($setting, self::INSTANCE_SETTING_ENTITY_CLASS);
 			$settingName = $inputSetting->getName();
 
-			if (!in_array($settingName, $expectedSettings)) {
-				throw new \DomainException(sprintf(
-					"Invalid payload: Unexpected '%s' setting in payload.", $settingName), 400
-				);
+			if (in_array($settingName, $expectedSettings)) {
+				$inputSetting->setMetadata($settingsFromMetadataFile[$settingName]['metadata']);
+				$settingobjects[] = $inputSetting;
 			}
-
-			$inputSetting->setMetadata($settingsFromMetadataFile[$settingName]['metadata']);
-			$inputSettings[] = $inputSetting;
 		}
 
-		return $inputSettings;
+		if (count($settingobjects) < count($expectedSettings)) {
+			throw new \DomainException('Invalid payload: Missing setting.', 400);
+		}
+
+		return $settingobjects;
 	}
 
 	/**
