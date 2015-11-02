@@ -189,9 +189,7 @@ class ApsInstanceSettingService extends ApsAbstractService
 		}
 
 		$settingsFromMetadataFile = $this->getSettingsFromMetadataFile($package);
-		$expectedSettings = array_map(function ($setting) {
-			return $setting['name'];
-		}, $settingsFromMetadataFile);
+		$expectedSettings = array_keys($settingsFromMetadataFile);
 
 		if (count($payload['instance_settings']) != count($expectedSettings)) {
 			throw new \DomainException('Invalid payload: Missing setting in payload.', 400);
