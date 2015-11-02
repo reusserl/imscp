@@ -204,7 +204,7 @@ class ApsInstanceSettingService extends ApsAbstractService
 	 * @param array $settings payload
 	 * @return ApsInstanceSetting[]
 	 */
-	public function getSettingObjectsFromArray($package, $settings)
+	public function getSettingObjectsFromArray(ApsPackage $package, array $settings)
 	{
 		$settingsFromMetadataFile = $this->getSettingsFromMetadataFile($package);
 		$expectedSettings = array_keys($settingsFromMetadataFile);
@@ -212,7 +212,7 @@ class ApsInstanceSettingService extends ApsAbstractService
 		/** @var Serializer $serializer */
 		$serializer = $this->getServiceLocator()->get('Serializer');
 
-		$settingobjects = array();
+		$settingObjects = array();
 		foreach ($settings as $setting) {
 			/** @var ApsInstanceSetting $inputSetting */
 			$inputSetting = $serializer->fromArray($setting, self::INSTANCE_SETTING_ENTITY_CLASS);
@@ -220,15 +220,15 @@ class ApsInstanceSettingService extends ApsAbstractService
 
 			if (in_array($settingName, $expectedSettings)) {
 				$inputSetting->setMetadata($settingsFromMetadataFile[$settingName]['metadata']);
-				$settingobjects[] = $inputSetting;
+				$settingObjects[] = $inputSetting;
 			}
 		}
 
-		if (count($settingobjects) < count($expectedSettings)) {
-			throw new \DomainException('Invalid payload: Missing setting.', 400);
+		if (count($settingObjects) < count($expectedSettings)) {
+			throw new \DomainException('Invalid payload: Missing setting(s).', 400);
 		}
 
-		return $settingobjects;
+		return $settingObjects;
 	}
 
 	/**
