@@ -16,7 +16,7 @@ server-load and the page-load time by concatenation and minification of html, cs
 # wget -N http://nodejs.org/dist/latest/node-v5.0.0-linux-x64.tar.gz
 # tar -xzf node-v5.0.0-linux-x64.tar.gz 
 # cd node-v*-linux-x64/
-# cp -rp bin/ etc/ include/ lib/ share/ /
+# cp -rp bin/ etc/ include/ lib/ share/ /usr/local
 ```
 
 ##### Check installation
