@@ -11,43 +11,39 @@ server-load and the page-load time by concatenation and minification of html, cs
 
 #### node.js installation
 
+As root user, run the following commands:
+
 ```shell
 # cd /usr/local/src
 # wget -N http://nodejs.org/dist/latest/node-v5.0.0-linux-x64.tar.gz
 # tar -xzf node-v5.0.0-linux-x64.tar.gz 
 # cd node-v*-linux-x64/
-# cp -rp bin/ etc/ include/ lib/ share/ /usr/local
+# cp -rp bin/ include/ lib/ share/ /usr/local
 ```
 
-##### Check installation
+#### Grunt CLI installation
 
-```shell
-# node -e "console.log('Hello from node.js ' + process.version)"
-```
-
-#### npm update
-
-```shell
-# npm update -g npm
-```
-
-#### Project dependencies installation
-
-```shell
-# cd /var/www/imscp/gui/themes/default
-# npm install
-```
-
-#### Grunt command line tool installation
+As root user, run the following command:
 
 ```shell
 # npm install -g grunt-cli
 ```
 
-### Build distribution files
+#### Project dependencies installation
+
+As normal user, run the following commands:
 
 ```shell
-# grunt build
+$ cd <project_path>/gui/themes/default
+$ npm install
+```
+
+### Build distribution files
+
+As normal user, run the following command:
+
+```shell
+$ grunt build
 ```
 
 ### Commit your changes
