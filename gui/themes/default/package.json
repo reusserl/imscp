@@ -1,0 +1,46 @@
+{
+	"name": "imscp-gui-default",
+	"description": "i-MSCP GUI default theme",
+	"type": "library",
+	"version": "1.0.0",
+	"author": "",
+	"contributors": [],
+	"license": "BSD-3-Clause",
+	"keywords": [
+		"i-mscp",
+		"hosting",
+		"linux",
+		"debian"
+	],
+	"homepage": "https://i-mscp.net",
+	"support": {
+		"email": "dev@i-mscp.net",
+		"irc": "irc://irc.freenode.net/i-mscp",
+		"source": "https://github.com/i-MSCP/imscp",
+		"issues": "https://youtrack.i-mscp.net/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/i-MSCP/imscp.git"
+	},
+	"main": "Gruntfile.js",
+	"dependencies": {
+	},
+	"devDependencies": {
+		"grunt": "~0.4.1",
+		"grunt-autoprefixer": "~0.4.0",
+		"grunt-concurrent": "~0.4.1",
+		"grunt-contrib-clean": "~0.5.0",
+		"grunt-contrib-concat": "~0.3.0",
+		"grunt-contrib-copy": "~0.4.1",
+		"grunt-contrib-cssmin": "~0.7.0",
+		"grunt-contrib-htmlmin": "~0.1.3",
+		"grunt-contrib-uglify": "~0.2.0",
+		"grunt-newer": "~0.5.4",
+		"grunt-usemin": "~2.0.0",
+		"load-grunt-tasks": "~0.2.0",
+		"time-grunt": "~0.2.1",
+		"grunt-html2js": "^0.2.9",
+		"grunt-rev": "^0.1.0"
+	}
+}

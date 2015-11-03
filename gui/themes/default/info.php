@@ -23,6 +23,7 @@ return array(
 	'theme_version' => '1.0.0',
 	'theme_authors' => array(
 		'Henrik Schytte' => 'henrik@schytte.net',
+		'Laurent Declercq' => 'l.declercq@nuxwin.com',
 		'Marc Pujol' => 'kilburn@la3.org'
 	),
 	'theme_licence' => 'GPLv2++',
