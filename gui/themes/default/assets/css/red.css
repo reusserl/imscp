@@ -23,89 +23,89 @@
  * @author      Laurent Declercq <l.declercq@nuxwin.com>
  */
 
-body {
+body.redLayout {
     background: #ffffff url(../images/red/background/left_bg.jpg) repeat-y top left;
     color: #1a1a1a;
 }
 
 /* Links */
 
-a {
+.redLayout a {
     color: #1a1a1a;
 }
 
-.header a,
-.location a,
-.left_menu a,
-.link_as_button a {
+.redLayout .header a,
+.redLayout .location a,
+.redLayout .left_menu a,
+.redLayout .link_as_button a {
     color: #ffffff;
 }
 
-a:hover,
-.active a {
+.redLayout a:hover,
+.redLayout .active a {
     color: #5cbada;
 }
 
-a:hover.link_as_button {
+.redLayout a:hover.link_as_button {
     color: #ffffff;
 }
 
-span.clickable:hover {
+.redLayout span.clickable:hover {
     color:#5cbada;
     cursor: pointer;
 }
 
 /* header */
-.header {
+.redLayout .header {
     background: #6e0e0f url(../images/red/background/top_bg.jpg) repeat-x top left;
 }
 
 /* logo */
-.header .logo {
+.redLayout .header .logo {
     background: transparent url(../images/red/background/top_left_bg.jpg) no-repeat;
 }
 
 /* Main menu */
-.main_menu {
+.redLayout .main_menu {
     background: transparent url(../images/red/background/mainmenu_left.png) no-repeat top left;
 }
 
-.main_menu ul {
+.redLayout .main_menu ul {
     background: transparent url(../images/red/background/mainmenu_bg.png) repeat-x top left;
 }
 
-.main_menu a:hover,
-.main_menu .active a {
+.redLayout .main_menu a:hover,
+.redLayout .main_menu .active a {
     background-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Location */
-.location {
+.redLayout .location {
     background: #5a0505 url(../images/red/jquery-ui/ui-bg_glass_40_5a0505_1x400.png) 50% 50% repeat-x;
 }
 
 /* Section */
-.location-area h1 {
+.redLayout .location-area h1 {
     color: #ffffff;
 }
 
 /* Breadcrumbs */
-.path {
+.redLayout .path {
     color: #ffffff;
 }
 
 /* Left menu */
-.left_menu {
+.redLayout .left_menu {
     background: transparent url(../images/red/background/left_top_bg.jpg) no-repeat top;
     color: #ffffff;
 }
 
-.left_menu a {
+.redLayout .left_menu a {
     background: transparent url(../images/red/background/bullet.png) no-repeat center left;
 }
 
-.left_menu a:hover,
-.left_menu .active a {
+.redLayout .left_menu a:hover,
+.redLayout .left_menu .active a {
     background-image: url(../images/red/background/bullet_hover.png);
 }
 
@@ -114,112 +114,112 @@ span.clickable:hover {
  */
 
 /* titles */
-h2 span,
-h3 span {
+.redLayout h2 span,
+.redLayout h3 span {
     border-bottom-color: #dfdfdf;
 }
 
 /* Tables */
-thead,
-tfoot {
+.redLayout thead,
+.redLayout tfoot {
     border-color: #5a0505;
     background: #5a0505 url(../images/red/jquery-ui/ui-bg_glass_40_5a0505_1x400.png) 50% 50% repeat-x;
     color: #ffffff;
 }
 
-tbody {
+.redLayout tbody {
     border-color: #dfdfdf;
     background: #ffffff url(../images/jquery-ui-common/ui-bg_flat_0_ffffff_40x100.png) 50% 50% repeat-x;
     color: #222222;
 }
 
-tbody td {
+.redLayout tbody td {
     border-bottom: 1px solid #dfdfdf;
 }
 
-tbody tr:nth-child(odd), .odd {
+.redLayout tbody tr:nth-child(odd), .odd {
     background-color: #ffffff;
 }
 
-tbody tr:nth-child(even), .even {
+.redLayout tbody tr:nth-child(even), .even {
     background-color: #ededed;
 }
 
 /* Form elements */
 
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="search"],
-select,
-textarea {
+.redLayout input[type="text"],
+.redLayout input[type="email"],
+.redLayout input[type="password"],
+.redLayout input[type="search"],
+.redLayout select,
+.redLayout textarea {
     background: #ffffff;
     border-color: #cccccc;
 }
 
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus,
-input[type="search"]:focus,
-textarea:focus,
-select:focus {
+.redLayout input[type="text"]:focus,
+.redLayout input[type="email"]:focus,
+.redLayout input[type="password"]:focus,
+.redLayout input[type="search"]:focus,
+.redLayout textarea:focus,
+.redLayout select:focus {
     border: 1px solid #6e0e0f;
     -webkit-box-shadow: 0 0 5px #6e0e0f;
     -moz-box-shadow: 0 0 5px #6e0e0f;
     box-shadow: 0 0 5px #6e0e0f;
 }
 
-input[readonly="readonly"],
-input[readonly],
-input[type="text"]:disabled,
-input[type="email"]:disabled,
-input[type="password"]:disabled,
-select:disabled,
-textarea[readonly],
-textarea:disabled,
-.disabled {
+.redLayout input[readonly="readonly"],
+.redLayout input[readonly],
+.redLayout input[type="text"]:disabled,
+.redLayout input[type="email"]:disabled,
+.redLayout input[type="password"]:disabled,
+.redLayout select:disabled,
+.redLayout textarea[readonly],
+.redLayout textarea:disabled,
+.redLayout .disabled {
     background: #cccccc url('../images/background/stripe_0582bcfb31aaf8571dba1adb85ffc318.png') repeat;
     color: #666666;
 }
 
-input[readonly="readonly"]:focus,
-input[readonly]:focus,
-input[type="text"]:disabled:focus,
-input[type="email"]:disabled:focus,
-input[type="password"]:disabled:focus,
-select:disabled:focus,
-textarea[readonly]:focus,
-textarea:disabled:focus,
-.disabled:focus {
+.redLayout input[readonly="readonly"]:focus,
+.redLayout input[readonly]:focus,
+.redLayout input[type="text"]:disabled:focus,
+.redLayout input[type="email"]:disabled:focus,
+.redLayout input[type="password"]:disabled:focus,
+.redLayout select:disabled:focus,
+.redLayout textarea[readonly]:focus,
+.redLayout textarea:disabled:focus,
+.redLayout .disabled:focus {
     border-color: #cccccc;
     -webkit-box-shadow: none;
     -moz-box-shadow: none;
     box-shadow: none;
 }
 
-.buttons {
+.redLayout .buttons {
     background: transparent;
 }
 
 /** Tooltips */
-.ui-tooltip {
+.redLayout .ui-tooltip {
     background: #590405;
     border-color: #590405;
 }
-.ui-tooltip.ui-tooltip-notice {
+.redLayout .ui-tooltip.ui-tooltip-notice {
     background: #590405 url(../images/tooltips/info.png) no-repeat 5px 50%;
 }
-.ui-tooltip-content
+.redLayout .ui-tooltip-content
 {
     color: #ffffff;
 }
 
 /* services status */
-.up {
+.redLayout .up {
     color: #3d7a15;
 }
 
-.down {
+.redLayout .down {
     color: #ca1d11;
 }
 
@@ -227,6 +227,6 @@ textarea:disabled:focus,
  * Footer
  */
 
-.footer {
+.redLayout .footer {
     color: #ffffff;
 }

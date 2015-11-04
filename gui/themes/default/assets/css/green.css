@@ -23,88 +23,88 @@
  * @author      Laurent Declercq <l.declercq@nuxwin.com>
  */
 
-body {
+body.greenLayout {
     background: #ffffff url(../images/green/background/left_bg.jpg) repeat-y top left;
     color: #1a1a1a;
 }
 
 /* Links */
 
-a {
+.greenLayout a {
     color: #1a1a1a;
 }
 
-.header a,
-.location a,
-.left_menu a,
-.link_as_button a {
+.greenLayout .header a,
+.greenLayout .location a,
+.greenLayout .left_menu a,
+.greenLayout .link_as_button a {
     color: #ffffff;
 }
 
-a:hover,
-.active a {
+.greenLayout a:hover,
+.greenLayout .active a {
     color: #5cbada;
 }
 
-a:hover.link_as_button {
+.greenLayout a:hover.link_as_button {
     color: #ffffff;
 }
 
-span.clickable:hover {
+.greenLayout span.clickable:hover {
     color:#5cbada;
     cursor: pointer;
 }
 
 /* header */
-.header {
+.greenLayout .header {
     background: #0e6e0e url(../images/green/background/top_bg.jpg) repeat-x top left;
 }
 
 /* logo */
-.header .logo {
+.greenLayout .header .logo {
     background: transparent url(../images/green/background/top_left_bg.jpg) no-repeat;
 }
 
 /* Main menu */
-.main_menu {
+.greenLayout .main_menu {
     background: transparent url(../images/green/background/mainmenu_left.png) no-repeat top left;
 }
 
-.main_menu ul {
+.greenLayout .main_menu ul {
     background: transparent url(../images/green/background/mainmenu_bg.png) repeat-x top left;
 }
 
-.main_menu a:hover, .main_menu .active a {
+.greenLayout .main_menu a:hover, .main_menu .active a {
     background-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Location */
-.location {
+.greenLayout .location {
     background: #055a0d url(../images/green/jquery-ui/ui-bg_glass_40_055a0d_1x400.png) 50% 50% repeat-x;
 }
 
 /* Section */
-.location-area h1 {
+.greenLayout .location-area h1 {
     color: #ffffff;
 }
 
 /* Breadcrumbs */
-.path {
+.greenLayout .path {
     color: #ffffff;
 }
 
 /* Left menu */
-.left_menu {
+.greenLayout .left_menu {
     background: transparent url(../images/green/background/left_top_bg.jpg) no-repeat top;
     color: #ffffff;
 }
 
-.left_menu a {
+.greenLayout .left_menu a {
     background: transparent url(../images/green/background/bullet.png) no-repeat center left;
 }
 
-.left_menu a:hover,
-.left_menu .active a {
+.greenLayout .left_menu a:hover,
+.greenLayout .left_menu .active a {
     background-image: url(../images/green/background/bullet_hover.png);
 }
 
@@ -113,113 +113,113 @@ span.clickable:hover {
  */
 
 /* titles */
-h2 span,
-h3 span {
+.greenLayout h2 span,
+.greenLayout h3 span {
     border-bottom-color: #dfdfdf;
 }
 
 /* Tables */
 
-thead,
-tfoot {
+.greenLayout thead,
+.greenLayout tfoot {
     border-color: #055a0d;
     background: #055a0d url(../images/green/jquery-ui/ui-bg_glass_40_055a0d_1x400.png) 50% 50% repeat-x;
     color: #ffffff;
 }
 
-tbody {
+.greenLayout tbody {
     border-color: #dfdfdf;
     background: #ffffff url(../images/jquery-ui-common/ui-bg_flat_0_ffffff_40x100.png) 50% 50% repeat-x;
     color: #222222;
 }
 
-tbody td {
+.greenLayout tbody td {
     border-bottom: 1px solid #dfdfdf;
 }
 
-tbody tr:nth-child(odd), .odd {
+.greenLayout tbody tr:nth-child(odd), .odd {
     background-color: #ffffff;
 }
 
-tbody tr:nth-child(even), .even {
+.greenLayout tbody tr:nth-child(even), .even {
     background-color: #ededed;
 }
 
 /* Form elements */
 
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="search"],
-select,
-textarea {
+.greenLayout input[type="text"],
+.greenLayout input[type="email"],
+.greenLayout input[type="password"],
+.greenLayout input[type="search"],
+.greenLayout select,
+.greenLayout textarea {
     background: #ffffff;
     border-color: #cccccc;
 }
 
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus,
-input[type="search"]:focus,
-textarea:focus,
-select:focus {
+.greenLayout input[type="text"]:focus,
+.greenLayout input[type="email"]:focus,
+.greenLayout input[type="password"]:focus,
+.greenLayout input[type="search"]:focus,
+.greenLayout textarea:focus,
+.greenLayout select:focus {
     border: 1px solid #0e6e0e;
     -webkit-box-shadow: 0 0 5px #0e6e0e;
     -moz-box-shadow: 0 0 5px #0e6e0e;
     box-shadow: 0 0 5px #0e6e0e;
 }
 
-input[readonly="readonly"],
-input[readonly],
-input[type="text"]:disabled,
-input[type="email"]:disabled,
-input[type="password"]:disabled,
-select:disabled,
-textarea[readonly],
-textarea:disabled,
-.disabled {
+.greenLayout input[readonly="readonly"],
+.greenLayout input[readonly],
+.greenLayout input[type="text"]:disabled,
+.greenLayout input[type="email"]:disabled,
+.greenLayout input[type="password"]:disabled,
+.greenLayout select:disabled,
+.greenLayout textarea[readonly],
+.greenLayout textarea:disabled,
+.greenLayout .disabled {
     background: #cccccc url('../images/background/stripe_0582bcfb31aaf8571dba1adb85ffc318.png') repeat;
     color: #666666;
 }
 
-input[readonly="readonly"]:focus,
-input[readonly]:focus,
-input[type="text"]:disabled:focus,
-input[type="email"]:disabled:focus,
-input[type="password"]:disabled:focus,
-select:disabled:focus,
-textarea[readonly]:focus,
-textarea:disabled:focus,
-.disabled:focus {
+.greenLayout input[readonly="readonly"]:focus,
+.greenLayout input[readonly]:focus,
+.greenLayout input[type="text"]:disabled:focus,
+.greenLayout input[type="email"]:disabled:focus,
+.greenLayout input[type="password"]:disabled:focus,
+.greenLayout select:disabled:focus,
+.greenLayout textarea[readonly]:focus,
+.greenLayout textarea:disabled:focus,
+.greenLayout .disabled:focus {
     border-color: #cccccc;
     -webkit-box-shadow: none;
     -moz-box-shadow: none;
     box-shadow: none;
 }
 
-.buttons {
+.greenLayout .buttons {
     background: transparent;
 }
 
 /** Tooltips */
-.ui-tooltip {
+.greenLayout .ui-tooltip {
     background: #1f5c16;
     border-color: #1f5c16;
 }
-.ui-tooltip.ui-tooltip-notice {
+.greenLayout .ui-tooltip.ui-tooltip-notice {
     background: #1f5c16 url(../images/tooltips/info.png) no-repeat 5px 50%;
 }
-.ui-tooltip-content
+.greenLayout .ui-tooltip-content
 {
     color: #ffffff;
 }
 
 /* services status */
-.up {
+.greenLayout .up {
     color: #3d7a15;
 }
 
-.down {
+.greenLayout .down {
     color: #ca1d11;
 }
 
@@ -227,6 +227,6 @@ textarea:disabled:focus,
  * Footer
  */
 
-.footer {
+.greenLayout .footer {
     color: #ffffff;
 }

@@ -23,88 +23,88 @@
  * @author      Laurent Declercq <l.declercq@nuxwin.com>
  */
 
-body {
+body.blueLayout  {
     background: #ffffff url(../images/blue/background/left_bg.jpg) repeat-y top left;
     color: #1a1a1a;
 }
 
 /* Links */
 
-a {
+.blueLayout a {
     color: #1a1a1a;
 }
 
-.header a,
-.location a,
-.left_menu a,
-.link_as_button a {
+.blueLayout .header a,
+.blueLayout .location a,
+.blueLayout .left_menu a,
+.blueLayout .link_as_button a {
     color: #ffffff;
 }
 
-a:hover,
-.active a {
+.blueLayout a:hover,
+.blueLayout .active a {
     color: #5cbada;
 }
 
-a:hover.link_as_button {
+.blueLayout a:hover.link_as_button {
     color: #ffffff;
 }
 
-span.clickable:hover {
+.blueLayout span.clickable:hover {
     color:#5cbada;
     cursor: pointer;
 }
 
 /* header */
-.header {
+.blueLayout .header {
     background: #1e288a url(../images/blue/background/top_bg.jpg) repeat-x top left;
 }
 
 /* logo */
-.header .logo {
+.blueLayout .header .logo {
     background: transparent url(../images/blue/background/top_left_bg.jpg) no-repeat;
 }
 
 /* Main menu */
-.main_menu {
+.blueLayout .main_menu {
     background: transparent url(../images/blue/background/mainmenu_left.png) no-repeat top left;
 }
 
-.main_menu ul {
+.blueLayout .main_menu ul {
     background: transparent url(../images/blue/background/mainmenu_bg.png) repeat-x top left;
 }
 
-.main_menu a:hover,
-.main_menu .active a {
+.blueLayout .main_menu a:hover,
+.blueLayout .main_menu .active a {
     background-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Location */
-.location {
+.blueLayout .location {
     background: #151e72 url(../images/blue/jquery-ui/ui-bg_glass_40_151e72_1x400.png) 50% 50% repeat-x;
 }
 
 /* Section */
-.location-area h1 {
+.blueLayout .location-area h1 {
     color: #ffffff;
 }
 
 /* Breadcrumbs */
-.path {
+.blueLayout .path {
     color: #ffffff;
 }
 
 /* Left menu */
-.left_menu {
+.blueLayout .left_menu {
     background: transparent url(../images/blue/background/left_top_bg.jpg) no-repeat top;
     color: #ffffff;
 }
 
-.left_menu a {
+.blueLayout .left_menu a {
     background: transparent url(../images/blue/background/bullet.png) no-repeat center left;
 }
 
-.left_menu a:hover, .left_menu .active a {
+.blueLayout .left_menu a:hover, .left_menu .active a {
     background-image: url(../images/blue/background/bullet_hover.png);
 }
 
@@ -113,112 +113,112 @@ span.clickable:hover {
  */
 
 /* titles */
-h2 span,
-h3 span {
+.blueLayout h2 span,
+.blueLayout h3 span {
     border-bottom-color: #dfdfdf;
 }
 
 /* Tables */
-thead,
-tfoot {
+.blueLayout thead,
+.blueLayout tfoot {
     border-color: #151e72;
     background: #151e72 url(../images/blue/jquery-ui/ui-bg_glass_40_151e72_1x400.png) 50% 50% repeat-x;
     color: #ffffff;
 }
 
-tbody {
+.blueLayout tbody {
     border-color: #dfdfdf;
     background: #ffffff url(../images/jquery-ui-common/ui-bg_flat_0_ffffff_40x100.png) 50% 50% repeat-x;
     color: #222222;
 }
 
-tbody td {
+.blueLayout tbody td {
     border-bottom: 1px solid #dfdfdf;
 }
 
-tbody tr:nth-child(odd), .odd {
+.blueLayout tbody tr:nth-child(odd), .odd {
     background-color: #ffffff;
 }
 
-tbody tr:nth-child(even), .even {
+.blueLayout tbody tr:nth-child(even), .even {
     background-color: #ededed;
 }
 
 /* Form elements */
 
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="search"],
-select,
-textarea {
+.blueLayout input[type="text"],
+.blueLayout input[type="email"],
+.blueLayout input[type="password"],
+.blueLayout input[type="search"],
+.blueLayout select,
+.blueLayout textarea {
     background: #ffffff;
     border-color: #cccccc;
 }
 
-input[type="text"]:focus,
-input[type="password"]:focus,
-input[type="email"]:focus,
-input[type="search"]:focus,
-textarea:focus,
-select:focus {
+.blueLayout input[type="text"]:focus,
+.blueLayout input[type="password"]:focus,
+.blueLayout input[type="email"]:focus,
+.blueLayout input[type="search"]:focus,
+.blueLayout textarea:focus,
+.blueLayout select:focus {
     border: 1px solid #1e288a;
     -webkit-box-shadow: 0 0 5px #1e288a;
     -moz-box-shadow: 0 0 5px #1e288a;
     box-shadow: 0 0 5px #1e288a;
 }
 
-input[readonly="readonly"],
-input[readonly],
-input[type="text"]:disabled,
-input[type="email"]:disabled,
-input[type="password"]:disabled,
-select:disabled,
-textarea[readonly],
-textarea:disabled,
+.blueLayout input[readonly="readonly"],
+.blueLayout input[readonly],
+.blueLayout input[type="text"]:disabled,
+.blueLayout input[type="email"]:disabled,
+.blueLayout input[type="password"]:disabled,
+.blueLayout select:disabled,
+.blueLayout textarea[readonly],
+.blueLayout textarea:disabled,
 .disabled {
     background: #cccccc url('../images/background/stripe_0582bcfb31aaf8571dba1adb85ffc318.png') repeat;
     color: #666666;
 }
 
-input[readonly="readonly"]:focus,
-input[readonly]:focus,
-input[type="text"]:disabled:focus,
-input[type="email"]:disabled:focus,
-input[type="password"]:disabled:focus,
-select:disabled:focus,
-textarea[readonly]:focus,
-textarea:disabled:focus,
-.disabled:focus {
+.blueLayout input[readonly="readonly"]:focus,
+.blueLayout input[readonly]:focus,
+.blueLayout input[type="text"]:disabled:focus,
+.blueLayout input[type="email"]:disabled:focus,
+.blueLayout input[type="password"]:disabled:focus,
+.blueLayout select:disabled:focus,
+.blueLayout textarea[readonly]:focus,
+.blueLayout textarea:disabled:focus,
+.blueLayout .disabled:focus {
     border-color: #cccccc;
     -webkit-box-shadow: none;
     -moz-box-shadow: none;
     box-shadow: none;
 }
 
-.buttons {
+.blueLayout .buttons {
     background: transparent;
 }
 
 /** Tooltips */
-.ui-tooltip {
+.blueLayout .ui-tooltip {
     background: #161e73;
     border-color: #161e73;
 }
-.ui-tooltip.ui-tooltip-notice {
+.blueLayout .ui-tooltip.ui-tooltip-notice {
     background: #161e73 url(../images/tooltips/info.png) no-repeat 5px 50%;
 }
-.ui-tooltip-content
+.blueLayout .ui-tooltip-content
 {
     color: #ffffff;
 }
 
 /* services status */
-.up {
+.blueLayout .up {
     color: #3d7a15;
 }
 
-.down {
+.blueLayout .down {
     color: #ca1d11;
 }
 
@@ -226,6 +226,6 @@ textarea:disabled:focus,
  * Footer
  */
 
-.footer {
+.blueLayout .footer {
     color: #ffffff;
 }

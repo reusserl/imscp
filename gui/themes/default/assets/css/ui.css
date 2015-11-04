@@ -1322,14 +1322,21 @@ table .graph {
  * Footer
  */
 .footer {
+    position:fixed;
+    bottom:5px;
+    /*
     position: absolute;
     left:0;
     bottom: 5px;
-    text-align: center;
+
+
+    */
     width: 197px;
     height: auto;
+    text-align: center;
     font-weight: bold;
     line-height: 1.2em;
+
 }
 
 .no_footer .footer {

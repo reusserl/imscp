@@ -100,23 +100,23 @@ a:hover,
     font-weight: bold;
 }
 
-.black #header {
+.blackLayout #header {
     background: #000000 url('../images/black/login/stripe.png') repeat-x left top;
 }
 
-.blue #header {
+.blueLayout #header {
     background: #1e288a url('../images/blue/login/stripe.png') repeat-x left top;
 }
 
-.green #header {
+.greenLayout #header {
     background: #0e6e0e url('../images/green/login/stripe.png') repeat-x left top;
 }
 
-.red #header {
+.redLayout #header {
     background: #6e0e0f url('../images/red/login/stripe.png') repeat-x left top;
 }
 
-.yellow #header {
+.yellowLayout #header {
     background: #918137 url('../images/yellow/login/stripe.png') repeat-x left top;
 }
 
@@ -197,23 +197,23 @@ a:hover,
 
 /*------------TOOLTIPS--------------*/
 
-.black .ui-tooltip {
+.blackLayout .ui-tooltip {
     background: #000000;
     border-color: #000000;
 }
-.blue .ui-tooltip {
+.blueLayout .ui-tooltip {
     background: #161e73;
     border-color: #161e73;
 }
-.green .ui-tooltip {
+.greenLayout .ui-tooltip {
     background: #1f5c16;
     border-color: #1f5c16;
 }
-.red .ui-tooltip {
+.redLayout .ui-tooltip {
     background: #590405;
     border-color: #590405;
 }
-.yellow .ui-tooltip {
+.yellowLayout .ui-tooltip {
     background: #85742f;
     border-color: #85742f;
 }
@@ -224,19 +224,19 @@ a:hover,
     -moz-border-radius: 4px;
     border-radius: 4px;
 }
-.black .ui-tooltip.ui-tooltip-notice {
+.blackLayout .ui-tooltip.ui-tooltip-notice {
     background: #000000 url(../images/tooltips/info.png) no-repeat 5px 50%;
 }
-.blue .ui-tooltip.ui-tooltip-notice {
+.blueLayout .ui-tooltip.ui-tooltip-notice {
     background: #161e73 url(../images/tooltips/info.png) no-repeat 5px 50%;
 }
-.green .ui-tooltip.ui-tooltip-notice {
+.greenLayout .ui-tooltip.ui-tooltip-notice {
     background: #1f5c16 url(../images/tooltips/info.png) no-repeat 5px 50%;
 }
-.red .ui-tooltip.ui-tooltip-notice {
+.redLayout .ui-tooltip.ui-tooltip-notice {
     background: #590405 url(../images/tooltips/info.png) no-repeat 5px 50%;
 }
-.yellow .ui-tooltip.ui-tooltip-notice {
+.yellowLayout .ui-tooltip.ui-tooltip-notice {
     background: #85742f url(../images/tooltips/info.png) no-repeat 5px 50%;
 }
 .ui-tooltip.ui-tooltip-notice {
@@ -267,23 +267,23 @@ a:hover,
     box-shadow: 0px 0px 5px 0px rgba(50, 50, 50, 0.75);
 }
 
-.black #login {
+.blackLayout #login {
     background-image: url('../images/imscp_logo90.png'), url(../images/black/login/gradient_box.png), url(../images/stripe_box.png);
 }
 
-.blue #login {
+.blueLayout #login {
     background-image: url('../images/imscp_logo90.png'), url(../images/blue/login/gradient_box.png), url(../images/stripe_box.png);
 }
 
-.green #login {
+.greenLayout #login {
     background-image: url('../images/imscp_logo90.png'), url(../images/green/login/gradient_box.png), url(../images/stripe_box.png);
 }
 
-.red #login {
+.redLayout #login {
     background-image: url('../images/imscp_logo90.png'), url(../images/red/login/gradient_box.png), url(../images/stripe_box.png);
 }
 
-.yellow #login {
+.yellowLayout #login {
     background-image: url('../images/imscp_logo90.png'), url(../images/yellow/login/gradient_box.png), url(../images/stripe_box.png);
 }
 
@@ -343,27 +343,27 @@ table td {
     color: #ffffff;
 }
 
-.black .ftp_chooser thead, .black .ftp_chooser tfoot {
+.blackLayout .ftp_chooser thead, .blackLayout .ftp_chooser tfoot {
     background: #000000 url(../images/black/background/ui-bg_glass_40_000000_1x400.png) 50% 50% repeat-x;
     border-color: #000000;
 }
 
-.blue .ftp_chooser thead, .black .ftp_chooser tfoot {
+.blueLayout .ftp_chooser thead, .blueLayout .ftp_chooser tfoot {
     background: #151e72 url(../images/blue/background/ui-bg_glass_40_151e72_1x400.png) 50% 50% repeat-x;
     border-color: #151e72;
 }
 
-.green .ftp_chooser thead, .black .ftp_chooser tfoot {
+.greenLayout .ftp_chooser thead, .greenLayout .ftp_chooser tfoot {
     background: #055a0d url(../images/green/background/ui-bg_glass_40_055a0d_1x400.png) 50% 50% repeat-x;
     border-color: #055a0d;
 }
 
-.red .ftp_chooser thead, .black .ftp_chooser tfoot {
+.redLayout .ftp_chooser thead, .redLayout .ftp_chooser tfoot {
     background: #5a0505 url(../images/red/background/ui-bg_glass_40_5a0505_1x400.png) 50% 50% repeat-x;
     border-color: #5a0505;
 }
 
-.yellow .ftp_chooser thead, .black .ftp_chooser tfoot {
+.yellowLayout .ftp_chooser thead, .yellowLayout .ftp_chooser tfoot {
     background: #85742f url(../images/yellow/background/ui-bg_glass_40_85742f_1x400.png) 50% 50% repeat-x;
     border-color: #85742f;
 }
@@ -405,23 +405,23 @@ table td {
     color: #ffffff;
 }
 
-.black #message_container {
+.blackLayout #message_container {
     background-image: url('../images/imscp_logo90.png'), url(../images/black/box/gradient_box.png), url(../images/stripe_box.png);
 }
 
-.blue #message_container {
+.blueLayout #message_container {
     background-image: url('../images/imscp_logo90.png'), url(../images/blue/box/gradient_box.png), url(../images/stripe_box.png);
 }
 
-.green #message_container {
+.greenLayout #message_container {
     background-image: url('../images/imscp_logo90.png'), url(../images/green/box/gradient_box.png), url(../images/stripe_box.png);
 }
 
-.red #message_container {
+.redLayout #message_container {
     background-image: url('../images/imscp_logo90.png'), url(../images/red/box/gradient_box.png), url(../images/stripe_box.png);
 }
 
-.yellow #message_container {
+.yellowLayout #message_container {
     background-image: url('../images/imscp_logo90.png'), url(../images/yellow/box/gradient_box.png), url(../images/stripe_box.png);
 }
 
