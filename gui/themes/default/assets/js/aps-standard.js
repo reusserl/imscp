@@ -45,8 +45,6 @@
 						}).prependTo(".body").trigger('message_timeout');
 					}
 
-
-
 					return response;
 				},
 
@@ -85,7 +83,7 @@
 	iMSCP.aps.factory("InstanceResource", function ($resource) {
 		return $resource("aps_instances.php", {id: '@id'}, {
 			update: {method: 'PUT'},
-			"new":{method: 'GET', params: {action: "new"}, isArray: true }
+			"new":{method: 'GET', params: {action: "new"}, isArray: false }
 		});
 	});
 
@@ -93,8 +91,8 @@
 
 	// Package controller
 	iMSCP.aps.controller("PackageController", packageController);
-	packageController.$inject = ["$scope", "NgTableParams", "PackageResource", "$window", 'dialogService'];
-	function packageController($scope, NgTableParams, PackageResource, $window, dialogService) {
+	packageController.$inject = ["$scope", "NgTableParams", "PackageResource", "$window", 'dialogService', '$sce'];
+	function packageController($scope, NgTableParams, PackageResource, $window, dialogService, $sce) {
 		var vm = this;
 
 		// Load table data
@@ -151,10 +149,13 @@
 			var pkg = this.package;
 			PackageResource.get({}, {id: this.package.id}).$promise.then(function (data) {
 				data = angular.merge(data, pkg);
-				dialogService.open("PackageDetails", "/templates.php?tpl=shared/aps_standard/package_details.tpl", data, {
+
+				dialogService.open("PackageDetails", "/templates.php?tpl=angular/aps-standard/package_details.tpl", data, {
 					title: imscp_i18n.core.aps.package_details,
+					dialogClass: 'ApsStandard',
 					modal: true,
-					width: $($window).width() / 2
+					width: $($window).width() / 2,
+					maxHeight: $($window).height() / 2
 				});
 			});
 		};
@@ -168,18 +169,11 @@
 
 		// Update package index
 		$scope.updateIndexAction = function () {
-			/*
-			$window.scrollTo(0, 0);
-			$("<div>", {
-				"class": "static_warning",
-				"html": $.parseHTML(imscp_i18n.core.aps.update_in_progress),
-				"hide": true
-			}).prependTo(".PackageList");
-			*/
-
-			PackageResource.updateIndex(function () {
-				$('.static_warning').remove();
-			});
+			if(confirm(imscp_i18n.core.aps.update_index_warning)) {
+				PackageResource.updateIndex(function () {
+					$('.static_warning').remove();
+				});
+			}
 		};
 	}
 
@@ -189,50 +183,76 @@
 	function writeInstanceController( InstanceResource, $window, dialogService) {
 		var vm = this;
 
+		vm.test = function(model) {
+			console.log(model)
+		};
+
 		// Get new instance form
 		vm.newAction = function(pkg) {
-			InstanceResource.new({}, {id: pkg.id}).$promise.then(function(data) {
-				dialogService.open("InstanceNew", "/templates.php?tpl=shared/aps_standard/instance_new.tpl", data, {
+			InstanceResource.new({}, {id: pkg.id}).$promise.then(function(model) {
+				dialogService.open("ApsInstanceSettings", "/templates.php?tpl=angular/aps-standard/instance_new.tpl", model, {
 					title: sprintf(imscp_i18n.core.aps.new_app_instance, pkg.name),
 					modal: true,
 					width: $($window).width() / 2,
-					position: { 'my': 'center', 'at': 'top+190' },
-					buttons: {
-						"Cancel": function() {
-							$( this ).dialog( "close" );
+					//maxHeight: $($window).height() / 2,
+					position: { 'my': "center", "at": "top+180" },
+					buttons: [
+						{
+							text: imscp_i18n.core.aps.install,
+							click: $.noop,
+							type: "submit",
+							form: "settingsForm"
+						},
+						{
+							text:imscp_i18n.core.aps.cancel,
+							click: function() {
+								$(this).dialog("close");
+							}
 						}
+					],
+					close: function() {
+						$("button,input").blur();
+					},
+					open: function() {
+						$( this ).find( "[type=submit]" ).hide();
 					}
 				});
 			});
 		};
 
-		vm.createAction = function (data) {
-			console.log(data);
-			console.log(angular.toJson(data, true));
-			// TODO redirect to instances.php on success
+		vm.createAction = function (model) {
+			model.$save({id: model.package_id}, function () {
+				dialogService.close("ApsInstanceSettings");
+			}, function (response) {
+				if (response.data.errors) {
+					model.errors = response.data.errors;
+				}
+			});
 		}
 	}
 
 	// Filter
 	iMSCP.aps.filter('strToRegexp', function() {
 		return function(str) {
-			if(str !== '') {
+			if(angular.isDefined(str) && str !== '') {
 				str = '/' + str + '/';
 				var flags = str.replace(/.*\/([gimy]*)$/, '$1');
 				var pattern = str.replace(new RegExp('^/(.*?)/' + flags + '$'), '$1');
 				return new RegExp(pattern, flags);
 			}
 
-			return undefined;
+			return /.*/;
 		}
-	});
-
-	// FORM
+	}).filter('toTrustedHtml', ['$sce', function($sce) {
+		return function($html) {
+			return $sce.trustAsHtml($html);
+		}
+	}]);
 
 	iMSCP.aps.directive('imscpForm', function() {
 		return {
 			restrict: 'E', // says that this directive is only for html elements
-			templateUrl: "/templates.php?tpl=shared/aps_standard/instance_settings_form.tpl"
+			templateUrl: "/templates.php?tpl=angular/aps-standard/instance_settings_form.tpl"
 		}
 	}).directive('imscpFormField', function($q, $compile, $templateCache, $http) {
 		// Load the given template
@@ -283,13 +303,24 @@
 		};
 
 		return {
-			restrict: 'E', // says that this directive is only for html elements
+			restrict: 'E',
 			template: '<div ng-bind="field"></div>',
 			scope: {
 				field: '='
 			},
 			link: linker
 		}
+	}).directive("dynamicName",function($compile){
+		return {
+			restrict:"A",
+			terminal:true,
+			priority:1000,
+			link:function(scope,element,attrs){
+				element.attr('name', scope.$eval(attrs.dynamicName));
+				element.removeAttr("dynamic-name");
+				$compile(element)(scope);
+			}
+		};
 	});
 
 	// AJAX LOADER
@@ -298,7 +329,7 @@
 	iMSCP.aps.directive('ajaxLoader', function ($http) {
 		return {
 			restrict: 'A', // Say that this directive is only for html attributes
-			link: function (scope, elm, attrs) {
+			link: function (scope) {
 				scope.isLoading = function () {
 					return $http.pendingRequests.length > 0;
 				};
@@ -321,7 +352,7 @@
 				restrict: 'E', // says that this directive is only for html elements
 				replace: true,
 				template: '<input type="button">',
-				link: function (scope, element, attrs) {
+				link: function (scope, element) {
 					element.button();
 				}
 			};
@@ -330,22 +361,25 @@
 			return {
 				restrict: 'E', // says that this directive is only for html elements
 				replace: true,
-				template: '<span>',
-				link: function(scope, element, attrs) {
+				template: '<span class="tips icon i_help">',
+				link: function(scope, element) {
 					element.tooltip({ tooltipClass: "ui-tooltip-notice", track: true });
 				}
 			}
+		}).
+		directive('jqTabs', function() {
+			return {
+				restrict: 'E', // says that this directive is only for html elements
+				replace: true,
+				transclude: true,
+				template:'<div>',
+				link: function(scope, element) {
+					element.tabs();
+				}
+			}
 		});
-
 	angular.module("EscapeHtml", []).filter('escapeHtml', function () {
-		var entityMap = {
-			"&": "&amp;",
-			"<": "&lt;",
-			">": "&gt;",
-			'"': '&quot;',
-			"'": '&#39;',
-			"/": '&#x2F;'
-		};
+		var entityMap = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': '&quot;', "'": '&#39;', "/": '&#x2F;'};
 
 		return function(str) {
 			return String(str).replace(/[&<>"'\/]/g, function (s) {
@@ -380,12 +414,12 @@
  * SOFTWARE.
  */
 (function () {
-	angular.module('dialogService', []).service('dialogService', ['$rootScope', '$q', '$compile', '$templateCache', '$http', "$timeout",
-		function ($rootScope, $q, $compile, $templateCache, $http, $timeout) {
+	angular.module('dialogService', []).service('dialogService', ['$rootScope', '$q', '$compile', '$templateCache', '$http',
+		function ($rootScope, $q, $compile, $templateCache, $http) {
 
 			var _this = this;
 			_this.dialogs = {};
-			$.ui.dialog.prototype._focusTabbable = function(){};
+			$.ui.dialog.prototype._focusTabbable = $.noop;
 
 			this.open = function (id, template, model, options) {
 				// Check our required arguments
@@ -402,10 +436,8 @@
 					model = null;
 				}
 
-				// Copy options so the change ot close isn't propagated back.
-				// Extend is used instead of copy because window references are
-				// often used in the options for positioning and they can't be deep
-				// copied.
+				// Copy options so the change ot close isn't propagated back. Extend is used instead of copy because
+				// window references are often used in the options for positioning and they can't be deep copied.
 				var dialogOptions = { autoOpen:false };
 				if (angular.isDefined(options)) {
 					//angular.extend(dialogOptions, options);
@@ -416,21 +448,20 @@
 				var dialog = { scope: null, ref: null, deferred: $q.defer() };
 
 				// nxw
-				dialog.scope = $rootScope.$new();
-				dialog.scope.model = model;
+				//dialog.scope = $rootScope.$new();
+				//dialog.scope.model = model;
 
-				compileTemplate(template, dialog.scope).then(function(html) {
-					dialog.ref = $(html);
-					// Initialize the dialog and open it
-					dialog.ref.dialog(dialogOptions);
-					//setTimeout(function(){dialog.ref.dialog("open");}, 3000);
-					dialog.ref.dialog("open");
-					// Cache the dialog
-					_this.dialogs[id] = dialog;
-				});
+				//compileTemplate(template, dialog.scope).then(function(html) {
+				//	dialog.ref = $(html);
+				//	// Initialize the dialog and open it
+				//	dialog.ref.dialog(dialogOptions);
+				//	//setTimeout(function(){dialog.ref.dialog("open");}, 3000);
+				//	dialog.ref.dialog("open");
+				//	// Cache the dialog
+				//	_this.dialogs[id] = dialog;
+				//});
 				// nxw
 
-				/*
 				// Get the template from the cache or url
 				loadTemplate(template).then(
 					function (dialogTemplate) {
@@ -440,9 +471,8 @@
 						var dialogLinker = $compile(dialogTemplate);
 						dialog.ref = $(dialogLinker(dialog.scope));
 
-						// Handle the case where the user provides a custom close and also
-						// the case where the user clicks the X or ESC and doesn't call
-						// close or cancel.
+						// Handle the case where the user provides a custom close and also the case where the user clicks
+						// the X or ESC and doesn't call close or cancel.
 						var customCloseFn = dialogOptions.close;
 						dialogOptions.close = function (event, ui) {
 							if (customCloseFn) {
@@ -453,7 +483,6 @@
 
 						// Initialize the dialog and open it
 						dialog.ref.dialog(dialogOptions);
-						//setTimeout(function(){ dialog.ref.dialog("open"); }, 1000);
 						dialog.ref.dialog("open");
 
 						// Cache the dialog
@@ -463,7 +492,6 @@
 						throw error;
 					}
 				);
-				*/
 
 				// Return our cached promise to complete later
 				return dialog.deferred.promise;
@@ -472,9 +500,8 @@
 			this.close = function (id, result) {
 				// Get the dialog and throw exception if not found
 				var dialog = getExistingDialog(id);
-				// Notify those waiting for the result
-				// This occurs first because the close calls the close handler on the
-				// dialog whose default action is to cancel.
+				// Notify those waiting for the result. This occurs first because the close calls the close handler on
+				// the dialog whose default action is to cancel.
 				dialog.deferred.resolve(result);
 				// Close the dialog (must be last)
 				dialog.ref.dialog("close");
@@ -483,9 +510,8 @@
 			this.cancel = function (id) {
 				// Get the dialog and throw exception if not found
 				var dialog = getExistingDialog(id);
-				// Notify those waiting for the result
-				// This occurs first because the cancel calls the close handler on the
-				// dialog whose default action is to cancel.
+				// Notify those waiting for the result. This occurs first because the cancel calls the close handler on
+				// the dialog whose default action is to cancel.
 				dialog.deferred.reject();
 				// Cancel and close the dialog (must be last)
 				dialog.ref.dialog("close");
@@ -494,9 +520,8 @@
 			function cleanup(id) {
 				// Get the dialog and throw exception if not found
 				var dialog = getExistingDialog(id);
-				// This is only called from the close handler of the dialog
-				// in case the x or escape are used to cancel the dialog. Don't
-				// call this from close, cancel, or externally.
+				// This is only called from the close handler of the dialog in case the x or escape are used to cancel
+				// the dialog. Don't call this from close, cancel, or externally.
 				dialog.deferred.reject();
 				dialog.scope.$destroy();
 				// Remove the object from the DOM
@@ -551,16 +576,73 @@
 				return deferred.promise;
 			}
 
-			// NXW addon to defer
-			function compileTemplate(template, scope) {
-				var deferred = $q.defer();
-
-				loadTemplate(template).then(function(template){
-					deferred.resolve($compile(template)(scope));
-				});
-
-				return deferred.promise;
-			}
+			// NXW
+			//function compileTemplate(template, scope) {
+			//	var deferred = $q.defer();
+			//
+			//	loadTemplate(template).then(function(template){
+			//		deferred.resolve($compile(template)(scope));
+			//	});
+			//
+			//	return deferred.promise;
+			//}
+			// NXW
 		}
 	]);
 })();
+
+/**
+ * The form attribute can be used to associate a submit button with a form, even if the button is not a child of the <form> itself.
+ *
+ * This polyfill uses a support check taken from Modernizr and polyfills the functionality using jQuery.
+ * See http://tjvantoll.com/2013/07/10/creating-a-jquery-ui-dialog-with-a-submit-button/
+ */
+(function() {
+	// Via Modernizr
+	function formAttributeSupport() {
+		var form = document.createElement( "form" ),
+			input = document.createElement( "input" ),
+			div = document.createElement( "div" ),
+			id = "formtest"+ ( new Date().getTime() ),
+			attr,
+			bool = false;
+
+		form.id = id;
+
+		// IE6/7 confuses the form idl attribute and the form content attribute
+		if ( document.createAttribute ) {
+			attr = document.createAttribute("form");
+			attr.nodeValue = id;
+			input.setAttributeNode(attr);
+			div.appendChild(form);
+			div.appendChild(input);
+
+			document.documentElement.appendChild(div);
+
+			bool = form.elements.length === 1 && input.form == form;
+
+			div.parentNode.removeChild(div);
+		}
+
+		return bool;
+	};
+
+	if ( !formAttributeSupport() ) {
+		$( document )
+			.on( "click", "[type=submit][form]", function( event ) {
+				event.preventDefault();
+				var formId = $( this ).attr( "form" ),
+					$form = $( "#" + formId ).submit();
+			})
+			.on( "keypress", "form input", function( event ) {
+				var $form;
+				if ( event.keyCode == 13 ) {
+					$form = $( this ).parents( "form" );
+					if ( $form.find( "[type=submit]" ).length == 0 &&
+						$( "[type=submit][form=" + $( this ).attr( "form" ) + "]" ).length > 0 ) {
+						$form.submit();
+					}
+				}
+			});
+	}
+}());
