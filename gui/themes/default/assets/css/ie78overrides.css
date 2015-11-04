@@ -7,23 +7,23 @@
     background-color: black;
 }
 
-.black #login {
+.blackLayout #login {
     background-image: url('../images/imscp_logo90.png');
 }
 
-.blue #login {
+.blueLayout #login {
     background-image: url('../images/imscp_logo90.png');
 }
 
-.green #login {
+.greenLayout #login {
     background-image: url('../images/imscp_logo90.png');
 }
 
-.red #login {
+.redLayout #login {
     background-image: url('../images/imscp_logo90.png');
 }
 
-.yellow #login {
+.yellowLayout #login {
     background-image: url('../images/imscp_logo90.png');
 }
 
@@ -37,22 +37,22 @@
     background-color: black;
 }
 
-.black #message_container {
+.blackLayout #message_container {
     background-image: url('../images/imscp_logo90.png');
 }
 
-.blue #message_container {
+.blueLayout #message_container {
     background-image: url('../images/imscp_logo90.png');
 }
 
-.green #message_container {
+.greenLayout #message_container {
     background-image: url('../images/imscp_logo90.png');
 }
 
-.red #message_container {
+.redLayout #message_container {
     background-image: url('../images/imscp_logo90.png');
 }
 
-.yellow #message_container {
+.yellowLayout #message_container {
     background-image: url('../images/imscp_logo90.png');
 }
