@@ -1,16 +1,20 @@
 {
-	"name": "imscp-gui-default",
+	"name": "imscp-gui-default-theme",
 	"description": "i-MSCP GUI default theme",
 	"type": "library",
-	"version": "1.0.0",
-	"author": "",
-	"contributors": [],
-	"license": "BSD-3-Clause",
+	"version": "1.1.0",
+	"author": "Marc Pujol <kilburn@la3.org>",
+	"contributors": [
+		"Arthur Mayer <a.mayer@i-mscp.net>",
+		"Henrik Schytte <henrik@schytte.net>",
+		"Laurent Declercq <l.declercq@nuxwin.com>",
+		"Ninos Ego <me@ninosego.de>"
+	],
+	"license": "GPL-2.0+",
 	"keywords": [
 		"i-mscp",
-		"hosting",
-		"linux",
-		"debian"
+		"gui",
+		"theme"
 	],
 	"homepage": "https://i-mscp.net",
 	"support": {

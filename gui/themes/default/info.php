@@ -20,12 +20,14 @@
 
 return array(
 	'theme_name' => 'default',
-	'theme_version' => '1.0.0',
+	'theme_version' => '1.1.0',
 	'theme_authors' => array(
+		'Arthur Mayer' => 'a.mayer@i-mscp.net',
 		'Henrik Schytte' => 'henrik@schytte.net',
 		'Laurent Declercq' => 'l.declercq@nuxwin.com',
-		'Marc Pujol' => 'kilburn@la3.org'
+		'Marc Pujol' => 'kilburn@la3.org',
+		'Ninos Ego' => 'me@ninosego.de'
 	),
-	'theme_licence' => 'GPLv2++',
+	'theme_licence' => 'GPL-2.0+',
 	'theme_color_set' => array('black', 'blue', 'green', 'red', 'yellow')
 );
