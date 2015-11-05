@@ -2,27 +2,50 @@
 <html>
 <head>
 	<title>{TR_PAGE_TITLE}</title>
-	<meta charset="{THEME_CHARSET}">
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="robots" content="nofollow, noindex">
-	<link rel="icon" href="{THEME_ASSETS_PATH}/images/favicon.ico">
-	<link rel="stylesheet" href="{THEME_ASSETS_PATH}/css/jquery-ui-{THEME_COLOR}.css?v={THEME_ASSETS_VERSION}">
-	<link rel="stylesheet" href="{THEME_ASSETS_PATH}/css/ui.css?v={THEME_ASSETS_VERSION}">
-	<link rel="stylesheet" href="{THEME_ASSETS_PATH}/css/{THEME_COLOR}.css?v={THEME_ASSETS_VERSION}">
+	<meta name="description" content="i-MSCP: internet Multi Server Control Panel">
+	<meta name="author" content="http://i-mscp.net/">
+	<link rel="icon" href="/assets/images/favicon.ico">
+	<!-- build:css /dist/assets/css/ui.css -->
+	<link rel="stylesheet" href="/assets/css/jquery-ui-black.css">
+	<link rel="stylesheet" href="/assets/css/jquery-ui-blue.css">
+	<link rel="stylesheet" href="/assets/css/jquery-ui-green.css">
+	<link rel="stylesheet" href="/assets/css/jquery-ui-red.css">
+	<link rel="stylesheet" href="/assets/css/jquery-ui-yellow.css">
+	<link rel="stylesheet" href="/assets/css/ui.css">
+	<link rel="stylesheet" href="/assets/css/aps_standard.css">
+	<link rel="stylesheet" href="/assets/css/black.css">
+	<link rel="stylesheet" href="/assets/css/blue.css">
+	<link rel="stylesheet" href="/assets/css/green.css">
+	<link rel="stylesheet" href="/assets/css/red.css">
+	<link rel="stylesheet" href="/assets/css/yellow.css">
+	<!-- endbuild -->
 	<script>
 		imscp_i18n = {JS_TRANSLATIONS};
 	</script>
-	<script src="{THEME_ASSETS_PATH}/js/vendor/jquery.min.js?v={THEME_ASSETS_VERSION}"></script>
-	<script src="{THEME_ASSETS_PATH}/js/vendor/jquery-ui.min.js?v={THEME_ASSETS_VERSION}"></script>
-	<script src="{THEME_ASSETS_PATH}/js/vendor/datatables.min.js?v={THEME_ASSETS_VERSION}"></script>
-	<script src="{THEME_ASSETS_PATH}/js/vendor/datatables_natural.min.js?v={THEME_ASSETS_VERSION}"></script>
-	<script src="{THEME_ASSETS_PATH}/js/vendor/pgenerator.min.js?v={THEME_ASSETS_VERSION}"></script>
-	<script src="{THEME_ASSETS_PATH}/js/imscp.js?v={THEME_ASSETS_VERSION}"></script>
+	<!-- build:js /dist/assets/js/ui.js -->
+	<script src="/assets/js/vendor/jQuery/jquery.js"></script>
+	<script src="/assets/js/vendor/jQuery/jquery-ui.js"></script>
+	<script src="/assets/js/vendor/jQuery/datatables/datatables.js"></script>
+	<script src="/assets/js/vendor/jQuery/datatables/natural.js"></script>
+	<script src="/assets/js/vendor/jQuery/pgenerator.jquery.js"></script>
+	<script src="/assets/js/vendor/AngularJs/angular.js"></script>
+	<script src="/assets/js/vendor/AngularJs/angular-filter.js"></script>
+	<script src="/assets/js/vendor/AngularJs/angular-resource.js"></script>
+	<script src="/assets/js/vendor/AngularJs/angular-sanitize.js"></script>
+	<script src="/assets/js/vendor/AngularJs/ng-table.js"></script>
+	<script src="/assets/js/main.js"></script>
+	<script src="/assets/js/aps-standard.js"></script>
+	<!-- endbuild -->
 </head>
-<body class="{THEME_COLOR}">
+<body class="{THEME_COLOR}Layout">
 <div id="wrapper">
 	<div class="header">
 		<!-- INCLUDE "../partials/navigation/main_menu.tpl" -->
-		<div class="logo"><img src="{ISP_LOGO}" alt="i-MSCP logo"/></div>
+		<div class="logo"><img src="{ISP_LOGO}" width="212" height="89" alt="i-MSCP logo"/></div>
 	</div>
 	<div class="location">
 		<div class="location-area">
