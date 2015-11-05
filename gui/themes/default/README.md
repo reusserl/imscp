@@ -1,16 +1,17 @@
-# Distribution files
+# i-MSCP default theme
 
-## Introduction
+This is the default theme for i-MSCP.
 
-File located in the `./dist` directory are distribution files that used in production environments where development
-mode is disabled. The intent is to minimizeserver-load and the page-load time by concatenating and minifying html, css
-and js sources.
+## Distribution files
 
-## Howto build distribution files
+File located in the `./dist` directory are distribution files that are used in production environments. The intent is to
+minimizeserver-load and the page-load time by concatenating and minifying html, css and js sources.
 
-### Setup environment
+### Howto build distribution files
 
-#### Node.js installation
+#### Setup environment
+
+##### Node.js installation
 
 As root user, run the following commands:
 
@@ -22,7 +23,7 @@ As root user, run the following commands:
 # cp -rp bin/ include/ lib/ share/ /usr/local
 ```
 
-#### Grunt CLI installation
+##### Grunt CLI installation
 
 As root user, run the following command:
 
@@ -30,7 +31,7 @@ As root user, run the following command:
 # npm install -g grunt-cli
 ```
 
-#### Dependencies installation
+##### Dependencies installation
 
 As normal user, run the following commands:
 
@@ -39,7 +40,7 @@ $ cd <project_path>/gui/themes/default
 $ npm install
 ```
 
-### Build distribution files
+#### Build distribution files
 
 As normal user, run the following command:
 
@@ -52,13 +53,13 @@ If all goes fine, you should get output such as:
 ![Grunt success]
 (https://raw.githubusercontent.com/i-MSCP/imscp/aps-standard/gui/themes/default/grunt.png)
 
-### Commit the new distribution files
+#### Commit the new distribution files
 
 Once the new distribution files have been generated in the `./dist` directory, you must add them and commit them on GitHub.
 Don't forget that each time your run the `grunt build` command, new asset file revisions are created, meaning that you'll
 have to re-add them and delete the old-ones.
 
-### Release process
+#### Release process
 
 All the procedure above must be part of the release process. Before releasing a new i-MSCP version, you must ensure that
 the distribution files are synchronized with the source files by running the grunt build task as explained above. This
