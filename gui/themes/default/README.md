@@ -5,7 +5,7 @@ This is the default theme for i-MSCP.
 ## Distribution files
 
 File located in the `./dist` directory are distribution files that are used in production environments. The intent is to
-minimizeserver-load and the page-load time by concatenating and minifying html, css and js sources.
+minimize server-load and the page-load time by concatenating and minifying html, css and js sources.
 
 ### Howto build distribution files
 

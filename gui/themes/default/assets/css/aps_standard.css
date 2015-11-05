@@ -1,6 +1,25 @@
+/**
+ * i-MSCP - internet Multi Server Control Panel
+ * Copyright (C) 2010-2015 by Laurent Declercq
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
 .loader {
 	display: none;
-	background: transparent url(../images/ajax/ajax-loader2.gif) center center no-repeat;
+	background: transparent url(../images/ajax/ajax-loader.gif) center center no-repeat;
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -26,88 +45,88 @@ body.loading .loader {
 
 /** PACKAGE LIST **/
 
-.PackageList {
+.ApsStandard .PackageList {
 	position: relative;
 }
 
-.PackageList table {
+.ApsStandard .PackageList table {
 	table-layout: fixed;
 	border-collapse: collapse;
 	width: 100%;
 	border-radius: 100px;
 }
 
-table tr th:nth-child(1) {
+.ApsStandard table tr th:nth-child(1) {
 	width: 100px;
 }
 
-table tr th:nth-child(3) {
+.ApsStandard table tr th:nth-child(3) {
 	width: 250px;
 }
 
-.PackageList thead {
+.ApsStandard .PackageList thead {
 	border: none;
 }
 
-.PackageList thead th {
+.ApsStandard .PackageList thead th {
 	text-align: center;
 	border: none;
 }
 
-.PackageList td {
+.ApsStandard .PackageList td {
 	border: none;
 }
 
-.PackageList tbody tr:nth-child(4n),
-.PackageList tbody tr:nth-child(4n-1) {
+.ApsStandard .PackageList tbody tr:nth-child(4n),
+.ApsStandard .PackageList tbody tr:nth-child(4n-1) {
 	background: #ffffff;
 
 }
 
-.PackageList tbody tr:nth-child(4n-2),
-.PackageList tbody tr:nth-child(4n-3) {
+.ApsStandard .PackageList tbody tr:nth-child(4n-2),
+.ApsStandard .PackageList tbody tr:nth-child(4n-3) {
 	background: #ededed;
 }
 
-.PackageList a,
-.PackageList a:link,
-.PackageList a:active,
-.PackageList a:visited {
+.ApsStandard .PackageList a,
+.ApsStandard .PackageList a:link,
+.ApsStandard .PackageList a:active,
+.ApsStandard .PackageList a:visited {
 	color: #1ba2c7;
 	text-decoration: none;
 }
 
-.PackageList a:hover {
+.ApsStandard .PackageList a:hover {
 	color: #4c5866;
 }
 
-.PackageList .Logo,
-.PackageList .Description,
-.PackageList .Details {
+.ApsStandard .PackageList .Logo,
+.ApsStandard .PackageList .Description,
+.ApsStandard .PackageList .Details {
 	padding: 10px 10px 0 10px;
 }
 
-.PackageList .Version,
-.PackageList .Info,
-.PackageList .Status {
+.ApsStandard .PackageList .Version,
+.ApsStandard .PackageList .Info,
+.ApsStandard .PackageList .Status {
 	padding: 5px 10px 5px 10px;
 }
 
-.PackageList .Logo,
-.PackageList .Details,
-.PackageList .Version,
-.PackageList .Status {
+.ApsStandard .PackageList .Logo,
+.ApsStandard .PackageList .Details,
+.ApsStandard .PackageList .Version,
+.ApsStandard .PackageList .Status {
 	text-align: center;
 	vertical-align: middle;
 	color: #737f8d;
 }
 
-.PackageList .Description {
+.ApsStandard .PackageList .Description {
 	color: #737f8d;
 	vertical-align: top;
 }
 
-.PackageList .Description h4 {
+.ApsStandard .PackageList .Description h4 {
 	margin: 0 0 10px 0;
 	text-align: left;
 	font-size: 1.5em;
@@ -115,22 +134,22 @@ table tr th:nth-child(3) {
 	text-transform: uppercase;
 }
 
-.PackageList .Info {
+.ApsStandard .PackageList .Info {
 	vertical-align: middle;
 	color: #737f8d;
 	text-transform: uppercase;
 }
 
-.PackageList .Info b {
+.ApsStandard .PackageList .Info b {
 	margin-right: 10px;
 }
 
-.PackageList .Info b,
-.PackageList .Info a {
+.ApsStandard .PackageList .Info b,
+.ApsStandard .PackageList .Info a {
 	text-transform: none;
 }
 
-.PackageList .Info span {
+.ApsStandard .PackageList .Info span {
 	float: right;
 	margin-right: 20px;
 	color: #cccccc;
@@ -139,13 +158,13 @@ table tr th:nth-child(3) {
 	font-weight: bold;
 }
 
-.PackageList .Details {
+.ApsStandard .PackageList .Details {
 	vertical-align: top;
 	text-align: center;
 }
 
-.black .PackageList .Details,
-.black .PackageList .Status {
+.blackLayout .ApsStandard .PackageList .Details,
+.blackLayout .ApsStandard .PackageList .Status {
 	background-image: linear-gradient(right, transparent 100px, #000000 100px, #000000 100%);
 	background-image: -webkit-linear-gradient(left, transparent 100px, #000000 100px, #000000 100%);
 	background-image: -moz-linear-gradient(left, transparent 100px, #000000 100px, #000000 100%);
@@ -153,8 +172,8 @@ table tr th:nth-child(3) {
 	background-image: -o-linear-gradient(left, transparent 100px, #000000 100px, #000000 100%);
 }
 
-.blue .PackageList .Details,
-.blue .PackageList .Status {
+.blueLayout .ApsStandard .PackageList .Details,
+.blueLayout .ApsStandard .PackageList .Status {
 	background-image: linear-gradient(right, transparent 100px, #151e72 100px, #151e72 100%);
 	background-image: -webkit-linear-gradient(left, transparent 100px, #151e72 100px, #151e72 100%);
 	background-image: -moz-linear-gradient(left, transparent 100px, #151e72 100px, #151e72 100%);
@@ -162,8 +181,8 @@ table tr th:nth-child(3) {
 	background-image: -o-linear-gradient(left, transparent 100px, #151e72 100px, #151e72 100%);
 }
 
-.green .PackageList .Details,
-.green .PackageList .Status {
+.greenLayout .ApsStandard .PackageList .Details,
+.greenLayout .ApsStandard .PackageList .Status {
 	background-image: linear-gradient(right, transparent 100px, #055a0d 100px, #055a0d 100%);
 	background-image: -webkit-linear-gradient(left, transparent 100px, #055a0d 100px, #055a0d 100%);
 	background-image: -moz-linear-gradient(left, transparent 100px, #055a0d 100px, #055a0d 100%);
@@ -171,8 +190,8 @@ table tr th:nth-child(3) {
 	background-image: -o-linear-gradient(left, transparent 100px, #055a0d 100px, #055a0d 100%);
 }
 
-.red .PackageList .Details,
-.red .PackageList .Status {
+.redLayout .ApsStandard .PackageList .Details,
+.redLayout .ApsStandard .PackageList .Status {
 	background-image: linear-gradient(right, transparent 100px, #5a0505 100px, #5a0505 100%);
 	background-image: -webkit-linear-gradient(left, transparent 100px, #5a0505 100px, #5a0505 100%);
 	background-image: -moz-linear-gradient(left, transparent 100px, #5a0505 100px, #5a0505 100%);
@@ -180,8 +199,8 @@ table tr th:nth-child(3) {
 	background-image: -o-linear-gradient(left, transparent 100px, #5a0505 100px, #5a0505 100%);
 }
 
-.yellow .PackageList .Details,
-.yellow .PackageList .Status {
+.yellowLayout .ApsStandard .PackageList .Details,
+.yellowLayout .ApsStandard .PackageList .Status {
 	background-image: linear-gradient(right, transparent 100px, #85742f 100px, #85742f 100%);
 	background-image: -webkit-linear-gradient(left, transparent 100px, #85742f 100px, #85742f 100%);
 	background-image: -moz-linear-gradient(left, transparent 100px, #85742f 100px, #85742f 100%);
@@ -189,11 +208,11 @@ table tr th:nth-child(3) {
 	background-image: -o-linear-gradient(left, transparent 100px, #85742f 100px, #85742f 100%);
 }
 
-.PackageList .Details {
+.ApsStandard .PackageList .Details {
 	text-align: center;
 }
 
-.PackageList .Details a {
+.ApsStandard .PackageList .Details a {
 	display: block;
 	float: right;
 	width: 140px;
@@ -204,18 +223,18 @@ table tr th:nth-child(3) {
 	font-weight: bold;
 }
 
-.PackageList .Details input {
+.ApsStandard .PackageList .Details input {
 	display: block;
 	float: right;
 	width: 140px;
 	font-weight: bold;
 }
 
-.PackageList .Locked a {
+.ApsStandard .PackageList .Locked a {
 	background: url(../images/icons/package_locked_big.png) no-repeat bottom center;
 }
 
-.PackageList .Logo img {
+.ApsStandard .PackageList .Logo img {
 	padding: 20px;
 	width: 60px;
 	height: 60px;
@@ -228,24 +247,24 @@ table tr th:nth-child(3) {
 
 /** PACKAGE DETAILS **/
 
-.Package {
+.ApsStandard .Package {
 	color: #4c5866;
 }
 
-.Package div.Right {
+.ApsStandard .Package div.Right {
 	float: right;
 	width: 15%;
 }
 
-.Package div.Right ul {
+.ApsStandard .Package div.Right ul {
 	float: right;
 }
 
-.Package .Right li:first-child {
+.ApsStandard .Package .Right li:first-child {
 	background: #fff;
 }
 
-.Package .Right li {
+.ApsStandard .Package .Right li {
 	display: block;
 	margin-bottom: 2px;
 	width: 150px;
@@ -257,17 +276,17 @@ table tr th:nth-child(3) {
 	text-align: center;
 }
 
-.Package .Right li.Logo {
+.ApsStandard .Package .Right li.Logo {
 	background-position: center center;
 	background-repeat: no-repeat;
 }
 
-.Package div.Left {
+.ApsStandard .Package div.Left {
 	width: 80%;
 	float: left;
 }
 
-.Package h2.Title {
+.ApsStandard .Package h2.Title {
 	padding: 0 0 10px 0;
 	border-bottom: 1px solid #c1d1d2;
 	background: none;
@@ -281,32 +300,32 @@ table tr th:nth-child(3) {
 	width: auto;
 }
 
-.Package h2.Title a {
+.ApsStandard .Package h2.Title a {
 	font-weight: normal;
 }
 
-.Package p.Description {
+.ApsStandard .Package p.Description {
 	margin: 10px 0;
 	white-space: pre-wrap;
 }
 
-.Package ul.Info {
+.ApsStandard .Package ul.Info {
 	margin-top: 20px;
 	list-style: none;
 }
 
-.Package ul.Info b {
+.ApsStandard .Package ul.Info b {
 	display: inline-block;
 	padding-right: 20px;
 	min-width: 130px;
 }
 
-.Package ul.Info a {
+.ApsStandard .Package ul.Info a {
 	color: #1ba2c7;
 	text-decoration: none;
 }
 
-.Package li.Download a {
+.ApsStandard .Package li.Download a {
 	display: block;
 	margin: 0 auto 5px;
 	padding-top: 10px;
@@ -321,49 +340,53 @@ table tr th:nth-child(3) {
 	font-weight: bold;
 }
 
-.Package li.Download a:hover {
+.ApsStandard .Package li.Download a:hover {
 	color: #000;
 }
 
-.Package li.Download span {
+.ApsStandard .Package li.Download span {
 	color: #737f8d;
 	text-transform: uppercase;
 	font-size: 8pt;
 }
 
+.ApsStandard .License {
+	white-space: pre-wrap;
+}
+
 /** FORM LAYOUT **/
 
-.form-horizontal legend {
+.ApsStandard .form-horizontal legend {
 	margin-bottom: 15px;
 }
 
-.form-horizontal .radio,
-.form-horizontal .checkbox,
-.form-horizontal .radio-inline,
-.form-horizontal .checkbox-inline {
+.ApsStandard .form-horizontal .radio,
+.ApsStandard .form-horizontal .checkbox,
+.ApsStandard .form-horizontal .radio-inline,
+.ApsStandard .form-horizontal .checkbox-inline {
 	margin-top: 0;
 	margin-bottom: 0;
 }
 
-.form-horizontal .radio,
-.form-horizontal .checkbox {
+.ApsStandard .form-horizontal .radio,
+.ApsStandard .form-horizontal .checkbox {
 	min-height: 27px;
 }
 
-.form-horizontal .form-group {
+.ApsStandard .form-horizontal .form-group {
 	clear: both;
 	margin-bottom: 15px;
 	vertical-align: middle;
 }
 
 @media (min-width: 768px) {
-	.form-horizontal .control-label {
+	.ApsStandard .form-horizontal .control-label {
 		margin-bottom: 0;
 		text-align: right;
 	}
 }
 
-.col-sm-2, .col-sm-10 {
+.ApsStandard .col-sm-2, .col-sm-10 {
 	position: relative;
 	min-height: 1px;
 	padding-right: 15px;
@@ -371,29 +394,25 @@ table tr th:nth-child(3) {
 }
 
 @media (min-width: 768px) {
-	.col-sm-2, .col-sm-10 {
+	.ApsStandard .col-sm-2, .col-sm-10 {
 		float: left;
 	}
 
-	.col-sm-10 {
+	.ApsStandard .col-sm-10 {
 		width: 83.33333333%;
 	}
 
-	.col-sm-2 {
+	.ApsStandard .col-sm-2 {
 		width: 16.66666667%;
 	}
 
-	.col-sm-offset-2 {
+	.ApsStandard .col-sm-offset-2 {
 		margin-left: 16.66666667%;
 	}
 }
 
 /** FORM VALIDATION **/
 
-.ng-invalid.ng-touched {
+.ApsStandard .ng-invalid.ng-touched {
 	border-color: red;
-}
-
-.ng-valid.ng-touched, {
-	border-color: green;
 }

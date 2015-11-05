@@ -64,17 +64,19 @@ module.exports = function (grunt) {
 		copy: {
 			dist: {
 				options: {
-					mode: true, // Copy the existing file and directories permissions.
-					timestamp: true // Preserve the timestamp attributes(atime and mtime) when copying files
+					//mode: true, // Copy the existing file and directories permissions.
+					//timestamp: true // Preserve the timestamp attributes(atime and mtime) when copying files
 				},
 				files: [
 					{
-						expand: true, // Enable dynamic expansion.
-						dot: false, // Do not allow patterns to match filenames starting with a period
-						flatten: true, // Remove all path part from generated dest paths.
-						cwd: '<%= themePaths.src %>/shared/layouts', // All src matches are relative to (but don't include) this path
-						dest: '<%= themePaths.dist %>/', // estination path prefix.
-						src: ['*.tpl'] // Actual pattern(s) to match.
+						expand: true,
+						dot: true,
+						src: [
+							'<%= themePaths.src %>/{admin,client,reseller,angular,shared}/**',
+							'<%= themePaths.src %>/*.{php,tpl}',
+							'<%= themePaths.src %>/assets/{images,fonts}/**'
+						],
+						dest: '<%= themePaths.dist %>/'
 					}
 				]
 			}
@@ -83,7 +85,7 @@ module.exports = function (grunt) {
 		// Reads HTML for usemin blocks to enable smart builds that automatically concat, minify and revision files.
 		// Creates configurations in memory so additional tasks can operate on them
 		useminPrepare: {
-			html: '<%= themePaths.dist %>/*.tpl',
+			html: '<%= themePaths.dist %>/shared/layouts/*.tpl',
 			options: {
 				dest: '<%= themePaths.src %>',
 				root: '<%= themePaths.src %>',
@@ -101,16 +103,14 @@ module.exports = function (grunt) {
 		},
 		cssmin: {
 			options: {
-				keepSpecialComments: '0',
-				root: '<%= themePaths.src %>',
-				rebase: true // Rebase URL in asset files
+				keepSpecialComments: '0'
 			}
 		},
 
 		// Performs rewrites based on rev and the useminPrepare configuration
 		usemin: {
-			html: ['<%= themePaths.dist %>/*.tpl'],
-			css: ['<%= themePaths.dist %>/{,**/}*.css'],
+			html: ['<%= themePaths.dist %>/shared/layouts/*.tpl'],
+			css: ['<%= themePaths.dist %>/assets/css/{,**}*.css'],
 			options: {
 				assetsDirs: ['<%= themePaths.src %>']
 			}
@@ -121,29 +121,29 @@ module.exports = function (grunt) {
 			dist: {
 				src: '<%= themePaths.dist %>/{,**/}*.{css,js}'
 			}
-		},
+		}
 
 		// Rebase include path in ui.tpl template
-		replace: {
-			dist: {
-				options: {
-					patterns: [
-						{
-							match: /(<!--\sINCLUDE\s")(\.\.\/)/g,
-							replacement: '$1$2shared/'
-						}
-					]
-				},
-				files: [
-					{
-						expand: true,
-						flatten: true,
-						src: ['<%= themePaths.dist %>/ui.tpl'],
-						dest: '<%= themePaths.dist %>'
-					}
-				]
-			}
-		}
+		//replace: {
+		//	dist: {
+		//		options: {
+		//			patterns: [
+		//				{
+		//					match: /(<!--\sINCLUDE\s")(\.\.\/)/g,
+		//					replacement: '$1$2$2$2shared/'
+		//				}
+		//			]
+		//		},
+		//		files: [
+		//			{
+		//				expand: true,
+		//				flatten: true,
+		//				src: ['<%= themePaths.dist %>/shared/layouts/ui.tpl'],
+		//				dest: '<%= themePaths.dist %>/shared/layouts'
+		//			}
+		//		]
+		//	}
+		//}
 	});
 
 	grunt.registerTask('build', [
@@ -155,7 +155,7 @@ module.exports = function (grunt) {
 		'uglify', // Uglify JS files
 		'cssmin', // Minify CSS
 		'filerev:dist', // Create asset file revisions
-		'replace:dist', // Update include paths in ui.tpl file
+		//'replace:dist', // Update include paths in ui.tpl file
 		'usemin' // Process work according useminPrepare task
 	]);
 

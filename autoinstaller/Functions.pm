@@ -90,7 +90,7 @@ sub loadConfig
 		for my $paramName(keys %main::imscpOldConfig) {
 			if(
 				exists $main::imscpConfig{$paramName} &&
-				not $paramName ~~  [ 'BuildDate', 'Version', 'CodeName', 'THEME_ASSETS_VERSION' ]
+				not $paramName ~~  [ 'BuildDate', 'Version', 'CodeName' ]
 			) {
 				$main::imscpConfig{$paramName} = $main::imscpOldConfig{$paramName};
 			}

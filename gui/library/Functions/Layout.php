@@ -42,11 +42,11 @@ function get_user_gui_props($user_id)
 
 	if ($stmt->recordCount() == 0 || (empty($stmt->fields['lang']) && empty($stmt->fields['layout']))) {
 		// values for user id, some default stuff
-		return array($cfg->USER_INITIAL_LANG, $cfg->USER_INITIAL_THEME);
+		return array($cfg['USER_INITIAL_LANG'], $cfg['USER_INITIAL_THEME']);
 	} elseif (empty($stmt->fields['lang'])) {
-		return array($cfg->USER_INITIAL_LANG, $stmt->fields['layout']);
+		return array($cfg['USER_INITIAL_LANG'], $stmt->fields['layout']);
 	} elseif (empty($stmt->fields['layout'])) {
-		return array($stmt->fields['lang'], $cfg->USER_INITIAL_THEME);
+		return array($stmt->fields['lang'], $cfg['USER_INITIAL_THEME']);
 	} else {
 		return array($stmt->fields['lang'], $stmt->fields['layout']);
 	}
@@ -104,12 +104,9 @@ function set_page_message($message, $level = 'info')
 	if (!is_string($message)) {
 		throw new iMSCP_Exception('set_page_message() expects a string for $message');
 	} elseif (
-		!in_array(
-			$level,
-			array(
-				'info', 'warning', 'error', 'success', 'static_success', 'static_error', 'static_warning', 'static_info'
-			)
-		)
+		!in_array($level, array(
+			'info', 'warning', 'error', 'success', 'static_success', 'static_error', 'static_warning', 'static_info'
+		))
 	) {
 		throw new iMSCP_Exception(sprintf('Wrong level %s for page message.', $level));
 	}
@@ -231,8 +228,8 @@ function layout_getAvailableColorSet()
 		/** @var iMSCP_Config_Handler_File $cfg */
 		$cfg = iMSCP_Registry::get('config');
 
-		if (file_exists($cfg->ROOT_TEMPLATE_PATH . '/info.php')) {
-			$themeInfo = include_once($cfg->ROOT_TEMPLATE_PATH . '/info.php');
+		if (file_exists($cfg['ROOT_TEMPLATE_PATH'] . '/info.php')) {
+			$themeInfo = include_once($cfg['ROOT_TEMPLATE_PATH'] . '/info.php');
 
 			if (is_array($themeInfo)) {
 				$colorSet = (array)$themeInfo['theme_color_set'];
@@ -241,14 +238,14 @@ function layout_getAvailableColorSet()
 				trigger_error(
 					sprintf(
 						"The 'theme_color'_set parameter is missing in the %s file",
-						$cfg->ROOT_TEMPLATE_PATH . '/info.php'
+						$cfg['ROOT_TEMPLATE_PATH'] . '/info.php'
 					),
 					E_USER_ERROR
 				);
 			}
 		} else {
 			trigger_error(
-				sprintf("File %s is missing or not readable", $cfg->ROOT_TEMPLATE_PATH . '/info.php'), E_USER_ERROR
+				sprintf("File %s is missing or not readable", $cfg['ROOT_TEMPLATE_PATH'] . '/info.php'), E_USER_ERROR
 			);
 		}
 	}
@@ -301,15 +298,7 @@ function layout_getUserLayoutColor($userId)
  */
 function layout_init($event)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
-
-	if ($cfg->DEBUG) {
-		$themesAssetsVersion = time();
-	} else {
-		$themesAssetsVersion = $cfg->THEME_ASSETS_VERSION;
-	}
-
+	$config = iMSCP_Registry::get('config');
 	ini_set('default_charset', 'UTF-8');
 
 	if (isset($_SESSION['user_theme_color'])) {
@@ -326,16 +315,12 @@ function layout_init($event)
 	/** @var $tpl iMSCP_pTemplate */
 	$tpl = $event->getParam('templateEngine');
 
-	$tpl->assign(
-		array(
-			'THEME_CHARSET' => 'UTF-8',
-			'THEME_ASSETS_PATH' => '/themes/' . $cfg->USER_INITIAL_THEME . '/assets',
-			'THEME_ASSETS_VERSION' => $themesAssetsVersion,
-			'THEME_COLOR' => $color,
-			'ISP_LOGO' => (isset($_SESSION['user_id'])) ? layout_getUserLogo() : '',
-			'JS_TRANSLATIONS' => i18n_getJsTranslations()
-		)
-	);
+	$tpl->assign(array(
+		'THEME_COLOR' => $color,
+		'ASSETS_PATH' => $config['ASSETS_PATH'],
+		'ISP_LOGO' => (isset($_SESSION['user_id'])) ? layout_getUserLogo() : '',
+		'JS_TRANSLATIONS' => i18n_getJsTranslations()
+	));
 
 	$tpl->parse('LAYOUT', 'layout');
 }
@@ -431,19 +416,20 @@ function layout_getUserLogo($searchForCreator = true, $returnDefault = true)
 	// No user logo found
 	if (
 		empty($stmt->fields['logo']) ||
-		!file_exists($cfg->GUI_ROOT_DIR . '/data/persistent/ispLogos/' . $stmt->fields['logo'])
+		!file_exists($cfg['GUI_ROOT_DIR'] . '/data/persistent/ispLogos/' . $stmt->fields['logo'])
 	) {
 		if (!$returnDefault) {
 			return '';
-		} elseif (file_exists($cfg->ROOT_TEMPLATE_PATH . '/assets/images/imscp_logo.png')) {
-			return '/themes/' . $_SESSION['user_theme'] . '/assets/images/imscp_logo.png';
+		} elseif (file_exists($cfg['ROOT_TEMPLATE_PATH'] . '/assets/images/imscp_logo.png')) {
+			$config = iMSCP_Registry::get('config');
+			return $config['ASSETS_PATH'] . '/images/imscp_logo.png';
 		} else {
-			// no logo available, we are using default
-			return $cfg->ISP_LOGO_PATH . '/' . 'isp_logo.gif';
+			// no logo available, we use default
+			return $cfg['ISP_LOGO_PATH'] . '/' . 'isp_logo.gif';
 		}
 	}
 
-	return $cfg->ISP_LOGO_PATH . '/' . $stmt->fields['logo'];
+	return $cfg['ISP_LOGO_PATH'] . '/' . $stmt->fields['logo'];
 }
 
 /**
@@ -547,8 +533,8 @@ function layout_deleteUserLogo($logoFilePath = null, $onlyFile = false)
 		exec_query('UPDATE `user_gui_props` SET `logo` = ? WHERE `user_id` = ?', array(null, $userId));
 	}
 
-	if (strpos($logoFilePath, $cfg->ISP_LOGO_PATH) !== false) {
-		$logoFilePath = $cfg->GUI_ROOT_DIR . '/data/persistent/ispLogos/' . basename($logoFilePath);
+	if (strpos($logoFilePath, $cfg['ISP_LOGO_PATH']) !== false) {
+		$logoFilePath = $cfg['GUI_ROOT_DIR'] . '/data/persistent/ispLogos/' . basename($logoFilePath);
 
 		if (file_exists($logoFilePath) && @unlink($logoFilePath)) {
 			return true;
@@ -575,7 +561,7 @@ function layout_isUserLogo($logoPath)
 
 	if (
 		$logoPath == '/themes/' . $_SESSION['user_theme'] . '/assets/images/imscp_logo.png'
-		|| $logoPath == $cfg->ISP_LOGO_PATH . '/' . 'isp_logo.gif'
+		|| $logoPath == $cfg['ISP_LOGO_PATH'] . '/' . 'isp_logo.gif'
 	) {
 		return false;
 	}
@@ -610,7 +596,7 @@ function layout_LoadNavigation()
 		}
 
 		if(!file_exists($filepath)) {
-			layout_createNavigationFile($cfg->ROOT_TEMPLATE_PATH . "/$userLevel/navigation.php", $locale, $userLevel);
+			layout_createNavigationFile($cfg['ROOT_TEMPLATE_PATH'] . "/$userLevel/navigation.php", $locale, $userLevel);
 		}
 
 		iMSCP_Registry::set('navigation', new Zend_Navigation(include($filepath)));

@@ -882,7 +882,8 @@ sub _buildHttpdConfig
 		BASE_SERVER_VHOST_HTTP_PORT => $main::imscpConfig{'BASE_SERVER_VHOST_HTTP_PORT'},
 		BASE_SERVER_VHOST_HTTPS_PORT => $httpsPort,
 		WEB_DIR => $main::imscpConfig{'GUI_ROOT_DIR'},
-		CONF_DIR => $main::imscpConfig{'CONF_DIR'}
+		CONF_DIR => $main::imscpConfig{'CONF_DIR'},
+		THEME => $main::imscpConfig{'USER_INITIAL_THEME'}
 	};
 
 	if($main::imscpConfig{'BASE_SERVER_VHOST_PREFIX'} eq 'https://') {

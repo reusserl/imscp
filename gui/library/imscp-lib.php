@@ -73,7 +73,7 @@ Registry::set('exceptionHandler', new ExceptionHandler());
 
 // Check for PHP version
 if (version_compare(phpversion(), '5.4.0', '<')) {
-	throw new \RuntimeException('i-MSCP require PHP version >= 5.3.10');
+	throw new \RuntimeException('i-MSCP require PHP version >= 5.4.0');
 }
 
 /**
@@ -109,6 +109,13 @@ if(is_readable(CONFIG_CACHE_FILE_PATH)) {
 
 	// Template root directory
 	$config['ROOT_TEMPLATE_PATH'] = dirname(__DIR__) . '/themes/' . $config['USER_INITIAL_THEME'];
+
+	if(!$config['DEVMODE'] && is_dir($config['ROOT_TEMPLATE_PATH'] . '/dist')) {
+		$config['ROOT_TEMPLATE_PATH'] .= '/dist';
+		$config['ASSETS_PATH'] = '/dist/assets';
+	} else {
+		$config['ASSETS_PATH'] = '/assets';
+	}
 
 	// Set the isp logos path
 	$config['ISP_LOGO_PATH'] = '/ispLogos';
@@ -267,6 +274,7 @@ if(is_readable(CONFIG_CACHE_FILE_PATH)) {
 		@file_put_contents(CONFIG_CACHE_FILE_PATH, serialize($config), LOCK_EX);
 	}
 }
+
 // Include composer autoloader for composer packages (register it in registry for later use)
 Registry::set('ComposerLoader', include_once($config['CACHE_DATA_DIR'] . '/packages/vendor/autoload.php'));
 

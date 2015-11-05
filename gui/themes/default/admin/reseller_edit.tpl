@@ -333,8 +333,6 @@
 			$('#' + this).css('border-color', '#ca1d11');
 		});
 
-		$('<img>').attr({src:'{THEME_ASSETS_PATH}/images/ajax/small-spinner.gif'}).addClass('small-spinner').
-			insertAfter($('#password, #password_confirmation'));
 		$('.datatable').dataTable(
 			{
 				language: imscp_i18n.core.dataTable,

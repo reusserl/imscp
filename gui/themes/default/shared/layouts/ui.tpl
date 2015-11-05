@@ -8,7 +8,7 @@
 	<meta name="robots" content="nofollow, noindex">
 	<meta name="description" content="i-MSCP: internet Multi Server Control Panel">
 	<meta name="author" content="http://i-mscp.net/">
-	<link rel="icon" href="/assets/images/favicon.ico">
+	<link rel="icon" href="{ASSETS_PATH}/images/favicon.ico">
 	<!-- build:css /dist/assets/css/ui.css -->
 	<link rel="stylesheet" href="/assets/css/jquery-ui-black.css">
 	<link rel="stylesheet" href="/assets/css/jquery-ui-blue.css">
