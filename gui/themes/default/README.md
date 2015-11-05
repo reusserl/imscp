@@ -2,8 +2,9 @@
 
 ## Introduction
 
-Distribution files are used in production environments where development mode is disabled. The intent is to minimize
-server-load and the page-load time by concatenating and minifying html, css and js sources.
+File located in the `./dist` directory are distribution files that used in production environments where development
+mode is disabled. The intent is to minimizeserver-load and the page-load time by concatenating and minifying html, css
+and js sources.
 
 ## Howto build distribution files
 
@@ -46,9 +47,16 @@ As normal user, run the following command:
 $ grunt build
 ```
 
+If all goes fine, you should get output such as:
+
+![Grunt success]
+(https://raw.githubusercontent.com/i-MSCP/imscp/aps-standard/gui/themes/default/grunt.png)
+
 ### Commit the new distribution files
 
-Once the new distribution files are built you must commit them on GitHub.
+Once the new distribution files have been generated in the `./dist` directory, you must add them and commit them on GitHub.
+Don't forget that each time your run the `grunt build` command, new asset file revisions are created, meaning that you'll
+have to re-add them and delete the old-ones.
 
 ### Release process
 
