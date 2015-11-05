@@ -61,6 +61,7 @@ CONTRIB
 
 FRONTEND
 	Added: SMTP submission port in list of service ports
+	Changed: Assets are now processed through Grunt (concatenation, minification and uglifycation)
 	Fixed: Load time issues in several pages (jQuery)
 	Fixed: Possible ERR_INCOMPLETE_CHUNKED_ENCODING error due to wrong permissions on nginx tmp (fastcgi) directory
 	Fixed: Wrong issue tracker links in admin/database_update.php
@@ -92,14 +93,14 @@ TESTS
 	  - iMSCP::SetRights libraries
 
 VENDOR
-	Added: Angular library v1.4.7 (JS)
-	Added: Angular ngResource module v1.4.7 (JS)
-	Added: Angular ngLoader module v1.4.7 (JS)
-	Added: Angular ngSanitize module v1.4.7 (JS)
-	Added: Angular ngTable module v1.0.0-beta.5 (JS)
-	Updated: DataTables library to v1.10.9 (JS)
-	Updated: jQuery library to v1.11.3 (JS)
-	Updated: jQuery UI library to v1.11.4 (JS)
+	Added: AngularJs library v1.4.7
+	Added: Anngular angular.filter module v0.5.7
+	Added: Angular ngResource module v1.4.7
+	Added: Angular ngSanitize module v1.4.7
+	Added: Angular ngTable module v1.0.0-beta.7
+	Updated: DataTables to v1.10.9
+	Updated: jQuery library to v1.11.3
+	Updated: jQuery UI library to v1.11.4
 
 YOUTRACK
 	Fixed: #IP-0826 Any password should be encrypted

@@ -1,15 +1,15 @@
-# Distribution files (i-MSCP default theme)
+# Distribution files
 
 ## Introduction
 
-The distribution files are used in production environments where development mode is disabled. The intent is to minimize
-server-load and the page-load time by concatenation and minification of html, css and js sources.
+Distribution files are used in production environments where development mode is disabled. The intent is to minimize
+server-load and the page-load time by concatenating and minifying html, css and js sources.
 
-### Howto build distribution files
+## Howto build distribution files
 
 ### Setup environment
 
-#### node.js installation
+#### Node.js installation
 
 As root user, run the following commands:
 
@@ -17,7 +17,7 @@ As root user, run the following commands:
 # cd /usr/local/src
 # wget -N http://nodejs.org/dist/latest/node-v5.0.0-linux-x64.tar.gz
 # tar -xzf node-v5.0.0-linux-x64.tar.gz 
-# cd node-v*-linux-x64/
+# cd node-v*-linux-x64
 # cp -rp bin/ include/ lib/ share/ /usr/local
 ```
 
@@ -29,7 +29,7 @@ As root user, run the following command:
 # npm install -g grunt-cli
 ```
 
-#### Project dependencies installation
+#### Dependencies installation
 
 As normal user, run the following commands:
 
@@ -46,10 +46,9 @@ As normal user, run the following command:
 $ grunt build
 ```
 
-### Commit your changes
+### Commit the new distribution files
 
-Once the new distribution files are built, you must not forget to update the **THEME_ASSETS_VERSION** parameter in the
-**imscp.conf** configuration file and commit your change on GitHub.
+Once the new distribution files are built you must commit them on GitHub.
 
 ### Release process
 
