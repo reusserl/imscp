@@ -1,0 +1,58 @@
+.form-horizontal legend {
+	margin-bottom: 15px;
+}
+
+.form-horizontal .radio,
+.form-horizontal .checkbox,
+.form-horizontal .radio-inline,
+.form-horizontal .checkbox-inline {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.form-horizontal .radio,
+.form-horizontal .checkbox {
+	min-height: 27px;
+}
+
+.form-horizontal .form-group {
+	clear: both;
+	margin-bottom: 15px;
+	vertical-align: middle;
+}
+
+@media (min-width: 768px) {
+	.form-horizontal .control-label {
+		margin-bottom: 0;
+		text-align: right;
+	}
+}
+
+.col-sm-2, .col-sm-10 {
+	position: relative;
+	min-height: 1px;
+	padding-right: 15px;
+	padding-left: 15px;
+}
+
+@media (min-width: 768px) {
+	.col-sm-2, .col-sm-10 {
+		float: left;
+	}
+
+	.col-sm-10 {
+		width: 83.33333333%;
+	}
+
+	.col-sm-2 {
+		width: 16.66666667%;
+	}
+
+	.col-sm-offset-2 {
+		margin-left: 16.66666667%;
+	}
+}
+
+.ng-invalid.ng-touched {
+	border-color: red;
+}

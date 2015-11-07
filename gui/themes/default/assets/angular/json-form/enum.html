@@ -1,0 +1,11 @@
+<div class="form-group">
+	<label for="{{field.name}}" class="col-sm-2 control-label">
+		{{field.metadata.label}}"
+		<select name="{{field.name|escapeHtml}}" data-ng-model="field.value" required>
+			<option data-ng-repeat="opt in field.metadata.choices" data-ng-selected="opt.value == field.value"
+					value="{{opt.value|escapeHtml}}">
+				{{opt.name}}
+			</option>
+		</select>
+	</label>
+</div>

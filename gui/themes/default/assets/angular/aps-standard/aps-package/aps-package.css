@@ -1,0 +1,289 @@
+.ApsPackageList {
+	position: relative;
+}
+
+.ApsPackageList table {
+	table-layout: fixed;
+	border-collapse: collapse;
+	width: 100%;
+	border-radius: 100px;
+}
+
+.ApsPackageList table tr th:nth-child(1) {
+	width: 100px;
+}
+
+.ApsPackageList table tr th:nth-child(3) {
+	width: 250px;
+}
+
+.ApsPackageList thead {
+	border: none;
+}
+
+.ApsPackageList thead th {
+	text-align: center;
+	border: none;
+}
+
+.ApsPackageList table tr td {
+	border: none;
+}
+
+.ApsPackageList tbody tr:nth-child(4n), .ApsPackageList tbody tr:nth-child(4n-1) {
+	background: #ffffff;
+}
+
+.ApsPackageList tbody tr:nth-child(4n-2), .ApsPackageList tbody tr:nth-child(4n-3) {
+	background: #ededed;
+}
+
+.ApsPackageList a, .ApsPackageList a:link, .ApsPackageList a:active, .ApsPackageList a:visited {
+	color: #1ba2c7;
+	text-decoration: none;
+}
+
+.PackageList a:hover {
+	color: #4c5866;
+}
+
+.ApsPackageList .Logo, .ApsPackageList .Description, .ApsPackageList .Details {
+	padding: 10px 10px 0 10px;
+}
+
+.ApsPackageList .Version, .ApsPackageList .Info, .ApsPackageList .Status {
+	padding: 5px 10px 5px 10px;
+}
+
+.ApsPackageList .Logo, .ApsPackageList .Details, .ApsPackageList .Version, .ApsPackageList .Status {
+	text-align: center;
+	vertical-align: middle;
+	color: #737f8d;
+}
+
+.ApsPackageList .Description {
+	color: #737f8d;
+	vertical-align: top;
+}
+
+.ApsPackageList .Description h4 {
+	margin: 0 0 10px 0;
+	text-align: left;
+	font-size: 1.5em;
+	font-weight: bold;
+	text-transform: uppercase;
+}
+
+.ApsPackageList .Info {
+	vertical-align: middle;
+	color: #737f8d;
+	text-transform: uppercase;
+}
+
+.ApsPackageList .Info b {
+	margin-right: 10px;
+}
+
+.ApsPackageList .Info b, .ApsPackageList .Info a {
+	text-transform: none;
+}
+
+.ApsPackageList .Info span {
+	float: right;
+	margin-right: 20px;
+	color: #cccccc;
+	text-transform: uppercase;
+	font-size: 90%;
+	font-weight: bold;
+}
+
+.ApsPackageList .Details {
+	vertical-align: top;
+	text-align: center;
+}
+
+.blackLayout .ApsPackageList .Details, .blackLayout .ApsPackageList .Status {
+	background-image: linear-gradient(right, transparent 100px, #000000 100px, #000000 100%);
+	background-image: -webkit-linear-gradient(left, transparent 100px, #000000 100px, #000000 100%);
+	background-image: -moz-linear-gradient(left, transparent 100px, #000000 100px, #000000 100%);
+	background-image: -ms-linear-gradient(left, transparent 100px, #000000 100px, #000000 100%);
+	background-image: -o-linear-gradient(left, transparent 100px, #000000 100px, #000000 100%);
+}
+
+.blueLayout .ApsPackageList .Details, .blueLayout .ApsPackageList .Status {
+	background-image: linear-gradient(right, transparent 100px, #151e72 100px, #151e72 100%);
+	background-image: -webkit-linear-gradient(left, transparent 100px, #151e72 100px, #151e72 100%);
+	background-image: -moz-linear-gradient(left, transparent 100px, #151e72 100px, #151e72 100%);
+	background-image: -ms-linear-gradient(left, transparent 100px, #151e72 100px, #151e72 100%);
+	background-image: -o-linear-gradient(left, transparent 100px, #151e72 100px, #151e72 100%);
+}
+
+.greenLayout .ApsPackageList .Details, .greenLayout .ApsPackageList .Status {
+	background-image: linear-gradient(right, transparent 100px, #055a0d 100px, #055a0d 100%);
+	background-image: -webkit-linear-gradient(left, transparent 100px, #055a0d 100px, #055a0d 100%);
+	background-image: -moz-linear-gradient(left, transparent 100px, #055a0d 100px, #055a0d 100%);
+	background-image: -ms-linear-gradient(left, transparent 100px, #055a0d 100px, #055a0d 100%);
+	background-image: -o-linear-gradient(left, transparent 100px, #055a0d 100px, #055a0d 100%);
+}
+
+.redLayout .ApsPackageList .Details, .redLayout .ApsPackageList .Status {
+	background-image: linear-gradient(right, transparent 100px, #5a0505 100px, #5a0505 100%);
+	background-image: -webkit-linear-gradient(left, transparent 100px, #5a0505 100px, #5a0505 100%);
+	background-image: -moz-linear-gradient(left, transparent 100px, #5a0505 100px, #5a0505 100%);
+	background-image: -ms-linear-gradient(left, transparent 100px, #5a0505 100px, #5a0505 100%);
+	background-image: -o-linear-gradient(left, transparent 100px, #5a0505 100px, #5a0505 100%);
+}
+
+.yellowLayout .ApsPackageList .Details, .yellowLayout .ApsPackageList .Status {
+	background-image: linear-gradient(right, transparent 100px, #85742f 100px, #85742f 100%);
+	background-image: -webkit-linear-gradient(left, transparent 100px, #85742f 100px, #85742f 100%);
+	background-image: -moz-linear-gradient(left, transparent 100px, #85742f 100px, #85742f 100%);
+	background-image: -ms-linear-gradient(left, transparent 100px, #85742f 100px, #85742f 100%);
+	background-image: -o-linear-gradient(left, transparent 100px, #85742f 100px, #85742f 100%);
+}
+
+.ApsPackageList .Details {
+	text-align: center;
+}
+
+.ApsPackageList .Details a {
+	display: block;
+	float: right;
+	width: 140px;
+	height: 105px;
+	background: url(images/package_big.png) no-repeat bottom center;
+	text-decoration: none;
+	text-transform: uppercase;
+	font-weight: bold;
+}
+
+.ApsPackageList .Details input {
+	display: block;
+	float: right;
+	width: 140px;
+	font-weight: bold;
+}
+
+.ApsPackageList .Locked a {
+	background: url(images/package_locked_big.png) no-repeat bottom center;
+}
+
+.ApsPackageList .Logo img {
+	padding: 20px;
+	width: 60px;
+	height: 60px;
+	max-width: 60px;
+	max-height: 60px;
+	border-radius: 5px;
+	background: #fff;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+/** PACKAGE DETAILS **/
+
+.ApsPackage {
+	color: #4c5866;
+}
+
+.ApsPackage div.Right {
+	float: right;
+	width: 15%;
+}
+
+.ApsPackage div.Right ul {
+	float: right;
+}
+
+.ApsPackage .Right li:first-child {
+	background: #fff;
+}
+
+.ApsPackage .Right li {
+	display: block;
+	margin-bottom: 2px;
+	width: 150px;
+	height: 150px;
+	background: #ededed;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+	list-style: none;
+	vertical-align: middle;
+	text-align: center;
+}
+
+.ApsPackage .Right li.Logo {
+	background-position: center center;
+	background-repeat: no-repeat;
+}
+
+.ApsPackage div.Left {
+	width: 80%;
+	float: left;
+}
+
+.ApsPackage h2.Title {
+	padding: 0 0 10px 0;
+	border-bottom: 1px solid #c1d1d2;
+	background: none;
+	text-align: left;
+	text-transform: none;
+	font-size: 27px;
+	line-height: normal;
+	left: 0;
+	margin: 0;
+	clear: none;
+	width: auto;
+}
+
+.ApsPackage h2.Title a {
+	font-weight: normal;
+}
+
+.ApsPackage p.Description {
+	margin: 10px 0;
+	white-space: pre-wrap;
+}
+
+.ApsPackage ul.Info {
+	margin-top: 20px;
+	list-style: none;
+}
+
+.ApsPackage ul.Info b {
+	display: inline-block;
+	padding-right: 20px;
+	min-width: 130px;
+}
+
+.ApsPackage ul.Info a {
+	color: #1ba2c7;
+	text-decoration: none;
+}
+
+.ApsPackage li.Download a {
+	display: block;
+	margin: 0 auto 5px;
+	padding-top: 10px;
+	width: 90px;
+	height: 110px;
+	background: url(images/package_big.png) no-repeat bottom center;
+	color: #7b8691;
+	vertical-align: text-top;
+	text-decoration: none;
+	text-transform: uppercase;
+	font-size: 8pt;
+	font-weight: bold;
+}
+
+.ApsPackage li.Download a:hover {
+	color: #000;
+}
+
+.ApsPackage li.Download span {
+	color: #737f8d;
+	text-transform: uppercase;
+	font-size: 8pt;
+}
+
+.ApsPackage .License {
+	white-space: pre-wrap;
+}
