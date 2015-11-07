@@ -20,20 +20,19 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.core').config(config);
+	angular.module('imscp.core').factory('ResponseInterceptorFactory', ResponseInterceptorFactory);
 
-	config.$inject = ['$httpProvider'];
+	ResponseInterceptorFactory.$inject = ['$q', '$window'];
 
-	function config($httpProvider) {
-		// Make i-MSCP aware of XHR requests
-		$httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+	function ResponseInterceptorFactory() {
+		return {
+			responseError: function (rejection) {
+				if (rejection.status === 403) {
+					$window.location.replace('/index.php');
+				}
 
-		// Disable caching
-		$httpProvider.defaults.headers.common['Cache-Control'] = 'no-cache';
-		$httpProvider.defaults.headers.common.Pragma = 'no-cache';
-		$httpProvider.defaults.headers.common['If-Modified-Since'] = '0';
-
-		// Redirect unauthenticated users to login page
-		$httpProvider.interceptors.push('ResponseInterceptor');
+				return $q.reject(rejection);
+			}
+		}
 	}
 })();
