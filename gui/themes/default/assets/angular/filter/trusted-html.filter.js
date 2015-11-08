@@ -20,15 +20,13 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.escape-html').filter('escapeHtml', EscapeHtml);
+	angular.module('imscp.filter').filter('trustedHtml', trustedHtml);
 
-	var entityMap = {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': '&quot;', "'": '&#39;', "/": '&#x2F;'};
+	trustedHtml.$inject = ['$sce'];
 
-	function EscapeHtml() {
-		return function (str) {
-			return String(str).replace(/[&<>"'\/]/g, function (s) {
-				return entityMap[s];
-			});
+	function trustedHtml($sce) {
+		return function ($html) {
+			return $sce.trustAsHtml($html);
 		}
 	}
 })();

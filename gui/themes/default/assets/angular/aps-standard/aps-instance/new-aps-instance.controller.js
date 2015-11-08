@@ -22,9 +22,50 @@
 
 	angular.module('imscp.aps-standard.aps-instance').controller('NewApsInstance', NewApsInstance);
 
-	NewApsInstance.$inject = [];
+	NewApsInstance.$inject = ['ApsInstanceResource', 'DialogService', '$window'];
 
-	function NewApsInstance() {
+	function NewApsInstance(ApsInstanceResource, DialogService, $window) {
+		var vm = this;
 
+		vm.newInstanceModal = function (pkg) {
+			ApsInstanceResource.new({}, {id: pkg.id}).$promise.then(function (model) {
+				DialogService.open('newApsInstanceModal', '/templates.php?tpl=assets/angular/aps-standard/aps-instance/new-aps-instance.tpl', model, {
+					title: sprintf(imscp_i18n.core.aps.new_app_instance, pkg.name),
+					modal: true,
+					width: $($window).width() / 2,
+					position: {'my': 'center', at: 'top+180'},
+					buttons: [
+						{
+							text: imscp_i18n.core.aps.install,
+							click: $.noop,
+							type: 'submit',
+							form: 'settingsForm'
+						},
+						{
+							text: imscp_i18n.core.aps.cancel,
+							click: function () {
+								$(this).dialog('close');
+							}
+						}
+					],
+					close: function () {
+						$("button,input").blur();
+					},
+					open: function () {
+						$(this).find('[type=submit]').hide();
+					}
+				});
+			});
+		};
+
+		vm.createAction = function (model) {
+			model.$save({id: model.package_id}, function () {
+				dialogService.close('newApsInstanceModal');
+			}, function (response) {
+				if (response.data.errors) {
+					model.errors = response.data.errors; // Replace with notification this.notification(notifications, type, target)
+				}
+			});
+		}
 	}
 })();

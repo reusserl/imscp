@@ -24,11 +24,11 @@
 
 	function jsonFormFields() {
 		return {
-			restrict: "E",
+			restrict: 'E',
 			scope: {
-				fields: "="
+				fields: '='
 			},
-			templateUrl: "/assets/js/angular/json-form/fields.html"
+			templateUrl: '/assets/angular/json-form/fields.html'
 		}
 	}
 })();

@@ -20,5 +20,9 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.aps-standard.aps-instance', []);
+	angular.module('imscp.aps-standard.aps-instance', [
+		'ngResource',
+		'ngTable',
+		'angular.filter'
+	]);
 })();

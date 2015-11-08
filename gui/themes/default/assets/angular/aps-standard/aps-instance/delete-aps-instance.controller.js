@@ -25,6 +25,14 @@
 	DeleteApsInstance.$inject = [];
 
 	function DeleteApsInstance() {
+		var vm = this;
 
+		vm.deleteInstance = function(ApsInstanceResource) {
+			if(confirm('Are you sure you want to delete this application instance?')) {
+				return ApsInstanceResource.$delete();
+			}
+
+			return false;
+		}
 	}
 })();

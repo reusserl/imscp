@@ -23,7 +23,7 @@
 	angular.module('imscp', [
 		'imscp.core',
 		'imscp.service',
-		'imscp.escape-html',
+		'imscp.filter',
 		'imscp.xhr-loader',
 		'imscp.aps-standard'
 	]);

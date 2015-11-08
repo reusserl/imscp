@@ -26,11 +26,11 @@
 
 	function jsonFormField($templateCache, $compile) {
 		return {
-			restrict: "E",
+			restrict: 'E',
 			replace: true,
-			//require: "^form",
+			//require: '^form',
 			scope: {
-				field: "="
+				field: '='
 			},
 			link: function (scope, element) {
 				var template;
@@ -44,7 +44,7 @@
 					template = 'enum.html';
 				}
 
-				element.html($templateCache.get('/assets/js/angular/json-form/' + template));
+				element.html($templateCache.get('/assets/angular/json-form/' + template));
 				return $compile(element.contents())(scope);
 			}
 		};

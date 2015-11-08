@@ -1,25 +1,23 @@
-.loader {
-	display: none;
-	background: transparent url(images/ajax-loader.gif) center center no-repeat;
+#xhrLoaderOverlay {
 	position: fixed;
-	top: 0;
 	left: 0;
-	width: 100%;
-	height: 100%;
-}
-
-.loader .modal {
-	position: fixed;
-	z-index: 3000;
 	top: 0;
-	left: 0;
-	height: 100%;
-	width: 100%;
+	bottom: 0;
+	right: 0;
 	background: #000000 url(/assets/images/jquery-ui-common/ui-bg_diagonals-medium_90_000000_40x40.png) 50% 50% repeat;
 	opacity: 0.1;
-	filter: Alpha(Opacity=10); /* support: IE8 */
+	filter: alpha(opacity=80);
+	z-index: 2000;
 }
 
-body.loading .loader {
-	display: block;
+#xhrLoaderSpinner {
+	position: fixed;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	width: 100%;
+	height: 100%;
+	background: transparent url(images/ajax-loader.gif) center center no-repeat;
+	z-index: 3000;
 }

@@ -65,10 +65,10 @@
 					return categories;
 				} else {
 					$("<div>", {
-						"class": "static_info",
+						"class": 'static_info',
 						"html": $.parseHTML(imscp_i18n.core.aps.no_package_available),
 						"hide": true
-					}).prependTo(".PackageList");
+					}).prependTo('.PackageList');
 					return [];
 				}
 			});
@@ -82,9 +82,8 @@
 			ApsPackageResource.get({}, {id: this.package.id}).$promise.then(function (data) {
 				data = angular.merge(data, pkg);
 
-				DialogService.open("PackageDetails", "/templates.php?tpl=angular/aps-standard/package_details.tpl", data, {
+				DialogService.open('PackageDetails', '/templates.php?tpl=assets/angular/aps-standard/aps-package/aps-package.tpl', data, {
 					title: imscp_i18n.core.aps.package_details,
-					dialogClass: 'ApsStandard',
 					modal: true,
 					width: $($window).width() / 2,
 					maxHeight: $($window).height() / 2
@@ -98,7 +97,6 @@
 			self.package.status = newStatus;
 			self.package.$update(null, null, function () {
 				self.package.status = prevStatus;
-				vm.loadTable();
 			});
 		};
 

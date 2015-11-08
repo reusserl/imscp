@@ -1,10 +1,10 @@
-<jq-tabs id="tabs" data-ng-transclude>
+<jq-tabs id="tabs" data-ng-transclude class="ApsPackage">
 	<ul>
 		<li><a href="#tabs-1"><?= tohtml(tr('General'))?></a></li>
 		<li data-ng-show="model.license"><a href="#tabs-2"><?= tohtml(tr('License'))?></a></li>
 	</ul>
 	<div id="tabs-1">
-		<div class="Package">
+		<div>
 			<div class="Right">
 				<ul>
 					<li class="Logo" data-ng-style="{ 'background-image': 'url({{model.icon_url}})'}"></li>
@@ -27,5 +27,5 @@
 			</div>
 		</div>
 	</div>
-	<div id="tabs-2" ng-bind-html="model.license|toTrustedHtml" class="License"></div>
+	<div id="tabs-2" ng-bind-html="model.license|trustedHtml" class="License"></div>
 </jq-tabs>

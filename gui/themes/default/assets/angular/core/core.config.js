@@ -34,6 +34,6 @@
 		$httpProvider.defaults.headers.common['If-Modified-Since'] = '0';
 
 		// Redirect unauthenticated users to login page
-		$httpProvider.interceptors.push('ResponseInterceptor');
+		$httpProvider.interceptors.push('ResponseInterceptorFactory');
 	}
 })();

@@ -20,7 +20,7 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.aps-standard.aps-instance').factory('ApsInstancResource', ApsInstanceResource);
+	angular.module('imscp.aps-standard.aps-instance').factory('ApsInstanceResource', ApsInstanceResource);
 
 	ApsInstanceResource.$inject = ['$resource'];
 

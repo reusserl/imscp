@@ -37,11 +37,11 @@
 		this.open = function (id, template, model, options) {
 			// Check our required arguments
 			if (!angular.isDefined(id)) {
-				throw "dialogService requires id in call to open";
+				throw 'dialogService requires id in call to open';
 			}
 
 			if (!angular.isDefined(template)) {
-				throw "dialogService requires template in call to open";
+				throw 'dialogService requires template in call to open';
 			}
 
 			// Set the defaults for model
@@ -81,7 +81,7 @@
 
 					// Initialize the dialog and open it
 					dialog.ref.dialog(dialogOptions);
-					dialog.ref.dialog("open");
+					dialog.ref.dialog('open');
 
 					// Cache the dialog
 					_this.dialogs[id] = dialog;
@@ -112,7 +112,7 @@
 			// the dialog whose default action is to cancel.
 			dialog.deferred.reject();
 			// Cancel and close the dialog (must be last)
-			dialog.ref.dialog("close");
+			dialog.ref.dialog('close');
 		};
 
 		function cleanup(id) {
@@ -134,7 +134,7 @@
 
 			// Throw an exception if the dialog is not found
 			if (!angular.isDefined(dialog)) {
-				throw "DialogService does not have a reference to dialog id " + id;
+				throw 'DialogService does not have a reference to dialog id ' + id;
 			}
 			return dialog;
 		}
@@ -160,14 +160,14 @@
 						var html = response.data;
 						if (!html || !html.length) {
 							// Nothing was found so reject the promise
-							return $q.reject("Template " + template + " was not found");
+							return $q.reject('Template ' + template + ' was not found');
 						}
 						html = trim(html);
 						// Add it to the template cache using the url as the key
 						$templateCache.put(template, html);
 						return html;
 					}, function () {
-						return $q.reject("Template " + template + " was not found");
+						return $q.reject('Template ' + template + ' was not found');
 					}
 				);
 			}

@@ -20,16 +20,16 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.jq-ui').directive('jqTooltip', jqTooltip);
+	angular.module('imscp.filter').filter('strToRegexp', strToRegexp);
 
-	function jqTooltip() {
-		return {
-			restrict: 'E',
-			replace: true,
-			template: '<span class="tips icon i_help"></span>',
-			link: function (scope, element) {
-				element.tooltip({tooltipClass: 'ui-tooltip-notice', track: true});
-			}
+	function strToRegexp(str) {
+		if (angular.isDefined(str) && str !== '') {
+			str = '/' + str + '/';
+			var flags = str.replace(/.*\/([gimy]*)$/, '$1');
+			var pattern = str.replace(new RegExp('^/(.*?)/' + flags + '$'), '$1');
+			return new RegExp(pattern, flags);
 		}
+
+		return /.*/;
 	}
 })();

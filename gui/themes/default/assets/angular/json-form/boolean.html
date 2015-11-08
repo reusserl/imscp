@@ -2,6 +2,7 @@
 	<div class="col-sm-offset-2">
 		<label>
 			<input type="checkbox" data-ng-model="field.value" id="{{field.name}}" name="{{field.name}}" required>
+			<jq-tooltip ng-show="field.metadata.tooltip" ng-attr-title="{{field.metadata.tooltip|escapeHtml}}"></jq-tooltip>
 			{{field.metadata.label}}
 		</label>
 	</div>

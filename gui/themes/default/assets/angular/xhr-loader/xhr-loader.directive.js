@@ -34,9 +34,9 @@
 
 				scope.$watch(scope.isLoading, function (v) {
 					if (v) {
-						$("body").addClass("loading");
+						$('<div id="xhrLoader"><div id="xhrLoaderOverlay"></div><div id="xhrLoaderSpinner"></div></div>').appendTo('body');
 					} else {
-						$("body").removeClass("loading");
+						$('#xhrLoader').remove();
 					}
 				});
 			}

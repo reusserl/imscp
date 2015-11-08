@@ -24,6 +24,6 @@
 		'imscp.jq-ui',
 		'imscp.json-form',
 		'imscp.notification',
-		'templates-angular'
+		//'templates-angular'
 	]);
 })();

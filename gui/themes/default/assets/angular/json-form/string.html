@@ -1,8 +1,7 @@
 <div class="form-group">
 	<label for="{{field.name}}" class="col-sm-2 control-label">
 		{{field.metadata.label}}
-		<jq-tooltip ng-show="field.metadata.tooltip" ng-attr-title="{{field.metadata.tooltip}}"></jq-tooltip>
+		<jq-tooltip ng-show="field.metadata.tooltip" ng-attr-title="{{field.metadata.tooltip|escapeHtml}}"></jq-tooltip>
 	</label>
-	<input id="{{field.name}}" name="{{field.name}}" type="{{field.metadata.type}}" ng-model="field.value"
-		   ng-value="field.value" required>
+	<input id="{{field.name}}" name="{{field.name}}" type="{{field.metadata.type}}" ng-model="field.value" ng-value="field.value" required>
 </div>
