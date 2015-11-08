@@ -24,11 +24,15 @@
 
 	ResponseInterceptorFactory.$inject = ['$q', '$window'];
 
-	function ResponseInterceptorFactory() {
+	function ResponseInterceptorFactory($q, $window) {
 		return {
 			responseError: function (rejection) {
 				if (rejection.status === 403) {
 					$window.location.replace('/index.php');
+				}
+
+				if(rejection.status === 500) {
+					window.location.replace('/errors/500.html');
 				}
 
 				return $q.reject(rejection);

@@ -5,5 +5,4 @@
 			<json-form-fields fields="fields"></json-form-fields>
 		</fieldset>
 	</div>
-	{{NewApsInstanceForm|json}}
 </form>

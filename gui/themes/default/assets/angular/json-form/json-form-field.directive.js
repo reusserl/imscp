@@ -22,9 +22,30 @@
 
 	angular.module('imscp.json-form').directive('jsonFormField', jsonFormField);
 
-	jsonFormField.$inject = ['$templateCache', '$compile'];
+	jsonFormField.$inject = ['$templateCache', '$compile', '$http', '$q', '$window'];
 
-	function jsonFormField($templateCache, $compile) {
+	function jsonFormField($templateCache, $compile, $http, $q, $window) {
+		function loadTemplate(fieldType) {
+			var templateUrl = '/assets/angular/json-form/';
+
+			if (fieldType == 'text' || fieldType == 'email' || fieldType == 'password') {
+				templateUrl += 'string.html';
+			} else if (fieldType == 'boolean') {
+				templateUrl += 'boolean.html';
+			} else {
+				templateUrl += 'enum.html';
+			}
+
+			return $http.get(templateUrl, {cache: $templateCache}).then(
+				function (response) {
+					return response.data;
+				},
+				function () {
+					return $q.reject("json-form: Template " + templateUrl + " was not found");
+				}
+			);
+		}
+
 		return {
 			restrict: 'E',
 			replace: true,
@@ -33,19 +54,13 @@
 				field: '='
 			},
 			link: function (scope, element) {
-				var template;
-				var fieldType = scope.field.type;
-
-				if (fieldType == 'text' || fieldType == 'email' || fieldType == 'password') {
-					template = 'string.html';
-				} else if (fieldType == 'boolean') {
-					template = 'boolean.html';
-				} else {
-					template = 'enum.html';
-				}
-
-				element.html($templateCache.get('/assets/angular/json-form/' + template));
-				return $compile(element.contents())(scope);
+				loadTemplate(scope.field.metadata.type).then(function (html) {
+					element.html(html);
+					return $compile(element.contents())(scope);
+				}, function (rejectionReason) {
+					//console.log(rejectionReason);
+					$window.location.replace('/errors/404.html');
+				});
 			}
 		};
 	}
