@@ -73,6 +73,10 @@ body.yellowLayout {
     background-color: rgba(255, 255, 255, 0.3);
 }
 
+.yellowLayout .main_menu a.show_labels {
+    background-color: transparent;
+}
+
 /* Location */
 .yellowLayout .location {
     background: #85742f url(../images/yellow/jquery-ui/ui-bg_glass_40_85742f_1x400.png) 50% 50% repeat-x;

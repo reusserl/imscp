@@ -72,6 +72,10 @@ body.blackLayout {
     background-color: rgba(255, 255, 255, 0.3);
 }
 
+.blackLayout .main_menu a.show_labels {
+    background-color: transparent;
+}
+
 /* Location */
 .blackLayout .location {
     background: #000000 url(../images/black/jquery-ui/ui-bg_glass_40_000000_1x400.png) 50% 50% repeat-x;

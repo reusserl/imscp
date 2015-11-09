@@ -73,6 +73,10 @@ body.blueLayout  {
     background-color: rgba(255, 255, 255, 0.3);
 }
 
+.blueLayout .main_menu a.show_labels {
+    background-color: transparent;
+}
+
 /* Location */
 .blueLayout .location {
     background: #151e72 url(../images/blue/jquery-ui/ui-bg_glass_40_151e72_1x400.png) 50% 50% repeat-x;

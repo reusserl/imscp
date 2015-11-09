@@ -72,6 +72,10 @@ body.greenLayout {
     background-color: rgba(255, 255, 255, 0.3);
 }
 
+.greenLayout .main_menu a.show_labels {
+    background-color: transparent;
+}
+
 /* Location */
 .greenLayout .location {
     background: #055a0d url(../images/green/jquery-ui/ui-bg_glass_40_055a0d_1x400.png) 50% 50% repeat-x;

@@ -161,8 +161,7 @@ a {
     text-decoration: none;
 }
 
-.main_menu ul li .show_labels {
-    background-color: transparent;
+.main_menu ul li a.show_labels {
     background-position: center top;
     line-height: 70px;
 }
@@ -280,14 +279,6 @@ a {
     background-image: url(../images/menu/profile_a.png);
 }
 
-.main_menu .packages {
-    background-image: url(../images/menu/packages.png);
-}
-
-.main_menu .packages:hover, .main_menu .active .packages {
-    background-image: url(../images/menu/packages_a.png);
-}
-
 /**
  * Location
  */
@@ -372,10 +363,6 @@ a {
 
 .location-area .webtools {
     background-image: url(../images/menu/webtools.png);
-}
-
-.location-area .packages {
-    background-image: url(../images/menu/packages.png);
 }
 
 /* Breadcrumbs */
