@@ -22,9 +22,9 @@
 
 	angular.module('imscp.core').config(config);
 
-	config.$inject = ['$httpProvider'];
+	config.$inject = ['$httpProvider', 'notificationProvider'];
 
-	function config($httpProvider) {
+	function config($httpProvider, notificationProvider) {
 		// Make i-MSCP aware of XHR requests
 		$httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
@@ -35,5 +35,11 @@
 
 		// Redirect unauthenticated users to login page
 		$httpProvider.interceptors.push('ResponseInterceptorFactory');
+
+		// Notify HTTP notifications
+		$httpProvider.interceptors.push(notificationProvider.httpNotificationsInterceptor)
+
+		// Setup notification service
+		notificationProvider.setGlobalTimeout(5000);
 	}
 })();
