@@ -216,9 +216,20 @@
     };
 
     $(function() {
-        var context = "ui";
-        if($('body').hasClass('simple')) {
-            context = "simple"
+        var context = $('body').hasClass('simple') ? 'simple' : 'ui';
+        if(context == 'simple') {
+            // Check browser compatibility (Do not show public pages if browser is not compatible. Warn user instead).
+            $.reject({
+                beforeReject: function () {
+                    $(".wrapper").hide();
+                },
+                onFail: function () {
+                    $(".wrapper").show();
+                },
+                reject: {
+                    msie: 8 // Reject any IE version that is older than version 9
+                }
+            });
         }
 
         initLayout(context);
@@ -265,7 +276,7 @@ function sprintf() {
 
     var str = arguments[0];
     var re = /([^%]*)%('.|0|\x20)?(-)?(\d+)?(\.\d+)?(%|b|c|d|u|f|o|s|x|X)(.*)/;
-    var a = [], b = [], numSubstitutions = 0, numMatches = 0;
+    var a , b = [], numSubstitutions = 0, numMatches = 0;
 
     while ((a = re.exec(str))) {
         var leftpart = a[1], pPad = a[2], pJustify = a[3], pMinLength = a[4];
