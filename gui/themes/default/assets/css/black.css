@@ -35,7 +35,8 @@ body.blackLayout {
     color: #ffffff;
 }
 
-.blackLayout a:hover, .active a {
+.blackLayout a:hover,
+.blackLayout .active a {
     color: #5cbada;
 }
 
