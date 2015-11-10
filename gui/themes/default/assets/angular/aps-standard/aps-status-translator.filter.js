@@ -20,22 +20,30 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.aps-standard.aps-instance').filter('apsTranslateStatus', apsTranslateStatus);
+	angular.module('imscp.aps-standard').filter('apsTranslateStatus', apsTranslateStatus);
 
 	apsTranslateStatus.$inject = ['gettextCatalog'];
 
 	function apsTranslateStatus(gettextCatalog) {
+		var translationMap;
+
 		// Initialize translation map
-		var translationMap = {
-			toadd: gettextCatalog.getString('Installation in progress...'),
-			todelete: gettextCatalog.getString('Uninstallation in progress...'),
-			tochange: gettextCatalog.getString('Reinstallation in progres...'),
-			unlocked: gettextCatalog.getString('Unlocked'),
-			locked: gettextCatalog.getString('Locked'),
-			unknown: gettextCatalog.getString('Unknown status. Please contact your administrator.')
-		};
+		function initTranslationMap() {
+			translationMap = {
+				toadd: gettextCatalog.getString('Installation in progress...'),
+				todelete: gettextCatalog.getString('Uninstallation in progress...'),
+				tochange: gettextCatalog.getString('Reinstallation in progres...'),
+				unlocked: gettextCatalog.getString('Unlocked'),
+				locked: gettextCatalog.getString('Locked'),
+				unknown: gettextCatalog.getString('Unexpected status. Please contact your administrator.')
+			};
+		}
 
 		return function (status) {
+			if (!angular.isDefined(translationMap)) {
+				initTranslationMap();
+			}
+
 			if (translationMap.hasOwnProperty(status)) {
 				return translationMap[status];
 			}
