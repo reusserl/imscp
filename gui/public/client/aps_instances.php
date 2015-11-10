@@ -47,7 +47,7 @@ if (customerHasFeature('aps_standard')) {
 	$tpl = new TemplateEngine();
 	$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'shared/aps_standard/instances.tpl',
+		'page' => 'assets/angular/aps-standard/aps-instance/aps-instances.tpl',
 		'page_message' => 'layout'
 	));
 

@@ -47,28 +47,14 @@ if (customerHasFeature('aps_standard')) {
 	$tpl = new TemplateEngine();
 	$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'shared/aps_standard/packages.tpl',
+		'page' => 'assets/angular/aps-standard/aps-package/aps-packages.tpl',
 		'page_message' => 'layout',
-		'adm_btn1' => 'page',
-		'adm_btn2' => 'page',
-		'client_btn1' => 'page'
 	));
 
 	$tpl->assign(array(
 		'TR_PAGE_TITLE' => tohtml(tr('Client / APS Standard / Packages'), 'htmlAttr'),
-		'PAGE_MESSAGE' => '',
-		'ADM_BTN1' => '',
-		'ADM_BTN2' => ''
+		'PAGE_MESSAGE' => ''
 	));
-
-	$eventManager->registerListener('onGetJsTranslations', function ($e) {
-		/** @var $e \iMSCP_Events_Event */
-		$e->getParam('translations')->core['aps'] = array(
-			'no_package_available' => tr('No package available.'),
-			'package_details' => tr('Package details'),
-			'new_app_instance' => tr('New %%s application instance')
-		);
-	});
 
 	generateNavigation($tpl);
 

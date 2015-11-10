@@ -46,26 +46,13 @@ if (is_xhr()) {
 $tpl = new TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
-	'page' => 'shared/aps_standard/packages.tpl',
-	'page_message' => 'layout',
-	'adm_btn1' => 'page',
-	'adm_btn2' => 'page',
-	'client_btn1' => 'page'
+	'page' => 'assets/angular/aps-standard/aps-package/aps-packages.tpl',
+	'page_message' => 'layout'
 ));
 
 $tpl->assign(array(
 	'TR_PAGE_TITLE' => tohtml(tr('Admin / APS Standard / Packages'), 'htmlAttr'),
-	'CLIENT_BTN1' => ''
 ));
-
-$eventManager->registerListener('onGetJsTranslations', function ($e) {
-	/** @var $e \iMSCP_Events_Event */
-	$e->getParam('translations')->core['aps'] = array(
-		'no_package_available' => tr('No package available. You should update package index.'),
-		'update_in_progress' => tr('Update of package index is in progress. This task can take several minutes.'),
-		'package_details' => tr('Package details')
-	);
-});
 
 generateNavigation($tpl);
 generatePageMessage($tpl);
