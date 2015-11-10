@@ -27,7 +27,6 @@
 	function apsTranslateStatus(gettextCatalog) {
 		var translationMap;
 
-		// Initialize translation map
 		function initTranslationMap() {
 			translationMap = {
 				toadd: gettextCatalog.getString('Installation in progress...'),
