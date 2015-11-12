@@ -20,10 +20,15 @@
 
 namespace iMSCP\ApsStandard\Service;
 
+use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\DriverManager;
 use iMSCP\ApsStandard\Entity\ApsInstance;
 use iMSCP\ApsStandard\Entity\ApsPackage;
 use iMSCP\ApsStandard\Entity\ApsInstanceSetting;
 use iMSCP\Entity\Admin;
+use iMSCP_Registry as Registry;
+use Symfony\Component\Validator\Constraints\Collection;
+use Symfony\Component\Validator\ConstraintViolationList;
 
 /**
  * Class ApsInstanceService
@@ -39,7 +44,7 @@ class ApsInstanceService extends ApsAbstractService
 	public function getInstances()
 	{
 		$this->getEventManager()->dispatch('onGetApsInstances', array('context' => $this));
-		$instance = $this->getEntityManager()->getRepository('Aps:Instance')->findBy(array(
+		$instance = $this->getEntityManager()->getRepository('Aps:ApsInstance')->findBy(array(
 			'owner' => $this->getAuth()->getIdentity()->admin_id
 		));
 		return $instance;
@@ -50,7 +55,7 @@ class ApsInstanceService extends ApsAbstractService
 	 *
 	 * @param ApsPackage $package Package which belongs to the newly created application instance
 	 * @param ApsInstanceSetting[] $settings APS instance settings
-	 * @return void
+	 * @return array
 	 */
 	public function createInstance($package, array $settings)
 	{
@@ -65,11 +70,29 @@ class ApsInstanceService extends ApsAbstractService
 			->setSettings($settings)
 			->setStatus('toadd');
 
-		$this->validateInstance($instance);
-		$entityManager = $this->getEntityManager();
-		$entityManager->persist($instance);
-		$entityManager->flush($instance);
-		//send_request();
+		/** @var ConstraintViolationList $violations */
+		$violations = $this->getValidator()->validate($instance);
+
+		$errors = array();
+
+		if (isset($settings['__db_name__'])) {
+			$errors = $this->validateDatabaseSettings(
+				$settings['__db_name__']->getValue(),
+				$settings['__db_user__']->getValue(),
+				$settings['__db_pwd__']->getValue()
+			);
+		}
+
+		$errors = array_merge($errors, $violations->getIterator()->getArrayCopy());
+
+		if (count($errors) == 0) {
+			$entityManager = $this->getEntityManager();
+			$entityManager->persist($instance);
+			$entityManager->flush($instance);
+			//send_request();
+		}
+
+		return $errors;
 	}
 
 	/**
@@ -146,16 +169,49 @@ class ApsInstanceService extends ApsAbstractService
 	}
 
 	/**
-	 * Validate the given application instance
+	 * Validate the given database settings
 	 *
-	 * @throws \DomainException
-	 * @param ApsInstance $instance
-	 * @return void
+	 * @throws DBALException
+	 * @param string $dbName Database name
+	 * @param string $dbUser Database user
+	 * @param string $dbPwd Database user password
+	 * @return array Array containing error strings if any
 	 */
-	protected function validateInstance(ApsInstance $instance)
+	protected function validateDatabaseSettings($dbName, $dbUser, $dbPwd)
 	{
-		if (count($this->getValidator()->validate($instance)) > 0) {
-			throw new \DomainException(tr('Invalid application instance.'), 400);
+		// Check that the given database exists and is owned by the user
+		$domainId = get_user_domain_id($this->getAuth()->getIdentity()->admin_id);
+		$stmt = $this->getEntityManager()->getConnection()->prepare(
+			'SELECT sqld_name FROM sql_database WHERE domain_id = ? AND sqld_name = ?'
+		);
+		$stmt->execute(array($domainId, $dbName));
+
+		$errors = array();
+
+		if (!$stmt->rowCount()) {
+			$errors[] = tr('Database not found.');
+		} else {
+			// Check that we can connect to the database using the given user/password
+			try {
+				$config = Registry::get('config');
+				$connection = DriverManager::getConnection(array(
+					'driver' => 'pdo_mysql',
+					'dbname' => $dbName,
+					'host' => $config['DATABASE_USER_HOST'],
+					'port' => $config['DATABASE_PORT'],
+					'user' => $dbUser,
+					'password' => $dbPwd
+				));
+
+				// Check that the database is not already used
+				if (count($connection->getSchemaManager()->listTableNames())) {
+					$errors[] = 'The database is not empty. Be sure to start with a new database.';
+				}
+			} catch (DBALException $e) {
+				$errors[] = tr('Could not connect to the database using the given database user/password.');
+			}
 		}
+
+		return $errors;
 	}
 }
