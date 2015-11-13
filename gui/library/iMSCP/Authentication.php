@@ -179,6 +179,13 @@ class iMSCP_Authentication
 					$this->identity->logged_from_admin_name = $_SESSION['logged_from'];
 					$this->identity->logged_from_admin_type = $_SESSION['logged_from_type'];
 				}
+			} else {
+				$this->identity = new stdClass();
+				$this->identity->admin_id = null;
+				$this->identity->admin_name = null;
+				$this->identity->admin_type = 'guest';
+				$this->identity->email = null;
+				$this->identity->created_by = null;
 			}
 		}
 
