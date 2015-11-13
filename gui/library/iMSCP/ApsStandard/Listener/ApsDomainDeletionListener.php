@@ -21,12 +21,12 @@
 namespace iMSCP\ApsStandard\Listener;
 
 use Doctrine\ORM\EntityManager;
+use iMSCP_Events_Event as Event;
+use iMSCP_Events as Events;
 use iMSCP_Events_ListenerAggregateInterface as ListenerAggregateInterface;
 use iMSCP_Events_Manager_Interface as EventManager;
-use iMSCP_Events as Events;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-use iMSCP_Events_Event as Event;
 
 /**
  * Class DomainDeletionListener
@@ -46,7 +46,7 @@ class ApsDomainDeletionListener implements ListenerAggregateInterface, ServiceLo
 	protected $listeners = array();
 
 	/**
-	 * {@inheritdoc
+	 * {@inheritdoc}
 	 */
 	public function setServiceLocator(ServiceLocatorInterface $serviceLocator)
 	{
@@ -54,7 +54,7 @@ class ApsDomainDeletionListener implements ListenerAggregateInterface, ServiceLo
 	}
 
 	/**
-	 * {@inheritdoc
+	 * {@inheritdoc}
 	 */
 	public function getServiceLocator()
 	{
@@ -62,7 +62,7 @@ class ApsDomainDeletionListener implements ListenerAggregateInterface, ServiceLo
 	}
 
 	/**
-	 * {@inheritdoc
+	 * {@inheritdoc}
 	 */
 	public function register(EventManager $eventManager, $priority = 1)
 	{
@@ -77,7 +77,7 @@ class ApsDomainDeletionListener implements ListenerAggregateInterface, ServiceLo
 	}
 
 	/**
-	 * {@inheritdoc
+	 * {@inheritdoc}
 	 */
 	public function unregister(EventManager $eventManager)
 	{
