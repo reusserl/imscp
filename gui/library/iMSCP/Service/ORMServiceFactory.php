@@ -68,10 +68,7 @@ class ORMServiceFactory implements FactoryInterface
 
 		//$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('Doctrine\DBAL\Driver\PDOStatement', array()));
 		$em = EntityManager::create(
-			array(
-				'driver' => 'pdo_mysql',
-				'pdo' => $db::getRawInstance() // Reuse PDO instance from Database service
-			),
+			array('pdo' => $db::getRawInstance()), // Reuse PDO instance from Database service
 			$emConfig
 		);
 

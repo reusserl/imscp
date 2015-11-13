@@ -51,6 +51,7 @@ class DatabaseServiceFactory implements FactoryInterface
 				Crypt::decryptRijndaelCBC($imscpDbKeys['KEY'], $imscpDbKeys['IV'], $config['DATABASE_PASSWORD']),
 				$config['DATABASE_TYPE'],
 				$config['DATABASE_HOST'],
+				$config['DATABASE_PORT'],
 				$config['DATABASE_NAME'],
 				array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES `UTF8`')
 			);

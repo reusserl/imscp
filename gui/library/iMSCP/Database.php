@@ -75,15 +75,14 @@ class iMSCP_Database
 	 * @param string $pass Sql password
 	 * @param string $type PDO driver
 	 * @param string $host Mysql server hostname
+	 * @param string $port Mysql server port
 	 * @param string $name Database name
 	 * @param array $options OPTIONAL Driver options
 	 * @return iMSCP_Database
 	 */
-	private function __construct($user, $pass, $type, $host, $name, $options = array())
+	private function __construct($user, $pass, $type, $host, $port, $name, $options = array())
 	{
-		$this->_db = new PDO($type . ':host=' . $host . ';dbname=' . $name, $user, $pass, $options);
-
-		// Set error mode
+		$this->_db = new PDO("$type:host=$host;port=$port;dbname=$name", $user, $pass, $options);
 		$this->_db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 	}
 
@@ -123,12 +122,13 @@ class iMSCP_Database
 	 * @param string $pass Sql password
 	 * @param string $type PDO driver
 	 * @param string $host Mysql server hostname
+	 * @param string $port Mysql server port
 	 * @param string $name Database name
 	 * @param string $connection OPTIONAL Connection key name
 	 * @param array $options OPTIONAL Driver options
 	 * @return iMSCP_Database An iMSCP_Database instance that represents the connection to the database
 	 */
-	public static function connect($user, $pass, $type, $host, $name, $connection = 'default', $options = null)
+	public static function connect($user, $pass, $type, $host, $port, $name, $connection = 'default', $options = null)
 	{
 		if (is_array($connection)) {
 			$options = $connection;
@@ -139,7 +139,7 @@ class iMSCP_Database
 			self::$_instances[$connection] = null;
 		}
 
-		return self::$_instances[$connection] = new self($user, $pass, $type, $host, $name, (array)$options);
+		return self::$_instances[$connection] = new self($user, $pass, $type, $host, $port, $name, (array)$options);
 	}
 
 	/**
