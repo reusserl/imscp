@@ -66,13 +66,29 @@ class ApsInstance
 	 *   @ORM\JoinColumn(name="owner_id", referencedColumnName="admin_id", nullable=false, onDelete="CASCADE")
 	 * })
 	 * @Assert\Valid()
+	 * @JMS\Exclude()
 	 */
 	private $owner;
 
 	/**
-	 * @var array
-	 * @ORM\OneToMany(targetEntity="iMSCP\ApsStandard\Entity\ApsInstanceSetting", mappedBy="instance", cascade={"persist"})
+	 * @var integer
+	 * @ORM\Column(name="domain_id", type="integer", nullable=false, options={"unsigned":true})
+	 * @JMS\Type("integer")
+	 */
+	private $domainId;
+
+	/**
+	 * @var string
+	 * @ORM\Column(name="domain_type", type="string", length=255, nullable=false)
+	 * @JMS\Type("string")
+	 */
+	private $domainType;
+
+	/**
+	 * @var ArrayCollection
+	 * @ORM\OneToMany(targetEntity="iMSCP\ApsStandard\Entity\ApsInstanceSetting", mappedBy="instance", cascade={"persist"}, indexBy="name")
 	 * @Assert\Valid()
+	 * @JMS\Exclude()
 	 */
 	private $settings;
 
@@ -147,28 +163,46 @@ class ApsInstance
 	}
 
 	/**
-	 * Get settings that belongs to this instance
+	 * Set domain id to wich this instance belongs to
 	 *
-	 * @return ArrayCollection[ApsInstanceSetting]
+	 * @param $domainId
+	 * @return ApsInstance
 	 */
-	public function getSettings()
+	public function setDomainId($domainId)
 	{
-		return $this->settings;
+		$this->domainId = (int)$domainId;
+		return $this;
 	}
 
 	/**
-	 * Set settings that belongs to this instance
-	 *
-	 * @param ApsInstanceSetting[] $settings
-	 * @return $this
+	 * Get domain id to which this instance belongs to
+	 * @return int
 	 */
-	public function setSettings(array $settings)
+	public function getDomainId()
 	{
-		foreach($settings as $setting) {
-			$this->addSetting($setting);
-		}
+		return $this->domainId;
+	}
 
+	/**
+	 * Set domain type to wich this instance belongs to
+	 *
+	 * @param string $domainType Domain type (dmn|sub|als|alssub)
+	 * @return ApsInstance
+	 */
+	public function setDomainType($domainType)
+	{
+		$this->domainType = (string)$domainType;
 		return $this;
+	}
+
+	/**
+	 * Get domain type to which this instance belongs to
+	 *
+	 * @return string
+	 */
+	public function getDomainType()
+	{
+		return $this->domainType;
 	}
 
 	/**
@@ -179,9 +213,60 @@ class ApsInstance
 	 */
 	public function addSetting(ApsInstanceSetting $setting)
 	{
-		$this->settings[] = $setting;
 		$setting->setInstance($this);
+		$this->settings[$setting->getName()] = $setting;
 		return $this;
+	}
+
+	/**
+	 * Add settings to this instance
+	 *
+	 * @param ApsInstanceSetting[] $settings
+	 * @return $this
+	 */
+	public function addSettings(array $settings)
+	{
+		foreach ($settings as $setting) {
+			$this->addSetting($setting);
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Get the given instance setting
+	 *
+	 * @param string $name
+	 * @return mixed|null
+	 */
+	public function getSetting($name)
+	{
+		if (!isset($this->settings[$name])) {
+			throw new \InvalidArgumentException(sprintf("Unknown '%s' APS instance setting."));
+		}
+
+		return $this->settings[$name];
+	}
+
+	/**
+	 * Get settings that belongs to this instance
+	 *
+	 * @return ApsInstanceSetting[]
+	 */
+	public function getSettings()
+	{
+		return $this->settings->toArray();
+	}
+
+	/**
+	 * Does this instance has the given setting?
+	 *
+	 * @param string $name Setting name
+	 * @return bool
+	 */
+	public function hasSetting($name)
+	{
+		return isset($this->settings[$name]);
 	}
 
 	/**
@@ -204,5 +289,16 @@ class ApsInstance
 	public function getStatus()
 	{
 		return $this->status;
+	}
+
+	/**
+	 * Get instance location
+	 *
+	 * @JMS\VirtualProperty
+	 * @return string
+	 */
+	public function getLocation()
+	{
+		return 'http://' . $this->getSetting('__base_url_host__') . $this->getSetting('__base_url_path__');
 	}
 }

@@ -23,6 +23,7 @@ namespace iMSCP\ApsStandard\Listener;
 use Doctrine\ORM\EntityManager;
 use iMSCP_Events_Event as Event;
 use iMSCP_Events as Events;
+use iMSCP_Events_Listener as Listener;
 use iMSCP_Events_ListenerAggregateInterface as ListenerAggregateInterface;
 use iMSCP_Events_Manager_Interface as EventManager;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
@@ -35,13 +36,15 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class ApsDomainDeletionListener implements ListenerAggregateInterface, ServiceLocatorAwareInterface
 {
+	const APS_INSTANCE_ENTITY_CLASS = 'iMSCP\\ApsStandard\\Entity\\ApsInstance';
+
 	/**
 	 * @var ServiceLocatorInterface
 	 */
 	protected $serviceLocator;
 
 	/**
-	 * @var array
+	 * @var Listener[]
 	 */
 	protected $listeners = array();
 
@@ -81,11 +84,10 @@ class ApsDomainDeletionListener implements ListenerAggregateInterface, ServiceLo
 	 */
 	public function unregister(EventManager $eventManager)
 	{
-		foreach ($this->listeners as $listener) {
+		foreach ($this->listeners as $index => $listener) {
 			$eventManager->unregisterListener($listener);
+			unset($this->listeners[$index]);
 		}
-
-		$this->listeners = array();
 	}
 
 	/**
@@ -98,8 +100,9 @@ class ApsDomainDeletionListener implements ListenerAggregateInterface, ServiceLo
 	{
 		/** @var EntityManager $em */
 		$em = $this->getServiceLocator()->get('EntityManager');
-		$em->getConfiguration()->addEntityNamespace('Aps', '\\iMSCP\\ApsStandard\\Entity\\');
-		$q = $em->createQuery('delete from Aps:ApsInstance i where i.domainId = ?0 and i.domainType = ?1');
+		$q = $em->createQuery(
+			'delete from ' . self::APS_INSTANCE_ENTITY_CLASS . ' i where i.domainId = ?0 and i.domainType = ?1'
+		);
 
 		switch ($event->getName()) {
 			case Events::onBeforeDeleteDomainAlias:
