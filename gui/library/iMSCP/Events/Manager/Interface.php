@@ -47,7 +47,7 @@ interface iMSCP_Events_Manager_Interface
 	 * @param string|array $event The event(s) to listen on
 	 * @param callable|object $listener PHP callback or object which implement method with same name as event
 	 * @param int $priority Higher values have higher priority
-	 * @return iMSCP_Events_Manager_Interface Provide fluent interface, returns self
+	 * @return iMSCP_Events_Listener|iMSCP_Events_Listener[]
 	 */
 	public function registerListener($event, $listener, $priority = 1);
 
@@ -55,9 +55,26 @@ interface iMSCP_Events_Manager_Interface
 	 * Unregister an event listener from an event
 	 *
 	 * @param iMSCP_Events_Listener $listener The listener object to remove
-	 * @return bool TRUE if $listener is found and unregistered, FALSE otherwise
+	 * @return void
 	 */
 	public function unregisterListener(iMSCP_Events_Listener $listener);
+
+	/**
+	 * Register a listener aggregate
+	 *
+	 * @param iMSCP_Events_ListenerAggregateInterface $aggregate
+	 * @param int $priority If provided, a suggested priority for the aggregate to use
+	 * @return void
+	 */
+	public function registerAggregate(iMSCP_Events_ListenerAggregateInterface $aggregate, $priority = 1);
+
+	/**
+	 * Unregister a listener aggregate
+	 *
+	 * @param iMSCP_Events_ListenerAggregateInterface $aggregate
+	 * @return void
+	 */
+	public function unregisterAggregate(iMSCP_Events_ListenerAggregateInterface $aggregate);
 
 	/**
 	 * Retrieve all registered events

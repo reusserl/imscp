@@ -69,11 +69,11 @@ class iMSCP_Events_Aggregator implements iMSCP_Events_Manager_Interface
 	 */
 	public function getEventManager($name)
 	{
-		if(isset($this->eventManagers[$name])) {
+		if (isset($this->eventManagers[$name])) {
 			return $this->eventManagers[$name];
 		}
 
-		return  null;
+		return null;
 	}
 
 	/**
@@ -106,52 +106,49 @@ class iMSCP_Events_Aggregator implements iMSCP_Events_Manager_Interface
 	}
 
 	/**
-	 * Dispatches an event to all registered listeners
-	 *
-	 * @throws iMSCP_Events_Manager_Exception When an listener is an object that do not implement the listener method or
-	 *                                        when the listener is not a valid PHP callback
-	 * @param string $event The name of the event to dispatch.
-	 * @param mixed $arguments OPTIONAL The data to pass to the event listener method.
-	 * @return iMSCP_Events_Listener_ResponseCollection
+	 * {@inheritdoc}
 	 */
 	public function dispatch($event, $arguments = array())
 	{
 		if (($eventType = $this->getEventType($event))) {
 			return $this->eventManagers[$eventType]->dispatch($event, $arguments);
-		} else {
-			return $this->eventManagers['application']->dispatch($event, $arguments);
 		}
+
+		return $this->eventManagers['application']->dispatch($event, $arguments);
 	}
 
 	/**
-	 * Registers an event listener that listens on the specified events
-	 *
-	 * @param string|array $event The event(s) to listen on
-	 * @param callable|object $listener PHP callback or object which implement method with same name as event
-	 * @param int $priority Higher values have higher priority
-	 * @return iMSCP_Events_Manager_Interface Provide fluent interface, returns self
+	 * {@inheritdoc}
 	 */
 	public function registerListener($event, $listener, $priority = 1)
 	{
-		if(is_array($event)) {
-			foreach($event as $e) {
-				$this->registerListener($e, $listener, $priority);
+		if (is_array($event)) {
+			$listeners = array();
+			foreach ($event as $e) {
+				$listeners[] = $this->registerListener($e, $listener, $priority);
 			}
-		} elseif (($eventType = $this->getEventType($event))) {
-			$this->eventManagers[$eventType]->registerListener($event, $listener, $priority);
-		} else {
-			$this->addEvents('application', (array) $event);
-			$this->eventManagers['application']->registerListener($event, $listener, $priority);
+
+			return $listeners;
 		}
 
-		return $this;
+		if (($eventType = $this->getEventType($event))) {
+			return $this->eventManagers[$eventType]->registerListener($event, $listener, $priority);
+		}
+
+		$this->addEvents('application', (array)$event);
+		return $this->eventManagers['application']->registerListener($event, $listener, $priority);
 	}
 
 	/**
-	 * Unregister an event listener from an event
-	 *
-	 * @param iMSCP_Events_Listener $listener The listener object to remove
-	 * @return bool TRUE if $listener is found and unregistered, FALSE otherwise
+	 * {@inheritdoc}
+	 */
+	public function registerAggregate(iMSCP_Events_ListenerAggregateInterface $aggregate, $priority = 1)
+	{
+		$aggregate->register($this, $priority);
+	}
+
+	/**
+	 * {@inheritdoc}
 	 */
 	public function unregisterListener(iMSCP_Events_Listener $listener)
 	{
@@ -165,28 +162,35 @@ class iMSCP_Events_Aggregator implements iMSCP_Events_Manager_Interface
 	}
 
 	/**
-	 * Get all known events
-	 *
-	 * @param string $type Events type
-	 * @return array
+	 * {@inheritdoc}
+	 */
+	public function unregisterAggregate(iMSCP_Events_ListenerAggregateInterface $aggregate)
+	{
+		$aggregate->unregister($this);
+	}
+
+	/**
+	 * {@inheritdoc}
 	 */
 	public function getEvents($type = null)
 	{
-		$type = (string) $type;
+		$type = (string)$type;
 
 		if (!$type) {
 			$events = array();
 
-			foreach($this->events as $type) {
+			foreach ($this->events as $type) {
 				$events = array_merge($events, $type);
 			}
 
 			return $events;
-		} elseif(isset($this->events[$type])) {
-			return $this->events[$type];
-		} else {
-			return array();
 		}
+
+		if (isset($this->events[$type])) {
+			return $this->events[$type];
+		}
+
+		return array();
 	}
 
 	/**
@@ -197,8 +201,8 @@ class iMSCP_Events_Aggregator implements iMSCP_Events_Manager_Interface
 	 */
 	public function getEventType($event)
 	{
-		foreach($this->events as $eventType => $events) {
-			if(in_array($event, $events)) {
+		foreach ($this->events as $eventType => $events) {
+			if (in_array($event, $events)) {
 				return $eventType;
 			}
 		}
@@ -207,10 +211,7 @@ class iMSCP_Events_Aggregator implements iMSCP_Events_Manager_Interface
 	}
 
 	/**
-	 * Retrieve all listeners which listen to a particular event
-	 *
-	 * @param string|null $event Event name
-	 * @return SplPriorityQueue
+	 * {@inheritdoc}
 	 */
 	public function getListeners($event)
 	{
@@ -222,10 +223,7 @@ class iMSCP_Events_Aggregator implements iMSCP_Events_Manager_Interface
 	}
 
 	/**
-	 * Clear all listeners for a given event
-	 *
-	 * @param string $event Event name
-	 * @return void
+	 * {@inheritdoc}
 	 */
 	public function clearListeners($event)
 	{
@@ -235,10 +233,7 @@ class iMSCP_Events_Aggregator implements iMSCP_Events_Manager_Interface
 	}
 
 	/**
-	 * Checks whether an event has any registered listeners
-	 *
-	 * @param string $event The name of the event
-	 * @return bool TRUE if the specified event has any listeners, FALSE otherwise
+	 * {@inheritdoc}
 	 */
 	public function hasListener($event)
 	{
