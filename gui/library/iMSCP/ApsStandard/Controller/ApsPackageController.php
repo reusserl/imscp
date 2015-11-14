@@ -66,14 +66,17 @@ class ApsPackageController extends ApsAbstractController
 	}
 
 	/**
-	 * List all packages
+	 * List packages
 	 *
 	 * @return void
 	 */
 	protected function indexAction()
 	{
-		$packages = $this->getSerializer()->serialize($this->getPackageService()->getPackages(), 'json');
-		$this->getResponse()->setContent($packages);
+		$page = $this->getRequest()->query->getInt('page', 0);
+		$limit = $this->getRequest()->query->getInt('count', 5);
+		$offset = ($page === 0) ? 0 : ($page - 1) * $limit;
+		$packages = $this->getPackageService()->getPageablePackageList($offset, $limit);
+		$this->getResponse()->setContent($this->getSerializer()->serialize($packages, 'json'));
 	}
 
 	/**
@@ -118,7 +121,6 @@ class ApsPackageController extends ApsAbstractController
 		}
 
 		$this->getPackageService()->updatePackageIndex();
-		$this->getResponse()->setData(array('redirect' =>  'aps_packages.php'));
 	}
 
 	/**

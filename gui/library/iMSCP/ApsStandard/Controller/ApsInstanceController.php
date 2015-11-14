@@ -49,7 +49,7 @@ class ApsInstanceController extends ApsAbstractController
 					} elseif ($action == 'new') {
 						$this->newAction();
 					} else {
-						$this->getResponse()->setStatusCode(400);
+						$this->getResponse()->setStatusCode(405);
 					}
 					break;
 				case Request::METHOD_POST:
@@ -112,20 +112,24 @@ class ApsInstanceController extends ApsAbstractController
 		$settings = $this->getInstanceSettingService()->getSettingObjectsFromArray($package, $payload['settings']);
 		$errors = $this->getInstanceService()->createInstance($package, $settings);
 
-		if (count($errors) > 0) {
-			$errMessages = array();
-			/** @var ConstraintViolation $error */
-			foreach ($errors as $error) {
-				$errMessages[] = $error->getMessage();
-			}
-
-			$this->getResponse()
-				->setContent($this->getSerializer()->serialize(array('errors' => $errMessages), 'json'))
-				->setStatusCode(400);
+		if (!count($errors)) {
+			$this->getResponse()->setStatusCode(201);
 			return;
 		}
 
-		$this->getResponse()->setStatusCode(201);
+		$errMessages = array();
+
+		foreach ($errors as $error) {
+			if ($error instanceof ConstraintViolation) {
+				$errMessages[] = $error->getMessage();
+			} else {
+				$errMessages[] = (string)$error;
+			}
+		}
+
+		$this->getResponse()
+			->setContent($this->getSerializer()->serialize(array('errors' => $errMessages), 'json'))
+			->setStatusCode(400);
 	}
 
 	/**
@@ -137,7 +141,7 @@ class ApsInstanceController extends ApsAbstractController
 	protected function updateAction()
 	{
 		$this->getInstanceService()->reinstallInstance($this->getRequest()->query->getInt('id'));
-		$this->getResponse()->setData(array('message' => 'Instance has been scheduled for update.'));
+		$this->getResponse()->setStatusCode(204);
 	}
 
 	/**
@@ -149,7 +153,7 @@ class ApsInstanceController extends ApsAbstractController
 	protected function deleteAction()
 	{
 		$this->getInstanceService()->deleteInstance($this->getRequest()->query->getInt('id'));
-		$this->getResponse()->setData(array('message' => 'Instance has been scheduled for deletion.'));
+		$this->getResponse()->setStatusCode(204);
 	}
 
 	/**
