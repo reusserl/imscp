@@ -73,7 +73,7 @@ class ApsPageableResourceCollection
 	 * @JMS\Inline()
 	 * @return array
 	 */
-	public function paginableCollection()
+	public function getPageableCollection()
 	{
 		return array(
 			'resources' => $this->getResources(),
