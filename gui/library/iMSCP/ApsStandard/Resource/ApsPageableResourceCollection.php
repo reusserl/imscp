@@ -67,7 +67,7 @@ class ApsPageableResourceCollection
 	}
 
 	/**
-	 * Get paginable collection
+	 * Get pageable collection
 	 *
 	 * @JMS\VirtualProperty()
 	 * @JMS\Inline()
