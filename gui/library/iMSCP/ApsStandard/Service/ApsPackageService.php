@@ -20,9 +20,11 @@
 
 namespace iMSCP\ApsStandard\Service;
 
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use iMSCP\ApsStandard\ApsDocument;
 use iMSCP\ApsStandard\Entity\ApsPackage;
 use iMSCP\ApsStandard\Entity\ApsPackageDetails;
+use iMSCP\ApsStandard\Resource\ApsPageableResourceCollection;
 use JMS\Serializer\Serializer;
 use Zend_Session as SessionHandler;
 
@@ -35,17 +37,41 @@ class ApsPackageService extends ApsAbstractService
 	const PACKAGE_ENTITY_CLASS = 'iMSCP\\ApsStandard\\Entity\\ApsPackage';
 
 	/**
-	 * Get all packages
+	 * Get package list
 	 *
 	 * @return ApsPackage[]
 	 */
-	public function getPackages()
+	public function getPackageList()
 	{
 		$this->getEventManager()->dispatch('onGetApsPackages', array('context' => $this));
 		$packages = $this->getEntityManager()->getRepository('Aps:ApsPackage')->findBy(array(
 			'status' => ($this->getAuth()->getIdentity()->admin_type === 'admin') ? array('locked', 'unlocked') : 'unlocked'
 		));
 		return $packages;
+	}
+
+	/**
+	 * Get pageable packages list
+	 *
+	 * @param int $offset The first result to return.
+	 * @param int $limit The maximum number of results to return
+	 * @return ApsPageableResourceCollection
+	 * @TODO Allow criteria for filtering
+	 */
+	public function getPageablePackagesList($offset, $limit)
+	{
+		$this->getEventManager()->dispatch('onGetApsPackages', array('context' => $this));
+		$queryBuilder = $this->getEntityManager()->createQueryBuilder()->select('p')->from('Aps:ApsPackage', 'p');
+
+		if ($this->getAuth()->getIdentity()->admin_type === 'admin') {
+			$queryBuilder->where("p.status IN('locked', 'unlocked')");
+		} else {
+			$queryBuilder->where("p.status = 'unlocked'");
+		}
+
+		$queryBuilder->setFirstResult($offset)->setMaxResults($limit);
+
+		return new ApsPageableResourceCollection(new Paginator($queryBuilder));
 	}
 
 	/**
@@ -92,18 +118,33 @@ class ApsPackageService extends ApsAbstractService
 	{
 		$package = $this->getPackage($id);
 		$this->getEventManager()->dispatch('onGetApsPackageDetails', array('package' => $package, 'context' => $this));
-		$meta = $this->getMetadataDir() . '/' . $package->getApsVersion() . '/' . $package->getName() . '/APP-META.xml';
+		$metadataDir = $this->getMetadataDir() . '/' . $package->getApsVersion() . '/' . $package->getName();
+		$metaFile = $metadataDir . '/APP-META.xml';
 
-		if (!file_exists($meta) || filesize($meta) == 0) {
-			throw new \RuntimeException(tr('The %s package META file is missing or invalid.', $meta));
+		if (!file_exists($metaFile) || filesize($metaFile) == 0) {
+			throw new \RuntimeException(tr('The %s package META file is missing or invalid.', $metaFile));
 		}
 
-		$doc = new ApsDocument($meta);
+		$doc = new ApsDocument($metaFile);
 		$packageDetails = new ApsPackageDetails();
 		$packageDetails->setDescription(str_replace(array('  ', "\n"), '', trim($doc->getXPathValue('//root:description'))));
 		$packageDetails->setPackager($doc->getXPathValue('//root:packager/root:name') ?:
 			parse_url($doc->getXPathValue('//root:package-homepage'), PHP_URL_HOST) ?: tr('Unknown')
 		);
+
+		if ($doc->getXPathValue("//root:license")) {
+			$licenseSrc = $doc->getXPathValue("//root:license/text/url");
+			$licenseSrc = $licenseSrc ?: $metadataDir . '/LICENSE';
+
+			if (($text = @file_get_contents($licenseSrc)) !== false) {
+				if (($encText = @iconv(@mb_detect_encoding($text, mb_detect_order(), true), 'UTF-8', $text)) === false) {
+					$encText = utf8_encode($text);
+				}
+
+				$packageDetails->setLicense($encText);
+			}
+		}
+
 		return $packageDetails;
 	}
 
