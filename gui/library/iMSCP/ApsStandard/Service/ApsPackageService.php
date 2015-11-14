@@ -58,7 +58,7 @@ class ApsPackageService extends ApsAbstractService
 	 * @return ApsPageableResourceCollection
 	 * @TODO Allow criteria for filtering
 	 */
-	public function getPageablePackagesList($offset, $limit)
+	public function getPageablePackageList($offset, $limit)
 	{
 		$this->getEventManager()->dispatch('onGetApsPackages', array('context' => $this));
 		$queryBuilder = $this->getEntityManager()->createQueryBuilder()->select('p')->from('Aps:ApsPackage', 'p');
