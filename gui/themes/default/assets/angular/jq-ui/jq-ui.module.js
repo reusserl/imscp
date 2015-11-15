@@ -20,5 +20,9 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.jq-ui', []);
+	angular.module('imscp.jq-ui', [
+
+		// Vendor modules
+		'gettext'
+	]);
 })();
