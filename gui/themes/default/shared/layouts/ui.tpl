@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html data-ng-app="imscp" data-ng-strict-di>
+<html ng-app="imscp" ng-strict-di>
 <head>
 	<title>{TR_PAGE_TITLE}</title>
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
