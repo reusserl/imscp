@@ -1,11 +1,10 @@
-<div class="form-group" data-ng-cloak>
+<div class="form-group">
 	<label for="{{field.name}}" class="col-sm-2 control-label">
-		<jq-tooltip ng-show="field.metadata.tooltip" ng-attr-title="{{field.metadata.tooltip|escapeHtml}}"></jq-tooltip>
 		{{field.metadata.label}}
+		<jq-tooltip ng-show="field.metadata.tooltip" ng-attr-title="{{field.metadata.tooltip|escapeHtml}}"></jq-tooltip>
 	</label>
-	<select id="{{field.name}}" name="{{field.name}}" data-ng-model="field.value" required>
-		<option data-ng-repeat="opt in field.metadata.choices" data-ng-selected="opt.value == field.value"
-				value="{{opt.value|escapeHtml}}">
+	<select id="{{field.name}}" name="{{field.name}}" ng-model="field.value" required>
+		<option ng-repeat="opt in field.metadata.choices" ng-selected="opt.value == field.value" value="{{opt.value|escapeHtml}}">
 			{{opt.name}}
 		</option>
 	</select>

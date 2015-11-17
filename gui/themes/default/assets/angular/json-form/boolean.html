@@ -1,8 +1,8 @@
-<div class="form-group" data-ng-cloak>
+<div class="form-group">
 	<div class="col-sm-offset-2">
 		<label>
 			<jq-tooltip ng-show="field.metadata.tooltip" ng-attr-title="{{field.metadata.tooltip|escapeHtml}}"></jq-tooltip>
-			<input type="checkbox" data-ng-model="field.value" id="{{field.name}}" name="{{field.name}}" required>
+			<input type="checkbox" ng-model="field.value" id="{{field.name}}" name="{{field.name}}" required>
 			{{field.metadata.label}}
 		</label>
 	</div>

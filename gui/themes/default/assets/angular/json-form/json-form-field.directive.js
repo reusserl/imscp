@@ -32,8 +32,10 @@
 				templateUrl += 'string.html';
 			} else if (fieldType == 'boolean') {
 				templateUrl += 'boolean.html';
-			} else {
+			} else if(fieldType == 'enum') {
 				templateUrl += 'enum.html';
+			} else {
+				templateUrl += 'textarea.html';
 			}
 
 			return $http.get(templateUrl, {cache: $templateCache}).then(
@@ -41,7 +43,7 @@
 					return response.data;
 				},
 				function () {
-					return $q.reject("json-form: Template " + templateUrl + " was not found");
+					return $q.reject("json-form: Template " + templateUrl + " was not found.");
 				}
 			);
 		}
@@ -56,6 +58,7 @@
 			link: function (scope, element) {
 				loadTemplate(scope.field.metadata.type).then(function (html) {
 					element.html(html);
+
 					return $compile(element.contents())(scope);
 				}, function (rejectionReason) {
 					//console.log(rejectionReason);

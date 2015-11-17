@@ -20,5 +20,8 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.json-form', []);
+	angular.module('imscp.json-form', [
+		'imscp.jq-ui',
+		'imscp.filter'
+	]);
 })();

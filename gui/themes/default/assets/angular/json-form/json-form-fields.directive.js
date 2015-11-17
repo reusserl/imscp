@@ -32,3 +32,54 @@
 		}
 	}
 })();
+
+/**
+ * The form attribute can be used to associate a submit button with a form, even if the button is not a child of the <form> itself.
+ *
+ * This polyfill uses a support check taken from Modernizr and polyfills the functionality using jQuery.
+ * See http://tjvantoll.com/2013/07/10/creating-a-jquery-ui-dialog-with-a-submit-button/
+ */
+(function () {
+	// Via Modernizr
+	function formAttributeSupport() {
+		var form = document.createElement("form"),
+			input = document.createElement("input"),
+			div = document.createElement("div"),
+			id = "formtest" + ( new Date().getTime() ),
+			attr,
+			bool = false;
+
+		form.id = id;
+
+		// IE6/7 confuses the form id attribute and the form content attribute
+		if (document.createAttribute) {
+			attr = document.createAttribute("form");
+			attr.nodeValue = id;
+			input.setAttributeNode(attr);
+			div.appendChild(form);
+			div.appendChild(input);
+
+			document.documentElement.appendChild(div);
+			bool = form.elements.length === 1 && input.form == form;
+			div.parentNode.removeChild(div);
+		}
+
+		return bool;
+	}
+
+	if (!formAttributeSupport()) {
+		$(document)
+			.on("click", "[type=submit][form]", function (event) {
+				event.preventDefault();
+				$("#" + $(this).attr("form")).submit();
+			})
+			.on("keypress", "form input", function (event) {
+				if (event.keyCode == 13) {
+					var $form = $(this).parents("form");
+					if ($form.find("[type=submit]").length == 0 && $("[type=submit][form=" + $(this).attr("form") + "]").length > 0) {
+						$form.submit();
+					}
+				}
+			});
+	}
+}());

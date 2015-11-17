@@ -3,6 +3,5 @@
 		{{field.metadata.label}}
 		<jq-tooltip ng-show="field.metadata.tooltip" ng-attr-title="{{field.metadata.tooltip|escapeHtml}}"></jq-tooltip>
 	</label>
-	<input id="{{field.name}}" name="{{field.name}}" type="{{field.metadata.type}}" ng-model="field.value"
-		   ng-value="field.value" ng-pattern="field.metadata.regexp|strToRegexp" required>
+	<textarea id="{{field.name}}" name="{{field.name}}" type="{{field.metadata.type}}" ng-model="field.value" ng-value="field.value" required></textarea>
 </div>
