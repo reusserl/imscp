@@ -31,16 +31,6 @@ use iMSCP_Registry as Registry;
 class ApsSpiderService extends ApsAbstractService
 {
 	/**
-	 * @var ApsPackage[][] packages (grouped by repositories)
-	 */
-	protected $packages = array();
-
-	/**
-	 * @var array List of unlocked packages
-	 */
-	protected $unlockedPackages = array();
-
-	/**
 	 * @var resource Lock file
 	 */
 	protected $lockFile;
@@ -56,30 +46,14 @@ class ApsSpiderService extends ApsAbstractService
 			$this->checkRequirements();
 			$this->setupEnvironment();
 
-			// Retrieves list of known packages
-			/** @var ApsPackage[] $packages */
-			$packages = $this->getEntityManager()->getRepository('Aps:ApsPackage')->findBy(array(
-				'status' => array('locked', 'unlocked')
-			));
-
-			if (!empty($packages)) {
-				foreach ($packages as $package) {
-					$name = $package->getName();
-					$this->packages[$package->getApsVersion()][$name] = $package;
-
-					if ($package->getStatus() == 'unlocked') {
-						$this->unlockedPackages[] = $name;
-					}
-				}
-			}
-
-			$serviceUrl = $this->getServiceURL();
+			$serviceUrl = $this->getApsCatalogUrl();
 			$systemIndex = new ApsDocument($serviceUrl, 'html');
 
 			// Parse system index to retrieve list of available repositories
 			// See: https://doc.apsstandard.org/2.1/portal/cat/browsing/#retrieving-repository-index
 			$repositories = $systemIndex->getXPathValue("//a[@class='repository']/@href", null, false);
 
+			// Explore APS repositories to find new package versions
 			foreach ($repositories as $repo) {
 				$repoUrl = $repo->nodeValue;
 				$repoId = rtrim($repoUrl, '/');
@@ -93,24 +67,39 @@ class ApsSpiderService extends ApsAbstractService
 					unset($repoIndex);
 
 					if ($repoFeedUrl != '') { // Ignore invalid repository entry
-						// Get list of known packages
-						$knownPackages = isset($this->packages[$repoId]) ? $this->packages[$repoId] : array();
+						$knownPackages = array();
+						$unlockedPackages = array();
+
+						// Get list of known packages for this repository
+						/** @var  ApsPackage $package */
+						foreach (
+							$this->getEntityManager()->getRepository('Aps:ApsPackage')->findBy(array(
+								'apsVersion' => $repoId
+							)) as $package
+						) {
+							$name = $package->getName();
+							$knownPackages[$name] = $package;
+
+							if ($package->isUnlocked()) {
+								$unlockedPackages[] = $name;
+							}
+						}
 
 						// Parse the repository feed by chunk of 100 entries (we fetch only latest package versions)
 						// See: https://doc.apsstandard.org/2.1/portal/cat/search/#search-description-arguments
 						$repoFeed = new ApsDocument(
 							$serviceUrl . str_replace('../', '/', $repoFeedUrl) . '?pageSize=100&latest=1'
 						);
-						$this->parseRepositoryFeedPage($repoFeed, $repoId, $knownPackages);
+						$this->parseRepositoryFeedPage($repoFeed, $repoId, $knownPackages, $unlockedPackages);
 						while ($repoFeedUrl = $repoFeed->getXPathValue("root:link[@rel='next']/@href")) {
 							$repoFeed = new ApsDocument($repoFeedUrl);
-							$this->parseRepositoryFeedPage($repoFeed, $repoId, $knownPackages);
+							$this->parseRepositoryFeedPage($repoFeed, $repoId, $knownPackages, $unlockedPackages);
 						}
 						unset($repoFeed);
 
-						// Update package index by exploring local metadata directories for the given repository
+						// Update package index
 						$this->updatePackageIndex($repoId, $knownPackages);
-						unset($knownPackages);
+						unset($packages);
 					}
 				}
 			}
@@ -141,17 +130,18 @@ class ApsSpiderService extends ApsAbstractService
 	 * @param ApsDocument $repositoryFeed Document representing APS repository feed
 	 * @param string $repositoryId Repository identifier (e.g. 1, 1.1, 1.2, 2.0 ...)
 	 * @param ApsPackage[] &$knownPackages List of known packages in the repository
+	 * @param array $unlockedPackages List of unlocked packages
 	 * @çeturn void
 	 */
-	protected function parseRepositoryFeedPage(ApsDocument $repositoryFeed, $repositoryId, &$knownPackages)
+	protected function parseRepositoryFeedPage(ApsDocument $repositoryFeed, $repositoryId, &$knownPackages, $unlockedPackages)
 	{
 		$entityManager = $this->getEntityManager();
-		$toDownload = array();
-		$metadataDir = $this->getMetadataDir() . '/' . $repositoryId;
+		$metadataDir = $this->getPackageMetadataDir() . '/' . $repositoryId;
+		$toDownloadFiles = array();
 
 		// Parse all package entries
 		foreach ($repositoryFeed->getXPathValue('root:entry', null, false) as $entry) {
-			// Retrieves needed data
+			// Retrieves needed metadata data
 			$name = $repositoryFeed->getXPathValue('a:name/text()', $entry);
 			$version = $repositoryFeed->getXPathValue('a:version/text()', $entry);
 			$release = $repositoryFeed->getXPathValue('a:release/text()', $entry);
@@ -165,7 +155,7 @@ class ApsSpiderService extends ApsAbstractService
 			// License (APS < 1.2)
 			$licenseURL = $repositoryFeed->getXPathValue("root:link[@a:type='eula']/@href", $entry);
 
-			// Continue only if all data are available
+			// Continue only if all needed package metadata are available
 			if (
 				$name != '' && $version != '' && $release != '' && $vendor != '' && $vendorURI != '' && $url != '' &&
 				$metaURL != ''
@@ -182,9 +172,9 @@ class ApsSpiderService extends ApsAbstractService
 
 				$needUpdate = $isKnown && version_compare("$cVersion.$cRelease", "$version.$release", '<');
 				$isBroken = $isKnown && !$needUpdate && (
-					(!file_exists("$packageMetadataDir/APP-META.xml") || filesize("$packageMetadataDir/APP-META.xml") == 0) ||
-					($licenseURL != '' && (!file_exists("$packageMetadataDir/LICENSE") || filesize("$packageMetadataDir/LICENSE") == 0))
-				);
+						(!file_exists("$packageMetadataDir/APP-META.xml") || filesize("$packageMetadataDir/APP-META.xml") == 0) ||
+						($licenseURL != '' && (!file_exists("$packageMetadataDir/LICENSE") || filesize("$packageMetadataDir/LICENSE") == 0))
+					);
 
 				// Continue only if a newer version is available, or if a file is not valid
 				if (!$isKnown || $needUpdate || $isBroken) {
@@ -194,11 +184,11 @@ class ApsSpiderService extends ApsAbstractService
 						if ($needUpdate) {
 							$package->setStatus('outdated'); // Mark the package as outdated
 						} else {
-							$entityManager->remove($package); // Delete broken package (it will be re-indexed)
+							$entityManager->remove($package); // Broken package. Mark it as deleted (it will be re-indexed)
 						}
 					}
 
-					// Create new package object
+					// Create new package
 					$package = new ApsPackage();
 					$package
 						->setName($name)
@@ -210,25 +200,31 @@ class ApsSpiderService extends ApsAbstractService
 						->setUrl($url)
 						->setIconUrl($iconURL)
 						->setCert($certLevel)
-						->setStatus(in_array($name, $this->unlockedPackages) ? 'unlocked' : 'locked');
+						->setStatus(in_array($name, $unlockedPackages) ? 'unlocked' : 'locked');
 					$knownPackages[$name] = $package;
 
 					// Create package metadata directory
 					@mkdir($packageMetadataDir, 0750, true);
 
-					// Schedule download of package license if any
+					// Schedule download of package license file if any
 					if ($licenseURL != '') {
-						$toDownload[$name . '_license'] = array('src' => $licenseURL, 'trg' => "$packageMetadataDir/LICENSE");
+						$toDownloadFiles[$name . '_license'] = array(
+							'src' => $licenseURL,
+							'trg' => "$packageMetadataDir/LICENSE"
+						);
 					}
 
 					// Schedule download of package APP-META.xml file
-					$toDownload[$name . '_meta'] = array('src' => $metaURL, 'trg' => "$packageMetadataDir/APP-META.xml");
+					$toDownloadFiles[$name . '_meta'] = array(
+						'src' => $metaURL,
+						'trg' => "$packageMetadataDir/APP-META.xml"
+					);
 				}
 			}
 		}
 
-		if (!empty($toDownload)) {
-			$this->downloadFiles($toDownload); // Download package APP-META.xml and license files
+		if (count($toDownloadFiles)) {
+			$this->downloadFiles($toDownloadFiles); // Download APP-META.xml and LICENSE files
 		}
 	}
 
@@ -241,27 +237,27 @@ class ApsSpiderService extends ApsAbstractService
 	 */
 	protected function updatePackageIndex($repoId, $packages)
 	{
-		$metaDir = $this->getMetadataDir() . '/' . $repoId;
+		$metadataDir = $this->getPackageMetadataDir() . '/' . $repoId;
 		$entityManager = $this->getEntityManager();
 
-		// Retrieve list of all available packages
-		$packageNames = array();
-		foreach (new \DirectoryIterator($metaDir) as $fileInfo) {
+		// Retrieve list of all available packages on the file system
+		$fsPackages = array();
+		foreach (new \DirectoryIterator($metadataDir) as $fileInfo) {
 			if (!$fileInfo->isDot() && $fileInfo->isDir()) {
-				$packageNames[] = $fileInfo->getFileName();
+				$fsPackages[] = $fileInfo->getFileName();
 			}
 		}
 
 		foreach ($packages as $package) {
 			$name = $package->getName();
 
-			if (!in_array($name, $packageNames)) { // Obsolete package
+			if (!in_array($name, $fsPackages)) { // Obsolete package (package no longer provided in APS repository)
 				$package->setStatus('obsolete');
 			} elseif (!$entityManager->contains($package)) { // New package
-				$metaFilePath = $metaDir . '/' . $name . '/APP-META.xml';
+				$metaFilePath = $metadataDir . '/' . $name . '/APP-META.xml';
 
 				if (file_exists($metaFilePath) && filesize($metaFilePath) != 0) { // Retrieves needed data
-					$meta = new ApsDocument($metaDir . '/' . $name . '/APP-META.xml');
+					$meta = new ApsDocument($metadataDir . '/' . $name . '/APP-META.xml');
 
 					if ($meta->getXPathValue('//aspnet:*', null, false)->length == 0) { // Ignore aspnet packages
 						$summary = $meta->getXPathValue('//root:summary/text()');
@@ -277,28 +273,33 @@ class ApsSpiderService extends ApsAbstractService
 					}
 				}
 
-				utils_removeDir($metaDir . '/' . $name); // Remove ignored/invalid package metadata
+				utils_removeDir($metadataDir . '/' . $name); // Remove ignored/invalid package metadata
 			}
 		}
 
 		$entityManager->flush();
 
-		foreach ($packages as $package) {
-			$status = $package->getStatus();
-
-			if (in_array($status, array('outdated', 'obsolete'))) {
-				if (!$entityManager->getRepository('Aps:ApsInstance')->findOneBy(array('package' => $package))) {
-					if ($status == 'obsolete') {
-						utils_removeDir($metaDir . '/' . $package->getName());
-					}
-
-					@unlink(
-						$this->getPackageDir() . "/$repoId/" . $package->getName() . '-' . $package->getVersion() . '-' .
-						$package->getRelease() . '.app.zip'
-					);
-
-					$entityManager->remove($package);
+		// Remove obsolete and outdated packages
+		/** @var  ApsPackage $package */
+		foreach (
+			$this->getEntityManager()->getRepository('Aps:ApsPackage')->findBy(array(
+				'apsVersion' => $repoId,
+				'status' => array('obsolete', 'outdated')
+			)) as $package
+		) {
+			// Remove package only if it is not used by an application instance
+			if (!$entityManager->getRepository('Aps:ApsInstance')->findOneBy(array('package' => $package))) {
+				if ($package->isObsolete()) {
+					utils_removeDir($metadataDir . '/' . $package->getName()); // Remove package metadata
 				}
+
+				// Remove package archive
+				@unlink(
+					$this->getPackageDir() . "/$repoId/" . $package->getName() . '-' . $package->getVersion() . '-' .
+					$package->getRelease() . '.app.zip'
+				);
+
+				$entityManager->remove($package);
 			}
 		}
 
@@ -308,7 +309,8 @@ class ApsSpiderService extends ApsAbstractService
 	/**
 	 * Download the given files
 	 *
-	 * @param array $files Array describing list of files to download
+	 * @param array $files Array containing list of files to download where each file entry is an array containing the
+	 *                     file target and file destination.
 	 * @return void
 	 */
 	protected function downloadFiles(array $files)
