@@ -21,6 +21,10 @@
 	'use strict';
 
 	angular.module('imscp.aps-standard.aps-package', [
+		'imscp.dialog',
+
+		// Vendor modules
+		'gettext',
 		'ngResource',
 		'ngTable'
 	]);

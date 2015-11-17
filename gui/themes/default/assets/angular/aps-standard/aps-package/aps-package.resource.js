@@ -27,7 +27,9 @@
 	function ApsPackageResource($resource) {
 		return $resource('aps_packages.php', {id: '@id'}, {
 			update: {method: 'PUT'},
-			updateIndex: {method: 'POST'}
+			updateIndex: {method: 'POST'},
+			query: { isArray:false},
+			getCategories: {method: 'GET', isArray:true, params:{action: 'getCategories'}}
 		});
 	}
 })();

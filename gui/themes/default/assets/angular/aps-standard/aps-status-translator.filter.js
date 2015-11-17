@@ -31,7 +31,7 @@
 			translationMap = {
 				toadd: gettextCatalog.getString('Installation in progress...'),
 				todelete: gettextCatalog.getString('Uninstallation in progress...'),
-				tochange: gettextCatalog.getString('Reinstallation in progres...'),
+				tochange: gettextCatalog.getString('Reinstallation in progress...'),
 				unlocked: gettextCatalog.getString('Unlocked'),
 				locked: gettextCatalog.getString('Locked'),
 				unknown: gettextCatalog.getString('Unexpected status. Please contact your administrator.')

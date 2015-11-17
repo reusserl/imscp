@@ -1,3 +1,15 @@
+.main_menu .aps_package {
+	background-image: url(images/aps_package_icon.png);
+}
+
+.main_menu .aps_package:hover, .main_menu .active .aps_package {
+	background-image: url(images/aps_package_icon_hover.png);
+}
+
+.location-area .aps_package {
+	background-image: url(images/aps_package_icon.png);
+}
+
 .ApsPackageList {
 	position: relative;
 }
@@ -88,7 +100,7 @@
 	text-transform: none;
 }
 
-.ApsPackageList .Info span {
+.ApsPackageList .Info > span {
 	float: right;
 	margin-right: 20px;
 	color: #cccccc;
@@ -151,7 +163,7 @@
 	float: right;
 	width: 140px;
 	height: 105px;
-	background: url(images/package_big.png) no-repeat bottom center;
+	background: url(images/aps_package_big.png) no-repeat bottom center;
 	text-decoration: none;
 	text-transform: uppercase;
 	font-weight: bold;
@@ -165,7 +177,7 @@
 }
 
 .ApsPackageList .Locked a {
-	background: url(images/package_locked_big.png) no-repeat bottom center;
+	background: url(images/aps_package_big_locked.png) no-repeat bottom center;
 }
 
 .ApsPackageList .Logo img {
@@ -265,7 +277,7 @@
 	padding-top: 10px;
 	width: 90px;
 	height: 110px;
-	background: url(images/package_big.png) no-repeat bottom center;
+	background: url(images/aps_package_big.png) no-repeat bottom center;
 	color: #7b8691;
 	vertical-align: text-top;
 	text-decoration: none;
