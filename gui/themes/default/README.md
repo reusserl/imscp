@@ -51,7 +51,7 @@ $ grunt build
 If all goes fine, you should get output such as:
 
 ![Grunt success]
-(https://raw.githubusercontent.com/i-MSCP/imscp/aps-standard/gui/themes/default/grunt.png)
+(grunt.png)
 
 #### Commit the new distribution files
 
