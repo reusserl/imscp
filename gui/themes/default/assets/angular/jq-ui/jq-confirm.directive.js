@@ -42,7 +42,8 @@
 							html: confirmMsg
 						}).dialog({
 							appendTo: 'body',
-							title: 'Confirm dialog',
+							title: gettextCatalog.getString('Confirmation required'),
+							width: 'auto',
 							modal: true,
 							buttons: [
 								{
