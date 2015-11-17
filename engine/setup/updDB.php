@@ -38,7 +38,7 @@ if(strpos($guiRootDir, 'GUI_ROOT_DIR') === false) {
 			throw new \Exception('Could not update database schema using doctrine ORM schema tool');
 		}
 
-		// Generate proxy classes for entity classes  (transitional)
+		// Generate proxy classes for entity classes (transitional)
 		system('php ' . GUI_ROOT_DIR . '/bin/doctrine.php orm:generate:proxies -q --no-ansi', $ret);
 		if($ret) {
 			throw new \Exception('Could not generate Doctrine proxy classes for entity classes');

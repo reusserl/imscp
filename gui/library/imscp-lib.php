@@ -279,7 +279,7 @@ if(is_readable(CONFIG_CACHE_FILE_PATH)) {
 Registry::set('ComposerLoader', include_once($config['CACHE_DATA_DIR'] . '/packages/vendor/autoload.php'));
 
 // Initialize application
-Initializer::run($config);
+Initializer::run($config, include(GUI_ROOT_DIR . '/config/frontend_config.php'));
 
 // Remove useless variable
 unset($configFilePath, $cachedConfigFilePath, $config);

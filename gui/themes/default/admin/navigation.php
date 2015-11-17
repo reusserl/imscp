@@ -199,12 +199,12 @@ return array(
 	'aps_standard' => array(
 		'label' => tr('APS Standard'),
 		'uri' => '/admin/aps_packages.php',
-		'class' => 'packages',
+		'class' => 'aps_package',
 		'pages' => array(
-			'packages' => array(
+			'aps_packages' => array(
 				'label' => tr('Packages'),
 				'uri' => '/admin/aps_packages.php',
-				'title_class' => 'packages'
+				'title_class' => 'aps_package'
 			)
 		)
 	),

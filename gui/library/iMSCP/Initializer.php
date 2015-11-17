@@ -34,6 +34,7 @@ use iMSCP_Filter_Compress_Gzip as GzipFilterCompressor;
 use iMSCP_Config_Handler_Db as ConfigDbHandler;
 use iMSCP\Service\ServiceManagerConfig;
 use Zend\ServiceManager\ServiceManager;
+use iMSCP_Events_ListenerAggregateInterface as ListenerAggregate;
 
 /**
  * Class Initializer
@@ -42,14 +43,14 @@ use Zend\ServiceManager\ServiceManager;
 class Initializer
 {
 	/**
-	 * @var ConfigFileHandler
+	 * @var ConfigFileHandler i-MSCP Main configuration
 	 */
-	protected $config;
+	protected $mainConfig;
 
 	/**
-	 * @staticvar boolean Initialization status
+	 * @var array FrontEnd configuration
 	 */
-	protected static $_initialized = false;
+	protected $frontendConfig;
 
 	/**
 	 * @var EventManager
@@ -57,33 +58,38 @@ class Initializer
 	protected $eventManager;
 
 	/**
-	 * Runs initializer
-	 *
-	 * @throws Exception
-	 * @param string|ConfigFileHandler $command Initializer method or an iMSCP_Config_Handler_File object
-	 * @param ConfigFileHandler $config OPTIONAL iMSCP_Config_Handler_File object
-	 * @return Initializer
+	 * @var ServiceManager
 	 */
-	public static function run($command = 'processAll', ConfigFileHandler $config = null)
+	protected $serviceManager;
+
+	/**
+	 * @staticvar boolean Initialization status
+	 */
+	protected static $initialized = false;
+
+
+	/**
+	 * Run initializer
+	 *
+	 * @param ConfigFileHandler $mainConfig
+	 * @param $frontendConfig
+	 * @return Initializer
+	 * @throws Exception
+	 */
+	public static function run(ConfigFileHandler $mainConfig, $frontendConfig)
 	{
-		if (!self::$_initialized) {
-			if ($command instanceof ConfigFileHandler) {
-				$config = $command;
-				$command = 'processAll';
-			}
-
-			// Overrides _processAll command for CLI interface
-			if ($command == 'processAll' && PHP_SAPI == 'cli') {
-				$command = 'processCLI';
-			} elseif (is_xhr()) {
-				$command = 'processAjax';
-			}
-
-			$initializer = new self(is_object($config) ? $config : new ConfigFileHandler());
-			$initializer->$command();
-
-		} else {
+		if (self::$initialized) {
 			throw new Exception('i-MSCP is already fully initialized.');
+		}
+
+		$initializer = new self($mainConfig, $frontendConfig);
+
+		if (PHP_SAPI == 'cli') {
+			$initializer->processCLI();
+		} elseif (is_xhr()) {
+			$initializer->processAjax();
+		} else {
+			$initializer->processAll();
 		}
 
 		return $initializer;
@@ -94,13 +100,15 @@ class Initializer
 	 *
 	 * Create a new Initializer instance that references the given {@link iMSCP_Config_Handler_File} instance.
 	 *
-	 * @param ConfigFileHandler $config
+	 * @param ConfigFileHandler $config i-MSCP Main configuration
+	 * @param array $frontendConfig Frontend configuration
 	 * @return Initializer
 	 */
-	protected function __construct(ConfigFileHandler $config)
+	protected function __construct(ConfigFileHandler $config, $frontendConfig)
 	{
 		// Register config object in registry for further usage.
-		$this->config = Registry::set('config', $config);
+		$this->mainConfig = Registry::set('config', $config);
+		$this->frontendConfig = $frontendConfig;
 		$this->eventManager = EventManager::getInstance();
 	}
 
@@ -121,6 +129,7 @@ class Initializer
 	{
 		$this->setDisplayErrors();
 		$this->initializeServiceManager();
+		$this->registerListeners();
 		$this->initializeSession();
 		$this->initializeDatabase();
 		$this->loadConfig();
@@ -136,7 +145,7 @@ class Initializer
 
 		// Trigger the onAfterInitialize event
 		$this->eventManager->dispatch(Events::onAfterInitialize, array('context' => $this));
-		self::$_initialized = true;
+		self::$initialized = true;
 	}
 
 	/**
@@ -148,6 +157,7 @@ class Initializer
 	{
 		$this->setDisplayErrors();
 		$this->initializeServiceManager();
+		$this->registerListeners();
 		$this->initializeSession();
 		$this->initializeDatabase();
 		$this->loadConfig();
@@ -159,7 +169,7 @@ class Initializer
 
 		// Trigger the onAfterInitialize event
 		$this->eventManager->dispatch(Events::onAfterInitialize, array('context' => $this));
-		self::$_initialized = true;
+		self::$initialized = true;
 	}
 
 	/**
@@ -170,13 +180,45 @@ class Initializer
 	protected function processCLI()
 	{
 		$this->initializeServiceManager();
+		$this->registerListeners();
 		$this->initializeDatabase();
 		$this->loadConfig();
 		$this->initializeLocalization(); // Needed for rebuilt of languages index
 
 		// Trigger the onAfterInitialize event
 		$this->eventManager->dispatch(Events::onAfterInitialize, array('context' => $this));
-		self::$_initialized = true;
+		self::$initialized = true;
+	}
+
+	/**
+	 * Initialize service manager
+	 *
+	 * @çeturn void
+	 */
+	protected function initializeServiceManager()
+	{
+		$serviceManager = new ServiceManager(new ServiceManagerConfig($this->frontendConfig['service_manager']));
+		$this->serviceManager = $serviceManager;
+		Registry::set('ServiceManager', $serviceManager);
+		Registry::set('ServiceLocator', $serviceManager);
+	}
+
+	/**
+	 * Register listeners
+	 *
+	 * @return void
+	 */
+	protected function registerListeners()
+	{
+		$eventManager = $this->eventManager;
+
+		if(isset($this->frontendConfig['listeners'])) {
+			foreach($this->frontendConfig['listeners'] as $listener) {
+				/** @var ListenerAggregate $aggregate */
+				$aggregate = $this->serviceManager->get($listener);
+				$eventManager->registerAggregate($aggregate);
+			}
+		}
 	}
 
 	/**
@@ -199,7 +241,7 @@ class Initializer
 	 */
 	protected function setDisplayErrors()
 	{
-		if ($this->config->DEBUG) {
+		if ($this->mainConfig->DEBUG) {
 			ini_set('display_errors', 1);
 		} else {
 			ini_set('display_errors', 0);
@@ -218,7 +260,7 @@ class Initializer
 	 */
 	protected function initializeLayout()
 	{
-		// Set layout color for the current environment (Must be donne at end)
+		// Set layout data (Must be donne at end)
 		$this->eventManager->registerListener(
 			array(
 				Events::onLoginScriptEnd, Events::onLostPasswordScriptEnd, Events::onAdminScriptEnd,
@@ -227,6 +269,7 @@ class Initializer
 			'layout_init'
 		);
 
+
 		if (!isset($_SESSION['user_logged'])) {
 			$this->eventManager->registerListener(Events::onAfterSetIdentity, function () {
 				unset($_SESSION['user_theme_color']);
@@ -234,18 +277,7 @@ class Initializer
 		}
 	}
 
-	/**
-	 * Initialize service manager
-	 *
-	 * @çeturn void
-	 */
-	protected function initializeServiceManager()
-	{
-		$serviceManagerConfig = include_once(GUI_ROOT_DIR . '/config/service_manager.php');
-		$serviceManager = new ServiceManager(new ServiceManagerConfig($serviceManagerConfig));
-		Registry::set('ServiceManager', $serviceManager);
-		Registry::set('ServiceLocator', $serviceManager);
-	}
+
 
 	/**
 	 * Initialize the session
@@ -255,7 +287,7 @@ class Initializer
 	 */
 	protected function initializeSession()
 	{
-		$sessionDir = $this->config->GUI_ROOT_DIR . '/data/sessions';
+		$sessionDir = $this->mainConfig->GUI_ROOT_DIR . '/data/sessions';
 
 		if (!is_writable($sessionDir)) {
 			throw new Exception('The gui/data/sessions directory must be writable.');
@@ -310,8 +342,8 @@ class Initializer
 	{
 		// Timezone is not set in the php.ini file?
 		if (ini_get('date.timezone') == '') {
-			$timezone = (isset($this->config['TIMEZONE']) && $this->config['TIMEZONE'] != '')
-				? $this->config['TIMEZONE'] : 'UTC';
+			$timezone = (isset($this->mainConfig['TIMEZONE']) && $this->mainConfig['TIMEZONE'] != '')
+				? $this->mainConfig['TIMEZONE'] : 'UTC';
 
 			if (!date_default_timezone_set($timezone)) {
 				throw new Exception(
@@ -343,7 +375,7 @@ class Initializer
 		$pdo = $databaseService::getRawInstance();
 
 		if (is_readable(DBCONFIG_CACHE_FILE_PATH)) {
-			if (!$this->config['DEBUG']) {
+			if (!$this->mainConfig['DEBUG']) {
 				/** @var ConfigDbHandler $dbConfig */
 				$dbConfig = unserialize(file_get_contents(DBCONFIG_CACHE_FILE_PATH));
 				$dbConfig->setDb($pdo);
@@ -355,13 +387,13 @@ class Initializer
 			FORCE_DBCONFIG_RELOAD:
 			// Creating new Db configuration handler.
 			$dbConfig = new ConfigDbHandler($pdo);
-			if (!$this->config['DEBUG'] && PHP_SAPI != 'cli') {
+			if (!$this->mainConfig['DEBUG'] && PHP_SAPI != 'cli') {
 				@file_put_contents(DBCONFIG_CACHE_FILE_PATH, serialize($dbConfig), LOCK_EX);
 			}
 		}
 
 		// Merge main configuration object with the dbConfig object
-		$this->config->merge($dbConfig);
+		$this->mainConfig->merge($dbConfig);
 
 		// Add the dbconfig object into the registry for later use
 		Registry::set('dbConfig', $dbConfig);
@@ -377,13 +409,13 @@ class Initializer
 	 */
 	protected function initializeOutputBuffering()
 	{
-		if (isset($this->config->COMPRESS_OUTPUT) && $this->config->COMPRESS_OUTPUT) {
+		if (isset($this->mainConfig->COMPRESS_OUTPUT) && $this->mainConfig->COMPRESS_OUTPUT) {
 			// Create a new filter that will be applyed on the buffer output
 			/** @var $filter GzipFilterCompressor */
 			$filter = Registry::set('bufferFilter', new GzipFilterCompressor(GzipFilterCompressor::FILTER_BUFFER));
 
 			// Show compression information in HTML comment ?
-			if (isset($this->config->SHOW_COMPRESSION_SIZE) && !$this->config->SHOW_COMPRESSION_SIZE) {
+			if (isset($this->mainConfig->SHOW_COMPRESSION_SIZE) && !$this->mainConfig->SHOW_COMPRESSION_SIZE) {
 				$filter->compressionInformation = false;
 			}
 
@@ -407,16 +439,16 @@ class Initializer
 					$row = $stmt->fetchRow(\PDO::FETCH_ASSOC);
 
 					if ((empty($row['lang']) && empty($row['layout']))) {
-						list($lang, $theme) = array($this->config['USER_INITIAL_LANG'], $this->config['USER_INITIAL_THEME']);
+						list($lang, $theme) = array($this->mainConfig['USER_INITIAL_LANG'], $this->mainConfig['USER_INITIAL_THEME']);
 					} elseif (empty($row['lang'])) {
-						list($lang, $theme) = array($this->config['USER_INITIAL_LANG'], $row['layout']);
+						list($lang, $theme) = array($this->mainConfig['USER_INITIAL_LANG'], $row['layout']);
 					} elseif (empty($row['layout'])) {
-						list($lang, $theme) = array($row['lang'], $this->config['USER_INITIAL_THEME']);
+						list($lang, $theme) = array($row['lang'], $this->mainConfig['USER_INITIAL_THEME']);
 					} else {
 						list($lang, $theme) = array($row['lang'], $row['layout']);
 					}
 				} else {
-					list($lang, $theme) = array($this->config['USER_INITIAL_LANG'], $this->config['USER_INITIAL_THEME']);
+					list($lang, $theme) = array($this->mainConfig['USER_INITIAL_LANG'], $this->mainConfig['USER_INITIAL_THEME']);
 				}
 
 				$_SESSION['user_def_lang'] = $lang;

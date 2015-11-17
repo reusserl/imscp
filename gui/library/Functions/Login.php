@@ -190,17 +190,10 @@ function check_login($userLevel = '', $preventExternalLogin = true)
 	$auth = iMSCP_Authentication::getInstance();
 
 	if (!$auth->hasIdentity()) {
-		$auth->unsetIdentity(); // Ensure deletion of all entity data
+		$auth->unsetIdentity(); // Ensure deletion of all identity data
 
 		if (is_xhr()) {
-			header('HTTP/1.0 403 Forbidden');
-			/** @var \Symfony\Component\HttpFoundation\Request $request */
-			$request = iMSCP_Registry::get('ServiceManager')->get('Request');
-
-			if(in_array('application/json', $request->getAcceptableContentTypes())) {
-				header("Content-type: application/json");
-				echo json_encode(array('redirect' => '/index.php'));
-			}
+			header('Status: 401 Unauthorized');
 			exit;
 		}
 
@@ -212,7 +205,7 @@ function check_login($userLevel = '', $preventExternalLogin = true)
 
 	$identity = $auth->getIdentity();
 
-	if ($cfg->MAINTENANCEMODE && $identity->admin_type != 'admin' &&
+	if ($cfg['MAINTENANCEMODE'] && $identity->admin_type != 'admin' &&
 		(!isset($_SESSION['logged_from_type']) || $_SESSION['logged_from_type'] != 'admin')
 	) {
 		$auth->unsetIdentity();

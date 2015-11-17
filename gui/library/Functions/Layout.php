@@ -312,6 +312,9 @@ function layout_init($event)
 		$color = array_shift($colors);
 	}
 
+	// getIdentity
+	$identity = iMSCP_Authentication::getInstance()->getIdentity();
+
 	/** @var $tpl iMSCP_pTemplate */
 	$tpl = $event->getParam('templateEngine');
 
@@ -319,7 +322,11 @@ function layout_init($event)
 		'THEME_COLOR' => $color,
 		'ASSETS_PATH' => $config['ASSETS_PATH'],
 		'ISP_LOGO' => (isset($_SESSION['user_id'])) ? layout_getUserLogo() : '',
-		'JS_TRANSLATIONS' => i18n_getJsTranslations()
+		'JS_TRANSLATIONS' => i18n_getJsTranslations(),
+		'USER_IDENTITY' => json_encode(array(
+			'userId' => $identity->admin_id,
+			'userRole' => $identity->admin_type
+		))
 	));
 
 	$tpl->parse('LAYOUT', 'layout');

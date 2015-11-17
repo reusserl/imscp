@@ -64,13 +64,12 @@ sub registerSetupListeners
 	my ($self, $eventManager) = @_;
 
 	$eventManager->register('beforeSetupComposerPackages', sub {
-		my $composer = shift;
-		$composer->registerPackages({
-			'doctrine/orm' => '~2.5.1',
+		(shift)->registerPackages({
+			'doctrine/orm' => '~2.5.0',
 			'jms/serializer' => '~1.0.0',
-			'symfony/http-foundation' => '~2.7.5',
-			'symfony/validator' => '~2.7.5',
-			'zendframework/zend-servicemanager' => '~2.5.1'
+			'symfony/http-foundation' => '~2.7.0',
+			'symfony/validator' => '~2.7.0',
+			'zendframework/zend-servicemanager' => '~2.4.0'
 		});
 	});
 
