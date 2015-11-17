@@ -22,14 +22,17 @@
 
 	angular.module('imscp.filter').filter('strToRegexp', strToRegexp);
 
-	function strToRegexp(str) {
-		if (angular.isDefined(str) && str !== '') {
-			str = '/' + str + '/';
-			var flags = str.replace(/.*\/([gimy]*)$/, '$1');
-			var pattern = str.replace(new RegExp('^/(.*?)/' + flags + '$'), '$1');
-			return new RegExp(pattern, flags);
-		}
+	function strToRegexp() {
+		return function(str) {
+			if (angular.isDefined(str) && str !== '') {
+				str = '/' + str + '/';
+				var flags = str.replace(/.*\/([gimy]*)$/, '$1');
+				var pattern = str.replace(new RegExp('^/(.*?)/' + flags + '$'), '$1');
+				return new RegExp(pattern, flags);
+			}
 
-		return /.*/;
+			//return /.*/;
+			return undefined;
+		}
 	}
 })();
