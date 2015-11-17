@@ -60,6 +60,10 @@
 				msie: {
 					text: 'Internet Explorer',
 					url: 'http://windows.microsoft.com/en-us/internet-explorer/download-ie'
+				},
+				konqueror: {
+					text: 'Konqueror',
+					url: 'https://konqueror.org/download'
 				}
 			},
 			// Pop-up Window Text
