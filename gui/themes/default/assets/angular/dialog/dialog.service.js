@@ -25,7 +25,7 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.service').service('DialogService', DialogService);
+	angular.module('imscp.dialog').service('DialogService', DialogService);
 
 	DialogService.$inject = ['$rootScope', '$q', '$compile', '$templateCache', '$http'];
 
