@@ -20,19 +20,20 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.aps-standard.aps-instance').controller('DeleteApsInstance', DeleteApsInstance);
+	angular.module('imscp.authentication').factory('AuthenticationResponseInterceptor', AuthenticationResponseInterceptor);
 
-	DeleteApsInstance.$inject = [];
+	AuthenticationResponseInterceptor.$inject = ['$rootScope', '$q', 'AUTH_EVENTS'];
 
-	function DeleteApsInstance() {
-		var vm = this;
+	function AuthenticationResponseInterceptor($rootScope, $q, AUTH_EVENTS) {
+		return {
+			responseError: function (response) {
+				$rootScope.$broadcast({
+					401: AUTH_EVENTS.notAuthenticated,
+					403: AUTH_EVENTS.notAuthorized
+				}[response.status], response);
 
-		vm.deleteInstance = function(ApsInstanceResource) {
-			if(confirm('Are you sure you want to delete this application instance?')) {
-				return ApsInstanceResource.$delete();
+				return $q.reject(response);
 			}
-
-			return false;
 		}
 	}
 })();
