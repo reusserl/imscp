@@ -117,15 +117,15 @@ class iMSCP_Plugin_Manager
 	 */
 	public function __construct($pluginRootDir)
 	{
-		if (@is_dir($pluginRootDir)) {
-			$this->pluginSetDirectory($pluginRootDir);
-			$this->eventsManager = iMSCP_Events_Aggregator::getInstance()->addEvents('pluginManager', $this->events);
-			$this->pluginLoadData();
-			spl_autoload_register(array($this, '_autoload'));
-		} else {
+		if (!@is_dir($pluginRootDir)) {
 			write_log(sprintf('Plugin Manager: Invalid plugin directory: %s', $pluginRootDir), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Invalid plugin directory: %s', $pluginRootDir));
 		}
+
+		$this->pluginSetDirectory($pluginRootDir);
+		$this->eventsManager = iMSCP_Events_Aggregator::getInstance()->addEvents('pluginManager', $this->events);
+		$this->pluginLoadData();
+		spl_autoload_register(array($this, '_autoload'));
 	}
 
 	/**
@@ -152,7 +152,6 @@ class iMSCP_Plugin_Manager
 		if (strpos($className, 'iMSCP_Plugin_', 0) === 0) {
 			$basename = substr($className, 13);
 			$filePath = $this->pluginGetDirectory() . "/$basename/$basename.php";
-
 			@include_once $filePath;
 		}
 	}
@@ -185,17 +184,12 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginSetDirectory($pluginDir)
 	{
-		if (@is_writable($pluginDir)) {
-			$this->pluginsDirectory = $pluginDir;
-		} else {
-			write_log(
-				sprintf("Plugin Manager: Directory %s doesn't exist or is not writable", $pluginDir), E_USER_ERROR
-			);
-
-			throw new iMSCP_Plugin_Exception(
-				sprintf("Plugin Manager: Directory %s doesn't exist or is not writable", $pluginDir)
-			);
+		if (!@is_writable($pluginDir)) {
+			write_log(sprintf("Plugin Manager: Directory %s doesn't exist or is not writable", $pluginDir), E_USER_ERROR);
+			throw new iMSCP_Plugin_Exception(sprintf("Plugin Manager: Directory %s doesn't exist or is not writable", $pluginDir));
 		}
+
+		$this->pluginsDirectory = $pluginDir;
 	}
 
 	/**
@@ -226,8 +220,10 @@ class iMSCP_Plugin_Manager
 					}
 				) : $this->pluginData
 			);
-		} elseif (isset($this->pluginsByType[$type])) {
-			$pluginData = $this->pluginData;
+		}
+
+		if (isset($this->pluginsByType[$type])) {
+			$pluginData = &$this->pluginData;
 
 			return $enabledOnly
 				? array_filter(
@@ -253,11 +249,7 @@ class iMSCP_Plugin_Manager
 			$className = "iMSCP_Plugin_$name";
 
 			if (!class_exists($className, true)) {
-				write_log(
-					sprintf('Plugin Manager: Unable to load %s plugin - Class %s not found.', $name, $className),
-					E_USER_ERROR
-				);
-
+				write_log(sprintf('Plugin Manager: Unable to load %s plugin - Class %s not found.', $name, $className), E_USER_ERROR);
 				return false;
 			}
 
@@ -292,7 +284,9 @@ class iMSCP_Plugin_Manager
 	{
 		if ($type == 'all') {
 			return $this->loadedPlugins;
-		} elseif (isset($this->pluginsByType[$type])) {
+		}
+
+		if (isset($this->pluginsByType[$type])) {
 			return array_intersect_key($this->loadedPlugins, array_flip($this->pluginsByType[$type]));
 		}
 
@@ -339,16 +333,16 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginSetStatus($name, $newStatus)
 	{
-		if ($this->pluginIsKnown($name)) {
-			$status = $this->pluginGetStatus($name);
-
-			if ($status !== $newStatus) {
-				exec_query('UPDATE plugin SET plugin_status = ? WHERE plugin_name = ?', array($newStatus, $name));
-				$this->pluginData[$name]['status'] = $newStatus;
-			}
-		} else {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
+		}
+
+		$status = $this->pluginGetStatus($name);
+
+		if ($status !== $newStatus) {
+			exec_query('UPDATE plugin SET plugin_status = ? WHERE plugin_name = ?', array($newStatus, $name));
+			$this->pluginData[$name]['status'] = $newStatus;
 		}
 	}
 
@@ -361,12 +355,12 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginGetError($name)
 	{
-		if ($this->pluginIsKnown($name)) {
-			return $this->pluginData[$name]['error'];
-		} else {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
 		}
+
+		return $this->pluginData[$name]['error'];
 	}
 
 	/**
@@ -379,14 +373,14 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginSetError($name, $pluginError)
 	{
-		if ($this->pluginIsKnown($name)) {
-			if ($pluginError !== $this->pluginData[$name]['error']) {
-				exec_query('UPDATE plugin SET plugin_error = ? WHERE plugin_name = ?', array($pluginError, $name));
-				$this->pluginData[$name]['error'] = $pluginError;
-			}
-		} else {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
+		}
+
+		if ($pluginError !== $this->pluginData[$name]['error']) {
+			exec_query('UPDATE plugin SET plugin_error = ? WHERE plugin_name = ?', array($pluginError, $name));
+			$this->pluginData[$name]['error'] = $pluginError;
 		}
 	}
 
@@ -399,12 +393,12 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginHasError($name)
 	{
-		if ($this->pluginIsKnown($name)) {
-			return (null !== $this->pluginData[$name]['error']);
-		} else {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
 		}
+
+		return (null !== $this->pluginData[$name]['error']);
 	}
 
 	/**
@@ -416,12 +410,12 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginGetInfo($name)
 	{
-		if ($this->pluginIsKnown($name)) {
-			return $this->pluginData[$name]['info'];
-		} else {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
 		}
+
+		return $this->pluginData[$name]['info'];
 	}
 
 	/**
@@ -445,12 +439,12 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginIsLocked($name)
 	{
-		if ($this->pluginIsKnown($name)) {
-			return (bool)$this->pluginData[$name]['locked'];
-		} else {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
 		}
+
+		return (bool)$this->pluginData[$name]['locked'];
 	}
 
 	/**
@@ -462,20 +456,20 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginLock($name)
 	{
-		if ($this->pluginIsKnown($name)) {
-			if (!$this->pluginIsLocked($name)) {
-				$responses = $this->eventsManager->dispatch(iMSCP_Events::onBeforeInstallPlugin, array(
-					'pluginName' => $name
-				));
-
-				if (!$responses->isStopped()) {
-					exec_query('UPDATE plugin SET plugin_locked = ? WHERE plugin_name = ?', array(1, $name));
-					$this->pluginData[$name]['locked'] = 1;
-				}
-			}
-		} else {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
+		}
+
+		if (!$this->pluginIsLocked($name)) {
+			$responses = $this->eventsManager->dispatch(iMSCP_Events::onBeforeInstallPlugin, array(
+				'pluginName' => $name
+			));
+
+			if (!$responses->isStopped()) {
+				exec_query('UPDATE plugin SET plugin_locked = ? WHERE plugin_name = ?', array(1, $name));
+				$this->pluginData[$name]['locked'] = 1;
+			}
 		}
 	}
 
@@ -488,20 +482,18 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginUnlock($name)
 	{
-		if ($this->pluginIsKnown($name)) {
-			if ($this->pluginIsLocked($name)) {
-				$responses = $this->eventsManager->dispatch(iMSCP_Events::onBeforeInstallPlugin, array(
-					'pluginName' => $name
-				));
-
-				if (!$responses->isStopped()) {
-					exec_query('UPDATE plugin SET plugin_locked = ? WHERE plugin_name = ?', array(0, $name));
-					$this->pluginData[$name]['locked'] = 0;
-				}
-			}
-		} else {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
+		}
+
+		if ($this->pluginIsLocked($name)) {
+			$responses = $this->eventsManager->dispatch(iMSCP_Events::onBeforeInstallPlugin, array('pluginName' => $name));
+
+			if (!$responses->isStopped()) {
+				exec_query('UPDATE plugin SET plugin_locked = ? WHERE plugin_name = ?', array(0, $name));
+				$this->pluginData[$name]['locked'] = 0;
+			}
 		}
 	}
 
@@ -514,20 +506,20 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginIsInstallable($name)
 	{
-		if ($this->pluginIsKnown($name)) {
-			$info = $this->pluginGetInfo($name);
-
-			if (isset($info['__installable__'])) {
-				return $info['__installable__'];
-			} else {
-				$pluginInstance = $this->pluginLoad($name);
-				$rMethod = new ReflectionMethod($pluginInstance, 'install');
-				return ('iMSCP_Plugin' !== $rMethod->getDeclaringClass()->getName());
-			}
-		} else {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
 		}
+
+		$info = $this->pluginGetInfo($name);
+
+		if (isset($info['__installable__'])) {
+			return $info['__installable__'];
+		}
+
+		$pluginInstance = $this->pluginLoad($name);
+		$rMethod = new ReflectionMethod($pluginInstance, 'install');
+		return ('iMSCP_Plugin' !== $rMethod->getDeclaringClass()->getName());
 	}
 
 	/**
@@ -539,12 +531,12 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginIsInstalled($name)
 	{
-		if ($this->pluginIsKnown($name)) {
-			return !in_array($this->pluginGetStatus($name), array('toinstall', 'uninstalled'));
-		} else {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
 		}
+
+		return !in_array($this->pluginGetStatus($name), array('toinstall', 'uninstalled'));
 	}
 
 	/**
@@ -617,20 +609,20 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginIsUninstallable($name)
 	{
-		if ($this->pluginIsKnown($name)) {
-			$info = $this->pluginGetInfo($name);
-
-			if (isset($info['__uninstallable__'])) {
-				return $info['__uninstallable__'];
-			} else {
-				$pluginInstance = $this->pluginLoad($name);
-				$rMethod = new ReflectionMethod($pluginInstance, 'uninstall');
-				return ('iMSCP_Plugin' != $rMethod->getDeclaringClass()->getName());
-			}
-		} else {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
 		}
+
+		$info = $this->pluginGetInfo($name);
+
+		if (isset($info['__uninstallable__'])) {
+			return $info['__uninstallable__'];
+		}
+
+		$pluginInstance = $this->pluginLoad($name);
+		$rMethod = new ReflectionMethod($pluginInstance, 'uninstall');
+		return ('iMSCP_Plugin' != $rMethod->getDeclaringClass()->getName());
 	}
 
 	/**
@@ -642,12 +634,12 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginIsUninstalled($name)
 	{
-		if ($this->pluginIsKnown($name)) {
-			return ($this->pluginGetStatus($name) == 'uninstalled');
-		} else {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
 		}
+
+		return ($this->pluginGetStatus($name) == 'uninstalled');
 	}
 
 	/**
@@ -698,13 +690,7 @@ class iMSCP_Plugin_Manager
 						write_log(sprintf('Plugin Manager: %s plugin uninstallation has failed', $name), E_USER_ERROR);
 					}
 				} else {
-					set_page_message(
-						tr(
-							'Plugin Manager: Unable to uninstall the %s plugin. Plugin has been locked by another plugin.',
-							$name
-						),
-						'warning'
-					);
+					set_page_message(tr('Plugin Manager: Unable to uninstall the %s plugin. Plugin has been locked by another plugin.', $name), 'warning');
 				}
 			}
 		}
@@ -721,12 +707,12 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginIsEnabled($name)
 	{
-		if ($this->pluginIsKnown($name)) {
-			return ($this->pluginGetStatus($name) == 'enabled');
-		} else {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
 		}
+
+		return ($this->pluginGetStatus($name) == 'enabled');
 	}
 
 	/**
@@ -806,12 +792,12 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginIsDisabled($name)
 	{
-		if ($this->pluginIsKnown($name)) {
-			return ($this->pluginGetStatus($name) == 'disabled');
-		} else {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
 		}
+
+		return ($this->pluginGetStatus($name) == 'disabled');
 	}
 
 	/**
@@ -903,11 +889,7 @@ class iMSCP_Plugin_Manager
 								$this->pluginUpdateInfo($name, $pluginInfo);
 
 								try {
-									exec_query(
-										'UPDATE plugin set plugin_config_prev = plugin_config WHERE plugin_name = ?',
-										$name
-									);
-
+									exec_query('UPDATE plugin set plugin_config_prev = plugin_config WHERE plugin_name = ?', $name);
 									$this->pluginSetStatus($name, 'enabled');
 								} catch (iMSCP_Exception_Database $e) {
 									throw new iMSCP_Plugin_Exception($e->getMessage(), $e->getCode(), $e);
@@ -1043,17 +1025,8 @@ class iMSCP_Plugin_Manager
 
 						if (is_dir($pluginDir)) {
 							if (!utils_removeDir($pluginDir)) {
-								set_page_message(
-									tr(
-										'Plugin Manager: Unable to delete %s plugin files. You should run the set-gui-permissions.pl script and try again.',
-										$name
-									),
-									'warning'
-								);
-								write_log(
-									sprintf('Plugin Manager: Unable to delete %s plugin files', $name),
-									E_USER_WARNING
-								);
+								set_page_message(tr('Plugin Manager: Unable to delete %s plugin files. You should run the set-gui-permissions.pl script and try again.', $name), 'warning');
+								write_log(sprintf('Plugin Manager: Unable to delete %s plugin files', $name), E_USER_WARNING);
 							}
 						}
 
@@ -1087,21 +1060,23 @@ class iMSCP_Plugin_Manager
 	public function pluginIsProtected($name)
 	{
 		if ($this->pluginIsKnown($name)) {
-			if (!$this->isLoadedProtectedPluginsList) {
-				$file = PERSISTENT_PATH . '/protected_plugins.php';
-				$protectedPlugins = array();
-
-				if (is_readable($file)) include_once $file;
-
-				$this->protectedPlugins = $protectedPlugins;
-				$this->isLoadedProtectedPluginsList = true;
-			}
-
-			return in_array($name, $this->protectedPlugins);
-		} else {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
 		}
+
+		if (!$this->isLoadedProtectedPluginsList) {
+			$file = PERSISTENT_PATH . '/protected_plugins.php';
+			$protectedPlugins = array();
+
+			if (is_readable($file)) {
+				include_once $file;
+			}
+
+			$this->protectedPlugins = $protectedPlugins;
+			$this->isLoadedProtectedPluginsList = true;
+		}
+
+		return in_array($name, $this->protectedPlugins);
 	}
 
 	/**
@@ -1117,22 +1092,23 @@ class iMSCP_Plugin_Manager
 				iMSCP_Events::onBeforeProtectPlugin, array('pluginManager' => $this, 'pluginName' => $name)
 			);
 
-			if (!$responses->isStopped()) {
-				$protectedPlugins = $this->protectedPlugins;
-				$this->protectedPlugins[] = $name;
-
-				if ($this->pluginUpdateProtectedFile()) {
-					$this->eventsManager->dispatch(
-						iMSCP_Events::onAfterProtectPlugin, array('pluginManager' => $this, 'pluginName' => $name)
-					);
-
-					return self::ACTION_SUCCESS;
-				}
-
-				$this->protectedPlugins = $protectedPlugins;
-			} else {
+			if ($responses->isStopped()) {
 				return self::ACTION_STOPPED;
 			}
+
+			$protectedPlugins = $this->protectedPlugins;
+			$this->protectedPlugins[] = $name;
+
+			if ($this->pluginUpdateProtectedFile()) {
+				$this->eventsManager->dispatch(
+					iMSCP_Events::onAfterProtectPlugin, array('pluginManager' => $this, 'pluginName' => $name)
+				);
+
+				return self::ACTION_SUCCESS;
+			}
+
+			$this->protectedPlugins = $protectedPlugins;
+
 		}
 
 		return self::ACTION_FAILURE;
@@ -1160,10 +1136,10 @@ class iMSCP_Plugin_Manager
 	{
 		if ($this->pluginIsKnown($name)) {
 			return ($this->pluginData[$name]['backend'] == 'yes');
-		} else {
-			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
-			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
 		}
+
+		write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
+		throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
 	}
 
 	/**
@@ -1176,20 +1152,15 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginCheckCompat($name, array $info)
 	{
-		if (
-			!isset($info['require_api']) ||
-			version_compare($this->pluginGetApiVersion(), $info['require_api'], '<')
-		) {
-			throw new iMSCP_Plugin_Exception(
-				tr('The %s plugin version %s is not compatible with your i-MSCP version.', $name, $info['version'])
-			);
-		} elseif ($this->pluginIsKnown($name)) {
+		if (!isset($info['require_api']) || version_compare($this->pluginGetApiVersion(), $info['require_api'], '<')) {
+			throw new iMSCP_Plugin_Exception(tr('The %s plugin version %s is not compatible with your i-MSCP version.', $name, $info['version']));
+		}
+
+		if ($this->pluginIsKnown($name)) {
 			$oldInfo = $this->pluginGetInfo($name);
 
 			if ($oldInfo['version'] > $info['version']) {
-				throw new iMSCP_Plugin_Exception(
-					tr('Plugin Manager: Downgrade of %s plugin is not allowed.', $name), 'error'
-				);
+				throw new iMSCP_Plugin_Exception(tr('Plugin Manager: Downgrade of %s plugin is not allowed.', $name), 'error');
 			}
 		}
 	}
@@ -1386,7 +1357,7 @@ class iMSCP_Plugin_Manager
 			iMSCP_Utility_OpcodeCache::clearAllActive($file); // Be sure to load newest version on next call
 
 			if (!@unlink($file)) {
-				write_log(sprintf('Plugin Manager: Unable to remove the %s file'), $file, E_USER_WARNING);
+				write_log(sprintf('Plugin Manager: Unable to remove the %s file', $file), E_USER_WARNING);
 				return false;
 			}
 		}
@@ -1455,9 +1426,7 @@ class iMSCP_Plugin_Manager
 
 		// Make the plugin manager aware of the deletion by reloading plugin data from database
 		$this->pluginLoadData();
-
 		write_log(sprintf('Plugin Manager: %s plugin has been removed from database', $name), E_USER_NOTICE);
-
 		return true;
 	}
 }
