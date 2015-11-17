@@ -8,27 +8,26 @@
 	<meta name="robots" content="nofollow, noindex">
 	<meta name="description" content="i-MSCP: internet Multi Server Control Panel">
 	<meta name="author" content="http://i-mscp.net/">
-	<link rel="icon" href="{ASSETS_PATH}/images/favicon.ico">
-	<!-- build:css /dist/assets/css/simple.css -->
-	<link rel="stylesheet" href="/assets/css/jquery-ui-black.css">
-	<link rel="stylesheet" href="/assets/css/jquery-ui-blue.css">
-	<link rel="stylesheet" href="/assets/css/jquery-ui-green.css">
-	<link rel="stylesheet" href="/assets/css/jquery-ui-red.css">
-	<link rel="stylesheet" href="/assets/css/jquery-ui-yellow.css">
-	<link rel="stylesheet" href="/assets/css/simple.css">
-	<!-- endbuild -->
-	<!-- build:css /dist/assets/css/ie78overrides.css -->
-	<!--[if (IE 7)|(IE 8)]>
-	<link href="/assets/css/ie78overrides.css" rel="stylesheet">
-	<![endif]-->
+	<link rel="icon" href="../../assets/images/favicon.ico">
+	<!-- build:css /dist/assets/css/imscp-pub.min.css -->
+	<link rel="stylesheet" href="../../assets/css/jquery-ui-black.css">
+	<link rel="stylesheet" href="../../assets/css/jquery-ui-blue.css">
+	<link rel="stylesheet" href="../../assets/css/jquery-ui-green.css">
+	<link rel="stylesheet" href="../../assets/css/jquery-ui-red.css">
+	<link rel="stylesheet" href="../../assets/css/jquery-ui-yellow.css">
+	<link rel="stylesheet" href="../../assets/css/jquery.reject.css">
+	<link rel="stylesheet" href="../../assets/css/simple.css">
 	<!-- endbuild -->
 	<script>
 		imscp_i18n = {JS_TRANSLATIONS};
 	</script>
-	<!-- build:js /dist/assets/js/simple.js -->
-	<script src="/assets/js/vendor/jQuery/jquery.js"></script>
-	<script src="/assets/js/vendor/jQuery/jquery-ui.js"></script>
-	<script src="/assets/js/main.js"></script>
+	<!-- build:js /dist/assets/js/vendor-pub.min.js -->
+	<script src="../../assets/js/vendor/jQuery/jquery.js"></script>
+	<script src="../../assets/js/vendor/jQuery/jquery-ui.js"></script>
+	<script src="../../assets/js/vendor/jQuery/jquery.reject.js"></script>
+	<!-- endbuild -->
+	<!-- build:js /dist/assets/js/imscp-pub.min.js -->
+	<script src="../../assets/js/main.js"></script>
 	<!-- endbuild -->
 </head>
 <body class="{THEME_COLOR}Layout simple">
