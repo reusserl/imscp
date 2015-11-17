@@ -22,9 +22,11 @@
 
 	angular.module('imscp', [
 		'imscp.core',
-		'imscp.service',
-		'imscp.filter',
+		'imscp.authentication',
+		'imscp.notification',
 		'imscp.xhr-loader',
 		'imscp.aps-standard'
+
+		//'templates-angular'
 	]);
 })();
