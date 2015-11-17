@@ -22,8 +22,6 @@
 
 	angular.module('imscp.notification').provider('notification', notification);
 
-	notification.$inject = [];
-
 	function notification() {
 		var
 			_timeout = null,
@@ -32,51 +30,51 @@
 			_httpNotificationsKey = 'notifications';
 
 		/**
-		 * Set default notification timeout (time after which a notification is automatically closed)
+		 * Set default timeout for notifications (time after which a notification is automatically closed)
 		 *
-		 * @param timeout Message timeout
+		 * @param timeout Default timeout for notifications
 		 */
 		this.setGlobalTimeout = function (timeout) {
 			_timeout = timeout;
 		};
 
 		/**
-		 * Whether or not to trust HTML content
+		 * Whether or not to trust HTML content in notifications
 		 *
 		 * @param trustHtml
 		 */
 		this.setGlobalTrustHtml = function (trustHtml) {
-			_trustHtml = trustHtml
+			_trustHtml = trustHtml;
 		};
 
 		/**
-		 * Set default notification severity
+		 * Set default severity for notifications
 		 *
-		 * @param severity Default notification severity
+		 * @param severity Default severity for notifications
 		 */
 		this.setDefaultSeverity = function (severity) {
 			_severity = severity;
 		};
 
 		/**
-		 * Set HTTP notifications key (key used to retrieve notification from HTTP responses)
+		 * Set key for HTTP notifications (key used to retrieve notifications from HTTP responses)
 		 *
-		 * @param httpNotificationsKey XHR notification key
+		 * @param httpNotificationsKey Key for HTTP notifications
 		 */
 		this.setHttpNotificationsKey = function (httpNotificationsKey) {
 			_httpNotificationsKey = httpNotificationsKey;
 		};
 
 		/**
-		 * HTTP notifications interceptor
+		 * Interceptor for HTTP notifications
 		 *
 		 * @type {*[]}
 		 */
-		this.httpNotificationsInterceptor = ['$q', 'notification', function ($q, notificationSrv) {
+		this.httpNotificationsInterceptor = ['$q', 'notification', function ($q, notification) {
 			function handleNotification(response) {
 				if (response.data.hasOwnProperty(_httpNotificationsKey) && response.data[_httpNotificationsKey].length > 0) {
-					angular.forEach(response.data[_httpNotificationsKey], function (notification) {
-						notificationSrv.notify(notification.text, notification.severity || _severity);
+					angular.forEach(response.data[_httpNotificationsKey], function (n) {
+						notification.notify(n.text, n.severity, n.config);
 					});
 				}
 			}
@@ -99,14 +97,14 @@
 			 *
 			 * @param notification Notification text
 			 * @param severity Notification severity
-			 * @param config OPTIONAL Notification configuration
+			 * @param config OPTIONAL Notification configuration object
 			 */
 			function notify(notification, severity, config) {
 				config = config || {};
 				$rootScope.$broadcast('notification', {
 					text: notification,
 					severity: severity || _severity,
-					timeout: config.timeout || _timeout,
+					timeout: parseInt(config.timeout) || _timeout,
 					trustHtml: config.trustHtml || _trustHtml
 				});
 			}

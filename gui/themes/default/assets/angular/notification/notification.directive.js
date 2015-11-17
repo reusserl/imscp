@@ -20,11 +20,11 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.notification').directive('notification', notificationDirective);
+	angular.module('imscp.notification').directive('notification', notification);
 
-	notificationDirective.$inject = ['$rootScope'];
+	notification.$inject = ['$rootScope'];
 
-	function notificationDirective($rootScope) {
+	function notification($rootScope) {
 		return {
 			restrict: 'EA',
 			template: "<div ng-repeat=\"notification in notifications\" ng-class=\"getSeverity(notification)\" ng-switch=\"notification.trustHtml\">\n" +
@@ -55,7 +55,7 @@
 				}
 
 				/**
-				 * Get notification severity
+				 * Get severity for the given notification
 				 *
 				 * @param notification Notification object
 				 * @returns {{success: boolean, static_success: boolean, info: boolean, static_info: boolean, warning: boolean, static_warning: boolean, error: boolean, static_error: boolean}}
@@ -74,7 +74,7 @@
 				};
 
 				/**
-				 * Notification event listener
+				 * Event listener for notifications
 				 */
 				$rootScope.$on('notification', function (event, notification) {
 					handleNotification(notification);
