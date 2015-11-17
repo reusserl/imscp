@@ -37,6 +37,27 @@ class ApsPackageService extends ApsAbstractService
 	const PACKAGE_ENTITY_CLASS = 'iMSCP\\ApsStandard\\Entity\\ApsPackage';
 
 	/**
+	 * Get package categories
+	 *
+	 * @return array
+	 */
+	public function getPackageCategory()
+	{
+		$this->getEventManager()->dispatch('onGetApsPackageCategories', array('context' => $this));
+		$queryBuilder = $this->getEntityManager()->createQueryBuilder()
+			->select('p.category')
+			->from('Aps:ApsPackage', 'p');
+
+		if ($this->getAuth()->getIdentity()->admin_type === 'admin') {
+			$queryBuilder->where("p.status IN('locked', 'unlocked')");
+		} else {
+			$queryBuilder->where("p.status = 'unlocked'");
+		}
+
+		return $queryBuilder->distinct()->getQuery()->execute();
+	}
+
+	/**
 	 * Get package list
 	 *
 	 * @return ApsPackage[]
@@ -55,13 +76,15 @@ class ApsPackageService extends ApsAbstractService
 	 *
 	 * @param int $offset The first result to return.
 	 * @param int $limit The maximum number of results to return
+	 * @param array $filters Filters
 	 * @return ApsPageableResourceCollection
-	 * @TODO Allow criteria for filtering
 	 */
-	public function getPageablePackageList($offset, $limit)
+	public function getPageablePackageList($offset, $limit, array $filters = array())
 	{
 		$this->getEventManager()->dispatch('onGetApsPackages', array('context' => $this));
-		$queryBuilder = $this->getEntityManager()->createQueryBuilder()->select('p')->from('Aps:ApsPackage', 'p');
+		$queryBuilder = $this->getEntityManager()->createQueryBuilder()
+			->select('p')
+			->from('Aps:ApsPackage', 'p');
 
 		if ($this->getAuth()->getIdentity()->admin_type === 'admin') {
 			$queryBuilder->where("p.status IN('locked', 'unlocked')");
@@ -69,9 +92,31 @@ class ApsPackageService extends ApsAbstractService
 			$queryBuilder->where("p.status = 'unlocked'");
 		}
 
-		$queryBuilder->setFirstResult($offset)->setMaxResults($limit);
+		// Apply category filter if set
+		if (isset($filters['category'])) {
+			$queryBuilder->andWhere('p.category = :category')->setParameter('category', $filters['category']);
+		}
 
-		return new ApsPageableResourceCollection(new Paginator($queryBuilder));
+		// Apply globalSearch filter if set
+		if (isset($filters['globalSearch'])) {
+			$or = $queryBuilder->expr()->orX();
+			foreach (array('summary', 'version', 'release', 'apsVersion', 'vendor', 'cert') as $column) {
+				$or->add($queryBuilder->expr()->like("p.$column", ":$column"));
+				$queryBuilder->setParameter($column, "%{$filters['globalSearch']}%");
+			}
+
+			$queryBuilder->andWhere($or);
+		}
+
+		$queryBuilder->setFirstResult($offset)->setMaxResults($limit)->distinct();
+
+		return new ApsPageableResourceCollection(new Paginator($queryBuilder), array(array(
+			'text' => $queryBuilder->getQuery()->getDQL(),
+			'severity' => 'static_warning',
+			'config' => array(
+				'timeout' => '-1'
+			)
+		)));
 	}
 
 	/**
@@ -118,7 +163,7 @@ class ApsPackageService extends ApsAbstractService
 	{
 		$package = $this->getPackage($id);
 		$this->getEventManager()->dispatch('onGetApsPackageDetails', array('package' => $package, 'context' => $this));
-		$metadataDir = $this->getMetadataDir() . '/' . $package->getApsVersion() . '/' . $package->getName();
+		$metadataDir = $this->getPackageMetadataDir() . '/' . $package->getApsVersion() . '/' . $package->getName();
 		$metaFile = $metadataDir . '/APP-META.xml';
 
 		if (!file_exists($metaFile) || filesize($metaFile) == 0) {

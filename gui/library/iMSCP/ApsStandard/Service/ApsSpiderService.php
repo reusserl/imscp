@@ -99,7 +99,6 @@ class ApsSpiderService extends ApsAbstractService
 
 						// Update package index
 						$this->updatePackageIndex($repoId, $knownPackages);
-						unset($packages);
 					}
 				}
 			}

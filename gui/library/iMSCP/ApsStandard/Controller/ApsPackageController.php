@@ -42,7 +42,11 @@ class ApsPackageController extends ApsAbstractController
 		try {
 			switch ($this->getRequest()->getMethod()) {
 				case Request::METHOD_GET:
-					if ($this->getRequest()->query->has('id')) {
+					$action = $this->getRequest()->query->get('action', 'index');
+
+					if ($action == 'getCategories') {
+						$this->getCategories();
+					} elseif ($this->getRequest()->query->has('id')) {
 						$this->showAction();
 					} else {
 						$this->indexAction();
@@ -66,6 +70,17 @@ class ApsPackageController extends ApsAbstractController
 	}
 
 	/**
+	 * Get package categories
+	 *
+	 * @throws \Exception
+	 */
+	public function getCategories()
+	{
+		$categories = $this->getPackageService()->getPackageCategory();
+		$this->getResponse()->setData($categories);
+	}
+
+	/**
 	 * List packages
 	 *
 	 * @return void
@@ -75,7 +90,8 @@ class ApsPackageController extends ApsAbstractController
 		$page = $this->getRequest()->query->getInt('page', 0);
 		$limit = $this->getRequest()->query->getInt('count', 5);
 		$offset = ($page === 0) ? 0 : ($page - 1) * $limit;
-		$packages = $this->getPackageService()->getPageablePackageList($offset, $limit);
+		$filters = array_map('urldecode', $this->getRequest()->query->get('filter', array()));
+		$packages = $this->getPackageService()->getPageablePackageList($offset, $limit, $filters);
 		$this->getResponse()->setContent($this->getSerializer()->serialize($packages, 'json'));
 	}
 

@@ -69,7 +69,7 @@ abstract class ApsAbstractService implements EventManagerAwareInterface, Service
 	/**
 	 * @var string APS service URL
 	 **/
-	protected $serviceURL = 'http://apscatalog.com';
+	protected $apsCatalogUrl = 'http://apscatalog.com';
 
 	/**
 	 * @var string APS package metadata directory
@@ -93,7 +93,7 @@ abstract class ApsAbstractService implements EventManagerAwareInterface, Service
 		$this->entityManager = $entityManager;
 		$this->auth = $auth;
 		$config = Registry::get('config');
-		$this->setMetadataDir($config['CACHE_DATA_DIR'] . '/aps_standard/metadata');
+		$this->setPackageMetadataDir($config['CACHE_DATA_DIR'] . '/aps_standard/metadata');
 		$this->setPackageDir($config['CACHE_DATA_DIR'] . '/aps_standard/packages');
 		$this->init();
 	}
@@ -178,9 +178,9 @@ abstract class ApsAbstractService implements EventManagerAwareInterface, Service
 	 *
 	 * @return string
 	 */
-	public function getServiceURL()
+	public function getApsCatalogUrl()
 	{
-		return $this->serviceURL;
+		return $this->apsCatalogUrl;
 	}
 
 	/**
@@ -189,9 +189,9 @@ abstract class ApsAbstractService implements EventManagerAwareInterface, Service
 	 * @param string $url URL
 	 * @return void
 	 */
-	public function setServiceURL($url)
+	public function setApsCatalogUrl($url)
 	{
-		$this->serviceURL = (string)$url;
+		$this->apsCatalogUrl = (string)$url;
 	}
 
 	/**
@@ -199,7 +199,7 @@ abstract class ApsAbstractService implements EventManagerAwareInterface, Service
 	 *
 	 * @return string
 	 */
-	public function getMetadataDir()
+	public function getPackageMetadataDir()
 	{
 		return $this->packageMetadataDir;
 	}
@@ -209,7 +209,7 @@ abstract class ApsAbstractService implements EventManagerAwareInterface, Service
 	 *
 	 * @param string $packageMetadataDir
 	 */
-	public function setMetadataDir($packageMetadataDir)
+	public function setPackageMetadataDir($packageMetadataDir)
 	{
 		$packageMetadataDir = (string)$packageMetadataDir;
 		$this->packageMetadataDir = rtrim($packageMetadataDir, '/');

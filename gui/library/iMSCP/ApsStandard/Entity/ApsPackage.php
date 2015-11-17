@@ -418,4 +418,44 @@ class ApsPackage
 	{
 		return $this->status;
 	}
+
+	/**
+	 * Is package locked?
+	 *
+	 * @return bool
+	 */
+	public function isLocked()
+	{
+		return $this->getStatus() == 'locked';
+	}
+
+	/**
+	 * Is package unlocked?
+	 *
+	 * @return bool
+	 */
+	public function isUnlocked()
+	{
+		return $this->getStatus() == 'unlocked';
+	}
+
+	/**
+	 * Is package outdated?
+	 *
+	 * @return bool
+	 */
+	public function isOutdated()
+	{
+		return $this->getStatus() == 'outdated';
+	}
+
+	/**
+	 * Is package obsolete?
+	 *
+	 * @return bool
+	 */
+	public function isObsolete()
+	{
+		return $this->getStatus() == 'obsolete';
+	}
 }
