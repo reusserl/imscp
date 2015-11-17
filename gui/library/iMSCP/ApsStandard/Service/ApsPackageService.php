@@ -108,7 +108,7 @@ class ApsPackageService extends ApsAbstractService
 			$queryBuilder->andWhere($or);
 		}
 
-		$queryBuilder->setFirstResult($offset)->setMaxResults($limit)->distinct();
+		$queryBuilder->setFirstResult($offset)->setMaxResults($limit);
 
 		return new ApsPageableResourceCollection(new Paginator($queryBuilder));
 	}
