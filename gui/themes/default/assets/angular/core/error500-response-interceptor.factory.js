@@ -20,19 +20,15 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.core').factory('ResponseInterceptorFactory', ResponseInterceptorFactory);
+	angular.module('imscp.core').factory('error500ResponseInterceptor', error500ResponseInterceptor);
 
-	ResponseInterceptorFactory.$inject = ['$q', '$window'];
+	error500ResponseInterceptor.$inject = ['$q', '$window'];
 
-	function ResponseInterceptorFactory($q, $window) {
+	function error500ResponseInterceptor($q, $window) {
 		return {
 			responseError: function (rejection) {
-				if (rejection.status === 403) {
-					$window.location.replace('/index.php');
-				}
-
-				if(rejection.status === 500) {
-					window.location.replace('/errors/500.html');
+				if (rejection.status === 500) {
+					$window.location = '/errors/500.html';
 				}
 
 				return $q.reject(rejection);

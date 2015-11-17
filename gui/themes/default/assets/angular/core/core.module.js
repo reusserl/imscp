@@ -20,10 +20,5 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.core', [
-		'imscp.jq-ui',
-		'imscp.json-form',
-		'imscp.notification',
-		//'templates-angular'
-	]);
+	angular.module('imscp.core', []);
 })();

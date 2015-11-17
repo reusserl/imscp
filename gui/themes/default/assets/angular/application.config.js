@@ -20,7 +20,7 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.core').config(config);
+	angular.module('imscp').config(config);
 
 	config.$inject = ['$httpProvider', 'notificationProvider'];
 
@@ -33,11 +33,14 @@
 		$httpProvider.defaults.headers.common.Pragma = 'no-cache';
 		$httpProvider.defaults.headers.common['If-Modified-Since'] = '0';
 
-		// Redirect unauthenticated users to login page
-		$httpProvider.interceptors.push('ResponseInterceptorFactory');
+		// Handle authentication/authorizations
+		$httpProvider.interceptors.push('AuthenticationResponseInterceptor');
+
+		// Handle internal server errors
+		$httpProvider.interceptors.push('error500ResponseInterceptor');
 
 		// Notify HTTP notifications
-		$httpProvider.interceptors.push(notificationProvider.httpNotificationsInterceptor)
+		$httpProvider.interceptors.push(notificationProvider.httpNotificationsInterceptor);
 
 		// Setup notification service
 		notificationProvider.setGlobalTimeout(5000);
