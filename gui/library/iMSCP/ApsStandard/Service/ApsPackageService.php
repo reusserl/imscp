@@ -110,13 +110,7 @@ class ApsPackageService extends ApsAbstractService
 
 		$queryBuilder->setFirstResult($offset)->setMaxResults($limit)->distinct();
 
-		return new ApsPageableResourceCollection(new Paginator($queryBuilder), array(array(
-			'text' => $queryBuilder->getQuery()->getDQL(),
-			'severity' => 'static_warning',
-			'config' => array(
-				'timeout' => '-1'
-			)
-		)));
+		return new ApsPageableResourceCollection(new Paginator($queryBuilder));
 	}
 
 	/**

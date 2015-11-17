@@ -37,13 +37,20 @@ class ApsPageableResourceCollection
 	protected $paginator;
 
 	/**
+	 * @var array Notifications
+	 */
+	protected $notifications;
+
+	/**
 	 * Constructor
 	 *
 	 * @param Paginator $paginator
+	 * @param array $notifications OPTIONAL Array containing notifications
 	 */
-	public function __construct(Paginator $paginator)
+	public function __construct(Paginator $paginator, array $notifications = array())
 	{
 		$this->paginator = $paginator;
+		$this->notifications = $notifications;
 	}
 
 	/**
@@ -77,7 +84,8 @@ class ApsPageableResourceCollection
 	{
 		return array(
 			'resources' => $this->getResources(),
-			'resourceCount' => $this->getResourceCount()
+			'resourceCount' => $this->getResourceCount(),
+			'notifications' =>  $this->notifications
 		);
 	}
 }
