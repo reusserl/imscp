@@ -166,7 +166,7 @@ class ApsPackageService extends ApsAbstractService
 
 		$doc = new ApsDocument($metaFile);
 		$packageDetails = new ApsPackageDetails();
-		$packageDetails->setDescription(str_replace(array('  ', "\n"), '', trim($doc->getXPathValue('//root:description'))));
+		$packageDetails->setDescription(str_replace(array('  ', "\n", "\t"), '', trim($doc->getXPathValue('//root:description'))));
 		$packageDetails->setPackager($doc->getXPathValue('//root:packager/root:name') ?:
 			parse_url($doc->getXPathValue('//root:package-homepage'), PHP_URL_HOST) ?: tr('Unknown')
 		);
