@@ -22,9 +22,9 @@
 
 	angular.module('imscp.aps-standard.aps-package').controller('ApsPackageController', ApsPackageController);
 
-	ApsPackageController.$inject = ['ApsPackageResource', 'NgTableParams', 'DialogService', 'gettextCatalog', 'notification', '$window'];
+	ApsPackageController.$inject = ['ApsPackageResource', 'NgTableParams', 'DialogService', 'Authentication', 'USER_ROLES', 'gettextCatalog', 'notification', '$window'];
 
-	function ApsPackageController(ApsPackageResource, NgTableParams, DialogService, gettextCatalog, notification, $window) {
+	function ApsPackageController(ApsPackageResource, NgTableParams, DialogService, Authentication, USER_ROLES, gettextCatalog, notification, $window) {
 		var vm = this;
 
 		vm.packageTable = function () {
@@ -64,8 +64,10 @@
 							},
 							counts: [5, 10, 25]
 						});
-				} else {
+				} else if (Authentication.isAuthorized(USER_ROLES.admin)) {
 					notification.notify(gettextCatalog.getString('No package available. You must update the package index.'), 'static_info', {timeout: -1});
+				} else {
+					notification.notify(gettextCatalog.getString('No package available. Please contact your reseller.'), 'static_info', {timeout: -1});
 				}
 
 				return categories;
