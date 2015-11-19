@@ -312,12 +312,14 @@ function layout_init($event)
 		$color = array_shift($colors);
 	}
 
-	// getIdentity
+	// Get user Identity
 	$identity = iMSCP_Authentication::getInstance()->getIdentity();
+
+	// Get user locale
+	$locale = iMSCP_Registry::get('ServiceManager')->get('Translator')->getLocale();
 
 	/** @var $tpl iMSCP_pTemplate */
 	$tpl = $event->getParam('templateEngine');
-
 	$tpl->assign(array(
 		'THEME_COLOR' => $color,
 		'ASSETS_PATH' => $config['ASSETS_PATH'],
@@ -326,9 +328,9 @@ function layout_init($event)
 		'USER_IDENTITY' => json_encode(array(
 			'userId' => $identity->admin_id,
 			'userRole' => $identity->admin_type
-		))
+		)),
+		'LOCALE' => json_encode($locale),
 	));
-
 	$tpl->parse('LAYOUT', 'layout');
 }
 
