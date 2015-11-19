@@ -20,5 +20,5 @@
 (function () {
 	'use strict';
 
-	angular.module('imscp.dialog', []);
+	angular.module('imscp.modal', []);
 })();
