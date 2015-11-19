@@ -91,9 +91,9 @@ if (customerHasFeature('domain_aliases') && isset($_GET['id'])) {
 		}
 
 		if (!$ret) {
-			iMSCP_Events_Aggregator::getInstance()->dispatch(
-				iMSCP_Events::onBeforeDeleteSubdomain, array('subdomainId' => $alssubId, 'type' => 'alssub')
-			);
+			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeDeleteSubdomain, array(
+					'subdomainId' => $alssubId, 'type' => 'alssub', 'subdomainName' => $alssubName
+			));
 
 			/** @var $db iMSCP_Database */
 			$db = iMSCP_Database::getInstance();
@@ -113,9 +113,9 @@ if (customerHasFeature('domain_aliases') && isset($_GET['id'])) {
 				throw $e;
 			}
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(
-				iMSCP_Events::onAfterDeleteSubdomain, array('subdomainId' => $alssubId, 'type' => 'alssub')
-			);
+			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterDeleteSubdomain, array(
+					'subdomainId' => $alssubId, 'type' => 'alssub', 'subdomainName' => $alssubName
+			));
 
 			send_request();
 

@@ -164,6 +164,7 @@ function client_editSubdomain()
 		$subdomainType = clean_input($_GET['type']);
 
 		if (($subdomainData = _client_getSubdomainData($subdomainId, $subdomainType))) {
+			$subdomainName = $subdomainData['subdomain_name'];
 			$forwardUrl = 'no';
 			$forwardType = null;
 
@@ -186,7 +187,7 @@ function client_editSubdomain()
 						$uriPath = rtrim(preg_replace('#/+#', '/', $uri->getPath()), '/') . '/'; // normalize path
 						$uri->setPath($uriPath);
 
-						if ($uri->getHost() == $subdomainData['subdomain_name'] && $uri->getPath() == '/') {
+						if ($uri->getHost() == $subdomainName && $uri->getPath() == '/') {
 							throw new iMSCP_Exception(
 								tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>") . ' ' .
 								tr('Subdomain %s cannot be forwarded on itself.', "<strong>{$subdomainData['subdomain_name_utf8']}</strong>")
@@ -204,7 +205,9 @@ function client_editSubdomain()
 			}
 
 			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeEditSubdomain, array(
-				'subdomainId' => $subdomainId
+				'subdomainId' => $subdomainId,
+				'subdomainName' => $subdomainName,
+				'subdomainType' => $subdomainType
 			));
 
 			if ($subdomainType == 'dmn') {
@@ -230,7 +233,9 @@ function client_editSubdomain()
 			exec_query($query, array($forwardUrl, $forwardType, 'tochange', $subdomainId));
 
 			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditSubdomain, array(
-				'subdomainId' => $subdomainId
+				'subdomainId' => $subdomainId,
+				'subdomainName' => $subdomainName,
+				'subdomainType' => $subdomainType
 			));
 
 			send_request();

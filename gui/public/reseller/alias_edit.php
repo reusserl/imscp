@@ -174,7 +174,8 @@ function reseller_editDomainAlias()
 			}
 
 			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeEditDomainAlias, array(
-				'domainAliasId' => $domainAliasId
+				'domainAliasId' => $domainAliasId,
+				'domainAliasName' => $domainAliasData['alias_name']
 			));
 
 			exec_query(
@@ -182,8 +183,9 @@ function reseller_editDomainAlias()
 				array($forwardUrl, $forwardType, 'tochange', $domainAliasId)
 			);
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditDomainALias, array(
-				'domainAliasId' => $domainAliasId
+			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditDomainAlias, array(
+				'domainAliasId' => $domainAliasId,
+				'domainAliasName' => $domainAliasData['alias_name']
 			));
 
 			send_request();
