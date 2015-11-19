@@ -32,8 +32,9 @@
 	<script>
 		var imscp_i18n = {JS_TRANSLATIONS};
 		var iMSCP = {
-				userIdentity: {USER_IDENTITY},
-				i18n: imscp_i18n
+			i18n: imscp_i18n,
+			locale: {LOCALE},
+			userIdentity: {USER_IDENTITY}
 		}
 	</script>
 
@@ -70,8 +71,8 @@
 	<script src="../../assets/angular/notification/notification.provider.js"></script>
 	<script src="../../assets/angular/notification/notification.directive.js"></script>
 
-	<script src="../../assets/angular/dialog/dialog.module.js"></script>
-	<script src="../../assets/angular/dialog/dialog.service.js"></script>
+	<script src="../../assets/angular/modal/modal.module.js"></script>
+	<script src="../../assets/angular/modal/modal.service.js"></script>
 
 	<script src="../../assets/angular/jq-ui/jq-ui.module.js"></script>
 	<script src="../../assets/angular/jq-ui/jq-button.directive.js"></script>
@@ -99,7 +100,6 @@
 	<script src="../../assets/angular/aps-standard/aps-status-translator.filter.js"></script>
 	<script src="../../assets/angular/aps-standard/aps-instance/aps-instance.resource.js"></script>
 	<script src="../../assets/angular/aps-standard/aps-instance/aps-instance.controller.js"></script>
-	<script src="../../assets/angular/aps-standard/aps-instance/new-aps-instance.controller.js"></script>
 
 	<!--<script src="../../assets/angular/templates.js"></script>-->
 	<!-- endbuild -->
