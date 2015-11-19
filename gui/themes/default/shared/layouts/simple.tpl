@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="{LANG}">
 <head>
 	<title>{TR_PAGE_TITLE}</title>
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8">

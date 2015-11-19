@@ -22,11 +22,11 @@
 
 	angular.module('imscp').controller('ApplicationController', ApplicationController);
 
-	ApplicationController.$inject = ['$scope', 'USER_ROLES', 'Authentication', 'gettextCatalog'];
+	ApplicationController.$inject = ['USER_ROLES', 'Authentication', 'gettextCatalog'];
 
-	function ApplicationController($scope, USER_ROLES, Authentication, gettextCatalog) {
-		$scope.userRoles = USER_ROLES;
-		$scope.isAuthorized = Authentication.isAuthorized;
+	function ApplicationController(USER_ROLES, Authentication, gettextCatalog) {
+		this.userRoles = USER_ROLES;
+		this.isAuthorized = Authentication.isAuthorized;
 		gettextCatalog.setCurrentLanguage(iMSCP.locale || 'en_GB');
 	}
 })(iMSCP = iMSCP || {});

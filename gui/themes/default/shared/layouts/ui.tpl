@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html ng-app="imscp" ng-strict-di>
+<html lang="{LANG}" ng-app="imscp" ng-strict-di>
 <head>
 	<title>{TR_PAGE_TITLE}</title>
 	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
@@ -33,7 +33,7 @@
 		var imscp_i18n = {JS_TRANSLATIONS};
 		var iMSCP = {
 			i18n: imscp_i18n,
-			locale: {LOCALE},
+			locale: '{LOCALE}',
 			userIdentity: {USER_IDENTITY}
 		}
 	</script>
@@ -104,7 +104,7 @@
 	<!--<script src="../../assets/angular/templates.js"></script>-->
 	<!-- endbuild -->
 </head>
-<body class="{THEME_COLOR}Layout" ng-controller="ApplicationController" xhr-loader authentication-alert ng-cloak>
+<body class="{THEME_COLOR}Layout" ng-controller="ApplicationController as Application" xhr-loader authentication-alert ng-cloak>
 <div id="wrapper">
 	<div class="header">
 		<!-- INCLUDE "../partials/navigation/main_menu.tpl" -->

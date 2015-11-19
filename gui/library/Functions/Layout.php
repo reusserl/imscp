@@ -315,8 +315,11 @@ function layout_init($event)
 	// Get user Identity
 	$identity = iMSCP_Authentication::getInstance()->getIdentity();
 
-	// Get user locale
+	// Get user locale and language
 	$locale = iMSCP_Registry::get('ServiceManager')->get('Translator')->getLocale();
+	$localeParts = explode('_', $locale);
+	$lang = $localeParts[0];
+	unset($localeParts);
 
 	/** @var $tpl iMSCP_pTemplate */
 	$tpl = $event->getParam('templateEngine');
@@ -329,7 +332,8 @@ function layout_init($event)
 			'userId' => $identity->admin_id,
 			'userRole' => $identity->admin_type
 		)),
-		'LOCALE' => json_encode($locale),
+		'LANG' => $lang,
+		'LOCALE' => $locale,
 	));
 	$tpl->parse('LAYOUT', 'layout');
 }
