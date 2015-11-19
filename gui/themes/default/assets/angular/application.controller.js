@@ -17,15 +17,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-(function () {
+(function (iMSCP) {
 	'use strict';
 
 	angular.module('imscp').controller('ApplicationController', ApplicationController);
 
-	ApplicationController.$inject = ['$scope', 'USER_ROLES', 'Authentication'];
+	ApplicationController.$inject = ['$scope', 'USER_ROLES', 'Authentication', 'gettextCatalog'];
 
-	function ApplicationController($scope, USER_ROLES, Authentication) {
+	function ApplicationController($scope, USER_ROLES, Authentication, gettextCatalog) {
 		$scope.userRoles = USER_ROLES;
 		$scope.isAuthorized = Authentication.isAuthorized;
+		gettextCatalog.setCurrentLanguage(iMSCP.locale || 'en_GB');
 	}
-})();
+})(iMSCP = iMSCP || {});
