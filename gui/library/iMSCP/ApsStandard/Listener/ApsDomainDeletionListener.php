@@ -32,12 +32,12 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 /**
  * Class DomainDeletionListener
  *
+ * Transitional listener (will be removed when all domains will be stored in the same table)
+ *
  * @package iMSCP\ApsStandard
  */
 class ApsDomainDeletionListener implements ListenerAggregateInterface, ServiceLocatorAwareInterface
 {
-	const APS_INSTANCE_ENTITY_CLASS = 'iMSCP\\ApsStandard\\Entity\\ApsInstance';
-
 	/**
 	 * @var ServiceLocatorInterface
 	 */
@@ -100,16 +100,22 @@ class ApsDomainDeletionListener implements ListenerAggregateInterface, ServiceLo
 	{
 		/** @var EntityManager $em */
 		$em = $this->getServiceLocator()->get('EntityManager');
-		$q = $em->createQuery(
-			'delete from ' . self::APS_INSTANCE_ENTITY_CLASS . ' i where i.domainId = ?0 and i.domainType = ?1'
-		);
+		$qb1 = $em->createQueryBuilder();
+		$qb2 = $em->createQueryBuilder();
+		$qb2->delete('Aps:ApsInstance', 'i')->where($qb2->expr()->in(
+			'i.id',
+			$qb1->select('IDENTITY(s.instance)')
+				->from('Aps:ApsInstanceSetting', 's')
+				->where($qb1->expr()->eq('s.name', $qb1->expr()->literal('__base_url_host__')))
+				->andWhere($qb1->expr()->eq('s.value', '?0'))->getDQL()
+		));
 
 		switch ($event->getName()) {
 			case Events::onBeforeDeleteDomainAlias:
-				$q->execute(array($event->getParam('domainAliasId'), 'als'));
+				$qb2->getQuery()->execute(array($event->getParam('domainAliasName')));
 				break;
 			case Events::onBeforeDeleteSubdomain:
-				$q->execute(array($event->getParam('domainAliasId'), $event->getParam('type')));
+				$qb2->getQuery()->execute(array($event->getParam('subdomainName')));
 		}
 	}
 }
