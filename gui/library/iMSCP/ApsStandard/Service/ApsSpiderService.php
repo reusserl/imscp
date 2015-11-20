@@ -258,7 +258,13 @@ class ApsSpiderService extends ApsAbstractService
 				if (file_exists($metaFilePath) && filesize($metaFilePath) != 0) { // Retrieves needed data
 					$meta = new ApsDocument($metadataDir . '/' . $name . '/APP-META.xml');
 
-					if ($meta->getXPathValue('//aspnet:*', null, false)->length == 0) { // Ignore aspnet packages
+					if (
+						// Ignore aspnet packages
+						$meta->getXPathValue('//aspnet:*', null, false)->length == 0 &&
+
+						// Ignore packages which require global settings (not supported ATM)
+						$meta->getXPathValue('root:global-settings', null, false)->length == 0
+					) {
 						$summary = $meta->getXPathValue('//root:summary/text()');
 						$category = $meta->getXPathValue('//root:category/text()');
 
