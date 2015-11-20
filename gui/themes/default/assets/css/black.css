@@ -150,6 +150,10 @@ body.blackLayout {
 .blackLayout input[type="email"],
 .blackLayout input[type="password"],
 .blackLayout input[type="search"],
+.blackLayout input[type="date"],
+.blackLayout input[type="time"],
+.blackLayout input[type="datetime"],
+.blackLayout input[type="number"],
 .blackLayout select,
 .blackLayout textarea {
     background: #ffffff;
@@ -160,6 +164,10 @@ body.blackLayout {
 .blackLayout input[type="email"]:focus,
 .blackLayout input[type="password"]:focus,
 .blackLayout input[type="search"]:focus,
+.blackLayout input[type="date"]:focus,
+.blackLayout input[type="time"]:focus,
+.blackLayout input[type="datetime"]:focus,
+.blackLayout input[type="number"]:focus,
 .blackLayout textarea:focus,
 .blackLayout select:focus {
     border: 1px solid #000000;
@@ -173,10 +181,15 @@ body.blackLayout {
 .blackLayout input[type="text"]:disabled,
 .blackLayout input[type="email"]:disabled,
 .blackLayout input[type="password"]:disabled,
+.blackLayout input[type="search"]:disabled,
+.blackLayout input[type="date"]:disabled,
+.blackLayout input[type="time"]:disabled,
+.blackLayout input[type="datetime"]:disabled,
+.blackLayout input[type="number"]:disabled,
 .blackLayout select:disabled,
 .blackLayout textarea[readonly],
 .blackLayout textarea:disabled,
-.blackLayout.disabled {
+.blackLayout .disabled {
     background: #cccccc url('../images/background/stripe_0582bcfb31aaf8571dba1adb85ffc318.png') repeat;
     color: #666666;
 }
@@ -186,6 +199,11 @@ body.blackLayout {
 .blackLayout input[type="text"]:disabled:focus,
 .blackLayout input[type="email"]:disabled:focus,
 .blackLayout input[type="password"]:disabled:focus,
+.blackLayout input[type="search"]:disabled:focus,
+.blackLayout input[type="date"]:disabled:focus,
+.blackLayout input[type="time"]:disabled:focus,
+.blackLayout input[type="datetime"]:disabled:focus,
+.blackLayout input[type="number"]:disabled:focus,
 .blackLayout select:disabled:focus,
 .blackLayout textarea[readonly]:focus,
 .blackLayout textarea:disabled:focus,

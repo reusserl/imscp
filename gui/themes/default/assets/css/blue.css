@@ -148,6 +148,10 @@ body.blueLayout  {
 .blueLayout input[type="email"],
 .blueLayout input[type="password"],
 .blueLayout input[type="search"],
+.blueLayout input[type="date"],
+.blueLayout input[type="time"],
+.blueLayout input[type="datetime"],
+.blueLayout input[type="number"],
 .blueLayout select,
 .blueLayout textarea {
     background: #ffffff;
@@ -155,9 +159,13 @@ body.blueLayout  {
 }
 
 .blueLayout input[type="text"]:focus,
-.blueLayout input[type="password"]:focus,
 .blueLayout input[type="email"]:focus,
+.blueLayout input[type="password"]:focus,
 .blueLayout input[type="search"]:focus,
+.blueLayout input[type="date"]:focus,
+.blueLayout input[type="time"]:focus,
+.blueLayout input[type="datetime"]:focus,
+.blueLayout input[type="number"]:focus,
 .blueLayout textarea:focus,
 .blueLayout select:focus {
     border: 1px solid #1e288a;
@@ -171,10 +179,15 @@ body.blueLayout  {
 .blueLayout input[type="text"]:disabled,
 .blueLayout input[type="email"]:disabled,
 .blueLayout input[type="password"]:disabled,
+.blueLayout input[type="search"]:disabled,
+.blueLayout input[type="date"]:disabled,
+.blueLayout input[type="time"]:disabled,
+.blueLayout input[type="datetime"]:disabled,
+.blueLayout input[type="number"]:disabled,
 .blueLayout select:disabled,
 .blueLayout textarea[readonly],
 .blueLayout textarea:disabled,
-.disabled {
+.blueLayout .disabled {
     background: #cccccc url('../images/background/stripe_0582bcfb31aaf8571dba1adb85ffc318.png') repeat;
     color: #666666;
 }
@@ -184,6 +197,11 @@ body.blueLayout  {
 .blueLayout input[type="text"]:disabled:focus,
 .blueLayout input[type="email"]:disabled:focus,
 .blueLayout input[type="password"]:disabled:focus,
+.blueLayout input[type="search"]:disabled:focus,
+.blueLayout input[type="date"]:disabled:focus,
+.blueLayout input[type="time"]:disabled:focus,
+.blueLayout input[type="datetime"]:disabled:focus,
+.blueLayout input[type="number"]:disabled:focus,
 .blueLayout select:disabled:focus,
 .blueLayout textarea[readonly]:focus,
 .blueLayout textarea:disabled:focus,
