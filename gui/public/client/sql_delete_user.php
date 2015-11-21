@@ -29,7 +29,6 @@
  * Main script
  */
 
-// Include core library
 require_once 'imscp-lib.php';
 
 iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
@@ -42,9 +41,7 @@ if (customerHasFeature('sql') && isset($_GET['id'])) {
 	if (sql_delete_user(get_user_domain_id($_SESSION['user_id']), $sqlUserId)) {
 		set_page_message(tr('Sql user successfully deleted.'), 'success');
 		write_log(sprintf("{$_SESSION['user_logged']} deleted SQL user with ID %d", $sqlUserId), E_USER_NOTICE);
-
-		redirectTo('sql_manage.php');
 	}
-}
 
-showBadRequestErrorPage();
+	redirectTo('sql_manage.php');
+}

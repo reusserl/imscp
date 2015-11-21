@@ -337,11 +337,11 @@ sub process
 	);
 
 	# Process toadd|tochange|todelete APS instance tasks
-	$self->process(
+	$self->_process(
 		'ApsInstance',
 		"
 			SELECT
-				id, name, status
+				i.id, p.name, i.status
 			FROM
 				aps_instance AS i
 			INNER JOIN

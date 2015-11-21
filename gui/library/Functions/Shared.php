@@ -537,17 +537,13 @@ function change_domain_status($customerId, $action)
  * Deletes an SQL user
  *
  * @throws iMSCP_Exception_Database
- * @param  int $domainId Domain unique identifier
- * @param  int $sqlUserId Sql user unique identifier
+ * @param int $domainId Domain unique identifier
+ * @param int $sqlUserId Sql user unique identifier
  * @param bool $flushPrivileges Whether or not privilege must be flushed
- * @return bool TRUE if $sqlUserId has been found and successfully removed, FALSE otherwise
+ * @return bool TRUE on success, false otherwise
  */
 function sql_delete_user($domainId, $sqlUserId, $flushPrivileges = true)
 {
-	iMSCP_Events_Aggregator::getInstance()->dispatch(
-		iMSCP_Events::onBeforeDeleteSqlUser, array('sqlUserId' => $sqlUserId)
-	);
-
 	$db = iMSCP_Database::getInstance();
 
 	try {
@@ -570,6 +566,7 @@ function sql_delete_user($domainId, $sqlUserId, $flushPrivileges = true)
 		);
 
 		if (!$stmt->rowCount()) {
+			set_page_message(tr('SQL user not found.'), 'error');
 			return false;
 		}
 
@@ -579,10 +576,21 @@ function sql_delete_user($domainId, $sqlUserId, $flushPrivileges = true)
 		$sqlUserHost = $row['sqlu_host'];
 		$sqlDbName = $row['sqld_name'];
 
-		$stmt = exec_query(
-			'SELECT COUNT(sqlu_id) AS cnt FROM sql_user WHERE sqlu_name = ? AND sqlu_host = ?',
-			array($sqlUserName, $sqlUserHost)
-		);
+		$results = iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeDeleteSqlUser, array(
+			'sqlUserId' => $sqlUserId,
+			'sqlUserName' => $sqlDbName
+		));
+
+		$return = $results->last();
+
+		if(!$return) {
+			$db->rollBack();
+			return false;
+		}
+
+		$stmt = exec_query('SELECT COUNT(sqlu_id) AS cnt FROM sql_user WHERE sqlu_name = ? AND sqlu_host = ?', array(
+			$sqlUserName, $sqlUserHost
+		));
 
 		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
 
@@ -592,10 +600,9 @@ function sql_delete_user($domainId, $sqlUserId, $flushPrivileges = true)
 			exec_query('DELETE FROM mysql.db WHERE Host = ? AND User = ?', array($sqlUserHost, $sqlUserName));
 		} else {
 			// SQL user is assigned to many databases. We remove its privileges for the involved database only
-			exec_query(
-				'DELETE FROM mysql.db WHERE Host = ? AND Db = ? AND User = ?',
-				array($sqlUserHost, $sqlDbName, $sqlUserName)
-			);
+			exec_query('DELETE FROM mysql.db WHERE Host = ? AND Db = ? AND User = ?', array(
+				$sqlUserHost, $sqlDbName, $sqlUserName
+			));
 		}
 
 		// Delete SQL user from i-MSCP database
@@ -608,9 +615,10 @@ function sql_delete_user($domainId, $sqlUserId, $flushPrivileges = true)
 			execute_query('FLUSH PRIVILEGES');
 		}
 
-		iMSCP_Events_Aggregator::getInstance()->dispatch(
-			iMSCP_Events::onAfterDeleteSqlUser, array('sqlUserId' => $sqlUserId)
-		);
+		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterDeleteSqlUser, array(
+			'sqlUserId' => $sqlUserId,
+			'sqlUserName' => $sqlDbName
+		));
 	} catch(iMSCP_Exception_Database $e) {
 		$db->rollBack();
 		throw $e;
@@ -625,41 +633,40 @@ function sql_delete_user($domainId, $sqlUserId, $flushPrivileges = true)
  * @throws iMSCP_Exception in case an SQL user which belong to the given database cannot be removed
  * @param  int $domainId Domain unique identifier
  * @param  int $databaseId Databse unique identifier
- * @return bool TRUE when $databaseId has been found and successfully deleted, FALSE otherwise
+ * @return bool TRUE on success, false otherwise
  */
 function delete_sql_database($domainId, $databaseId)
 {
 	$db = iMSCP_Database::getInstance();
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeDeleteSqlDb, array('sqlDbId' => $databaseId));
-
 	try {
 		$db->beginTransaction();
 
 		// Get name of database
-		$stmt = exec_query(
-			'SELECT sqld_name FROM sql_database WHERE domain_id = ? AND sqld_id = ?', array($domainId, $databaseId)
-		);
+		$stmt = exec_query('SELECT sqld_name FROM sql_database WHERE domain_id = ? AND sqld_id = ?', array(
+			$domainId, $databaseId
+		));
 
 		if ($stmt->rowCount()) {
 			$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+
+			$results = iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeDeleteSqlDb, array(
+				'sqlDbId' => $databaseId,
+				'sqlDbName' => $row['sqld_name']
+			));
+
+			$return = $results->last();
+
+			if (!$return) {
+				$db->rollBack();
+				return false;
+			}
+
 			$databaseName = quoteIdentifier($row['sqld_name']);
 
 			// Get list of SQL users assigned to the database being removed
-
 			$stmt = exec_query(
-				'
-					SELECT
-						sqlu_id
-					FROM
-						sql_user
-					INNER JOIN
-						sql_database USING(sqld_id)
-					WHERE
-						sqld_id = ?
-					AND
-						domain_id = ?
-				',
+				'SELECT sqlu_id FROM sql_user INNER JOIN sql_database USING(sqld_id) WHERE sqld_id = ? AND domain_id = ?',
 				array($databaseId, $domainId)
 			);
 
@@ -672,16 +679,20 @@ function delete_sql_database($domainId, $databaseId)
 			}
 
 			exec_query('DELETE FROM sql_database WHERE domain_id = ? AND sqld_id = ?', array($domainId, $databaseId));
+			$db->commit();
 
 			// Must be done last due to the implicit commit
 			execute_query("DROP DATABASE IF EXISTS $databaseName");
 			execute_query('FLUSH PRIVILEGES');
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(
-				iMSCP_Events::onAfterDeleteSqlDb, array('sqlDbId' => $databaseId)
-			);
+			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterDeleteSqlDb, array(
+				'sqlDbId' => $databaseId,
+				'sqlDbName' => $row['sqld_name']
+			));
 
 			return true;
+		} else {
+			set_page_message(tr('SQL database not found'), 'error');
 		}
 	} catch(iMSCP_Exception_Database $e) {
 		$db->rollBack();
@@ -704,10 +715,6 @@ function deleteCustomer($customerId, $checkCreatedBy = false)
 	$customerId = (int)$customerId;
 
 	$cfg = iMSCP_Registry::get('config');
-
-	iMSCP_Events_Aggregator::getInstance()->dispatch(
-		iMSCP_Events::onBeforeDeleteCustomer, array('customerId' => $customerId)
-	);
 
 	// Get username, uid and gid of domain user
 	$query = '
@@ -740,6 +747,15 @@ function deleteCustomer($customerId, $checkCreatedBy = false)
 	$db = iMSCP_Database::getInstance();
 
 	try {
+		$results = iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeDeleteCustomer, array(
+			'customerId' => $customerId,
+			'customerName' => $customerName,
+		));
+
+		if(!$results->last()) {
+			return false;
+		}
+
 		// First, remove customer sessions to prevent any problems
 		exec_query('DELETE FROM login WHERE user_name = ?', $customerName);
 
@@ -894,9 +910,10 @@ function deleteCustomer($customerId, $checkCreatedBy = false)
 		// Commit all changes to database server
 		$db->commit();
 
-		iMSCP_Events_Aggregator::getInstance()->dispatch(
-			iMSCP_Events::onAfterDeleteCustomer, array('customerId' => $customerId)
-		);
+		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterDeleteCustomer, array(
+			'customerId' => $customerId,
+			'customerName' => $customerName,
+		));
 	} catch (iMSCP_Exception $e) {
 		$db->rollBack();
 		throw new iMSCP_Exception($e->getMessage(), $e->getCode(), $e);

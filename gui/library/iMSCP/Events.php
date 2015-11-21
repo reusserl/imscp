@@ -326,6 +326,7 @@ class iMSCP_Events
 	 * The listeners receive an iMSCP_Events_Event object with the following parameter:
 	 *
 	 * - customerId: (int) Customer identifier
+	 * - customerName: (string) Customer name
 	 *
 	 * @const string
 	 */
@@ -337,6 +338,7 @@ class iMSCP_Events
 	 * The listeners receive an iMSCP_Events_Event object with the following parameter:
 	 *
 	 * - customerId: (int) Customer identifier
+	 * - customerName: (string) Customer name
 	 *
 	 * @const string
 	 */
@@ -466,6 +468,7 @@ class iMSCP_Events
 	 * The listeners receive an iMSCP_Events_Event object with the following parameter:
 	 *
 	 * - sqlUserId: (int) SQL user identifier
+	 * - sqlUserNale (string) SQL user name
 	 *
 	 * @const string
 	 */
@@ -477,6 +480,7 @@ class iMSCP_Events
 	 * The listeners receive an iMSCP_Events_Event object with the following parameter:
 	 *
 	 * - sqlUserId: (int) SQL user identifier
+	 * - sqlUserNale (string) SQL user name
 	 *
 	 * @const string
 	 */
@@ -510,6 +514,7 @@ class iMSCP_Events
 	 * The listeners receive an iMSCP_Events_Event object with the following parameter:
 	 *
 	 * - sqlDbId: (int) SQL database identifier
+	 * - sqlDbName: (string) SQL database name
 	 *
 	 * @const string
 	 */
@@ -521,6 +526,7 @@ class iMSCP_Events
 	 * The listeners receive an iMSCP_Events_Event object with the following parameter:
 	 *
 	 * - sqlDbId: (int) SQL database identifier
+	 * - sqlDbName: (string) SQL database name
 	 *
 	 * @const string
 	 */
