@@ -545,12 +545,10 @@ class iMSCP_Update_Database extends iMSCP_Update
 	{
 		$sqlUpd = array();
 
-		$config = Registry::get('config');
-		$imscpDbKeys = new ConfigFileHandler($config['CONF_DIR'] . '/imscp-db-keys');
-
-		if (!isset($imscpDbKeys['KEY']) || !isset($imscpDbKeys['IV'])) {
-			throw new \RuntimeException('imscp-db-keys file is corrupted.');
-		}
+		/** @var \iMSCP\Service\EncryptionDataService $encryptionDataService */
+		$encryptionDataService = iMSCP_Registry::get('ServiceLocator')->get('EncryptionDataService');
+		$encryptionKey = $encryptionDataService->getKey();
+		$encryptionIV = $encryptionDataService->getIv();
 
 		$stmt = execute_query(
 			"
@@ -565,9 +563,7 @@ class iMSCP_Update_Database extends iMSCP_Update
 
 		if ($stmt->rowCount()) {
 			while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
-				$password = quoteValue(\iMSCP\Crypt::decryptRijndaelCBC(
-					$imscpDbKeys['KEY'], $imscpDbKeys['IV'], $row['mail_pass'])
-				);
+				$password = quoteValue(\iMSCP\Crypt::decryptRijndaelCBC($encryptionKey, $encryptionIV, $row['mail_pass']));
 				$status = quoteValue('tochange');
 				$mailId = quoteValue($row['mail_id'], PDO::PARAM_INT);
 				$sqlUpd[] = "UPDATE mail_users SET mail_pass = $password, status = $status WHERE mail_id = $mailId";
@@ -575,24 +571,20 @@ class iMSCP_Update_Database extends iMSCP_Update
 		}
 
 		// Decrypt all SQL users passwords
-
 		$stmt = exec_query('SELECT sqlu_id, sqlu_pass FROM sql_user');
-
 		if ($stmt->rowCount()) {
 			while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
-				$password = quoteValue(\iMSCP\Crypt::decryptRijndaelCBC($key, $iv, $row['sqlu_pass']));
+				$password = quoteValue(\iMSCP\Crypt::decryptRijndaelCBC($encryptionKey, $encryptionIV, $row['sqlu_pass']));
 				$id = quoteValue($row['sqlu_id'], PDO::PARAM_INT);
 				$sqlUpd[] = "UPDATE sql_user SET sqlu_pass = $password WHERE sqlu_id = $id";
 			}
 		}
 
 		// Decrypt all FTP users passwords
-
 		$stmt = exec_query('SELECT userid, passwd FROM ftp_users');
-
 		if ($stmt->rowCount()) {
 			while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
-				$password = quoteValue(\iMSCP\Crypt::decryptRijndaelCBC($key, $iv, $row['passwd']));
+				$password = quoteValue(\iMSCP\Crypt::decryptRijndaelCBC($encryptionKey, $encryptionIV, $row['passwd']));
 				$userId = quoteValue($row['userid']);
 				$sqlUpd[] = "UPDATE ftp_users SET rawpasswd = $password WHERE userid = $userId";
 			}

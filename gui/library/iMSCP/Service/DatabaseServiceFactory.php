@@ -39,16 +39,15 @@ class DatabaseServiceFactory implements FactoryInterface
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
 		try {
+			/** @var EncryptionDataService $encryptionDataService */
+			$encryptionDataService = $serviceLocator->get('EncryptionDataService');
 			$config = Registry::get('config');
-			$imscpDbKeys = new ConfigFileHandler($config['CONF_DIR'] . '/imscp-db-keys');
-
-			if (!isset($imscpDbKeys['KEY']) || !isset($imscpDbKeys['IV'])) {
-				throw new \RuntimeException('imscp-db-keys file is corrupted.');
-			}
-
 			$db = Database::connect(
 				$config['DATABASE_USER'],
-				Crypt::decryptRijndaelCBC($imscpDbKeys['KEY'], $imscpDbKeys['IV'], $config['DATABASE_PASSWORD']),
+				Crypt::decryptRijndaelCBC(
+					$encryptionDataService->getKey(), $encryptionDataService->getIV(),
+					$config['DATABASE_PASSWORD']
+				),
 				$config['DATABASE_TYPE'],
 				$config['DATABASE_HOST'],
 				$config['DATABASE_PORT'],
