@@ -31,7 +31,12 @@ use JMS\Serializer\Serializer;
  */
 class ApsInstanceSettingService extends ApsAbstractService
 {
-	const INSTANCE_SETTING_ENTITY_CLASS = 'iMSCP\\ApsStandard\\Entity\\ApsInstanceSetting';
+	const APS_INSTANCE_SETTING_ENTITY_CLASS = 'iMSCP\\ApsStandard\\Entity\\ApsInstanceSetting';
+
+	/**
+	 * @var array Domain list
+	 */
+	protected $domainList;
 
 	/**
 	 * Get settings definition for the given package
@@ -45,7 +50,7 @@ class ApsInstanceSettingService extends ApsAbstractService
 			'package' => $package, 'context' => $this
 		));
 
-		$meta = $this->getMetadataDir() . '/' . $package->getApsVersion() . '/' . $package->getName() . '/APP-META.xml';
+		$meta = $this->getPackageMetadataDir() . '/' . $package->getApsVersion() . '/' . $package->getName() . '/APP-META.xml';
 		if (!file_exists($meta) || filesize($meta) == 0) {
 			throw new \RuntimeException(tr('The %s package META file is missing or invalid.', $meta));
 		}
@@ -57,14 +62,14 @@ class ApsInstanceSettingService extends ApsAbstractService
 		$settings = array(
 			'__base_url_host__' => array(
 				'name' => '__base_url_host__',
-				'value' => strval($choices[0]['value']),
+				'value' => $choices[0]['value'],
 				'metadata' => array(
 					'group' => $groupName,
 					'label' => tr('Target domain'),
 					'tooltip' => tr('Domain under which the application must be installed.'),
 					'choices' => $choices,
-					'aps_type' => 'enum',
-					'type' => 'enum'
+					'type' => 'enum',
+					'required' => true
 				)
 			),
 			'__base_url_path__' => array(
@@ -74,14 +79,13 @@ class ApsInstanceSettingService extends ApsAbstractService
 					'group' => $groupName,
 					'label' => tr('Target folder'),
 					'tooltip' => tr('An optional subfolder in which the application must be installed.'),
-					'aps_type' => 'string',
-					'type' => 'text',
-					'regexp' => '^[\x21-\x7e\\/]+$',
-					'max_length' => 255
+					'type' => 'string',
+					'regexp' => '^\\/[\x21-\x7e\\/]*$',
+					'maxlength' => 255,
+					'required' => true
 				)
 			)
 		);
-		unset($choices);
 
 		// Database settings (if required)
 		if ($doc->getXPathValue('//db:id')) {
@@ -93,11 +97,30 @@ class ApsInstanceSettingService extends ApsAbstractService
 					'group' => $groupName,
 					'label' => tr('Database name'),
 					'tooltip' => tr('The database must exist.'),
-					'aps_type' => 'database-name',
-					'type' => 'text',
-					'min_length' => 1
+					'type' => 'string',
+					'minlength' => 1,
+					'required' => true
 				)
 			);
+
+			if ($doc->getXPathValue('//db:can-use-tables-prefix/text()') == 'true') {
+				$groupName = tr('Database');
+				$settings['__db_table_prefix__'] = array(
+					'name' => '__db_table_prefix__',
+					'value' => '',
+					'metadata' => array(
+						'group' => $groupName,
+						'label' => tr('Database table prefix'),
+						'tooltip' => tr('Optional prefix for database tables. Needed for databases which already contain tables for another application.'),
+						'type' => 'string',
+						'minlength' => 1,
+						'maxlength' => 5,
+						'regexp' => '[0-9-a-z_]*',
+						'required' => false
+					)
+				);
+			}
+
 			$settings['__db_user__'] = array(
 				'name' => '__db_user__',
 				'value' => '',
@@ -105,74 +128,105 @@ class ApsInstanceSettingService extends ApsAbstractService
 					'group' => $groupName,
 					'label' => tr('Database user'),
 					'tooltip' => tr('The user must exist and must have privileges on the database.'),
-					'aps_type' => 'string',
-					'type' => 'text',
-					'min_length' => 1
+					'type' => 'string',
+					'minlength' => 1,
+					'required' => true
 				)
 			);
+
 			$settings['__db_pwd__'] = array(
 				'name' => '__db_pwd__',
 				'value' => '',
 				'metadata' => array(
 					'group' => $groupName,
-					'label' => tr("Database password"),
-					'aps_type' => 'password',
+					'label' => tr('Database password'),
 					'type' => 'password',
-					'min_length' => 1
+					'minlength' => 1,
+					'required' => true
 				)
 			);
 		}
 
-		$intLang = str_replace('_', '-', $_SESSION['user_def_lang']);
+		// Get user locale
+		$intLang = str_replace('_', '-', $this->getServiceLocator()->get('translator')->getLocale());
 
-		// Retrieve all setting groups from the package metadata file
+		// Retrieve all setting group
 		foreach ($doc->getXPathValue('//root:settings/root:group', null, false) as $group) {
-			// Group name
-			$groupName = $doc->getXPathValue("root:name[@xml:lang='$intLang']/text()", $group) ?:
+			$settingGroup = $doc->getXPathValue("root:name[@xml:lang='$intLang']/text()", $group) ?:
 				$doc->getXPathValue("root:name/text()", $group) ?: tr('Other settings');
 
 			// Retrieve all settings in current setting group (or subgroup)
+			// Based on APS 1.2. specifications
 			foreach ($doc->getXPathValue('(root:group/root:setting|root:setting)', $group, false) as $item) {
 				$settingName = $doc->getXPathValue('@id', $item);
-				$type = $doc->getXPathValue('@type', $item);
-				$setting = array();
-				$setting['name'] = $settingName;
-				$setting['metadata']['group'] = $groupName;
-				$setting['metadata']['label'] = ucfirst(str_replace(
-					'_', ' ', $doc->getXPathValue("root:name[@xml:lang='$intLang']/text()", $item) ?:
-					$doc->getXPathValue("root:name/text()", $item)
-				));
-				$setting['metadata']['aps_type'] = $type;
+				$settingType = $doc->getXPathValue('@type', $item);
+				$setting = array(
+					'name' => $settingName,
+					'metadata' => array(
+						'group' => $settingGroup,
+						'label' => ucfirst(str_replace('_', ' ',
+							$doc->getXPathValue("root:name[@xml:lang='$intLang']/text()", $item)
+								?: $doc->getXPathValue("root:name/text()", $item)
+						)),
+						'tooltip' => $doc->getXPathValue("root:description[@xml:lang='$intLang']/text()", $item)
+							?: $doc->getXPathValue("root:description/text()", $item),
+						'type' => $settingType,
+						'required' => ($doc->getXPathValue("@optional", $item) !== 'true') ? true : false,
+						'hidden' => ($doc->getXPathValue("@visibility", $item) == 'hidden') ? true : false,
+						'protected' => ($doc->getXPathValue("@protected", $item) == 'true') ? true : false
+					)
+				);
 
-				if (in_array($type, array('domain-name', 'email', 'float', 'integer', 'string', 'password'))) {
-					$setting['value'] = strval($doc->getXPathValue('@default-value', $item));
-					$setting['metadata']['type'] = 'text';
-					$setting['metadata']['regexp'] = $doc->getXPathValue('@regex', $item);
-					$setting['metadata']['min_length'] = $doc->getXPathValue('@min-length', $item);
-					$setting['metadata']['max_length'] = $doc->getXPathValue('@max-length', $item);
-				} elseif ('type' == 'email') {
-					$setting['type'] = 'email';
-				} elseif ($type == 'password') {
-					$setting['metadata']['type'] = 'password';
-					$setting['metadata']['regexp'] = $doc->getXPathValue('@regex', $item);
-					$setting['metadata']['min_length'] = $doc->getXPathValue('@min-length', $item);
-					$setting['metadata']['max_length'] = $doc->getXPathValue('@max-length', $item);
-				} elseif ($type == 'enum') {
-					$choices = array();
-					foreach ($doc->getXPathValue('root:choice', $item, false) as $choice) {
-						$choices[] = array(
-							'name' => $doc->getXPathValue('root:name', $choice),
-							'value' => strval($doc->getXPathValue('@id', $choice))
-						);
-					}
-					$setting['value'] = strval($doc->getXPathValue('@default-value', $item) ?: $choices[0]['value']);
-					$setting['metadata']['type'] = 'enum';
-					$setting['metadata']['choices'] = $choices;
-				} elseif ($type == 'boolean') {
-					$setting['value'] = strval($doc->getXPathValue('@default-value', $item));
-					$setting['metadata']['type'] = 'boolean';
-				} else {
-					throw new \DomainException(sprintf("Unknown APS '%s' setting type.", $type));
+				switch ($settingType) {
+					case 'boolean':
+						$setting['value'] = (bool)$doc->getXPathValue('@default-value', $item) ?: false;
+						break;
+					case 'string':
+					case 'password':
+						$setting['value'] = $doc->getXPathValue('@default-value', $item);
+						$setting['metadata']['minlength'] = (int)$doc->getXPathValue('@min-length', $item);
+						$setting['metadata']['maxlength'] = (int)$doc->getXPathValue('@max-length', $item);
+						$setting['metadata']['regexp'] = $doc->getXPathValue('@regex', $item);
+						$setting['metadata']['charset'] = $doc->getXPathValue('@charset', $item);
+						break;
+					case 'integer':
+						$setting['value'] = (int)$doc->getXPathValue('@default-value', $item) ?: 0;
+						$setting['metadata']['min'] = $doc->getXPathValue('@min', $item) ?: 0;
+						$setting['metadata']['max'] = $doc->getXPathValue('@max', $item);
+						break;
+					case 'float':
+						$setting['value'] = (float)$doc->getXPathValue('@default-value', $item) ?: 0.0;
+						$setting['metadata']['min'] = $doc->getXPathValue('@min', $item) ?: 0.0;
+						$setting['metadata']['max'] = $doc->getXPathValue('@max', $item);
+						$setting['metadata']['step'] = 0.1;
+						break;
+					case 'date':
+					case 'time':
+						$setting['value'] = $doc->getXPathValue('@default-value', $item);
+						$setting['metadata']['min'] = $doc->getXPathValue('@min', $item) ?: 0;
+						$setting['metadata']['max'] = $doc->getXPathValue('@max', $item);
+						break;
+					case 'email':
+					case 'domain-name':
+					case 'host-name':
+						$setting['value'] = $doc->getXPathValue('@default-value', $item);
+						break;
+					case 'enum':
+						$choices = array();
+						foreach ($doc->getXPathValue('root:choice', $item, false) as $choice) {
+							$choices[] = array(
+								'name' => $doc->getXPathValue('root:name', $choice),
+								'value' => $doc->getXPathValue('@id', $choice)
+							);
+						}
+						$setting['value'] = $doc->getXPathValue('@default-value', $item) ?: $choices[0]['value'];
+						$setting['metadata']['choices'] = $choices;
+						break;
+					case 'list':
+						//$settingValue = '';
+						break;
+					default:
+						throw new \DomainException(sprintf("Unknown APS '%s' setting type.", $settingType));
 				}
 
 				$settings[$settingName] = $setting;
@@ -215,18 +269,21 @@ class ApsInstanceSettingService extends ApsAbstractService
 		$settingObjects = array();
 		foreach ($settings as $setting) {
 			/** @var ApsInstanceSetting $settingObject */
-			$settingObject = $serializer->fromArray($setting, self::INSTANCE_SETTING_ENTITY_CLASS);
+			$settingObject = $serializer->fromArray($setting, self::APS_INSTANCE_SETTING_ENTITY_CLASS);
 			$settingName = $settingObject->getName();
 
+			// Ignore unknown settings
 			if (in_array($settingName, $expectedSettings)) {
 				$settingObject->setMetadata($settingsFromMetadataFile[$settingName]['metadata']);
-				$settingObjects[] = $settingObject;
+				$settingObjects[$settingName] = $settingObject;
 			}
 		}
 
 		if (count($settingObjects) < count($expectedSettings)) {
 			throw new \DomainException('Invalid payload: Missing setting(s).', 400);
 		}
+
+		unset($settingObjects['license_agreement']); // We do want store license agreement
 
 		return $settingObjects;
 	}
@@ -240,14 +297,15 @@ class ApsInstanceSettingService extends ApsAbstractService
 	 */
 	protected function getDomainList()
 	{
-		$mainDmnProps = get_domain_default_props($this->getAuth()->getIdentity()->admin_id);
-		$domainsList = array(array(
-			'name' => $mainDmnProps['domain_name'],
-			'value' => $mainDmnProps['domain_id'] . '_' . 'dmn'
-		));
+		if (null === $this->domainList) {
+			$mainDmnProps = get_domain_default_props($this->getAuth()->getIdentity()->admin_id);
+			$domainsList = array(array(
+				'name' => $mainDmnProps['domain_name'],
+				'value' => $mainDmnProps['domain_id']
+			));
 
-		$stmt = $this->entityManager->getConnection()->prepare(
-			"
+			$stmt = $this->entityManager->getConnection()->prepare(
+				"
 				SELECT
 					CONCAT(`t1`.`subdomain_name`, '.', `t2`.`domain_name`) AS `name`,
 					CONCAT(`t1`.`subdomain_id`, '_sub') AS `value`
@@ -283,14 +341,17 @@ class ApsInstanceSettingService extends ApsAbstractService
 					`subdomain_alias_status` = :status
 		");
 
-		$stmt->execute(array('domain_id' => $mainDmnProps['domain_id'], 'status' => 'ok'));
-		if ($stmt->rowCount()) {
-			$domainsList = array_merge($domainsList, $stmt->fetchAll(\PDO::FETCH_ASSOC));
-			usort($domainsList, function ($a, $b) {
-				return strnatcmp(decode_idna($a['name']), decode_idna($b['name']));
-			});
+			$stmt->execute(array('domain_id' => $mainDmnProps['domain_id'], 'status' => 'ok'));
+			if ($stmt->rowCount()) {
+				$domainsList = array_merge($domainsList, $stmt->fetchAll(\PDO::FETCH_ASSOC));
+				usort($domainsList, function ($a, $b) {
+					return strnatcmp(decode_idna($a['name']), decode_idna($b['name']));
+				});
+			}
+
+			$this->domainList = $domainsList;
 		}
 
-		return $domainsList;
+		return $this->domainList;
 	}
 }
