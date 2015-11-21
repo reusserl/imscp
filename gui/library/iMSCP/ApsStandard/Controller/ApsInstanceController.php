@@ -24,7 +24,6 @@ use iMSCP\ApsStandard\Service\ApsInstanceService;
 use iMSCP\ApsStandard\Service\ApsInstanceSettingService;
 use iMSCP\ApsStandard\Service\ApsPackageService;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Validator\ConstraintViolation;
 
 /**
  * Class ApsInstanceController
@@ -32,8 +31,6 @@ use Symfony\Component\Validator\ConstraintViolation;
  */
 class ApsInstanceController extends ApsAbstractController
 {
-	const INSTANCE_ENTITY_CLASS = 'iMSCP\\ApsStandard\\Entity\\ApsInstance';
-
 	/**
 	 * {@inheritdoc}
 	 */
@@ -73,7 +70,7 @@ class ApsInstanceController extends ApsAbstractController
 	}
 
 	/**
-	 * List all application instances
+	 * List application instances
 	 *
 	 * @return void
 	 */
@@ -99,6 +96,7 @@ class ApsInstanceController extends ApsAbstractController
 	/**
 	 * Create a new application instance
 	 *
+	 * @throws \Exception
 	 * @return void
 	 */
 	protected function createAction()
@@ -110,21 +108,16 @@ class ApsInstanceController extends ApsAbstractController
 
 		$package = $this->getPackageService()->getPackage($payload['package_id']);
 		$settings = $this->getInstanceSettingService()->getSettingObjectsFromArray($package, $payload['settings']);
-		$errors = $this->getInstanceService()->createInstance($package, $settings);
+		$violations = $this->getInstanceService()->createInstance($package, $settings);
 
-		if (!count($errors)) {
+		if (!count($violations)) {
 			$this->getResponse()->setStatusCode(201);
 			return;
 		}
 
 		$errMessages = array();
-
-		foreach ($errors as $error) {
-			if ($error instanceof ConstraintViolation) {
-				$errMessages[] = $error->getMessage();
-			} else {
-				$errMessages[] = (string)$error;
-			}
+		foreach ($violations as $violation) {
+			$errMessages[] = $violation->getMessage();
 		}
 
 		$this->getResponse()
@@ -157,7 +150,7 @@ class ApsInstanceController extends ApsAbstractController
 	}
 
 	/**
-	 * Get package service
+	 * Get instance service
 	 *
 	 * @return ApsInstanceService
 	 */
@@ -167,7 +160,7 @@ class ApsInstanceController extends ApsAbstractController
 	}
 
 	/**
-	 * Get setting form service
+	 * Get package service
 	 *
 	 * @return ApsPackageService
 	 */
@@ -177,7 +170,7 @@ class ApsInstanceController extends ApsAbstractController
 	}
 
 	/**
-	 * Get setting form service
+	 * Get instance setting service
 	 *
 	 * @return ApsInstanceSettingService
 	 */
