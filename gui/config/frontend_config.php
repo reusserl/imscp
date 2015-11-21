@@ -20,9 +20,11 @@
 
 // Service manager configuration file
 return array(
+	// Service manager (service locator) configuration
 	'service_manager' => array(
 		'invokables' => array(
-			'ApsDomainDeletionListener' => 'iMSCP\\ApsStandard\\Listener\\ApsDomainDeletionListener'
+			'ApsDependentObjectsDeletionListener' => 'iMSCP\\ApsStandard\\Listener\\ApsDependentObjectsDeletionListener',
+			'EncryptionDataService' => 'iMSCP\\Service\\EncryptionDataService'
 		),
 
 		'factories' => array(
@@ -50,7 +52,8 @@ return array(
 		)
 	),
 
+	// Listener aggregates
 	'listeners' => array(
-		'ApsDomainDeletionListener'
+		'ApsDependentObjectsDeletionListener'
 	)
 );
