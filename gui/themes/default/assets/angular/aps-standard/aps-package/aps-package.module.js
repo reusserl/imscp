@@ -21,7 +21,7 @@
 	'use strict';
 
 	angular.module('imscp.aps-standard.aps-package', [
-		'imscp.dialog',
+		'imscp.modal',
 
 		// Vendor modules
 		'gettext',

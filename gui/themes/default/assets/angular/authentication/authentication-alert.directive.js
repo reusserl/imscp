@@ -22,14 +22,14 @@
 
 	angular.module('imscp.authentication').directive('authenticationAlert', authenticationAlert);
 
-	authenticationAlert.$inject = ['AUTH_EVENTS', 'DialogService', '$window', 'gettextCatalog'];
+	authenticationAlert.$inject = ['AUTH_EVENTS', 'ModalService', '$window', 'gettextCatalog'];
 
-	function authenticationAlert(AUTH_EVENTS, DialogService, $window, gettextCatalog) {
+	function authenticationAlert(AUTH_EVENTS, ModalService, $window, gettextCatalog) {
 		return {
 			restrict: 'A',
 			link: function (scope) {
 				var showAlertModal = function () {
-					DialogService.open('authenticationAlertModal', '/assets/angular/authentication/authentication-alert-modal.html', {}, {
+					ModalService.open('authenticationAlertModal', '/assets/angular/authentication/authentication-alert-modal.html', {}, {
 						title: sprintf(gettextCatalog.getString('Authentication alert')),
 						modal: true,
 						position: {'my': 'center', at: 'center'},

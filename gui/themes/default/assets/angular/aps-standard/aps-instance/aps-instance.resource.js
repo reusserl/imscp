@@ -27,7 +27,7 @@
 	function ApsInstanceResource($resource) {
 		return $resource('aps_instances.php', {id: '@id'}, {
 			update: {method: 'PUT'},
-			"new": {method: 'GET', params: {action: 'new'}, isArray: false}
+			new: {method: 'GET', params: {action: 'new'}, isArray: false}
 		});
 	}
 })();

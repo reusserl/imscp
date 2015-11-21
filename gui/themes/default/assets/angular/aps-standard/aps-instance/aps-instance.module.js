@@ -21,8 +21,13 @@
 	'use strict';
 
 	angular.module('imscp.aps-standard.aps-instance', [
+		'imscp.json-form',
+		'imscp.modal',
+
+		// Vendor modules
+		'angular.filter',
+		'gettext',
 		'ngResource',
-		'ngTable',
-		'angular.filter'
+		'ngTable'
 	]);
 })();

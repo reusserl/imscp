@@ -17,11 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-(function () {
+(function (iMSCP) {
 	'use strict';
 
 	angular.module('imscp.authentication').value('AuthenticationData', {
 		userId: iMSCP.userIdentity.userId || null,
 		userRole: iMSCP.userIdentity.userRole || 'guest'
 	});
-})();
+})(iMSCP = iMSCP || {});

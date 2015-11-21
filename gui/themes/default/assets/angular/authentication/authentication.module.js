@@ -21,7 +21,7 @@
 	'use strict';
 
 	angular.module('imscp.authentication', [
-		'imscp.dialog',
+		'imscp.modal',
 
 		// Vendor modules
 		'gettext'

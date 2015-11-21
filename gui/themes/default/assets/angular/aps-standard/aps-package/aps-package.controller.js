@@ -22,9 +22,9 @@
 
 	angular.module('imscp.aps-standard.aps-package').controller('ApsPackageController', ApsPackageController);
 
-	ApsPackageController.$inject = ['ApsPackageResource', 'NgTableParams', 'DialogService', 'Authentication', 'USER_ROLES', 'gettextCatalog', 'notification', '$window'];
+	ApsPackageController.$inject = ['ApsPackageResource', 'NgTableParams', 'ModalService', 'Authentication', 'USER_ROLES', 'gettextCatalog', 'notification', '$window'];
 
-	function ApsPackageController(ApsPackageResource, NgTableParams, DialogService, Authentication, USER_ROLES, gettextCatalog, notification, $window) {
+	function ApsPackageController(ApsPackageResource, NgTableParams, ModalService, Authentication, USER_ROLES, gettextCatalog, notification, $window) {
 		var vm = this;
 
 		vm.packageTable = function () {
@@ -52,7 +52,6 @@
 
 						}, {
 							filterOptions: {filterDelay: 1000},
-							filterDelayThreshold: 1,
 							getData: function (params) {
 								return ApsPackageResource.query(params.url()).$promise.then(function (data) {
 									params.total(data.resourceCount);
@@ -65,9 +64,9 @@
 							counts: [5, 10, 25]
 						});
 				} else if (Authentication.isAuthorized(USER_ROLES.admin)) {
-					notification.notify(gettextCatalog.getString('No package available. You must update the package index.'), 'static_info', {timeout: -1});
+					notification.notify(gettextCatalog.getString('No package available. You must update the package index.'), 'static_warning', {timeout: -1});
 				} else {
-					notification.notify(gettextCatalog.getString('No package available. Please contact your reseller.'), 'static_info', {timeout: -1});
+					notification.notify(gettextCatalog.getString('No package available. Please contact your reseller.'), 'static_warning', {timeout: -1});
 				}
 
 				return categories;
@@ -78,7 +77,7 @@
 			ApsPackageResource.get({}, {id: pkg.id}).$promise.then(function (data) {
 				data = angular.merge(data, pkg);
 
-				DialogService.open('PackageDetails', '/assets/angular/aps-standard/aps-package/aps-package-details-modal.tpl', data, {
+				ModalService.open('PackageDetails', '/assets/angular/aps-standard/aps-package/aps-package-details-modal.tpl', data, {
 					title: gettextCatalog.getString('Package details'),
 					modal: true,
 					width: $($window).width() / 2,
