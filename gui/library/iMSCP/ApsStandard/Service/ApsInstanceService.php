@@ -25,15 +25,13 @@ use Doctrine\DBAL\DriverManager;
 use iMSCP\ApsStandard\Entity\ApsInstance;
 use iMSCP\ApsStandard\Entity\ApsPackage;
 use iMSCP\ApsStandard\Entity\ApsInstanceSetting;
+use iMSCP\Crypt as Crypt;
 use iMSCP\Entity\Admin;
 use iMSCP\Service\EncryptionDataService;
 use iMSCP_Registry as Registry;
 use Symfony\Component\Validator\Constraints\Collection;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
-
-use iMSCP\Crypt as Crypt;
-use iMSCP_Config_Handler_File as ConfigFileHandler;
 
 /**
  * Class ApsInstanceService
