@@ -40,7 +40,9 @@ class EncryptionDataService
 	protected $iv;
 
 	/**
-	 * {@inheritdoc}
+	 * Constructor
+	 *
+	 * @throws \iMSCP_Exception
 	 */
 	public function __construct()
 	{
