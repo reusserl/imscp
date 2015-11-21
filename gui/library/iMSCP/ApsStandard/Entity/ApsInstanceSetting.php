@@ -56,9 +56,10 @@ class ApsInstanceSetting
 
 	/**
 	 * @var array
+	 * @ORM\Column(name="metadata", type="json_array", nullable=false)
 	 * @JMS\ReadOnly()
 	 */
-	private $metadata = array();
+	private $metadata;
 
 	/**
 	 * Get instance setting identifier
@@ -174,65 +175,78 @@ class ApsInstanceSetting
 		}
 
 		$value = $this->getValue();
-		$errors = array();
+		$errorMessages = array();
 
-		switch ($metadata['aps_type']) {
+		switch ($metadata['type']) {
+			case 'boolean':
+				if(filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === NULL) {
+					$errorMessages[] = tr("Invalid '%s' setting. Boolean expected.", $metadata['label']);
+				}
+				break;
 			case 'string':
 			case 'password':
-				if (isset($metadata['min_length']) && strlen($value) < intval($metadata['min_length'])) {
-					$errors[] = tr("Invalid '%s' setting length. Min. length: %s", $metadata['label'], $metadata['min_length']);
+				if (isset($metadata['minlength']) && strlen($value) < intval($metadata['minlength'])) {
+					$errorMessages[] = tr("Invalid '%s' setting length. Min. length: %s", $metadata['label'], $metadata['minlength']);
 				}
 
-				if (
-					isset($metadata['max_length']) && $metadata['max_length'] !== '' &&
-					strlen($value) > intval($metadata['max_length'])
-				) {
-					$errors[] = tr("Invalid '%s' setting length. Max. length: %s", $metadata['label'], $metadata['max_length']);
+				if (isset($metadata['maxlength']) && $metadata['maxlength'] !== '' && strlen($value) > intval($metadata['maxlength'])) {
+					$errorMessages[] = tr("Invalid '%s' setting length. Max. length: %s", $metadata['label'], $metadata['maxlength']);
 				}
 
 				if (isset($metadata['regexp']) && !preg_match('/' . $metadata['regexp'] . '/', $value)) {
-					$errors[] = tr("Invalid '%s' setting syntax.", $metadata['label']);
+					$errorMessages[] = tr("Invalid '%s' setting syntax.", $metadata['label']);
 				}
 
 				break;
 			case 'integer':
 				if (filter_var($value, FILTER_VALIDATE_INT) === false) {
-					$errors[] = tr("Invalid '%s' setting. Integer expected.", $metadata['label']);
+					$errorMessages[] = tr("Invalid '%s' setting. Integer expected.", $metadata['label']);
 				}
 				break;
 			case 'float':
 				if (filter_var($value, FILTER_VALIDATE_FLOAT) === false) {
-					$errors[] = tr("Invalid '%s' setting. Float expected.", $metadata['label']);
+					$errorMessages[] = tr("Invalid '%s' setting. Float expected.", $metadata['label']);
 				}
 				break;
-			case 'boolean':
-				if(filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) === NULL) {
-					$errors[] = tr("Invalid '%s' setting. Boolean expected.", $metadata['label']);
-				}
+			case 'date':
+				// TODO
+				break;
+			case 'time':
+				// TODO
 				break;
 			case 'domain-name':
 				if (!isValidDomainName($value)) {
-					$errors[] = tr("Invalid '%s' setting. Domain name expected.", $metadata['label']);
+					$errorMessages[] = tr("Invalid '%s' setting. Domain name expected.", $metadata['label']);
+				}
+
+				if(!\iMSCP_Validate::getInstance()->hostname($value, array('allow' => \Zend_Validate_Hostname::ALLOW_DNS))) {
+					$errorMessages[] = tr("Invalid '%s' setting. Domain name expected.", $metadata['label']);
+				}
+				break;
+			case 'host-name':
+				if(
+					!\iMSCP_Validate::getInstance()->hostname($value, array(
+						'allow' => \Zend_Validate_Hostname::ALLOW_DNS|\Zend_Validate_Hostname::ALLOW_IP
+					))
+				) {
+					$errorMessages[] = tr("Invalid '%s' setting. Hostname or IP address expected.", $metadata['label']);
 				}
 				break;
 			case 'email':
 				if (filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
-					$errors[] = tr("Invalid '%s' setting. Email address expected.", $metadata['label']);
+					$errorMessages[] = tr("Invalid '%s' setting. Email address expected.", $metadata['label']);
 				}
 				break;
 			case 'enum':
-				$choices = array();
-				foreach($metadata['choices'] as $choice) {
-					$choices[] = $choice['value'];
-				}
-
-				if (!in_array($value, $choices)) {
-					$errors[] = tr("Unexpected value for the '%s' setting.", $metadata['label']);
+				if(array_filter($metadata['choices'], function ($choice) use ($value) {
+					return $choice === $value;
+				})) {
+					$errorMessages[] = tr("Unexpected value for the '%s' setting.", $metadata['label']);
 				}
 		}
 
-		if (count($errors) > 0) {
-			foreach ($errors as $error) {
+		if (count($errorMessages) > 0) {
+			foreach ($errorMessages as $error) {
 				$context->buildViolation($error)->addViolation();
 			}
 		}
