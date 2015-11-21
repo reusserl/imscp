@@ -45,8 +45,7 @@ class DatabaseServiceFactory implements FactoryInterface
 			$db = Database::connect(
 				$config['DATABASE_USER'],
 				Crypt::decryptRijndaelCBC(
-					$encryptionDataService->getKey(), $encryptionDataService->getIV(),
-					$config['DATABASE_PASSWORD']
+					$encryptionDataService->getKey(), $encryptionDataService->getIV(), $config['DATABASE_PASSWORD']
 				),
 				$config['DATABASE_TYPE'],
 				$config['DATABASE_HOST'],
