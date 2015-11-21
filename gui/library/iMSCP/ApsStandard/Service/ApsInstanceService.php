@@ -28,6 +28,7 @@ use iMSCP\ApsStandard\Entity\ApsInstanceSetting;
 use iMSCP\Entity\Admin;
 use iMSCP_Registry as Registry;
 use Symfony\Component\Validator\Constraints\Collection;
+use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
 
 /**
@@ -43,7 +44,6 @@ class ApsInstanceService extends ApsAbstractService
 	 */
 	public function getInstances()
 	{
-		$this->getEventManager()->dispatch('onGetApsInstances', array('context' => $this));
 		$instance = $this->getEntityManager()->getRepository('Aps:ApsInstance')->findBy(array(
 			'owner' => $this->getAuth()->getIdentity()->admin_id
 		));
@@ -55,7 +55,7 @@ class ApsInstanceService extends ApsAbstractService
 	 *
 	 * @param ApsPackage $package Package which belongs to the newly created application instance
 	 * @param ApsInstanceSetting[] $settings APS instance settings
-	 * @return array
+	 * @return ConstraintViolationList
 	 */
 	public function createInstance($package, array $settings)
 	{
@@ -67,32 +67,33 @@ class ApsInstanceService extends ApsAbstractService
 		$instance
 			->setPackage($package)
 			->setOwner($this->getAdminEntity($this->getAuth()->getIdentity()->admin_id))
-			->setSettings($settings)
+			->addSettings($settings)
 			->setStatus('toadd');
 
 		/** @var ConstraintViolationList $violations */
 		$violations = $this->getValidator()->validate($instance);
 
-		$errors = array();
-
-		if (isset($settings['__db_name__'])) {
-			$errors = $this->validateDatabaseSettings(
-				$settings['__db_name__']->getValue(),
-				$settings['__db_user__']->getValue(),
-				$settings['__db_pwd__']->getValue()
-			);
+		if (count($violations)) {
+			return $violations;
 		}
 
-		$errors = array_merge($errors, $violations->getIterator()->getArrayCopy());
+		if ($instance->hasSetting('__db_name__')) {
+			$violations->addAll($this->validateDatabaseSettings(
+				$instance->getSetting('__db_name__')->getValue(),
+				$instance->getSetting('__db_user__')->getValue(),
+				$instance->getSetting('__db_pwd__')->getValue(),
+				$instance->hasSetting('__db_table_prefix__') ? $instance->getSetting('__db_table_prefix__')->getValue() : ''
+			));
+		}
 
-		if (count($errors) == 0) {
+		if (!count($violations)) {
 			$entityManager = $this->getEntityManager();
 			$entityManager->persist($instance);
 			$entityManager->flush($instance);
 			//send_request();
 		}
 
-		return $errors;
+		return $violations;
 	}
 
 	/**
@@ -175,9 +176,10 @@ class ApsInstanceService extends ApsAbstractService
 	 * @param string $dbName Database name
 	 * @param string $dbUser Database user
 	 * @param string $dbPwd Database user password
-	 * @return array Array containing error strings if any
+	 * @param string $dbTablePrefix Database table prefix if any
+	 * @return ConstraintViolationList
 	 */
-	protected function validateDatabaseSettings($dbName, $dbUser, $dbPwd)
+	protected function validateDatabaseSettings($dbName, $dbUser, $dbPwd, $dbTablePrefix = '')
 	{
 		// Check that the given database exists and is owned by the user
 		$domainId = get_user_domain_id($this->getAuth()->getIdentity()->admin_id);
@@ -186,10 +188,10 @@ class ApsInstanceService extends ApsAbstractService
 		);
 		$stmt->execute(array($domainId, $dbName));
 
-		$errors = array();
+		$violationList = new ConstraintViolationList();
 
 		if (!$stmt->rowCount()) {
-			$errors[] = tr('Database not found.');
+			$violationList->add(new ConstraintViolation(tr('Database not found.'), '', '', array(), '', ''));
 		} else {
 			// Check that we can connect to the database using the given user/password
 			try {
@@ -203,15 +205,30 @@ class ApsInstanceService extends ApsAbstractService
 					'password' => $dbPwd
 				));
 
-				// Check that the database is not already used
-				if (count($connection->getSchemaManager()->listTableNames())) {
-					$errors[] = 'The database is not empty. Be sure to start with a new database.';
+				// Check that the database can be used
+				if (count($tableNames = $connection->getSchemaManager()->listTableNames())) {
+					if ($dbTablePrefix === '') {
+						$violationList->add(new ConstraintViolation(
+							tr('The database is not empty. Be sure to start with a new database.'), '', '', array(), '', ''
+						));
+					} else {
+						// We need to check all tables to be sure that the prefix is not already used
+						foreach ($tableNames as $tableName) {
+							if (strpos($tableName, $dbTablePrefix) === 0) {
+								$violationList->add(new ConstraintViolation(
+									tr('The table prefix is already used in the database. Please choose another prefix.'), '', '', array(), '', ''
+								));
+							}
+						}
+					}
 				}
 			} catch (DBALException $e) {
-				$errors[] = tr('Could not connect to the database using the given database user/password.');
+				$violationList->add(new ConstraintViolation(
+					tr('Could not connect to the database using the given database user/password.'), '', '', array(), '', ''
+				));
 			}
 		}
 
-		return $errors;
+		return $violationList;
 	}
 }
