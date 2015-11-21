@@ -52,7 +52,7 @@ if (customerHasFeature('aps_standard')) {
 	));
 
 	$tpl->assign(array(
-		'TR_PAGE_TITLE' => tohtml(tr('Client / APS Standard / Instances'), 'htmlAttr'),
+		'TR_PAGE_TITLE' => tohtml(tr('Client / APS Standard / Application instances'), 'htmlAttr'),
 	));
 
 	generateNavigation($tpl);

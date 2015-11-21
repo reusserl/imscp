@@ -67,7 +67,6 @@ class Initializer
 	 */
 	protected static $initialized = false;
 
-
 	/**
 	 * Run initializer
 	 *
