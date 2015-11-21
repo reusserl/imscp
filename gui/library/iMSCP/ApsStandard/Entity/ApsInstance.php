@@ -71,20 +71,6 @@ class ApsInstance
 	private $owner;
 
 	/**
-	 * @var integer
-	 * @ORM\Column(name="domain_id", type="integer", nullable=false, options={"unsigned":true})
-	 * @JMS\Type("integer")
-	 */
-	private $domainId;
-
-	/**
-	 * @var string
-	 * @ORM\Column(name="domain_type", type="string", length=255, nullable=false)
-	 * @JMS\Type("string")
-	 */
-	private $domainType;
-
-	/**
 	 * @var ArrayCollection
 	 * @ORM\OneToMany(targetEntity="iMSCP\ApsStandard\Entity\ApsInstanceSetting", mappedBy="instance", cascade={"persist"}, indexBy="name")
 	 * @Assert\Valid()
@@ -163,50 +149,7 @@ class ApsInstance
 	}
 
 	/**
-	 * Set domain id to wich this instance belongs to
-	 *
-	 * @param $domainId
-	 * @return ApsInstance
-	 */
-	public function setDomainId($domainId)
-	{
-		$this->domainId = (int)$domainId;
-		return $this;
-	}
-
-	/**
-	 * Get domain id to which this instance belongs to
-	 * @return int
-	 */
-	public function getDomainId()
-	{
-		return $this->domainId;
-	}
-
-	/**
-	 * Set domain type to wich this instance belongs to
-	 *
-	 * @param string $domainType Domain type (dmn|sub|als|alssub)
-	 * @return ApsInstance
-	 */
-	public function setDomainType($domainType)
-	{
-		$this->domainType = (string)$domainType;
-		return $this;
-	}
-
-	/**
-	 * Get domain type to which this instance belongs to
-	 *
-	 * @return string
-	 */
-	public function getDomainType()
-	{
-		return $this->domainType;
-	}
-
-	/**
-	 * Add the given setting
+	 * Add the given setting to this instance
 	 *
 	 * @param ApsInstanceSetting $setting
 	 * @return $this
@@ -219,7 +162,7 @@ class ApsInstance
 	}
 
 	/**
-	 * Add settings to this instance
+	 * Add instance settings
 	 *
 	 * @param ApsInstanceSetting[] $settings
 	 * @return $this
@@ -249,7 +192,7 @@ class ApsInstance
 	}
 
 	/**
-	 * Get settings that belongs to this instance
+	 * Get instance settings
 	 *
 	 * @return ApsInstanceSetting[]
 	 */
