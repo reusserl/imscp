@@ -26,10 +26,14 @@ use iMSCP\ApsStandard\Entity\ApsInstance;
 use iMSCP\ApsStandard\Entity\ApsPackage;
 use iMSCP\ApsStandard\Entity\ApsInstanceSetting;
 use iMSCP\Entity\Admin;
+use iMSCP\Service\EncryptionDataService;
 use iMSCP_Registry as Registry;
 use Symfony\Component\Validator\Constraints\Collection;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
+
+use iMSCP\Crypt as Crypt;
+use iMSCP_Config_Handler_File as ConfigFileHandler;
 
 /**
  * Class ApsInstanceService
@@ -57,7 +61,7 @@ class ApsInstanceService extends ApsAbstractService
 	 * @param ApsInstanceSetting[] $settings APS instance settings
 	 * @return ConstraintViolationList
 	 */
-	public function createInstance($package, array $settings)
+	public function createInstance(ApsPackage $package, array $settings)
 	{
 		$this->getEventManager()->dispatch('onCreateApsInstance', array(
 			'package' => $package, 'settings' => $settings, 'context' => $this
@@ -87,6 +91,19 @@ class ApsInstanceService extends ApsAbstractService
 		}
 
 		if (!count($violations)) {
+			/** @var EncryptionDataService $encryptionDataService */
+			$encryptionDataService = $this->getServiceLocator()->get('EncryptionDataService');
+			$encryptionKey = $encryptionDataService->getKey();
+			$encryptionIV = $encryptionDataService->getIv();
+
+			// Encrypt any password setting
+			foreach ($instance->getSettings() as $setting) {
+				$metadata = $setting->getMetadata();
+				if ($metadata['type'] === 'password') {
+					$setting->setValue(Crypt::encryptRijndaelCBC($encryptionKey, $encryptionIV, $setting->getValue()));
+				}
+			}
+
 			$entityManager = $this->getEntityManager();
 			$entityManager->persist($instance);
 			$entityManager->flush($instance);
@@ -199,7 +216,7 @@ class ApsInstanceService extends ApsAbstractService
 				$connection = DriverManager::getConnection(array(
 					'driver' => 'pdo_mysql',
 					'dbname' => $dbName,
-					'host' => $config['DATABASE_USER_HOST'],
+					'host' => $config['DATABASE_HOST'],
 					'port' => $config['DATABASE_PORT'],
 					'user' => $dbUser,
 					'password' => $dbPwd
