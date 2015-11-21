@@ -3,6 +3,6 @@
 		{{field.metadata.label}}
 		<jq-tooltip ng-show="field.metadata.tooltip" ng-attr-title="{{field.metadata.tooltip}}"></jq-tooltip>
 	</label>
-	<select id="{{field.name}}" name="{{field.name}}" ng-options="choice.name for choice in field.metadata.choices"
-			ng-model="field.value" ng-required="field.metadata.required"></select>
+	<textarea id="{{field.name}}" name="{{field.name}}" type="{{field.metadata.type}}" ng-model="field.value"
+			  ng-value="field.value" ng-required="field.metadata.required"></textarea>
 </div>

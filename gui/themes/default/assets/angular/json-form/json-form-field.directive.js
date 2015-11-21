@@ -22,23 +22,21 @@
 
 	angular.module('imscp.json-form').directive('jsonFormField', jsonFormField);
 
-	jsonFormField.$inject = ['$templateCache', '$compile', '$http', '$q', '$window'];
+	jsonFormField.$inject = ['$compile', '$http', '$q', '$window'];
 
-	function jsonFormField($templateCache, $compile, $http, $q, $window) {
+	function jsonFormField($compile, $http, $q, $window) {
 		function loadTemplate(fieldType) {
 			var templateUrl = '/assets/angular/json-form/';
 
-			if (fieldType == 'text' || fieldType == 'email' || fieldType == 'password') {
+			if (fieldType == 'integer' || fieldType == 'float') {
+				templateUrl += 'number.html';
+			} else if (fieldType == 'domain-name' || fieldType == 'host-name') {
 				templateUrl += 'string.html';
-			} else if (fieldType == 'boolean') {
-				templateUrl += 'boolean.html';
-			} else if(fieldType == 'enum') {
-				templateUrl += 'enum.html';
 			} else {
-				templateUrl += 'textarea.html';
+				templateUrl += fieldType + '.html';
 			}
 
-			return $http.get(templateUrl, {cache: $templateCache}).then(
+			return $http.get(templateUrl, {cache: true}).then(
 				function (response) {
 					return response.data;
 				},
@@ -58,6 +56,10 @@
 			link: function (scope, element) {
 				loadTemplate(scope.field.metadata.type).then(function (html) {
 					element.html(html);
+
+					if (scope.field.metadata.type == 'enum') {
+						scope.field['value'] = scope.field.metadata.choices[0];
+					}
 
 					return $compile(element.contents())(scope);
 				}, function (rejectionReason) {
