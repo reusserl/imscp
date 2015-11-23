@@ -129,14 +129,14 @@ class ORMServiceFactory implements FactoryInterface
 			$cacheDriverClass = self::ARRAY_CACHE_DRIVER_CLASS;
 
 			if (!$devmode && extension_loaded('apc')) {
-				$this->cacheDriverClass = self::APC_CACHE_DRIVER_CLASS;
+				$cacheDriverClass = self::APC_CACHE_DRIVER_CLASS;
 			}
 
 			if (!$devmode && extension_loaded('xcache')) {
-				$this->cacheDriverClass = self::XCACHE_CACHE_DRIVER_CLASS;
+				$cacheDriverClass = self::XCACHE_CACHE_DRIVER_CLASS;
 			}
 
-			$this->$cacheDriverClass = $cacheDriverClass;
+			$this->cacheDriverClass = $cacheDriverClass;
 		}
 
 		/** @var CacheProvider $cache */
