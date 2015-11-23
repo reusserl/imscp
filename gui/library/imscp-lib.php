@@ -20,6 +20,7 @@
 
 namespace iMSCP;
 
+use Doctrine\Common\Annotations\AnnotationRegistry;
 use iMSCP_Registry as Registry;
 use iMSCP_Exception_Handler as ExceptionHandler;
 use iMSCP_Config_Handler_File as ConfigHandlerFile;
@@ -275,11 +276,12 @@ if(is_readable(CONFIG_CACHE_FILE_PATH)) {
 	}
 }
 
-// Include composer autoloader for composer packages (register it in registry for later use)
-Registry::set('ComposerLoader', include_once($config['CACHE_DATA_DIR'] . '/packages/vendor/autoload.php'));
+// Include composer autoloader and register it as loader for annotations
+$loader = include_once($config['CACHE_DATA_DIR'] . '/packages/vendor/autoload.php');
+AnnotationRegistry::registerLoader(array($loader, 'loadClass'));
 
 // Initialize application
 Initializer::run($config, include(GUI_ROOT_DIR . '/config/frontend_config.php'));
 
-// Remove useless variable
-unset($configFilePath, $cachedConfigFilePath, $config);
+// Remove useless variables
+unset($configFilePath, $cachedConfigFilePath, $config, $loader);

@@ -35,7 +35,6 @@ class ValidatorServiceFactory implements FactoryInterface
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		$serviceLocator->get('Annotation');
 		return Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
 	}
 }

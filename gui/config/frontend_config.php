@@ -29,7 +29,6 @@ return array(
 
 		'factories' => array(
 			// Common services
-			'Annotation' => 'iMSCP\\Service\\AnnotationServiceFactory',
 			'Database' => 'iMSCP\\Service\\DatabaseServiceFactory',
 			'ORM' => 'iMSCP\\Service\\ORMServiceFactory',
 			'Request' => 'iMSCP\\Service\\HttpRequestServiceFactory',
