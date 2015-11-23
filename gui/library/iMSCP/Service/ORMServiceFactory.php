@@ -64,7 +64,7 @@ class ORMServiceFactory implements FactoryInterface
 		// Get common cache object
 		$cacheImpl = $this->getCacheDriverInstance($devmode, 'imscp_');
 
-		// Setup metadata drivers
+		// Setup metadata driver
 		/** @var AnnotationReader $annotationReader */
 		$annotationReader = new CachedReader(new AnnotationReader(), $cacheImpl);
 		$annotationDriver = new AnnotationDriver($annotationReader, array(
@@ -126,17 +126,13 @@ class ORMServiceFactory implements FactoryInterface
 	protected function getCacheDriverInstance($devmode, $namespace)
 	{
 		if (null === $this->cacheDriverClass) {
-			$cacheDriverClass = self::ARRAY_CACHE_DRIVER_CLASS;
-
 			if (!$devmode && extension_loaded('apc')) {
-				$cacheDriverClass = self::APC_CACHE_DRIVER_CLASS;
+				$this->cacheDriverClass = self::APC_CACHE_DRIVER_CLASS;
+			} elseif (!$devmode && extension_loaded('xcache')) {
+				$this->cacheDriverClass = self::XCACHE_CACHE_DRIVER_CLASS;
+			} else {
+				$this->cacheDriverClass = self::ARRAY_CACHE_DRIVER_CLASS;
 			}
-
-			if (!$devmode && extension_loaded('xcache')) {
-				$cacheDriverClass = self::XCACHE_CACHE_DRIVER_CLASS;
-			}
-
-			$this->cacheDriverClass = $cacheDriverClass;
 		}
 
 		/** @var CacheProvider $cache */
