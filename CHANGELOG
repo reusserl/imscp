@@ -46,7 +46,7 @@ CONFIGS
 	Added: mounts.conf file - fstab-like file which holds filesystems that must be mounted in sequential order on reboot
 	Added: imscp_mountall sysvinit script an imscp_mountall upstart job - Mount i-MSCP filesystems on server reboot
 	Added: libcrypt-rijndael-perl package (Debian/Ubuntu)
-	Added: php5-apcu package (Debian >= 7 / Ubuntu >= 14.04)
+	Added: php5-apcu package (Debian >= 8 / Ubuntu >= 14.04)
 	Added: postfix-cdb package (Debian/Ubuntu)
 	Added: vsftpd and libpam-mysql packages (Debian/Ubuntu) for VsFTPd support
 	Added: vsftpd configuration files for VsFTPd support
