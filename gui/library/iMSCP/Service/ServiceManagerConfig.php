@@ -39,35 +39,35 @@ class ServiceManagerConfig extends Config
 	 *
 	 * @var array
 	 */
-	protected $invokables = array();
+	protected $invokables = [];
 
 	/**
 	 * Service factories
 	 *
 	 * @var array
 	 */
-	protected $factories = array(
+	protected $factories = [
 		'EventManager' => 'iMSCP\Service\EventManagerFactory',
-	);
+	];
 
 	/**
 	 * Abstract factories
 	 *
 	 * @var array
 	 */
-	protected $abstractFactories = array();
+	protected $abstractFactories = [];
 
 	/**
 	 * Aliases
 	 *
 	 * @var array
 	 */
-	protected $aliases = array(
+	protected $aliases = [
 		'iMSCP\Events\EventManagerInterface' => 'EventManager',
 		'Zend\ServiceManager\ServiceLocatorInterface' => 'ServiceManager',
 		'Zend\ServiceManager\ServiceManager' => 'ServiceManager',
 		'ServiceLocator' => 'ServiceManager'
-	);
+	];
 
 	/**
 	 * Shared services
@@ -76,21 +76,21 @@ class ServiceManagerConfig extends Config
 	 *
 	 * @var array
 	 */
-	protected $shared = array();
+	protected $shared = [];
 
 	/**
 	 * Delegators
 	 *
 	 * @var array
 	 */
-	protected $delegators = array();
+	protected $delegators = [];
 
 	/**
 	 * Initializers
 	 *
 	 * @var array
 	 */
-	protected $initializers = array();
+	protected $initializers = [];
 
 	/**
 	 * Constructor
@@ -99,9 +99,9 @@ class ServiceManagerConfig extends Config
 	 *
 	 * @param  array $configuration
 	 */
-	public function __construct(array $configuration = array())
+	public function __construct(array $configuration = [])
 	{
-		$this->initializers = array(
+		$this->initializers = [
 			'EventManagerAwareInitializer' => function ($instance, ServiceLocatorInterface $serviceLocator) {
 				if ($instance instanceof EventManagerAwareInterface) {
 					/** @var EventManagerInterface $eventManager */
@@ -119,14 +119,14 @@ class ServiceManagerConfig extends Config
 					$instance->setServiceLocator($serviceLocator);
 				}
 			},
-		);
+		];
 
 		$this->factories['ServiceManager'] = function (ServiceLocatorInterface $serviceLocator) {
 			return $serviceLocator;
 		};
 
 		parent::__construct(array_merge_recursive(
-			array(
+			[
 				'invokables' => $this->invokables,
 				'factories' => $this->factories,
 				'abstract_factories' => $this->abstractFactories,
@@ -134,7 +134,7 @@ class ServiceManagerConfig extends Config
 				'shared' => $this->shared,
 				'delegators' => $this->delegators,
 				'initializers' => $this->initializers
-			),
+			],
 			$configuration
 		));
 	}

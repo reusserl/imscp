@@ -67,10 +67,10 @@ class ORMServiceFactory implements FactoryInterface
 		// Setup metadata driver
 		/** @var AnnotationReader $annotationReader */
 		$annotationReader = new CachedReader(new AnnotationReader(), $cacheImpl);
-		$annotationDriver = new AnnotationDriver($annotationReader, array(
+		$annotationDriver = new AnnotationDriver($annotationReader, [
 			LIBRARY_PATH . '/iMSCP/Entity',
 			LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'
-		));
+		]);
 		$ORMConfig->setMetadataDriverImpl($annotationDriver);
 
 		// Setup proxy configuration
@@ -79,10 +79,10 @@ class ORMServiceFactory implements FactoryInterface
 		$ORMConfig->setAutoGenerateProxyClasses($devmode);
 
 		// Setup entity namespaces
-		$ORMConfig->setEntityNamespaces(array(
+		$ORMConfig->setEntityNamespaces([
 			'Core' => 'iMSCP\\Entity',
 			'Aps' => 'iMSCP\\ApsStandard\\Entity'
-		));
+		]);
 
 		// Ignore tables which are not managed through ORM service
 		$ORMConfig->setFilterSchemaAssetsExpression('/^(?:admin|aps_.*)$/');
@@ -95,21 +95,21 @@ class ORMServiceFactory implements FactoryInterface
 
 		// Setup second-level cache
 		$cacheImpl = $this->getCacheDriverInstance($devmode, 'imscp_sec');
+		$cacheFactory = new DefaultCacheFactory(new RegionsConfiguration(), $cacheImpl);
+		//$cacheFactory->setFileLockRegionDirectory(CACHE_PATH . '/locks'); // Only needed for READ_WRITE mode
 		$ORMConfig->setSecondLevelCacheEnabled(true);
-		$ORMConfig->getSecondLevelCacheConfiguration()->setCacheFactory(
-			new DefaultCacheFactory(new RegionsConfiguration(), $cacheImpl)
-		);
+		$ORMConfig->getSecondLevelCacheConfiguration()->setCacheFactory($cacheFactory);
 
 		// Setup entity manager
 		/** @var \PDO $pdo */
 		$pdo = $serviceLocator->get('Database')->getRawInstance();
-		$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('Doctrine\\DBAL\\Driver\\PDOStatement', array()));
+		$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['Doctrine\\DBAL\\Driver\\PDOStatement', []]);
 		$entityManager = EntityManager::create(
-			array(
+			[
 				'pdo' => $pdo, // Reuse PDO instance from Database service
 				'host' => $mainConfig['DATABASE_HOST'], // Only there for later referral through connection object
 				'port' => $mainConfig['DATABASE_PORT'] // Only there for later referral through connection object
-			),
+			],
 			$ORMConfig
 		);
 

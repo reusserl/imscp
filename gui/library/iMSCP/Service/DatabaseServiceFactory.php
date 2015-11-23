@@ -51,7 +51,7 @@ class DatabaseServiceFactory implements FactoryInterface
 				$config['DATABASE_HOST'],
 				$config['DATABASE_PORT'],
 				$config['DATABASE_NAME'],
-				array(\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES `UTF8`')
+				[\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES `UTF8`']
 			);
 		} catch (\PDOException $e) {
 			// We need enforce int. See https://github.com/zendframework/zend-servicemanager/issues/41

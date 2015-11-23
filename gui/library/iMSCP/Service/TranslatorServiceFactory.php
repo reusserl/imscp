@@ -75,18 +75,18 @@ class TranslatorServiceFactory implements FactoryInterface
 		$cache = CacheHandler::factory(
 			'Core',
 			'File',
-			array(
+			[
 				'caching' => true,
 				'lifetime' => null, // Translation cache is never flushed automatically
 				'automatic_serialization' => true,
 				'automatic_cleaning_factor' => 0,
 				'ignore_user_abort' => true,
 				'cache_id_prefix' => 'iMSCP_Translate'
-			),
-			array(
+			],
+			[
 				'hashed_directory_level' => 0,
 				'cache_dir' => CACHE_PATH . '/translations'
-			)
+			]
 		);
 
 		if ($config['DEBUG']) {
@@ -96,12 +96,12 @@ class TranslatorServiceFactory implements FactoryInterface
 		}
 
 		// Setup primary translator for iMSCP core translations
-		return new Translator(array(
+		return new Translator([
 			'adapter' => 'gettext',
 			'content' => sprintf($trFilePathPattern, $locale, $locale),
 			'locale' => $locale,
 			'disableNotices' => true,
 			'tag' => 'iMSCP'
-		));
+		]);
 	}
 }
