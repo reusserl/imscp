@@ -20,8 +20,14 @@
 
 namespace iMSCP\Service;
 
-use Doctrine\ORM\Tools\Setup;
+use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\Common\Annotations\CachedReader;
+use Doctrine\Common\Cache\CacheProvider;
+use Doctrine\ORM\Cache\DefaultCacheFactory;
+use Doctrine\ORM\Cache\RegionsConfiguration;
+use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
 use iMSCP_Registry as Registry;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
@@ -32,46 +38,111 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class ORMServiceFactory implements FactoryInterface
 {
+	const ARRAY_CACHE_DRIVER_CLASS = 'Doctrine\\Common\\Cache\\ArrayCache';
+	const APC_CACHE_DRIVER_CLASS = 'Doctrine\\Common\\Cache\\ApcCache';
+	const XCACHE_CACHE_DRIVER_CLASS = 'Doctrine\\Common\\Cache\\XcacheCahce';
+
+	/**
+	 * @var string
+	 */
+	protected $cacheDriverClass;
+
 	/**
 	 * {@inheritdoc}
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		/** @var \iMSCP_Database $db */
-		$db = $serviceLocator->get('Database');
-		$serviceLocator->get('Annotation');
-		$devmode = (bool)Registry::get('config')->DEVMODE;
-		$emConfig = Setup::createAnnotationMetadataConfiguration(
-			array( // TODO make the path list configurable (require config service)
-				LIBRARY_PATH . '/iMSCP/Entity',
-				LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'
+		// Get main configuration object
+		$mainConfig = Registry::get('config');
+
+		// Set devmode mode flag
+		$devmode = (bool)$mainConfig['DEVMODE'];
+
+		// Create new ORM configuration object
+		$ORMConfig = new Configuration();
+
+		// Get common cache object
+		$cacheImpl = $this->getCacheDriverInstance($devmode, 'imscp_');
+
+		// Setup metadata drivers
+		/** @var AnnotationReader $annotationReader */
+		$annotationReader = new CachedReader(new AnnotationReader(), $cacheImpl);
+		$annotationDriver = new AnnotationDriver($annotationReader, array(
+			LIBRARY_PATH . '/iMSCP/Entity',
+			LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'
+		));
+		$ORMConfig->setMetadataDriverImpl($annotationDriver);
+
+		// Setup proxy configuration
+		$ORMConfig->setProxyDir(CACHE_PATH . '/orm/proxies');
+		$ORMConfig->setProxyNamespace('iMSCP\\Proxies');
+		$ORMConfig->setAutoGenerateProxyClasses($devmode);
+
+		// Setup entity namespaces
+		$ORMConfig->setEntityNamespaces(array(
+			'Core' => 'iMSCP\\Entity',
+			'Aps' => 'iMSCP\\ApsStandard\\Entity'
+		));
+
+		// Ignore tables which are not managed through ORM service
+		$ORMConfig->setFilterSchemaAssetsExpression('/^(?:admin|aps_.*)$/');
+
+		// Setup caches
+		$ORMConfig->setHydrationCacheImpl($cacheImpl);
+		$ORMConfig->setMetadataCacheImpl($cacheImpl);
+		$ORMConfig->setQueryCacheImpl($cacheImpl);
+		$ORMConfig->setResultCacheImpl($cacheImpl);
+
+		// Setup second-level cache
+		$cacheImpl = $this->getCacheDriverInstance($devmode, 'imscp_sec');
+		$ORMConfig->setSecondLevelCacheEnabled(true);
+		$ORMConfig->getSecondLevelCacheConfiguration()->setCacheFactory(
+			new DefaultCacheFactory(new RegionsConfiguration(), $cacheImpl)
+		);
+
+		// Setup entity manager
+		/** @var \PDO $pdo */
+		$pdo = $serviceLocator->get('Database')->getRawInstance();
+		$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('Doctrine\DBAL\Driver\PDOStatement', array()));
+		$entityManager = EntityManager::create(
+			array(
+				'pdo' => $pdo, // Reuse PDO instance from Database service
+				'host' => $mainConfig['DATABASE_HOST'], // Only there for later referral through connection object
+				'port' => $mainConfig['DATABASE_PORT'] // Only there for later referral through connection object
 			),
-			$devmode,
-			CACHE_PATH . '/orm/proxies', // Proxy classes directory
-			null, // Will use best available caching driver (none if devmode)
-			false // Do not use simple annotation driver which is not compatible with auto-generated entities
+			$ORMConfig
 		);
 
-		$emConfig->setProxyNamespace('iMSCP\\Proxies');
+		return $entityManager;
+	}
 
-		//$emConfig->getMetadataDriverImpl()->addPaths(array(LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'));
-		// Map MySQL ENUM type to varchar (Not needed ATM)
-		//$connection = $entityManager->getConnection();
-		//$platform = $connection->getDatabasePlatform();
-		//$platform->registerDoctrineTypeMapping('enum', 'string');
+	/**
+	 * Return new doctrine cache instance according current environment
+	 *
+	 * @param bool $devmode
+	 * @param string $namespace
+	 * @return CacheProvider
+	 */
+	protected function getCacheDriverInstance($devmode, $namespace)
+	{
+		if (null === $this->cacheDriverClass) {
+			$cacheDriverClass = self::ARRAY_CACHE_DRIVER_CLASS;
 
-		// Right now, we use Doctrine for APS Standard feature only. Thus, we ignore most of tables
-		$emConfig->setFilterSchemaAssetsExpression('/^(?:admin|aps_.*)$/');
+			if (!$devmode && extension_loaded('apc')) {
+				$this->cacheDriverClass = self::APC_CACHE_DRIVER_CLASS;
+			}
 
-		// Add namespace for core entities
-		$emConfig->addEntityNamespace('Core', '\\iMSCP\\Entity\\');
+			if (!$devmode && extension_loaded('xcache')) {
+				$this->cacheDriverClass = self::XCACHE_CACHE_DRIVER_CLASS;
+			}
 
-		//$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('Doctrine\DBAL\Driver\PDOStatement', array()));
-		$em = EntityManager::create(
-			array('pdo' => $db::getRawInstance()), // Reuse PDO instance from Database service
-			$emConfig
-		);
+			$this->$cacheDriverClass = $cacheDriverClass;
+		}
 
-		return $em;
+		/** @var CacheProvider $cache */
+		$cache = new $this->cacheDriverClass();
+		$cache->setNamespace($namespace);
+
+		return $cache;
 	}
 }
