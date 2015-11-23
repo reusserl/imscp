@@ -37,7 +37,6 @@ class Admin
 {
 	/**
 	 * @var integer
-	 *
 	 * @ORM\Column(name="admin_id", type="integer", nullable=false, options={"unsigned":true})
 	 * @ORM\Id
 	 * @ORM\GeneratedValue(strategy="IDENTITY")
@@ -46,188 +45,162 @@ class Admin
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="admin_name", type="string", length=200, nullable=true)
 	 */
 	private $adminName;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="admin_pass", type="string", length=200, nullable=true)
 	 */
 	private $adminPass;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="admin_type", type="string", length=10, nullable=true)
 	 */
 	private $adminType;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="admin_sys_name", type="string", length=16, nullable=true)
 	 */
 	private $adminSysName;
 
 	/**
 	 * @var integer
-	 *
 	 * @ORM\Column(name="admin_sys_uid", type="integer", nullable=false)
 	 */
 	private $adminSysUid;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="admin_sys_gname", type="string", length=32, nullable=true)
 	 */
 	private $adminSysGname;
 
 	/**
 	 * @var integer
-	 *
 	 * @ORM\Column(name="admin_sys_gid", type="integer", nullable=false)
 	 */
 	private $adminSysGid;
 
 	/**
 	 * @var integer
-	 *
 	 * @ORM\Column(name="domain_created", type="integer", nullable=false)
 	 */
 	private $domainCreated;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="customer_id", type="string", length=200, nullable=true)
 	 */
 	private $customerId;
 
 	/**
 	 * @var integer
-	 *
 	 * @ORM\Column(name="created_by", type="integer", nullable=true)
 	 */
 	private $createdBy;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="fname", type="string", length=200, nullable=true)
 	 */
 	private $fname;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="lname", type="string", length=200, nullable=true)
 	 */
 	private $lname;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="gender", type="string", length=1, nullable=true)
 	 */
 	private $gender;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="firm", type="string", length=200, nullable=true)
 	 */
 	private $firm;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="zip", type="string", length=10, nullable=true)
 	 */
 	private $zip;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="city", type="string", length=200, nullable=true)
 	 */
 	private $city;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="state", type="string", length=200, nullable=true)
 	 */
 	private $state;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="country", type="string", length=200, nullable=true)
 	 */
 	private $country;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="email", type="string", length=200, nullable=true)
 	 */
 	private $email;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="phone", type="string", length=200, nullable=true)
 	 */
 	private $phone;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="fax", type="string", length=200, nullable=true)
 	 */
 	private $fax;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="street1", type="string", length=200, nullable=true)
 	 */
 	private $street1;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="street2", type="string", length=200, nullable=true)
 	 */
 	private $street2;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="uniqkey", type="string", length=255, nullable=true)
 	 */
 	private $uniqkey;
 
 	/**
 	 * @var \DateTime
-	 *
 	 * @ORM\Column(name="uniqkey_time", type="datetime", nullable=true)
 	 */
 	private $uniqkeyTime;
 
 	/**
 	 * @var string
-	 *
 	 * @ORM\Column(name="admin_status", type="string", length=255, nullable=false)
 	 */
 	private $adminStatus;
 
 	/**
-	 * Get adminId
+	 * Get admin identifier
 	 *
 	 * @return integer
 	 */
@@ -237,7 +210,7 @@ class Admin
 	}
 
 	/**
-	 * Set adminName
+	 * Set admin name
 	 *
 	 * @param string $adminName
 	 * @return Admin
@@ -249,7 +222,7 @@ class Admin
 	}
 
 	/**
-	 * Get adminName
+	 * Get admin name
 	 *
 	 * @return string
 	 */
@@ -259,7 +232,7 @@ class Admin
 	}
 
 	/**
-	 * Set adminPass
+	 * Set admin password
 	 *
 	 * @param string $adminPass
 	 * @return Admin
@@ -271,7 +244,7 @@ class Admin
 	}
 
 	/**
-	 * Get adminPass
+	 * Get admin password
 	 *
 	 * @return string
 	 */
@@ -281,7 +254,7 @@ class Admin
 	}
 
 	/**
-	 * Set adminType
+	 * Set admin type
 	 *
 	 * @param string $adminType
 	 * @return Admin
@@ -293,7 +266,7 @@ class Admin
 	}
 
 	/**
-	 * Get adminType
+	 * Get admin type
 	 *
 	 * @return string
 	 */
@@ -303,7 +276,7 @@ class Admin
 	}
 
 	/**
-	 * Set adminSysName
+	 * Set admin system name
 	 *
 	 * @param string $adminSysName
 	 * @return Admin
@@ -315,7 +288,7 @@ class Admin
 	}
 
 	/**
-	 * Get adminSysName
+	 * Get admin system name
 	 *
 	 * @return string
 	 */
@@ -325,7 +298,7 @@ class Admin
 	}
 
 	/**
-	 * Set adminSysUid
+	 * Set admin system uid
 	 *
 	 * @param integer $adminSysUid
 	 * @return Admin
@@ -337,7 +310,7 @@ class Admin
 	}
 
 	/**
-	 * Get adminSysUid
+	 * Get admin system uid
 	 *
 	 * @return integer
 	 */
@@ -347,7 +320,7 @@ class Admin
 	}
 
 	/**
-	 * Set adminSysGname
+	 * Set admin system group name
 	 *
 	 * @param string $adminSysGname
 	 * @return Admin
@@ -359,7 +332,7 @@ class Admin
 	}
 
 	/**
-	 * Get adminSysGname
+	 * Get admin system group name
 	 *
 	 * @return string
 	 */
@@ -369,7 +342,7 @@ class Admin
 	}
 
 	/**
-	 * Set adminSysGid
+	 * Set admin system gid
 	 *
 	 * @param integer $adminSysGid
 	 * @return Admin
@@ -381,7 +354,7 @@ class Admin
 	}
 
 	/**
-	 * Get adminSysGid
+	 * Get admin system gid
 	 *
 	 * @return integer
 	 */
@@ -391,7 +364,7 @@ class Admin
 	}
 
 	/**
-	 * Set domainCreated
+	 * Set domain creation date
 	 *
 	 * @param integer $domainCreated
 	 * @return Admin
@@ -403,7 +376,7 @@ class Admin
 	}
 
 	/**
-	 * Get domainCreated
+	 * Get domain creation date
 	 *
 	 * @return integer
 	 */
@@ -413,7 +386,7 @@ class Admin
 	}
 
 	/**
-	 * Set customerId
+	 * Set customer id
 	 *
 	 * @param string $customerId
 	 * @return Admin
@@ -425,7 +398,7 @@ class Admin
 	}
 
 	/**
-	 * Get customerId
+	 * Get customer id
 	 *
 	 * @return string
 	 */
@@ -435,7 +408,7 @@ class Admin
 	}
 
 	/**
-	 * Set createdBy
+	 * Set created by
 	 *
 	 * @param integer $createdBy
 	 * @return Admin
@@ -447,7 +420,7 @@ class Admin
 	}
 
 	/**
-	 * Get createdBy
+	 * Get created by
 	 *
 	 * @return integer
 	 */
@@ -457,7 +430,7 @@ class Admin
 	}
 
 	/**
-	 * Set fname
+	 * Set first name
 	 *
 	 * @param string $fname
 	 * @return Admin
@@ -469,7 +442,7 @@ class Admin
 	}
 
 	/**
-	 * Get fname
+	 * Get get firstname
 	 *
 	 * @return string
 	 */
@@ -479,7 +452,7 @@ class Admin
 	}
 
 	/**
-	 * Set lname
+	 * Set last name
 	 *
 	 * @param string $lname
 	 * @return Admin
@@ -491,7 +464,7 @@ class Admin
 	}
 
 	/**
-	 * Get lname
+	 * Get last name
 	 *
 	 * @return string
 	 */
@@ -699,7 +672,7 @@ class Admin
 	}
 
 	/**
-	 * Set street1
+	 * Set street 1
 	 *
 	 * @param string $street1
 	 * @return Admin
@@ -711,7 +684,7 @@ class Admin
 	}
 
 	/**
-	 * Get street1
+	 * Get street 1
 	 *
 	 * @return string
 	 */
@@ -721,7 +694,7 @@ class Admin
 	}
 
 	/**
-	 * Set street2
+	 * Set street 2
 	 *
 	 * @param string $street2
 	 * @return Admin
@@ -733,7 +706,7 @@ class Admin
 	}
 
 	/**
-	 * Get street2
+	 * Get street 2
 	 *
 	 * @return string
 	 */
@@ -743,7 +716,7 @@ class Admin
 	}
 
 	/**
-	 * Set uniqkey
+	 * Set uniq key
 	 *
 	 * @param string $uniqkey
 	 * @return Admin
@@ -755,7 +728,7 @@ class Admin
 	}
 
 	/**
-	 * Get uniqkey
+	 * Get uniq key
 	 *
 	 * @return string
 	 */
@@ -765,7 +738,7 @@ class Admin
 	}
 
 	/**
-	 * Set uniqkeyTime
+	 * Set uniq key time
 	 *
 	 * @param \DateTime $uniqkeyTime
 	 * @return Admin
@@ -777,7 +750,7 @@ class Admin
 	}
 
 	/**
-	 * Get uniqkeyTime
+	 * Get uniq key time
 	 *
 	 * @return \DateTime
 	 */
@@ -787,7 +760,7 @@ class Admin
 	}
 
 	/**
-	 * Set adminStatus
+	 * Set admin status
 	 *
 	 * @param string $adminStatus
 	 * @return Admin
@@ -799,7 +772,7 @@ class Admin
 	}
 
 	/**
-	 * Get adminStatus
+	 * Get admin status
 	 *
 	 * @return string
 	 */
