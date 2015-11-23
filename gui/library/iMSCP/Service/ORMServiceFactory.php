@@ -40,7 +40,7 @@ class ORMServiceFactory implements FactoryInterface
 {
 	const ARRAY_CACHE_DRIVER_CLASS = 'Doctrine\\Common\\Cache\\ArrayCache';
 	const APC_CACHE_DRIVER_CLASS = 'Doctrine\\Common\\Cache\\ApcCache';
-	const XCACHE_CACHE_DRIVER_CLASS = 'Doctrine\\Common\\Cache\\XcacheCahce';
+	const XCACHE_CACHE_DRIVER_CLASS = 'Doctrine\\Common\\Cache\\XcacheCache';
 
 	/**
 	 * @var string
