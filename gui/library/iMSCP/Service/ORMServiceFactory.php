@@ -74,7 +74,7 @@ class ORMServiceFactory implements FactoryInterface
 		$ORMConfig->setMetadataDriverImpl($annotationDriver);
 
 		// Setup proxy configuration
-		$ORMConfig->setProxyDir(CACHE_PATH . '/orm/proxies');
+		$ORMConfig->setProxyDir(LIBRARY_PATH . '/iMSCP/proxies');
 		$ORMConfig->setProxyNamespace('iMSCP\\Proxies');
 		$ORMConfig->setAutoGenerateProxyClasses($devmode);
 
@@ -103,7 +103,7 @@ class ORMServiceFactory implements FactoryInterface
 		// Setup entity manager
 		/** @var \PDO $pdo */
 		$pdo = $serviceLocator->get('Database')->getRawInstance();
-		$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('Doctrine\DBAL\Driver\PDOStatement', array()));
+		$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, array('Doctrine\\DBAL\\Driver\\PDOStatement', array()));
 		$entityManager = EntityManager::create(
 			array(
 				'pdo' => $pdo, // Reuse PDO instance from Database service
