@@ -38,21 +38,21 @@ function getPreviousPageData()
 {
 	global $hpId, $dmnName, $adminName, $dmnExpire;
 
-	if(isset($_SESSION['dmn_expire'])) {
+	if (isset($_SESSION['dmn_expire'])) {
 		$dmnExpire = $_SESSION['dmn_expire'];
 	}
 
-	if(isset($_SESSION['step_one'])) {
+	if (isset($_SESSION['step_one'])) {
 		$stepTwo = $_SESSION['dmn_name'] . ';' . $_SESSION['dmn_tpl'];
 		$hpId = $_SESSION['dmn_tpl'];
 		unset($_SESSION['dmn_name']);
 		unset($_SESSION['dmn_tpl']);
 		unset($_SESSION['chtpl']);
 		unset($_SESSION['step_one']);
-	} elseif(isset($_SESSION['step_two_data'])) {
+	} elseif (isset($_SESSION['step_two_data'])) {
 		$stepTwo = $_SESSION['step_two_data'];
 		unset($_SESSION['step_two_data']);
-	} elseif(isset($_SESSION['local_data'])) {
+	} elseif (isset($_SESSION['local_data'])) {
 		$stepTwo = $_SESSION['local_data'];
 		unset($_SESSION['local_data']);
 	} else {
@@ -60,10 +60,9 @@ function getPreviousPageData()
 	}
 
 	list($dmnName, $hpId) = explode(';', $stepTwo);
-
 	$adminName = $dmnName;
 
-	if(!isValidDomainName($dmnName) || $hpId == '') {
+	if (!isValidDomainName($dmnName) || $hpId == '') {
 		return false;
 	}
 
@@ -77,8 +76,8 @@ function getPreviousPageData()
  */
 function reseller_generateEmptyPage()
 {
-	global $email, $customerId, $firstName, $lastName, $gender, $firm, $zip, $city, $state, $country, $street1,
-		$street2, $phone, $fax, $domainIp;
+	global $email, $customerId, $firstName, $lastName, $gender, $firm, $zip, $city, $state, $country, $street1, $street2,
+	       $phone, $fax, $domainIp;
 
 	$email = $customerId = $firstName = $lastName = $firm = $zip = $city = $state = $country = $street1 = $street2 =
 	$phone = $mail = $fax = $domainIp = '';
@@ -93,35 +92,30 @@ function reseller_generateEmptyPage()
  */
 function reseller_generatePage($tpl)
 {
-	global $hpId, $dmnName, $adminName, $email, $customerId, $firstName, $lastName, $gender, $firm, $zip, $city,
-		$state, $country, $street1, $street2, $phone, $fax;
+	global $hpId, $dmnName, $adminName, $email, $customerId, $firstName, $lastName, $gender, $firm, $zip, $city, $state,
+	       $country, $street1, $street2, $phone, $fax;
 
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
-
+	$config = iMSCP_Registry::get('config');
 	$adminName = decode_idna($adminName);
-
-	$tpl->assign(
-		array(
-			'VL_USERNAME' => tohtml($adminName),
-			'VL_MAIL' => tohtml($email),
-			'VL_USR_ID' => $customerId,
-			'VL_USR_NAME' => tohtml($firstName),
-			'VL_LAST_USRNAME' => tohtml($lastName),
-			'VL_USR_FIRM' => tohtml($firm),
-			'VL_USR_POSTCODE' => tohtml($zip),
-			'VL_USRCITY' => tohtml($city),
-			'VL_USRSTATE' => tohtml($state),
-			'VL_MALE' => ($gender == 'M') ? $cfg['HTML_SELECTED'] : '',
-			'VL_FEMALE' => ($gender == 'F') ? $cfg['HTML_SELECTED'] : '',
-			'VL_UNKNOWN' => ($gender == 'U') ? $cfg['HTML_SELECTED'] : '',
-			'VL_COUNTRY' => tohtml($country),
-			'VL_STREET1' => tohtml($street1),
-			'VL_STREET2' => tohtml($street2),
-			'VL_PHONE' => tohtml($phone),
-			'VL_FAX' => tohtml($fax)
-		)
-	);
+	$tpl->assign(array(
+		'VL_USERNAME' => tohtml($adminName),
+		'VL_MAIL' => tohtml($email),
+		'VL_USR_ID' => $customerId,
+		'VL_USR_NAME' => tohtml($firstName),
+		'VL_LAST_USRNAME' => tohtml($lastName),
+		'VL_USR_FIRM' => tohtml($firm),
+		'VL_USR_POSTCODE' => tohtml($zip),
+		'VL_USRCITY' => tohtml($city),
+		'VL_USRSTATE' => tohtml($state),
+		'VL_MALE' => ($gender == 'M') ? $config['HTML_SELECTED'] : '',
+		'VL_FEMALE' => ($gender == 'F') ? $config['HTML_SELECTED'] : '',
+		'VL_UNKNOWN' => ($gender == 'U') ? $config['HTML_SELECTED'] : '',
+		'VL_COUNTRY' => tohtml($country),
+		'VL_STREET1' => tohtml($street1),
+		'VL_STREET2' => tohtml($street2),
+		'VL_PHONE' => tohtml($phone),
+		'VL_FAX' => tohtml($fax)
+	));
 
 	reseller_generate_ip_list($tpl, $_SESSION['user_id']);
 	$_SESSION['local_data'] = "$dmnName;$hpId";
@@ -136,23 +130,19 @@ function reseller_generatePage($tpl)
 function reseller_addCustomer()
 {
 	global $hpId, $dmnName, $dmnExpire, $domainIp, $adminName, $email, $password, $customerId, $firstName, $lastName,
-		$gender, $firm, $zip, $city, $state, $country, $phone, $fax,  $street1,  $street2 ;
+	       $gender, $firm, $zip, $city, $state, $country, $phone, $fax, $street1, $street2;
 
 	$resellerId = intval($_SESSION['user_id']);
+	$config = iMSCP_Registry::get('config');
 
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
-
-	if(isset($_SESSION['ch_hpprops'])) {
+	if (isset($_SESSION['ch_hpprops'])) {
 		$props = $_SESSION['ch_hpprops'];
 		unset($_SESSION['ch_hpprops']);
 	} else {
-		if($cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
+		if ($config['HOSTING_PLANS_LEVEL'] == 'admin') {
 			$stmt = exec_query('SELECT props FROM hosting_plans WHERE id = ?', $hpId);
 		} else {
-			$stmt = exec_query(
-				'SELECT props FROM hosting_plans WHERE reseller_id = ? AND id = ?', array($resellerId, $hpId)
-			);
+			$stmt = exec_query('SELECT props FROM hosting_plans WHERE reseller_id = ? AND id = ?', array($resellerId, $hpId));
 		}
 
 		$data = $stmt->fetchRow();
@@ -164,7 +154,7 @@ function reseller_addCustomer()
 		$phpiniAllowUrlFopen, $phpiniDisplayErrors, $phpiniDisableFunctions, $phpiniPostMaxSize,
 		$phpiniUploadMaxFileSize, $phpiniMaxExecutionTime, $phpiniMaxInputTime, $phpiniMemoryLimit, $extMailServer,
 		$webFolderProtection, $mailQuota, $apsStandard
-	) = explode(';', $props);
+		) = explode(';', $props);
 
 	$php = str_replace('_', '', $php);
 	$cgi = str_replace('_', '', $cgi);
@@ -175,19 +165,15 @@ function reseller_addCustomer()
 	$webFolderProtection = str_replace('_', '', $webFolderProtection);
 	$encryptedPassword = \iMSCP\Crypt::bcrypt($password);
 
-	/** @var $db iMSCP_Database */
 	$db = iMSCP_Database::getInstance();
 
 	try {
-		iMSCP_Events_Aggregator::getInstance()->dispatch(
-			iMSCP_Events::onBeforeAddDomain,
-			array(
-				'domainName' => $dmnName,
-				'createdBy' => $resellerId,
-				'customerId' => $customerId,
-				'customerEmail' => $email
-			)
-		);
+		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeAddDomain, array(
+			'domainName' => $dmnName,
+			'createdBy' => $resellerId,
+			'customerId' => $customerId,
+			'customerEmail' => $email
+		));
 
 		$db->beginTransaction();
 
@@ -231,10 +217,9 @@ function reseller_addCustomer()
 		$dmnId = $db->insertId();
 
 		// save php.ini if exist
-		if($phpEditor == 'yes') {
+		if ($phpEditor == 'yes') {
 			/* @var $phpini iMSCP_PHPini */
 			$phpini = iMSCP_PHPini::getInstance();
-
 			// fill it with the custom values - other take from default
 			$phpini->setData('phpiniSystem', 'yes');
 			$phpini->setData('phpiniPostMaxSize', $phpiniPostMaxSize);
@@ -242,58 +227,45 @@ function reseller_addCustomer()
 			$phpini->setData('phpiniMaxExecutionTime', $phpiniMaxExecutionTime);
 			$phpini->setData('phpiniMaxInputTime', $phpiniMaxInputTime);
 			$phpini->setData('phpiniMemoryLimit', $phpiniMemoryLimit);
-
 			// save it to php_ini table
 			$phpini->saveCustomPHPiniIntoDb($dmnId);
 		}
 
-		exec_query(
-			'INSERT INTO htaccess_users (dmn_id, uname, upass, status) VALUES (?, ?, ?, ?)',
-			array($dmnId, $dmnName, $encryptedPassword, 'toadd')
-		);
+		exec_query('INSERT INTO htaccess_users (dmn_id, uname, upass, status) VALUES (?, ?, ?, ?)', array(
+			$dmnId, $dmnName, $encryptedPassword, 'toadd'
+		));
 
-		$user_id = $db->insertId();
-
-		exec_query(
-			'INSERT INTO htaccess_groups (dmn_id, ugroup, members, status) VALUES (?, ?, ?, ?)',
-			array($dmnId, 'statistics', $user_id, 'toadd')
-		);
+		exec_query('INSERT INTO htaccess_groups (dmn_id, ugroup, members, status) VALUES (?, ?, ?, ?)', array(
+			$dmnId, 'statistics', $db->insertId(), 'toadd'
+		));
 
 		// Create default addresses if needed
-		if($cfg['CREATE_DEFAULT_EMAIL_ADDRESSES']) {
+		if ($config['CREATE_DEFAULT_EMAIL_ADDRESSES']) {
 			client_mail_add_default_accounts($dmnId, $email, $dmnName);
 		}
 
 		// let's send mail to user
 		send_add_user_auto_msg($resellerId, $adminName, $password, $email, $firstName, $lastName, tr('Customer'));
-
-		exec_query(
-			'INSERT INTO user_gui_props (user_id, lang, layout) VALUES (?, ?, ?)',
-			array($recordId, $cfg['USER_INITIAL_LANG'], $cfg['USER_INITIAL_THEME'])
-		);
-
+		exec_query('INSERT INTO user_gui_props (user_id, lang, layout) VALUES (?, ?, ?)', array(
+			$recordId, $config['USER_INITIAL_LANG'], $config['USER_INITIAL_THEME']
+		));
 		update_reseller_c_props($resellerId);
 
 		$db->commit();
 
-		iMSCP_Events_Aggregator::getInstance()->dispatch(
-			iMSCP_Events::onAfterAddDomain,
-			array(
-				'domainName' => $dmnName,
-				'createdBy' => $resellerId,
-				'customerId' => $recordId,
-				'customerEmail' => $email,
-				'domainId' => $dmnId
-			)
-		);
+		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterAddDomain, array(
+			'domainName' => $dmnName,
+			'createdBy' => $resellerId,
+			'customerId' => $recordId,
+			'customerEmail' => $email,
+			'domainId' => $dmnId
+		));
 
 		send_request();
-
 		write_log("{$_SESSION['user_logged']} added new customer: $adminName", E_USER_NOTICE);
 		set_page_message(tr('Customer account successfully scheduled for creation.'), 'success');
-
 		redirectTo('users.php');
-	} catch(iMSCP_Exception_Database $e) {
+	} catch (iMSCP_Exception_Database $e) {
 		$db->rollBack();
 		throw $e;
 	}
@@ -303,21 +275,20 @@ function reseller_addCustomer()
  * Main
  */
 
-// Include core library
 require 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
-
+$eventManager = iMSCP_Events_Aggregator::getInstance();
+$eventManager->dispatch(iMSCP_Events::onResellerScriptStart);
 check_login('reseller');
 
-if(!getPreviousPageData()) {
+if (!getPreviousPageData()) {
 	set_page_message(tr('Data were been altered. Please try again.'), 'error');
 	unsetMessages();
 	redirectTo('user_add1.php');
 }
 
-if(isset($_POST['uaction']) && ($_POST['uaction'] === 'user_add3_nxt') && !isset($_SESSION['step_two_data'])) {
-	if(check_ruser_data()) {
+if (isset($_POST['uaction']) && ($_POST['uaction'] === 'user_add3_nxt') && !isset($_SESSION['step_two_data'])) {
+	if (check_ruser_data()) {
 		reseller_addCustomer();
 	}
 } else {
@@ -325,53 +296,46 @@ if(isset($_POST['uaction']) && ($_POST['uaction'] === 'user_add3_nxt') && !isset
 	reseller_generateEmptyPage();
 }
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
-
 $tpl = new iMSCP_pTemplate();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'reseller/user_add3.tpl',
-		'page_message' => 'layout',
-		'ip_entry' => 'page',
-		'alias_feature' => 'page'
-	)
-);
+$tpl->define_dynamic(array(
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'reseller/user_add3.tpl',
+	'page_message' => 'layout',
+	'ip_entry' => 'page',
+	'alias_feature' => 'page'
+));
 
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Reseller / Customers / Add Customer - Next Step'),
-		'TR_ADD_USER' => tr('Add user'),
-		'TR_CORE_DATA' => tr('Core data'),
-		'TR_USERNAME' => tr('Username'),
-		'TR_PASSWORD' => tr('Password'),
-		'TR_REP_PASSWORD' => tr('Repeat password'),
-		'TR_DOMAIN_IP' => tr('Domain IP'),
-		'TR_USREMAIL' => tr('Email'),
-		'TR_ADDITIONAL_DATA' => tr('Additional data'),
-		'TR_CUSTOMER_ID' => tr('Customer ID'),
-		'TR_FIRSTNAME' => tr('First name'),
-		'TR_LASTNAME' => tr('Last name'),
-		'TR_GENDER' => tr('Gender'),
-		'TR_MALE' => tr('Male'),
-		'TR_FEMALE' => tr('Female'),
-		'TR_UNKNOWN' => tr('Unknown'),
-		'TR_COMPANY' => tr('Company'),
-		'TR_POST_CODE' => tr('Zip'),
-		'TR_CITY' => tr('City'),
-		'TR_STATE_PROVINCE' => tr('State/Province'),
-		'TR_COUNTRY' => tr('Country'),
-		'TR_STREET1' => tr('Street 1'),
-		'TR_STREET2' => tr('Street 2'),
-		'TR_MAIL' => tr('Email'),
-		'TR_PHONE' => tr('Phone'),
-		'TR_FAX' => tr('Fax'),
-		'TR_BTN_ADD_USER' => tr('Add user')
-	)
-);
+$tpl->assign(array(
+	'TR_PAGE_TITLE' => tr('Reseller / Customers / Add Customer - Next Step'),
+	'TR_ADD_USER' => tr('Add user'),
+	'TR_CORE_DATA' => tr('Core data'),
+	'TR_USERNAME' => tr('Username'),
+	'TR_PASSWORD' => tr('Password'),
+	'TR_REP_PASSWORD' => tr('Repeat password'),
+	'TR_DOMAIN_IP' => tr('Domain IP'),
+	'TR_USREMAIL' => tr('Email'),
+	'TR_ADDITIONAL_DATA' => tr('Additional data'),
+	'TR_CUSTOMER_ID' => tr('Customer ID'),
+	'TR_FIRSTNAME' => tr('First name'),
+	'TR_LASTNAME' => tr('Last name'),
+	'TR_GENDER' => tr('Gender'),
+	'TR_MALE' => tr('Male'),
+	'TR_FEMALE' => tr('Female'),
+	'TR_UNKNOWN' => tr('Unknown'),
+	'TR_COMPANY' => tr('Company'),
+	'TR_POST_CODE' => tr('Zip'),
+	'TR_CITY' => tr('City'),
+	'TR_STATE_PROVINCE' => tr('State/Province'),
+	'TR_COUNTRY' => tr('Country'),
+	'TR_STREET1' => tr('Street 1'),
+	'TR_STREET2' => tr('Street 2'),
+	'TR_MAIL' => tr('Email'),
+	'TR_PHONE' => tr('Phone'),
+	'TR_FAX' => tr('Fax'),
+	'TR_BTN_ADD_USER' => tr('Add user')
+));
 
-if(!resellerHasFeature('domain_aliases')) {
+if (!resellerHasFeature('domain_aliases')) {
 	$tpl->assign('ALIAS_FEATURE', '');
 }
 
@@ -380,7 +344,5 @@ reseller_generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
-
+$eventManager->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();
