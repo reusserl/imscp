@@ -127,6 +127,7 @@ sub build
 		}
 	}
 
+	# Install pre-required packages
 	my $rs = _installPreRequiredPackages() unless $main::skippackages;
 	return $rs if $rs;
 

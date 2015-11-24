@@ -253,6 +253,10 @@ sub _rebuildVsFTPdDebianPackage
 	step(
 		sub {
 			my ($stdout, $stderr);
+			execute('apt-mark unhold vsftpd', \$stdout, \$stderr) == 0 or die(sprintf(
+				"Could not unset 'hold' state on the vsftpd package: %s", $stderr || 'Unknown error'
+			));
+			debug($stdout) if $stdout;
 			execute('apt-get -y source vsftpd', \$stdout, \$stderr) == 0 or die(sprintf(
 				'Could not get vsftpd source package: %s', $stderr || 'Unknown error'
 			));
@@ -329,6 +333,10 @@ sub _rebuildVsFTPdDebianPackage
 			my ($stdout, $stderr);
 			execute('dpkg --force-confnew -i vsftpd_*.deb', \$stdout, \$stderr) == 0 or die(sprintf(
 				'Could not install patched Ubuntu vsftpd package: %s', $stderr || 'Unknown error'
+			));
+			debug($stdout) if $stdout;
+			execute('apt-mark hold vsftpd', \$stdout, \$stderr) == 0 or die(sprintf(
+				"Could not set 'hold' state on the vsftpd package: %s", $stderr || 'Unknown error'
 			));
 			debug($stdout) if $stdout;
 			0;
