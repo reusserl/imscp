@@ -46,6 +46,7 @@ class ApsInstance
 	 * @ORM\GeneratedValue(strategy="IDENTITY")
 	 * @JMS\Type("integer")
 	 * @JMS\AccessType("property")
+	 * @JMS\Groups("List")
 	 */
 	private $id;
 
@@ -56,6 +57,7 @@ class ApsInstance
 	 *   @ORM\JoinColumn(name="package_id", referencedColumnName="id", onDelete="SET NULL")
 	 * })
 	 * @Assert\Valid()
+	 * @JMS\Type("iMSCP\ApsStandard\Entity\ApsPackage")
 	 */
 	private $package;
 
@@ -74,7 +76,8 @@ class ApsInstance
 	 * @var ArrayCollection
 	 * @ORM\OneToMany(targetEntity="iMSCP\ApsStandard\Entity\ApsInstanceSetting", mappedBy="instance", cascade={"persist"}, indexBy="name")
 	 * @Assert\Valid()
-	 * @JMS\Exclude()
+	 * @JMS\Type("ArrayCollection<string, iMSCP\ApsStandard\Entity\ApsInstanceSetting>")
+	 * @JMS\Groups("New")
 	 */
 	private $settings;
 
@@ -83,6 +86,7 @@ class ApsInstance
 	 * @ORM\Column(name="status", type="string", length=255, nullable=false)
 	 * @JMS\Type("string")
 	 * @Assert\Choice(choices = {"ok", "toadd", "tochange", "todelete"}, message = "Invalid status.")
+	 * @JMS\Groups("List")
 	 */
 	private $status;
 
@@ -152,7 +156,7 @@ class ApsInstance
 	 * Add the given setting to this instance
 	 *
 	 * @param ApsInstanceSetting $setting
-	 * @return $this
+	 * @return ApsInstance
 	 */
 	public function addSetting(ApsInstanceSetting $setting)
 	{
@@ -162,13 +166,18 @@ class ApsInstance
 	}
 
 	/**
-	 * Add instance settings
+	 * Set instance settings
 	 *
 	 * @param ApsInstanceSetting[] $settings
-	 * @return $this
+	 * @return ApsInstance
 	 */
-	public function addSettings(array $settings)
+	public function setSettings($settings)
 	{
+		// Must be done because serializer service don't call the constructor on deserialization
+		if(!$this->settings instanceof ArrayCollection) {
+			$this->settings = new ArrayCollection();
+		}
+
 		foreach ($settings as $setting) {
 			$this->addSetting($setting);
 		}
@@ -185,7 +194,7 @@ class ApsInstance
 	public function getSetting($name)
 	{
 		if (!isset($this->settings[$name])) {
-			throw new \InvalidArgumentException(sprintf("Unknown '%s' APS instance setting."));
+			throw new \InvalidArgumentException(sprintf("Unknown '%s' APS instance setting.", $name));
 		}
 
 		return $this->settings[$name];
@@ -198,7 +207,7 @@ class ApsInstance
 	 */
 	public function getSettings()
 	{
-		return $this->settings->toArray();
+		return $this->settings;
 	}
 
 	/**
@@ -238,10 +247,15 @@ class ApsInstance
 	 * Get instance location
 	 *
 	 * @JMS\VirtualProperty
-	 * @return string
+	 * @JMS\Groups("List")
+	 * @return string|null
 	 */
 	public function getLocation()
 	{
-		return 'http://' . $this->getSetting('__base_url_host__') . $this->getSetting('__base_url_path__');
+		if ($this->hasSetting('__base_url_host__') && $this->hasSetting('__base_url_path__')) {
+			return 'http://' . $this->getSetting('__base_url_host__')->getValue() . $this->getSetting('__base_url_path__')->getValue();
+		}
+
+		return null;
 	}
 }
