@@ -247,7 +247,7 @@ sub _rebuildVsFTPdDebianPackage
 			$buildir->make();
 			chdir '/usr/local/src/vsftpd' or die(sprintf('Could not change directory: %s', $!));
 			0;
-		}, 'Creating build directory for vsftpd package...', 7, 1
+		}, 'Creating build directory for i-MSCP vsftpd package...', 7, 1
 	);
 
 	step(
@@ -291,7 +291,7 @@ sub _rebuildVsFTPdDebianPackage
 			return $rs if $rs;
 
 			my $ret = execute("dpkg --compare-versions $stdout '<' 3", \$stdout, \$stderr);
-			! $stderr or die(sprintf('Could not compare version: %s'), $stderr);
+			! $stderr or die(sprintf('Could not compare vsftpd package version: %s', $stderr));
 
 			unless($ret) {
 				iMSCP::File->new( filename => "$self->{'cfgDir'}/imscp_allow_writeable_root.patch")->copyFile(
@@ -323,11 +323,11 @@ sub _rebuildVsFTPdDebianPackage
 				"Could not add 'imscp' local suffix to vsftpd package: %s", $stderr || 'Unknown error'
 			));
 			execute('dpkg-buildpackage -b', \$stdout, \$stderr) == 0 or die(sprintf(
-				'Could not build vsftpd package: %s', $stderr || 'Unknown error'
+				'Could not build i-MSCP vsftpd package: %s', $stderr || 'Unknown error'
 			));
 			debug($stdout) if $stdout;
 			0;
-		}, 'Building new vsftpd package...', 7, 5
+		}, 'Building i-MSCP vsftpd package...', 7, 5
 	);
 
 	step(
@@ -339,18 +339,18 @@ sub _rebuildVsFTPdDebianPackage
 			));
 			debug($stdout) if $stdout;
 			execute('apt-mark hold vsftpd', \$stdout, \$stderr) == 0 or die(sprintf(
-				"Could not set 'hold' state on the vsftpd package: %s", $stderr || 'Unknown error'
+				"Could not set 'hold' state on the i-MSCP vsftpd package: %s", $stderr || 'Unknown error'
 			));
 			debug($stdout) if $stdout;
 			0;
-		}, 'Installing new vsftpd package...', 7, 6
+		}, 'Installing i-MSCP vsftpd package...', 7, 6
 	);
 
 	step(
 		sub {
 			chdir $oldDir or die(sprintf('Could not change directory: %s', $!));
 			iMSCP::Dir->new( dirname => '/usr/local/src/vsftpd' )->remove();
-		}, 'Removing vsftpd package build directory', 7, 7
+		}, 'Removing i-MSCP vsftpd package build directory', 7, 7
 	);
 
 	endDetail();
