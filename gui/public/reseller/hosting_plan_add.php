@@ -250,7 +250,7 @@ function reseller_generateErrorPage($tpl, $phpini)
 		)
 	);
 
-	if(resellerHasFeature('aps')) {
+	if(resellerHasFeature('aps_standard')) {
 		$tpl->assign(
 			array(
 				'TR_APS_STANDARD_YES' => ($apsStandard == '_yes_') ? $checked : '',
@@ -314,7 +314,7 @@ function reseller_checkData($phpini)
 	$php = ($php == '_yes_') ? '_yes_' : '_no_';
 	$cgi = ($cgi == '_yes_') ? '_yes_' : '_no_';
 	$dns = ($dns == '_yes_') ? '_yes_' : '_no_';
-	$apsStandard = (resellerHasFeature('aps') && $apsStandard == '_yes_') ? '_yes_' : '_no_';
+	$apsStandard = (resellerHasFeature('aps_standard') && $apsStandard == '_yes_') ? '_yes_' : '_no_';
 	$backup = resellerHasFeature('backup') ? array_intersect($backup, array('_dmn_', '_sql_', '_mail_')) : array();
 	$extMail = ($extMail == '_yes_') ? '_yes_' : '_no_';
 	$webFolderProtection = ($webFolderProtection == '_yes_') ? '_yes_' : '_no_';

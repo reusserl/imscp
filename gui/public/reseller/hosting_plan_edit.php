@@ -294,7 +294,7 @@ function reseller_generateErrorPage($tpl, $phpini)
 		)
 	);
 
-	if(resellerHasFeature('aps')) {
+	if(resellerHasFeature('aps_standard')) {
 		$tpl->assign(
 			array(
 				'APS_STANDARD_YES' => ($apsStandard == '_yes_') ? $checked : '',
