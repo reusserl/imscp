@@ -374,21 +374,27 @@ sub deleteDmn
 		clearImmutable($parentDir);
 		clearImmutable($data->{'WEB_DIR'}, 'recursive');
 
-		iMSCP::Dir->new( dirname => $data->{'WEB_DIR'} )->remove();;
+		# In the current implementation, the 'dmn' domain type also means 'homedir' for the folder. Thus, the folder
+		# deletion must be done by the 'User' module which is the real provider. This will be fixed in version 1.4 when
+		# we will redesign the Web folder structure. Deleting the folder here would result to a 'Device or resource busy'
+		# error because the folder is mounted on itself by the 'User' module.
+		unless($data->{'DOMAIN_TYPE'} eq 'dmn') {
+			iMSCP::Dir->new( dirname => $data->{'WEB_DIR'} )->remove();
 
-		if($parentDir ne $userWebDir) {
-			my $dir = iMSCP::Dir->new( dirname => $parentDir );
+			if($parentDir ne $userWebDir) {
+				my $dir = iMSCP::Dir->new( dirname => $parentDir );
 
-			if($dir->isEmpty()) {
-				clearImmutable(dirname($parentDir));
-				$dir->remove();
+				if($dir->isEmpty()) {
+					clearImmutable(dirname($parentDir));
+					$dir->remove();
+				}
 			}
-		}
 
-		if($data->{'WEB_FOLDER_PROTECTION'} eq 'yes' && $parentDir ne $userWebDir) {
-			do {
-				setImmutable($parentDir) if -d $parentDir;
-			} while (($parentDir = dirname($parentDir)) ne $userWebDir);
+			if($data->{'WEB_FOLDER_PROTECTION'} eq 'yes' && $parentDir ne $userWebDir) {
+				do {
+					setImmutable($parentDir) if -d $parentDir;
+				} while (($parentDir = dirname($parentDir)) ne $userWebDir);
+			}
 		}
 	}
 

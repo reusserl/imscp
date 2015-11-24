@@ -254,7 +254,7 @@ sub delete
 	$rs = iMSCP::SystemUser->new('force' => 'yes')->delSystemUser($userName);
 	return $rs if $rs;
 
-	# Only needed to cover the case where the admin added other users to the unix group
+	# Needed because group is not removed when it has other members
 	$rs = iMSCP::SystemGroup->getInstance()->delSystemGroup($groupName);
 	return $rs if $rs;
 
