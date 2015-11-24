@@ -335,7 +335,7 @@ sub _rebuildVsFTPdDebianPackage
 			chdir '..' or die(sprintf('Could not change directory: %s', $!));
 			my ($stdout, $stderr);
 			execute('dpkg --force-confnew -i vsftpd_*.deb', \$stdout, \$stderr) == 0 or die(sprintf(
-				'Could not install patched Ubuntu vsftpd package: %s', $stderr || 'Unknown error'
+				'Could not install i-MSCP patched vsftpd package: %s', $stderr || 'Unknown error'
 			));
 			debug($stdout) if $stdout;
 			execute('apt-mark hold vsftpd', \$stdout, \$stderr) == 0 or die(sprintf(
@@ -381,7 +381,7 @@ sub _setVersion
 		$self->{'config'}->{'VSFTPD_VERSION'} = $1;
 		debug("vsftpd version set to: $1");
 	} else {
-		error('Unable to parse vsftpd version from vsftpd version string');
+		error('Could not parse vsftpd version from vsftpd version string');
 		return 1;
 	}
 
