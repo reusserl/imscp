@@ -319,6 +319,9 @@ sub _rebuildVsFTPdDebianPackage
 	step(
 		sub {
 			my ($stdout, $stderr);
+			execute("dch --local imscp 'i-MSCP patched version.'", \$stdout, \$stderr) == 0 or die(sprintf(
+				"Could not add 'imscp' local suffix to vsftpd package: %s", $stderr || 'Unknown error'
+			));
 			execute('dpkg-buildpackage -b', \$stdout, \$stderr) == 0 or die(sprintf(
 				'Could not build vsftpd package: %s', $stderr || 'Unknown error'
 			));
