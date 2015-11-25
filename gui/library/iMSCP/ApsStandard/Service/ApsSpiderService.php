@@ -67,15 +67,15 @@ class ApsSpiderService extends ApsAbstractService
 					unset($repoIndex);
 
 					if ($repoFeedUrl != '') { // Ignore invalid repository entry
-						$knownPackages = array();
-						$unlockedPackages = array();
+						$knownPackages = [];
+						$unlockedPackages = [];
 
 						// Get list of known packages for this repository
 						/** @var  ApsPackage $package */
 						foreach (
-							$this->getEntityManager()->getRepository('Aps:ApsPackage')->findBy(array(
+							$this->getEntityManager()->getRepository('Aps:ApsPackage')->findBy([
 								'apsVersion' => $repoId
-							)) as $package
+							]) as $package
 						) {
 							$name = $package->getName();
 							$knownPackages[$name] = $package;
@@ -102,6 +102,11 @@ class ApsSpiderService extends ApsAbstractService
 					}
 				}
 			}
+
+			if (PHP_SAPI == 'cli') {
+				fwrite(STDOUT, "Works done.\nDon't forget to restart the imscp_panel service to flush cache entries.\n");
+				exit(0);
+			}
 		} catch (\Exception $e) {
 			if (PHP_SAPI == 'cli') {
 				fwrite(STDERR, $e->getMessage() . "\n");
@@ -125,7 +130,6 @@ class ApsSpiderService extends ApsAbstractService
 	/**
 	 * Parse the given repository feed page and extract/download package metadata
 	 *
-	 * @throws \Doctrine\DBAL\DBALException
 	 * @param ApsDocument $repositoryFeed Document representing APS repository feed
 	 * @param string $repositoryId Repository identifier (e.g. 1, 1.1, 1.2, 2.0 ...)
 	 * @param ApsPackage[] &$knownPackages List of known packages in the repository
@@ -136,7 +140,7 @@ class ApsSpiderService extends ApsAbstractService
 	{
 		$entityManager = $this->getEntityManager();
 		$metadataDir = $this->getPackageMetadataDir() . '/' . $repositoryId;
-		$toDownloadFiles = array();
+		$toDownloadFiles = [];
 
 		// Parse all package entries
 		foreach ($repositoryFeed->getXPathValue('root:entry', null, false) as $entry) {
@@ -207,17 +211,17 @@ class ApsSpiderService extends ApsAbstractService
 
 					// Schedule download of package license file if any
 					if ($licenseURL != '') {
-						$toDownloadFiles[$name . '_license'] = array(
+						$toDownloadFiles[$name . '_license'] = [
 							'src' => $licenseURL,
 							'trg' => "$packageMetadataDir/LICENSE"
-						);
+						];
 					}
 
 					// Schedule download of package APP-META.xml file
-					$toDownloadFiles[$name . '_meta'] = array(
+					$toDownloadFiles[$name . '_meta'] = [
 						'src' => $metaURL,
 						'trg' => "$packageMetadataDir/APP-META.xml"
-					);
+					];
 				}
 			}
 		}
@@ -240,7 +244,7 @@ class ApsSpiderService extends ApsAbstractService
 		$entityManager = $this->getEntityManager();
 
 		// Retrieve list of all available packages on the file system
-		$fsPackages = array();
+		$fsPackages = [];
 		foreach (new \DirectoryIterator($metadataDir) as $fileInfo) {
 			if (!$fileInfo->isDot() && $fileInfo->isDir()) {
 				$fsPackages[] = $fileInfo->getFileName();
@@ -260,10 +264,13 @@ class ApsSpiderService extends ApsAbstractService
 
 					if (
 						// Ignore aspnet packages
-						$meta->getXPathValue('//aspnet:*', null, false)->length == 0 &&
-
 						// Ignore packages which require global settings (not supported ATM)
-						$meta->getXPathValue('root:global-settings', null, false)->length == 0
+						// Ignore packages which define 'list' or 'hidden' setting(s) (not supported ATM)
+						$meta->getXPathValue(
+							'//aspnet:*|//root:global-settings|//root:setting[@type="list"]|//root:setting[@visibility="hidden"]',
+							null,
+							false
+						)->length == 0
 					) {
 						$summary = $meta->getXPathValue('//root:summary/text()');
 						$category = $meta->getXPathValue('//root:category/text()');
@@ -287,13 +294,13 @@ class ApsSpiderService extends ApsAbstractService
 		// Remove obsolete and outdated packages
 		/** @var  ApsPackage $package */
 		foreach (
-			$this->getEntityManager()->getRepository('Aps:ApsPackage')->findBy(array(
+			$this->getEntityManager()->getRepository('Aps:ApsPackage')->findBy([
 				'apsVersion' => $repoId,
-				'status' => array('obsolete', 'outdated')
-			)) as $package
+				'status' => ['obsolete', 'outdated']
+			]) as $package
 		) {
 			// Remove package only if it is not used by an application instance
-			if (!$entityManager->getRepository('Aps:ApsInstance')->findOneBy(array('package' => $package))) {
+			if (!$entityManager->getRepository('Aps:ApsInstance')->findOneBy(['package' => $package])) {
 				if ($package->isObsolete()) {
 					utils_removeDir($metadataDir . '/' . $package->getName()); // Remove package metadata
 				}
@@ -326,8 +333,8 @@ class ApsSpiderService extends ApsAbstractService
 		$files = array_chunk($files, 20); // Download 20 files at a time
 
 		foreach ($files as $chunk) {
-			$fileHandles = array();
-			$curlHandles = array();
+			$fileHandles = [];
+			$curlHandles = [];
 			$curlMultiHandle = curl_multi_init();
 
 			// Create cURL handles (one per file) and add them to cURL multi handle
@@ -339,7 +346,7 @@ class ApsSpiderService extends ApsAbstractService
 					throw new \RuntimeException('Could not create cURL or file handle');
 				}
 
-				curl_setopt_array($curlHandle, array(
+				curl_setopt_array($curlHandle, [
 					CURLOPT_BINARYTRANSFER => true,
 					CURLOPT_RETURNTRANSFER => true,
 					CURLOPT_FILE => $fileHandle,
@@ -352,7 +359,7 @@ class ApsSpiderService extends ApsAbstractService
 					CURLOPT_SSL_VERIFYPEER => true,
 					CURLOPT_CAINFO => $distroCAbundle,
 					CURLOPT_CAPATH => $distroCApath
-				));
+				]);
 
 				$curlHandles[$i] = $curlHandle;
 				$fileHandles[$i] = $fileHandle;
