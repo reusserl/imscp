@@ -22,7 +22,7 @@ namespace iMSCP\Service;
 
 use iMSCP\Doctrine\Persistence\ManagerRegistry;
 use iMSCP_Registry as Registry;
-use JMS\Serializer\Construction\DoctrineObjectConstructor;
+use iMSCP\Serializer\Construction\DoctrineObjectConstructor;
 use JMS\Serializer\Construction\UnserializeObjectConstructor;
 use JMS\Serializer\JsonDeserializationVisitor;
 use JMS\Serializer\JsonSerializationVisitor;
