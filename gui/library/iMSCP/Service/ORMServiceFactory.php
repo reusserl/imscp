@@ -52,14 +52,18 @@ class ORMServiceFactory implements FactoryInterface
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
+		/** @var  \Doctrine\DBAL\Connection $connection */
+		$connection = $serviceLocator->get('DBALConnection');
+
 		// Get main configuration object
 		$mainConfig = Registry::get('config');
 
 		// Set devmode mode flag
-		$devmode = (bool)$mainConfig['DEVMODE'];
+		$devmode = (bool)!$mainConfig['DEVMODE'];
 
 		// Create new ORM configuration object
-		$ORMConfig = new Configuration();
+		/** @var Configuration $ORMConfig */
+		$ORMConfig = $connection->getConfiguration();
 
 		// Get common cache object
 		$cacheImpl = $this->getCacheDriverInstance($devmode, 'imscp_');
@@ -84,9 +88,6 @@ class ORMServiceFactory implements FactoryInterface
 			'Aps' => 'iMSCP\\ApsStandard\\Entity'
 		]);
 
-		// Ignore tables which are not managed through ORM service
-		$ORMConfig->setFilterSchemaAssetsExpression('/^(?:admin|aps_.*)$/');
-
 		// Setup caches
 		$ORMConfig->setHydrationCacheImpl($cacheImpl);
 		$ORMConfig->setMetadataCacheImpl($cacheImpl);
@@ -100,20 +101,7 @@ class ORMServiceFactory implements FactoryInterface
 		$ORMConfig->setSecondLevelCacheEnabled(true);
 		$ORMConfig->getSecondLevelCacheConfiguration()->setCacheFactory($cacheFactory);
 
-		// Setup entity manager
-		/** @var \PDO $pdo */
-		$pdo = $serviceLocator->get('Database')->getRawInstance();
-		$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['Doctrine\\DBAL\\Driver\\PDOStatement', []]);
-		$entityManager = EntityManager::create(
-			[
-				'pdo' => $pdo, // Reuse PDO instance from Database service
-				'host' => $mainConfig['DATABASE_HOST'], // Only there for later referral through connection object
-				'port' => $mainConfig['DATABASE_PORT'] // Only there for later referral through connection object
-			],
-			$ORMConfig
-		);
-
-		return $entityManager;
+		return EntityManager::create($connection, $ORMConfig);
 	}
 
 	/**
