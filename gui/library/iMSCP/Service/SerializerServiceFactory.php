@@ -45,7 +45,7 @@ class SerializerServiceFactory implements FactoryInterface
 	{
 		/** @var ManagerRegistry $managerRegistry */
 		$managerRegistry = $serviceLocator->get('ManagerRegistry');
-		$objectConstructor = new DoctrineObjectConstructor($managerRegistry, New UnserializeObjectConstructor());
+		$objectConstructor = new DoctrineObjectConstructor($managerRegistry, new UnserializeObjectConstructor());
 
 		$config = Registry::get('config');
 		$serializer = SerializerBuilder::create()

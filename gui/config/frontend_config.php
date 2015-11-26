@@ -19,40 +19,44 @@
  */
 
 // Service manager configuration file
-return array(
+return [
 	// Service manager (service locator) configuration
-	'service_manager' => array(
-		'invokables' => array(
+	'service_manager' => [
+		'invokables' => [
 			'ApsDependentObjectsDeletionListener' => 'iMSCP\\ApsStandard\\Listener\\ApsDependentObjectsDeletionListener',
 			'EncryptionDataService' => 'iMSCP\\Service\\EncryptionDataService'
-		),
+		],
 
-		'factories' => array(
+		'factories' => [
 			// Common services
 			'Database' => 'iMSCP\\Service\\DatabaseServiceFactory',
+			'DBALConnection' => 'iMSCP\\Service\\DBALConnectionFactory',
 			'ORM' => 'iMSCP\\Service\\ORMServiceFactory',
+			'ManagerRegistry' => 'iMSCP\\Service\\ManagerRegistryFactory',
 			'Request' => 'iMSCP\\Service\\HttpRequestServiceFactory',
 			'Response' => 'iMSCP\\Service\\HttpResponseServiceFactory',
 			'Serializer' => 'iMSCP\\Service\\SerializerServiceFactory',
 			'Translator' => 'iMSCP\\Service\\TranslatorServiceFactory',
 			'Validator' => 'iMSCP\\Service\\ValidatorServiceFactory'
-		),
+		],
 
-		'abstract_factories' => array(
+		'abstract_factories' => [
 			// Abstract factory for APS standard controllers
 			'iMSCP\\ApsStandard\\Controller\\ApsControllerAbstractFactory',
 
 			// Abstract factory for APS standard services
 			'iMSCP\\ApsStandard\\Service\\ApsServiceAbstractFactory'
-		),
+		],
 
-		'aliases' => array(
-			'EntityManager' => 'ORM'
-		)
-	),
+		'aliases' => [
+			'EntityManager' => 'ORM',
+			'default_manager' => 'ORM',
+			'default_connection' => 'DBALConnection'
+		]
+	],
 
 	// Listener aggregates
-	'listeners' => array(
+	'listeners' => [
 		'ApsDependentObjectsDeletionListener'
-	)
-);
+	]
+];
