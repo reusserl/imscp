@@ -138,7 +138,7 @@ class Initializer
 		$this->initializeLocalization();
 		$this->initializeLayout();
 		$this->initializeNavigation();
-		$this->initializeOutputBuffering();
+		//$this->initializeOutputBuffering(); // This is actually done by nginx using ngx_http_gzip_module
 		$this->checkForDatabaseUpdate();
 		$this->initializePlugins();
 
