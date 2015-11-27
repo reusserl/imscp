@@ -73,6 +73,8 @@ class iMSCP_Exception_Writer_Browser extends iMSCP_Exception_Writer_Abstract
 
 			$this->message .= preg_replace('#([\t\n]+|<br \/>)#', ' ', $exception->getMessage());
 
+			$this->message .= "\n\nTrace:\n\n" . $exception->getTraceAsString();
+
 			/** @var $exception iMSCP_Exception_Database */
 			if($exception instanceof iMSCP_Exception_Database) {
 				$query = $exception->getQuery();
