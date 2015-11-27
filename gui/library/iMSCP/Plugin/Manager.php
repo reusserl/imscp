@@ -1059,7 +1059,7 @@ class iMSCP_Plugin_Manager
 	 */
 	public function pluginIsProtected($name)
 	{
-		if ($this->pluginIsKnown($name)) {
+		if (!$this->pluginIsKnown($name)) {
 			write_log(sprintf('Plugin Manager: Unknown plugin %s', $name), E_USER_ERROR);
 			throw new iMSCP_Plugin_Exception(sprintf('Plugin Manager: Unknown plugin %s', $name));
 		}
