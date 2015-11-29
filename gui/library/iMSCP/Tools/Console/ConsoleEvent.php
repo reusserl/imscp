@@ -18,15 +18,39 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-use iMSCP_Registry as Registry;
-use iMSCP\Tools\Console\ConsoleEvent;
+namespace iMSCP\Tools\Console;
 
-chdir(__DIR__);
+use iMSCP_Events_Event  as Event;
+use Symfony\Component\Console\Command\Command;
 
-require_once '../library/imscp-lib.php';
+/**
+ * Class ConsoleEvent
+ * @package iMSCP\Tools\Console
+ */
+class ConsoleEvent extends Event
+{
+	/**
+	 * @var Command[]
+	 */
+	protected $commands = [];
 
-$consoleEvent = new ConsoleEvent();
-iMSCP_Events_Aggregator::getInstance()->dispatch(new ConsoleEvent());
-$cli = iMSCP\Tools\Console\ConsoleRunner::createApplication(
-	iMSCP\Tools\Console\ConsoleRunner::createHelperSet(Registry::get('ServiceManager')), $consoleEvent->getCommands()
-)->run();
+	/**
+	 * Add command
+	 *
+	 * @param Command $command
+	 */
+	public function addCommand(Command $command)
+	{
+		$this->commands[] = $command;
+	}
+
+	/**
+	 * Get commands
+	 *
+	 * @return Command[]
+	 */
+	public function getCommands()
+	{
+		return $this->commands;
+	}
+}

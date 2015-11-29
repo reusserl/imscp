@@ -36,9 +36,9 @@ class UpdatePackageIndexCommand extends Command
 	protected function configure()
 	{
 		$this->setName('imscp:aps:update:package:index')
-			->setDescription('Update APS standard package index')
+			->setDescription('Update i-MSCP APS standard package index')
 			->setHelp(<<<EOT
-The <info>imscp:aps-standard:update-package-index</info> command update APS standard package index:
+The <info>imscp:aps-standard:update-package-index</info> command update i-MSCP APS standard package index:
 
   <info>imscp:aps-standard:update-package-index</info>
 
@@ -52,6 +52,6 @@ EOT
 	protected function execute(InputInterface $input, OutputInterface $output)
 	{
 		$this->getHelper('sm')->get('ApsSpiderService')->exploreCatalog();
-		$output->writeln('APS standard package index updated successfully!');
+		$output->writeln('i-MSCP APS standard package index updated successfully!');
 	}
 }
