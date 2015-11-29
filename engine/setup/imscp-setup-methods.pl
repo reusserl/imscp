@@ -1277,15 +1277,9 @@ sub setupUpdateDatabase
 {
 	iMSCP::EventManager->getInstance()->trigger('beforeSetupUpdateDatabase');
 
-	my $file = iMSCP::File->new( filename => "$main::imscpConfig{'ROOT_DIR'}/engine/setup/updDB.php" );
-	my $content = $file->get();
-
-	if($content =~ s/\{GUI_ROOT_DIR\}/$main::imscpConfig{'GUI_ROOT_DIR'}/) {
-		$file->set($content);
-		$file->save();
-	}
-
-	my $rs = execute("php $main::imscpConfig{'ROOT_DIR'}/engine/setup/updDB.php", \my $stdout, \my $stderr);
+	my $rs = execute(
+		"php $main::imscpConfig{'GUI_ROOT_DIR'}/bin/imscp.php --no-ansi imscp:update:database", \my $stdout, \my $stderr
+	);
 	debug($stdout) if $stdout;
 	error($stderr) if $rs && $stderr;
 	return $rs if $rs;
