@@ -43,6 +43,7 @@ use Doctrine\ORM\Tools\Console\Command\ValidateSchemaCommand;
 use Doctrine\ORM\Tools\Console\Helper\EntityManagerHelper;
 use iMSCP\ApsStandard\Command\UpdatePackageIndexCommand as ApsUpdatePackageIndexCommand;
 use iMSCP\Tools\Console\Helper\ServiceManagerHelper;
+use iMSCP\Translation\Command\BuildLanguageIndexCommand;
 use iMSCP\Update\Command\UpdateDatabaseCommand;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Helper\HelperSet;
@@ -117,6 +118,7 @@ class ConsoleRunner
 			#
 
 			new ApsUpdatePackageIndexCommand(),
+			new BuildLanguageIndexCommand(),
 			new UpdateDatabaseCommand(),
 
 			#

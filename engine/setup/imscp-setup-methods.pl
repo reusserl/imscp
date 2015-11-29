@@ -161,21 +161,22 @@ sub setupTasks
 	umount($main::imscpConfig{'USER_WEB_DIR'});
 
 	my @steps = (
-		[ \&setupSaveOldConfig,           'Saving old configuration file' ],
-		[ \&setupWriteNewConfig,          'Writing new configuration file' ],
-		[ \&setupCreateMasterGroup,       'Creating system master group' ],
-		[ \&setupCreateSystemDirectories, 'Creating system directories' ],
-		[ \&setupServerHostname,          'Setting server hostname' ],
-		[ \&setupCreateDatabase,          'Creating/updating i-MSCP database' ],
-		[ \&setupSecureSqlInstallation,   'Securing SQL installation' ],
-		[ \&setupServerIps,               'Setting server IP addresses' ],
-		[ \&setupDefaultAdmin,            'Creating/updating default admin account' ],
-		[ \&setupServices,                'Setup services' ],
-		[ \&setupServiceSsl,              'Setup SSL for i-MSCP services' ],
-		[ \&setupServersAndPackages,      'Setup servers/packages' ],
-		[ \&setupSetPermissions,          'Setting permissions' ],
-		[ \&setupRebuildCustomerFiles,    'Rebuilding customers files' ],
-		[ \&setupRestartServices,         'Restarting services' ]
+		[ \&setupSaveOldConfig,              'Saving old configuration file' ],
+		[ \&setupWriteNewConfig,             'Writing new configuration file' ],
+		[ \&setupCreateMasterGroup,          'Creating system master group' ],
+		[ \&setupCreateSystemDirectories,    'Creating system directories' ],
+		[ \&setupServerHostname,             'Setting server hostname' ],
+		[ \&setupCreateDatabase,             'Creating/updating i-MSCP database' ],
+		[ \&setupSecureSqlInstallation,      'Securing SQL installation' ],
+		[ \&setupServerIps,                  'Setting server IP addresses' ],
+		[ \&setupDefaultAdmin,               'Creating/updating default admin account' ],
+		[ \&setupServices,                   'Setup services' ],
+		[ \&setupServiceSsl,                 'Setup SSL for i-MSCP services' ],
+		[ \&setupServersAndPackages,         'Setup servers/packages' ],
+		[ \&setupSetPermissions,             'Setting permissions' ],
+		[ \&setupBuildFrontendLanguageIndex, 'Setting permissions' ],
+		[ \&setupRebuildCustomerFiles,       'Rebuilding customers files' ],
+		[ \&setupRestartServices,            'Restarting services' ]
 	);
 
 	my ($nStep, $nSteps) = (0, scalar @steps);
@@ -1468,6 +1469,18 @@ sub setupSetPermissions
 
 	$main::imscpConfig{'DEBUG'} = $debug;
 	iMSCP::EventManager->getInstance()->trigger('afterSetupSetPermissions');
+}
+
+sub setupBuildFrontendLanguageIndex
+{
+	my $rs = execute(
+		"php $main::imscpConfig{'GUI_ROOT_DIR'}/bin/imscp.php --no-ansi imscp:aps:update:package:index",
+		\my $stdout,
+		\my $stderr
+	);
+	debug($stdout) if $stdout;
+	error($stderr) if $rs && $stderr;
+	return $rs if $rs;
 }
 
 sub setupRebuildCustomerFiles
