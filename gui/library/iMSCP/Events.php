@@ -1327,4 +1327,13 @@ class iMSCP_Events
 	 * @see i18n_getJsTranslations() for more details
 	 */
 	const onGetJsTranslations = 'onGetJsTranslations';
+
+	/**
+	 * The onCreateConsoleHelperSet event is triggered before the i-MSCP Frontend Command Line Tool helper set is created.
+	 *
+	 * This event allow 3rd-party components to add their own commands into the i-MSCP Frontend Command Line Tool.
+	 *
+	 * The listeners receive an iMSCP\Tools\Console\ConsoleEvent object
+	 */
+	const onBeforeCreateConsoleHelperSet = 'onBeforeCreateConsoleHelperSet';
 }
