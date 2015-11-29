@@ -1474,7 +1474,7 @@ sub setupSetPermissions
 sub setupBuildFrontendLanguageIndex
 {
 	my $rs = execute(
-		"php $main::imscpConfig{'GUI_ROOT_DIR'}/bin/imscp.php --no-ansi imscp:aps:update:package:index",
+		"php $main::imscpConfig{'GUI_ROOT_DIR'}/bin/imscp.php --no-ansi imscp:build:language:index",
 		\my $stdout,
 		\my $stderr
 	);
