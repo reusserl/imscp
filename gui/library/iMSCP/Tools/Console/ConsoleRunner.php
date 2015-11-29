@@ -41,7 +41,7 @@ use Doctrine\ORM\Tools\Console\Command\SchemaTool\DropCommand;
 use Doctrine\ORM\Tools\Console\Command\SchemaTool\UpdateCommand;
 use Doctrine\ORM\Tools\Console\Command\ValidateSchemaCommand;
 use Doctrine\ORM\Tools\Console\Helper\EntityManagerHelper;
-use iMSCP\ApsStandard\Command\UpdatePackageIndexCommand;
+use iMSCP\ApsStandard\Command\UpdatePackageIndexCommand as ApsUpdatePackageIndexCommand;
 use iMSCP\Tools\Console\Helper\ServiceManagerHelper;
 use iMSCP\Update\Command\UpdateDatabaseCommand;
 use Symfony\Component\Console\Application;
@@ -104,8 +104,9 @@ class ConsoleRunner
 	}
 
 	/**
-	 * @param Application $cli
+	 * Add commands
 	 *
+	 * @param Application $cli
 	 * @return void
 	 */
 	static public function addCommands(Application $cli)
@@ -115,8 +116,8 @@ class ConsoleRunner
 			# i-MSCP commands
 			#
 
+			new ApsUpdatePackageIndexCommand(),
 			new UpdateDatabaseCommand(),
-			new UpdatePackageIndexCommand(),
 
 			#
 			# Doctrine commands
@@ -142,7 +143,7 @@ class ConsoleRunner
 			new RunDqlCommand(),
 			new ValidateSchemaCommand(),
 			new InfoCommand(),
-			new MappingDescribeCommand(),
+			new MappingDescribeCommand()
 		]);
 	}
 }

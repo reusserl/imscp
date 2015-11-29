@@ -18,10 +18,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP;
-
 use iMSCP_Registry as Registry;
 
 chdir(__DIR__);
+
 require_once '../library/imscp-lib.php';
-require_once Registry::get('config')->CACHE_DATA_DIR . '/packages/vendor/doctrine/orm/bin/doctrine.php';
+
+iMSCP\Tools\Console\ConsoleRunner::run(
+	iMSCP\Tools\Console\ConsoleRunner::createHelperSet(Registry::get('ServiceManager'))
+);

@@ -56,7 +56,7 @@ EOT
 		// Update database schema (for tables which are not yet managed through ORM)
 		DatabaseUpdater::getInstance()->applyUpdates();
 
-		// Update database schema (for table which are managed through ORM)
+		// Update database schema (for tables which are managed through ORM)
 		$this->getApplication()->find('orm:schema-tool:update')->run(
 			new ArrayInput(['command' => 'orm:schema-tool:update', '-f' => true]), $output
 		);
