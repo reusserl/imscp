@@ -21,6 +21,8 @@
 namespace iMSCP\ApsStandard\Listener;
 
 use Doctrine\ORM\EntityManager;
+use iMSCP\ApsStandard\Command\UpdatePackageIndexCommand;
+use iMSCP\Tools\Console\ConsoleEvent;
 use iMSCP_Events_Event as Event;
 use iMSCP_Events as Events;
 use iMSCP_Events_Listener as Listener;
@@ -30,10 +32,10 @@ use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class ApsDependentObjectsDeletionListener
+ * Class ApsStandardListener
  * @package iMSCP\ApsStandard\Listener
  */
-class ApsDependentObjectsDeletionListener implements ListenerAggregateInterface, ServiceLocatorAwareInterface
+class ApsStandardListener implements ListenerAggregateInterface, ServiceLocatorAwareInterface
 {
 	/**
 	 * @var ServiceLocatorInterface
@@ -84,8 +86,12 @@ class ApsDependentObjectsDeletionListener implements ListenerAggregateInterface,
 		);
 
 		$this->listeners[] = $eventManager->registerListener(
-			Events::onBeforeDeleteSqlUser, [$this, 'onDeleteDependentSqlUser'], 99
+			Events::onBeforeCreateConsoleHelperSet, [$this, 'onBeforeCreateConsoleHelperSet']
 		);
+
+		#$this->listeners[] = $eventManager->registerListener(
+		#	Events::onBeforeDeleteSqlUser, [$this, 'onDeleteDependentSqlUser'], 99
+		#);
 	}
 
 	/**
@@ -113,11 +119,16 @@ class ApsDependentObjectsDeletionListener implements ListenerAggregateInterface,
 		$em = $this->getServiceLocator()->get('EntityManager');
 		$qb1 = $em->createQueryBuilder();
 		$qb2 = $em->createQueryBuilder();
-		$qb2->delete('Aps:ApsInstance', 'i')->where($qb2->expr()->in('i.id', $qb1->select('IDENTITY(s.instance)')
-			->from('Aps:ApsInstanceSetting', 's')
-			->where($qb1->expr()->eq('s.name', $qb1->expr()->literal('__base_url_host__')))
-			->andWhere($qb1->expr()->eq('s.value', '?0'))->getDQL()
-		));
+		$qb2
+			->delete('Aps:ApsInstance', 'i')
+			->where(
+				$qb2->expr()->in('i.id', $qb1
+					->select('IDENTITY(s.instance)')
+					->from('Aps:ApsInstanceSetting', 's')
+					->where($qb1->expr()->eq('s.name', $qb1->expr()->literal('__base_url_host__')))
+					->andWhere($qb1->expr()->eq('s.value', '?0'))->getDQL()
+				)
+			);
 
 		switch ($event->getName()) {
 			case Events::onBeforeDeleteDomainAlias:
@@ -141,7 +152,8 @@ class ApsDependentObjectsDeletionListener implements ListenerAggregateInterface,
 		/** @var EntityManager $em */
 		$em = $this->getServiceLocator()->get('EntityManager');
 		$qb = $em->createQueryBuilder();
-		$qb->delete('Aps:ApsInstance', 'i')
+		$qb
+			->delete('Aps:ApsInstance', 'i')
 			->where($qb->expr()->eq('i.owner', '?0'))
 			->getQuery()->execute([$event->getParam('customerId')]);
 
@@ -172,27 +184,38 @@ class ApsDependentObjectsDeletionListener implements ListenerAggregateInterface,
 		return true;
 	}
 
+#	/**
+#	 * Prevent deletion of dependent SQL user
+#	 *
+#	 * @param Event $event
+#	 * @return bool TRUE on success, FALSE on failure
+#	 */
+#
+#	public function onDeleteDependentSqlUser(Event $event)
+#	{
+#		/** @var EntityManager $em */
+#		$em = $this->getServiceLocator()->get('EntityManager');
+#		$result = $em->getRepository('Aps:ApsInstanceSetting')->findOneBy([
+#			'name' => '__db_user__',
+#			'value' => $event->getParam('sqlUserName')
+#		]);
+#
+#		if ($result !== null) {
+#			set_page_message(tr('This SQL user is assigned to an application instance. You cannot delete it.'), 'error');
+#			$event->stopPropagation();
+#			return false;
+#		}
+#
+#		return true;
+#	}
+
 	/**
-	 * Prevent deletion of dependent SQL user
+	 * Register APS standard commands in i-MSCP Frontend Command Line Tool
 	 *
-	 * @param Event $event
-	 * @return bool TRUE on success, FALSE on failure
+	 * @param ConsoleEvent $event
 	 */
-	public function onDeleteDependentSqlUser(Event $event)
+	public function onBeforeCreateConsoleHelperSet(ConsoleEvent $event)
 	{
-		/** @var EntityManager $em */
-		$em = $this->getServiceLocator()->get('EntityManager');
-		$result = $em->getRepository('Aps:ApsInstanceSetting')->findOneBy([
-			'name' => '__db_user__',
-			'value' => $event->getParam('sqlUserName')
-		]);
-
-		if ($result !== null) {
-			set_page_message(tr('This SQL user is assigned to an application instance. You cannot delete it.'), 'error');
-			$event->stopPropagation();
-			return false;
-		}
-
-		return true;
+		$event->addCommand(new UpdatePackageIndexCommand());
 	}
 }

@@ -23,7 +23,7 @@ return [
 	// Service manager (service locator) configuration
 	'service_manager' => [
 		'invokables' => [
-			'ApsDependentObjectsDeletionListener' => 'iMSCP\\ApsStandard\\Listener\\ApsDependentObjectsDeletionListener',
+			'ApsStandardListener' => 'iMSCP\\ApsStandard\\Listener\\ApsStandardListener',
 			'EncryptionDataService' => 'iMSCP\\Service\\EncryptionDataService'
 		],
 
@@ -57,6 +57,6 @@ return [
 
 	// Listener aggregates
 	'listeners' => [
-		'ApsDependentObjectsDeletionListener'
+		'ApsStandardListener'
 	]
 ];

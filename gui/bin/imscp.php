@@ -20,14 +20,15 @@
 
 use iMSCP_Registry as Registry;
 use iMSCP_Events as Events;
+use iMSCP_Events_Aggregator as EventManager;
 use iMSCP\Tools\Console\ConsoleEvent;
+use iMSCP\Tools\Console\ConsoleRunner;
 
 chdir(__DIR__);
 
 require_once '../library/imscp-lib.php';
 
-$consoleEvent = new ConsoleEvent();
-iMSCP_Events_Aggregator::getInstance()->dispatch(new ConsoleEvent(Events::onBeforeCreateConsoleHelperSet));
-$cli = iMSCP\Tools\Console\ConsoleRunner::createApplication(
-	iMSCP\Tools\Console\ConsoleRunner::createHelperSet(Registry::get('ServiceManager')), $consoleEvent->getCommands()
-)->run();
+$consoleEvent = new ConsoleEvent(Events::onBeforeCreateConsoleHelperSet);
+EventManager::getInstance()->dispatch($consoleEvent);
+$cli = ConsoleRunner::createApplication(ConsoleRunner::createHelperSet(Registry::get('ServiceManager')), $consoleEvent->getCommands());
+$cli->run();

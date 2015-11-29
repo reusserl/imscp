@@ -41,7 +41,6 @@ use Doctrine\ORM\Tools\Console\Command\SchemaTool\DropCommand;
 use Doctrine\ORM\Tools\Console\Command\SchemaTool\UpdateCommand;
 use Doctrine\ORM\Tools\Console\Command\ValidateSchemaCommand;
 use Doctrine\ORM\Tools\Console\Helper\EntityManagerHelper;
-use iMSCP\ApsStandard\Command\UpdatePackageIndexCommand as ApsUpdatePackageIndexCommand;
 use iMSCP\Tools\Console\Helper\ServiceManagerHelper;
 use iMSCP\Translation\Command\BuildLanguageIndexCommand;
 use iMSCP\Update\Command\UpdateDatabaseCommand;
@@ -116,8 +115,6 @@ class ConsoleRunner
 			#
 			# i-MSCP commands
 			#
-
-			new ApsUpdatePackageIndexCommand(),
 			new BuildLanguageIndexCommand(),
 			new UpdateDatabaseCommand(),
 
