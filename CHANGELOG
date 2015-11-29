@@ -34,11 +34,12 @@ BACKEND
 	Rewritten: Servers::mta::postfix
 
 COMPOSER
-	Added: doctrine/orm  package (~2.5.1)
+	Added: doctrine/orm  package (~2.5.0)
 	Added: jms/serializer package (~1.0.0)
-	Added: symfony/http-foundation package (~2.7.5)
-	Added: Symfony/Validator package (~2.7.5)
-	Added: zendframework/zend-servicemanager package (~2.5.1)
+	Added: symfony/console package (~2.7)
+	Added: symfony/http-foundation package (~2.7.0)
+	Added: Symfony/Validator package (~2.7.0)
+	Added: zendframework/zend-servicemanager package (~2.4.0)
 
 CONFIGS
 	Added: build-essential package
