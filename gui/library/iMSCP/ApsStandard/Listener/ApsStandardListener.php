@@ -85,9 +85,11 @@ class ApsStandardListener implements ListenerAggregateInterface, ServiceLocatorA
 			Events::onBeforeDeleteSqlDb, [$this, 'onDeleteDependentSqlDatabase'], 99
 		);
 
-		$this->listeners[] = $eventManager->registerListener(
-			Events::onBeforeCreateConsoleApplication, [$this, 'onBeforeCreateConsoleHelperSet']
-		);
+		if(PHP_SAPI == 'cli') {
+			$this->listeners[] = $eventManager->registerListener(
+				Events::onBeforeCreateConsoleApplication, [$this, 'onBeforeCreateConsoleHelperSet']
+			);
+		}
 
 		#$this->listeners[] = $eventManager->registerListener(
 		#	Events::onBeforeDeleteSqlUser, [$this, 'onDeleteDependentSqlUser'], 99
