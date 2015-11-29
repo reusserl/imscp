@@ -28,7 +28,7 @@ chdir(__DIR__);
 
 require_once '../library/imscp-lib.php';
 
-$consoleEvent = new ConsoleEvent(Events::onBeforeCreateConsoleHelperSet);
+$consoleEvent = new ConsoleEvent(Events::onBeforeCreateConsoleApplication);
 EventManager::getInstance()->dispatch($consoleEvent);
 $cli = ConsoleRunner::createApplication(ConsoleRunner::createHelperSet(Registry::get('ServiceManager')), $consoleEvent->getCommands());
 $cli->run();

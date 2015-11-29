@@ -86,7 +86,7 @@ class ApsStandardListener implements ListenerAggregateInterface, ServiceLocatorA
 		);
 
 		$this->listeners[] = $eventManager->registerListener(
-			Events::onBeforeCreateConsoleHelperSet, [$this, 'onBeforeCreateConsoleHelperSet']
+			Events::onBeforeCreateConsoleApplication, [$this, 'onBeforeCreateConsoleHelperSet']
 		);
 
 		#$this->listeners[] = $eventManager->registerListener(
