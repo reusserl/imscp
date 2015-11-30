@@ -78,14 +78,14 @@ sub registerSetupListeners
 			'zendframework/zend-cache' => '~2.4.0',
 			'zendframework/zend-config' => '~2.4.0',
 			'zendframework/zend-escaper' => '~2.4.0',
-			'zendframework/zend-eventmanager' => "~2.4.0',
-			'zendframework/zend-i18n' => ''~2.4.0",
+			'zendframework/zend-eventmanager' => '~2.4.0',
+			'zendframework/zend-i18n' => '~2.4.0',
 			'zendframework/zend-modulemanager' => '~2.4.0',
 			'zendframework/zend-navigation' => '~2.4.0',
 			'zendframework/zend-servicemanager' => '~2.4.0',
 			'zendframework/zend-session' => '~2.4.0',
 			'zendframework/zend-uri' => '~2.4.0',
-			'zendframework/zend-validator' => "~2.4.0'
+			'zendframework/zend-validator' => '~2.4.0'
 		});
 
 		# Register PSR-4 autoload mapping rules for i-MSCP frontend modules
@@ -97,7 +97,7 @@ sub registerSetupListeners
 
 		# Register PSR-0 autoload mapping rule for Net_DNS2 PEAR packages (vendor)
 		$composerManager->registerAutoloaderMap(
-			'psr-0',  'Net_DNS2', $main::imscpConfig{'GUI_ROOT_DIR'} . "/vendor"
+			'psr-0',  'Net_DNS2', $main::imscpConfig{'GUI_ROOT_DIR'} . '/vendor'
 		);
 	});
 
