@@ -80,6 +80,7 @@ sub registerSetupListeners
 			'zendframework/zend-escaper' => '~2.4.0',
 			'zendframework/zend-eventmanager' => '~2.4.0',
 			'zendframework/zend-i18n' => '~2.4.0',
+			'zendframework/zend-loader' => '~2.4.0',
 			'zendframework/zend-modulemanager' => '~2.4.0',
 			'zendframework/zend-navigation' => '~2.4.0',
 			'zendframework/zend-servicemanager' => '~2.4.0',
@@ -89,9 +90,9 @@ sub registerSetupListeners
 		});
 
 		# Register PSR-4 autoload mapping rules for i-MSCP frontend modules
-		for my $module(iMSCP::Dir->new( dirname => $main::imscpConfig{'GUI_ROOT_DIR'} . '/module' )->getDirs()) {
+		for my $module(iMSCP::Dir->new( dirname => $main::imscpConfig{'GUI_ROOT_DIR'} . '/module/iMSCP' )->getDirs()) {
 			$composerManager->registerAutoloaderMap(
-				'psr-4', "iMSCP\\\\$module\\\\", $main::imscpConfig{'GUI_ROOT_DIR'} . "/module/$module/src"
+				'psr-4', "iMSCP\\\\$module\\\\", $main::imscpConfig{'GUI_ROOT_DIR'} . "/module/iMSCP/$module/src"
 			);
 		}
 
