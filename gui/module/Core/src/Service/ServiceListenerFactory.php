@@ -22,6 +22,7 @@ namespace iMSCP\Core\Service;
 
 use Zend\ModuleManager\Listener\ServiceListener;
 use Zend\ModuleManager\Listener\ServiceListenerInterface;
+use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\Exception\InvalidArgumentException;
 use Zend\Stdlib\Exception\RuntimeException;
 use Zend\ServiceManager\FactoryInterface;
@@ -53,7 +54,7 @@ class ServiceListenerFactory implements FactoryInterface
 		],
 		'factories' => [
 			'Application' => 'iMSCP\Service\ApplicationFactory',
-			'EncryptionDataService' => 'iMSCP\Service\EncryptionDataServiceFactory',
+			'EncryptionDataService' => 'iMSCP\Service\EncryptionDataService',
 			'FrontendConfig' => 'iMSCP\Service\FrontendConfigFactory',
 			'SystemConfig' => 'iMSCP\Service\SystemConfig',
 			'Database' => 'iMSCP\Service\DatabaseServiceFactory',
@@ -110,7 +111,9 @@ class ServiceListenerFactory implements FactoryInterface
 
 			$serviceListener->setDefaultServiceConfig($this->defaultServiceConfig);
 		} else {
-			$serviceListener = new ServiceListener($serviceLocator, $this->defaultServiceConfig);
+			/** @var ServiceManager $serviceManager */
+			$serviceManager = $serviceLocator;
+			$serviceListener = new ServiceListener($serviceManager, $this->defaultServiceConfig);
 		}
 
 		if (isset($configuration['service_listener_options'])) {
