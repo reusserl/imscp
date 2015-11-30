@@ -19,6 +19,9 @@
 
 namespace iMSCP\Core\Php;
 
+use iMSCP\Core\Application;
+use iMSCP\Core\Config\FileConfigHandler;
+
 /**
  * Class iMSCP_PHPini
  */
@@ -27,35 +30,35 @@ class PhpEditor
 	/**
 	 * iMSCP_PHPini instance.
 	 *
-	 * @var PHPini
+	 * @var PhpEditor
 	 */
-	static protected $_instance;
+	static protected $instance;
 
 	/**
 	 * Associative array that contains php.ini data.
 	 *
 	 * @var array
 	 */
-	protected $_phpiniData = array();
+	protected $phpiniData = array();
 
 	/**
 	 * Associative array that contains the reseller's permissions, including its max values for PHP directives.
 	 *
 	 * @var array
 	 */
-	protected $_phpiniRePerm = array();
+	protected $phpiniRePerm = array();
 
 	/**
 	 * Associative array that contains client permissions.
 	 *
 	 * @var array
 	 */
-	protected $_phpiniClPerm = array();
+	protected $phpiniClPerm = array();
 
 	/**
-	 *  @var ConfigHandlerFile
+	 * @var FileConfigHandler
 	 */
-	protected $_cfg;
+	protected $cfg;
 
 	/**
 	 * Flag that is set to TRUE if an error occurs at {link setData()}.
@@ -83,8 +86,7 @@ class PhpEditor
 	 */
 	private function __construct()
 	{
-		/** @var $cfg ConfigHandlerFile */
-		$this->_cfg = Application::getInstance()->getServiceManager()->get('config');
+		$this->cfg = Application::getInstance()->getServiceManager()->get('config');
 
 		// Populate $_phpiniData with default data.
 		// Default data are those set by admin via the admin/settings.php page
@@ -110,18 +112,17 @@ class PhpEditor
 
 	/**
 	 * Implements singleton design pattern.
-	 * 
+	 *
 	 * @static
-	 * @return PHPini
+	 * @return PhpEditor
 	 */
 	static public function getInstance()
 	{
-		if(null === self::$_instance)
-		{
-			self::$_instance = new self();
+		if (null === self::$instance) {
+			self::$instance = new self();
 		}
 
-		return self::$_instance;
+		return self::$instance;
 	}
 
 	/**
@@ -132,20 +133,20 @@ class PhpEditor
 	 */
 	public function loadDefaultData()
 	{
-		$this->_phpiniData['phpiniSystem'] = 'no';
+		$this->phpiniData['phpiniSystem'] = 'no';
 
 		// Default permissions on PHP directives
-		$this->_phpiniData['phpiniAllowUrlFopen'] = $this->_cfg->PHPINI_ALLOW_URL_FOPEN;
-		$this->_phpiniData['phpiniDisplayErrors'] = $this->_cfg->PHPINI_DISPLAY_ERRORS;
-		$this->_phpiniData['phpiniErrorReporting'] = $this->_cfg->PHPINI_ERROR_REPORTING;
-		$this->_phpiniData['phpiniDisableFunctions'] = $this->_cfg->PHPINI_DISABLE_FUNCTIONS;
+		$this->phpiniData['phpiniAllowUrlFopen'] = $this->cfg->PHPINI_ALLOW_URL_FOPEN;
+		$this->phpiniData['phpiniDisplayErrors'] = $this->cfg->PHPINI_DISPLAY_ERRORS;
+		$this->phpiniData['phpiniErrorReporting'] = $this->cfg->PHPINI_ERROR_REPORTING;
+		$this->phpiniData['phpiniDisableFunctions'] = $this->cfg->PHPINI_DISABLE_FUNCTIONS;
 
 		// Default value for PHP directives
-		$this->_phpiniData['phpiniPostMaxSize'] = $this->_cfg->PHPINI_POST_MAX_SIZE;
-		$this->_phpiniData['phpiniUploadMaxFileSize'] = $this->_cfg->PHPINI_UPLOAD_MAX_FILESIZE;
-		$this->_phpiniData['phpiniMaxExecutionTime'] = $this->_cfg->PHPINI_MAX_EXECUTION_TIME;
-		$this->_phpiniData['phpiniMaxInputTime'] = $this->_cfg->PHPINI_MAX_INPUT_TIME;
-		$this->_phpiniData['phpiniMemoryLimit'] = $this->_cfg->PHPINI_MEMORY_LIMIT;
+		$this->phpiniData['phpiniPostMaxSize'] = $this->cfg->PHPINI_POST_MAX_SIZE;
+		$this->phpiniData['phpiniUploadMaxFileSize'] = $this->cfg->PHPINI_UPLOAD_MAX_FILESIZE;
+		$this->phpiniData['phpiniMaxExecutionTime'] = $this->cfg->PHPINI_MAX_EXECUTION_TIME;
+		$this->phpiniData['phpiniMaxInputTime'] = $this->cfg->PHPINI_MAX_INPUT_TIME;
+		$this->phpiniData['phpiniMemoryLimit'] = $this->cfg->PHPINI_MEMORY_LIMIT;
 
 		$this->flagCustomIni = false;
 	}
@@ -159,21 +160,19 @@ class PhpEditor
 	public function loadCustomPHPini($domainId)
 	{
 		$query = "SELECT * FROM `php_ini` WHERE `domain_id` = ?";
-		$stmt = exec_query($query, (int) $domainId);
+		$stmt = exec_query($query, (int)$domainId);
 
-		if ($stmt->recordCount()) {
-			$this->_phpiniData['phpiniSystem'] = 'yes';
-
-			$this->_phpiniData['phpiniAllowUrlFopen'] = $stmt->fields('allow_url_fopen');
-			$this->_phpiniData['phpiniDisplayErrors'] = $stmt->fields('display_errors');
-			$this->_phpiniData['phpiniErrorReporting'] = $stmt->fields('error_reporting');
-			$this->_phpiniData['phpiniDisableFunctions'] = $stmt->fields('disable_functions');
-			$this->_phpiniData['phpiniPostMaxSize'] = $stmt->fields('post_max_size');
-			$this->_phpiniData['phpiniUploadMaxFileSize'] = $stmt->fields('upload_max_filesize');
-			$this->_phpiniData['phpiniMaxExecutionTime'] = $stmt->fields('max_execution_time');
-			$this->_phpiniData['phpiniMaxInputTime'] = $stmt->fields('max_input_time');
-			$this->_phpiniData['phpiniMemoryLimit'] = $stmt->fields('memory_limit');
-
+		if ($stmt->rowCount()) {
+			$this->phpiniData['phpiniSystem'] = 'yes';
+			$this->phpiniData['phpiniAllowUrlFopen'] = $stmt->fields('allow_url_fopen');
+			$this->phpiniData['phpiniDisplayErrors'] = $stmt->fields('display_errors');
+			$this->phpiniData['phpiniErrorReporting'] = $stmt->fields('error_reporting');
+			$this->phpiniData['phpiniDisableFunctions'] = $stmt->fields('disable_functions');
+			$this->phpiniData['phpiniPostMaxSize'] = $stmt->fields('post_max_size');
+			$this->phpiniData['phpiniUploadMaxFileSize'] = $stmt->fields('upload_max_filesize');
+			$this->phpiniData['phpiniMaxExecutionTime'] = $stmt->fields('max_execution_time');
+			$this->phpiniData['phpiniMaxInputTime'] = $stmt->fields('max_input_time');
+			$this->phpiniData['phpiniMemoryLimit'] = $stmt->fields('memory_limit');
 			$this->flagCustomIni = true;
 		}
 
@@ -188,7 +187,7 @@ class PhpEditor
 	 */
 	public function loadRePerm($resellerId)
 	{
-		$resellerId = (int) $resellerId;
+		$resellerId = (int)$resellerId;
 
 		$query = "
 			SELECT
@@ -202,21 +201,26 @@ class PhpEditor
 		";
 		$stmt = exec_query($query, $resellerId);
 
-		if($stmt->rowCount() && $stmt->fields('php_ini_system') == 'yes') {
-			// Permissions on PHP directives
-			$this->_phpiniRePerm['phpiniSystem'] = 'yes';
-			$this->_phpiniRePerm['phpiniAllowUrlFopen'] = $stmt->fields('php_ini_al_allow_url_fopen');
-			$this->_phpiniRePerm['phpiniDisplayErrors'] = $stmt->fields('php_ini_al_display_errors');
-			$this->_phpiniRePerm['phpiniDisableFunctions'] = $stmt->fields('php_ini_al_disable_functions');
 
-			// Max values for PHP directives
-			$this->_phpiniRePerm['phpiniPostMaxSize'] = $stmt->fields('php_ini_max_post_max_size');
-			$this->_phpiniRePerm['phpiniUploadMaxFileSize'] = $stmt->fields('php_ini_max_upload_max_filesize');
-			$this->_phpiniRePerm['phpiniMaxExecutionTime'] = $stmt->fields('php_ini_max_max_execution_time');
-			$this->_phpiniRePerm['phpiniMaxInputTime'] = $stmt->fields('php_ini_max_max_input_time');
-			$this->_phpiniRePerm['phpiniMemoryLimit'] = $stmt->fields('php_ini_max_memory_limit');
+		if ($stmt->rowCount()) {
+			$row = $stmt->fetchRow(\PDO::FETCH_ASSOC);
 
-			return true;
+			if ($row['php_ini_system'] == 'yes') {
+				// Permissions on PHP directives
+				$this->phpiniRePerm['phpiniSystem'] = 'yes';
+				$this->phpiniRePerm['phpiniAllowUrlFopen'] = $stmt->fields('php_ini_al_allow_url_fopen');
+				$this->phpiniRePerm['phpiniDisplayErrors'] = $stmt->fields('php_ini_al_display_errors');
+				$this->phpiniRePerm['phpiniDisableFunctions'] = $stmt->fields('php_ini_al_disable_functions');
+
+				// Max values for PHP directives
+				$this->phpiniRePerm['phpiniPostMaxSize'] = $stmt->fields('php_ini_max_post_max_size');
+				$this->phpiniRePerm['phpiniUploadMaxFileSize'] = $stmt->fields('php_ini_max_upload_max_filesize');
+				$this->phpiniRePerm['phpiniMaxExecutionTime'] = $stmt->fields('php_ini_max_max_execution_time');
+				$this->phpiniRePerm['phpiniMaxInputTime'] = $stmt->fields('php_ini_max_max_input_time');
+				$this->phpiniRePerm['phpiniMemoryLimit'] = $stmt->fields('php_ini_max_memory_limit');
+
+				return true;
+			}
 		}
 
 		return false;
@@ -230,23 +234,23 @@ class PhpEditor
 	public function loadReDefaultPerm()
 	{
 		// Default permissions on PHP directives
-		$this->_phpiniRePerm['phpiniSystem'] = 'no';
-		$this->_phpiniRePerm['phpiniAllowUrlFopen'] = 'no';
-		$this->_phpiniRePerm['phpiniDisplayErrors'] = 'no';
-		$this->_phpiniRePerm['phpiniDisableFunctions'] = 'no';
+		$this->phpiniRePerm['phpiniSystem'] = 'no';
+		$this->phpiniRePerm['phpiniAllowUrlFopen'] = 'no';
+		$this->phpiniRePerm['phpiniDisplayErrors'] = 'no';
+		$this->phpiniRePerm['phpiniDisableFunctions'] = 'no';
 
 		// Default reseller max value for PHP directives (based on system wide values)
-		$this->_phpiniRePerm['phpiniPostMaxSize'] = $this->_cfg->PHPINI_POST_MAX_SIZE;
-		$this->_phpiniRePerm['phpiniUploadMaxFileSize'] = $this->_cfg->PHPINI_UPLOAD_MAX_FILESIZE;
-		$this->_phpiniRePerm['phpiniMaxExecutionTime'] = $this->_cfg->PHPINI_MAX_EXECUTION_TIME;
-		$this->_phpiniRePerm['phpiniMaxInputTime'] = $this->_cfg->PHPINI_MAX_INPUT_TIME;
-		$this->_phpiniRePerm['phpiniMemoryLimit'] = $this->_cfg->PHPINI_MEMORY_LIMIT;
+		$this->phpiniRePerm['phpiniPostMaxSize'] = $this->cfg->PHPINI_POST_MAX_SIZE;
+		$this->phpiniRePerm['phpiniUploadMaxFileSize'] = $this->cfg->PHPINI_UPLOAD_MAX_FILESIZE;
+		$this->phpiniRePerm['phpiniMaxExecutionTime'] = $this->cfg->PHPINI_MAX_EXECUTION_TIME;
+		$this->phpiniRePerm['phpiniMaxInputTime'] = $this->cfg->PHPINI_MAX_INPUT_TIME;
+		$this->phpiniRePerm['phpiniMemoryLimit'] = $this->cfg->PHPINI_MEMORY_LIMIT;
 	}
 
 	/**
 	 * Sets value for the given PHP directive.
 	 *
-	 * @see _rawCheckData()
+	 * @see rawCheckData()
 	 * @param string $key PHP data key name
 	 * @param string $value PHP data value
 	 * @param bool $withCheck Tells whether or not the value must be checked
@@ -254,19 +258,19 @@ class PhpEditor
 	 */
 	public function setData($key, $value, $withCheck = true)
 	{
-		if(! $withCheck) {
-			if($key == 'phpiniErrorReporting') {
-				$this->_phpiniData[$key] = $this->errorReportingToInteger($value);
+		if (!$withCheck) {
+			if ($key == 'phpiniErrorReporting') {
+				$this->phpiniData[$key] = $this->errorReportingToInteger($value);
 			} else {
-				$this->_phpiniData[$key] = $value;
+				$this->phpiniData[$key] = $value;
 			}
 
 			return true;
-		} elseif($this->_rawCheckData($key, $value)) {
-			if($key == 'phpiniErrorReporting') {
-				$this->_phpiniData[$key] = $this->errorReportingToInteger($value);
+		} elseif ($this->rawCheckData($key, $value)) {
+			if ($key == 'phpiniErrorReporting') {
+				$this->phpiniData[$key] = $this->errorReportingToInteger($value);
 			} else {
-				$this->_phpiniData[$key] = $value;
+				$this->phpiniData[$key] = $value;
 			}
 
 			return true;
@@ -286,13 +290,12 @@ class PhpEditor
 	 */
 	public function setClPerm($key, $value)
 	{
-		if ($this->_rawCheckClPermData($key, $value)) {
-			$this->_phpiniClPerm[$key] = $value;
+		if ($this->rawCheckClPermData($key, $value)) {
+			$this->phpiniClPerm[$key] = $value;
 			return true;
 		}
 
 		$this->flagValueClError = true;
-
 		return false;
 	}
 
@@ -305,16 +308,15 @@ class PhpEditor
 	 */
 	public function setDataWithPermCheck($key, $value)
 	{
-		if ($this->_rawCheckData($key, $value)) { // Value is not out of range
+		if ($this->rawCheckData($key, $value)) { // Value is not out of range
 			// Either, the reseller has permissions on $key or $value is not greater than reseller max value for $key
 			if ($this->checkRePerm($key) || $this->checkRePermMax($key, $value)) {
-				$this->_phpiniData[$key] = $value;
+				$this->phpiniData[$key] = $value;
 				return true;
 			}
 		}
 
 		$this->flagValueError = true;
-
 		return false;
 	}
 
@@ -328,16 +330,15 @@ class PhpEditor
 	 */
 	public function setRePerm($key, $value, $withCheck = true)
 	{
-		if(!$withCheck) {
-			$this->_phpiniRePerm[$key] = $value;
+		if (!$withCheck) {
+			$this->phpiniRePerm[$key] = $value;
 			return true;
-		} elseif($this->_rawCheckRePermData($key, $value)) {
-			$this->_phpiniRePerm[$key] = $value;
+		} elseif ($this->rawCheckRePermData($key, $value)) {
+			$this->phpiniRePerm[$key] = $value;
 			return true;
 		}
 
 		$this->flagValueError = true;
-
 		return false;
 	}
 
@@ -349,10 +350,11 @@ class PhpEditor
 	 */
 	public function checkRePerm($key)
 	{
-		if ($this->_phpiniRePerm['phpiniSystem'] == 'yes') {
-			if($key == 'phpiniSystem' ||
-			   in_array($key, array('phpiniAllowUrlFopen', 'phpiniDisplayErrors', 'phpiniDisableFunctions')
-			   ) && $this->_phpiniRePerm[$key] == 'yes'
+		if ($this->phpiniRePerm['phpiniSystem'] == 'yes') {
+			if (
+				$key == 'phpiniSystem' || in_array(
+					$key, array('phpiniAllowUrlFopen', 'phpiniDisplayErrors', 'phpiniDisableFunctions')
+				) && $this->phpiniRePerm[$key] == 'yes'
 			) {
 				return true;
 			}
@@ -370,11 +372,13 @@ class PhpEditor
 	 */
 	public function checkRePermMax($key, $value)
 	{
-		if($this->_phpiniRePerm['phpiniSystem'] == 'yes') {
-			if(in_array($key, array(
-								   'phpiniPostMaxSize', 'phpiniUploadMaxFileSize',
-								   'phpiniMaxExecutionTime', 'phpiniMaxInputTime',
-								   'phpiniMemoryLimit', '')) && $value <= $this->_phpiniRePerm[$key]
+		if ($this->phpiniRePerm['phpiniSystem'] == 'yes') {
+			if (
+				in_array($key, array(
+						'phpiniPostMaxSize', 'phpiniUploadMaxFileSize',
+						'phpiniMaxExecutionTime', 'phpiniMaxInputTime',
+						'phpiniMemoryLimit', '')
+				) && $value <= $this->phpiniRePerm[$key]
 			) {
 				return true;
 			}
@@ -419,16 +423,13 @@ class PhpEditor
 				WHERE
 					`domain_id` = ?
 			";
-			exec_query(
-				$query,
-				array(
-					$this->_phpiniData['phpiniDisableFunctions'], $this->_phpiniData['phpiniAllowUrlFopen'],
-					$this->_phpiniData['phpiniDisplayErrors'], $this->_phpiniData['phpiniErrorReporting'],
-					$this->_phpiniData['phpiniPostMaxSize'], $this->_phpiniData['phpiniUploadMaxFileSize'],
-					$this->_phpiniData['phpiniMaxExecutionTime'], $this->_phpiniData['phpiniMaxInputTime'],
-					$this->_phpiniData['phpiniMemoryLimit'], $domainId
-				)
-			);
+			exec_query($query, array(
+				$this->phpiniData['phpiniDisableFunctions'], $this->phpiniData['phpiniAllowUrlFopen'],
+				$this->phpiniData['phpiniDisplayErrors'], $this->phpiniData['phpiniErrorReporting'],
+				$this->phpiniData['phpiniPostMaxSize'], $this->phpiniData['phpiniUploadMaxFileSize'],
+				$this->phpiniData['phpiniMaxExecutionTime'], $this->phpiniData['phpiniMaxInputTime'],
+				$this->phpiniData['phpiniMemoryLimit'], $domainId
+			));
 		} else {
 			$query = "
 				INSERT INTO `php_ini` (
@@ -438,16 +439,13 @@ class PhpEditor
 					?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 				)
 			";
-			exec_query(
-				$query,
-				array(
-					$this->_phpiniData['phpiniDisableFunctions'], $this->_phpiniData['phpiniAllowUrlFopen'],
-					$this->_phpiniData['phpiniDisplayErrors'], $this->_phpiniData['phpiniErrorReporting'],
-					$this->_phpiniData['phpiniPostMaxSize'], $this->_phpiniData['phpiniUploadMaxFileSize'],
-					$this->_phpiniData['phpiniMaxExecutionTime'], $this->_phpiniData['phpiniMaxInputTime'],
-					$this->_phpiniData['phpiniMemoryLimit'], $domainId
-				)
-			);
+			exec_query($query, array(
+				$this->phpiniData['phpiniDisableFunctions'], $this->phpiniData['phpiniAllowUrlFopen'],
+				$this->phpiniData['phpiniDisplayErrors'], $this->phpiniData['phpiniErrorReporting'],
+				$this->phpiniData['phpiniPostMaxSize'], $this->phpiniData['phpiniUploadMaxFileSize'],
+				$this->phpiniData['phpiniMaxExecutionTime'], $this->phpiniData['phpiniMaxInputTime'],
+				$this->phpiniData['phpiniMemoryLimit'], $domainId
+			));
 		}
 	}
 
@@ -495,14 +493,11 @@ class PhpEditor
 			WHERE
 				`domain_id` = ?
 		";
-		exec_query(
-			$query,
-			array(
-				$this->_phpiniClPerm['phpiniSystem'], $this->_phpiniClPerm['phpiniAllowUrlFopen'],
-				$this->_phpiniClPerm['phpiniDisplayErrors'], $this->_phpiniClPerm['phpiniDisableFunctions'],
-				$domainId
-			)
-		);
+		exec_query($query, array(
+			$this->phpiniClPerm['phpiniSystem'], $this->phpiniClPerm['phpiniAllowUrlFopen'],
+			$this->phpiniClPerm['phpiniDisplayErrors'], $this->phpiniClPerm['phpiniDisableFunctions'],
+			$domainId
+		));
 	}
 
 	/**
@@ -514,9 +509,9 @@ class PhpEditor
 	public function checkExistCustomPHPini($domainId)
 	{
 		$query = 'SELECT COUNT(`domain_id`) `cnt` FROM `php_ini` WHERE `domain_id` = ?';
-		$stmt = exec_query($query, (int) $domainId);
-
-		if ($stmt->fields['cnt'] > 0) {
+		$stmt = exec_query($query, (int)$domainId);
+		$row = $stmt->fetchRow(\PDO::FETCH_ASSOC);
+		if ($row['cnt'] > 0) {
 			return true;
 		}
 
@@ -530,7 +525,7 @@ class PhpEditor
 	 */
 	public function getData()
 	{
-		return $this->_phpiniData;
+		return $this->phpiniData;
 	}
 
 	/**
@@ -540,7 +535,7 @@ class PhpEditor
 	 */
 	public function getRePerm()
 	{
-		return $this->_phpiniRePerm;
+		return $this->phpiniRePerm;
 	}
 
 	/**
@@ -551,15 +546,15 @@ class PhpEditor
 	 */
 	public function getRePermVal($key)
 	{
-		return $this->_phpiniRePerm[$key];
+		return $this->phpiniRePerm[$key];
 	}
 
-    /**
-     * Returns default value for the giver reseller permission.
-     *
-     * @param string $key Permissions key name
-     * @return string Permissions value
-     */
+	/**
+	 * Returns default value for the giver reseller permission.
+	 *
+	 * @param string $key Permissions key name
+	 * @return string Permissions value
+	 */
 	public function getReDefaultPermVal($key)
 	{
 		return min($this->getRePermVal($key), $this->getDataVal($key));
@@ -572,7 +567,7 @@ class PhpEditor
 	 */
 	public function getClPerm()
 	{
-		return $this->_phpiniClPerm;
+		return $this->phpiniClPerm;
 	}
 
 	/**
@@ -583,7 +578,7 @@ class PhpEditor
 	 */
 	public function getClPermVal($key)
 	{
-		return $this->_phpiniClPerm[$key];
+		return $this->phpiniClPerm[$key];
 	}
 
 	/**
@@ -594,7 +589,7 @@ class PhpEditor
 	 */
 	public function getDataVal($key)
 	{
-		return $this->_phpiniData[$key];
+		return $this->phpiniData[$key];
 	}
 
 	/**
@@ -606,16 +601,15 @@ class PhpEditor
 	public function getDataDefaultVal($key)
 	{
 		$phpiniDatatmp['phpiniSystem'] = 'no';
-		$phpiniDatatmp['phpiniAllowUrlFopen'] = $this->_cfg->PHPINI_ALLOW_URL_FOPEN;
-		$phpiniDatatmp['phpiniDisplayErrors'] = $this->_cfg->PHPINI_DISPLAY_ERRORS;
-		$phpiniDatatmp['phpiniErrorReporting'] = $this->_cfg->PHPINI_ERROR_REPORTING;
-		$phpiniDatatmp['phpiniDisableFunctions'] = $this->_cfg->PHPINI_DISABLE_FUNCTIONS;
-		$phpiniDatatmp['phpiniPostMaxSize'] = $this->_cfg->PHPINI_POST_MAX_SIZE;
-		$phpiniDatatmp['phpiniUploadMaxFileSize'] = $this->_cfg->PHPINI_UPLOAD_MAX_FILESIZE;
-		$phpiniDatatmp['phpiniMaxExecutionTime'] = $this->_cfg->PHPINI_MAX_EXECUTION_TIME;
-		$phpiniDatatmp['phpiniMaxInputTime'] = $this->_cfg->PHPINI_MAX_INPUT_TIME;
-		$phpiniDatatmp['phpiniMemoryLimit'] = $this->_cfg->PHPINI_MEMORY_LIMIT;
-
+		$phpiniDatatmp['phpiniAllowUrlFopen'] = $this->cfg->PHPINI_ALLOW_URL_FOPEN;
+		$phpiniDatatmp['phpiniDisplayErrors'] = $this->cfg->PHPINI_DISPLAY_ERRORS;
+		$phpiniDatatmp['phpiniErrorReporting'] = $this->cfg->PHPINI_ERROR_REPORTING;
+		$phpiniDatatmp['phpiniDisableFunctions'] = $this->cfg->PHPINI_DISABLE_FUNCTIONS;
+		$phpiniDatatmp['phpiniPostMaxSize'] = $this->cfg->PHPINI_POST_MAX_SIZE;
+		$phpiniDatatmp['phpiniUploadMaxFileSize'] = $this->cfg->PHPINI_UPLOAD_MAX_FILESIZE;
+		$phpiniDatatmp['phpiniMaxExecutionTime'] = $this->cfg->PHPINI_MAX_EXECUTION_TIME;
+		$phpiniDatatmp['phpiniMaxInputTime'] = $this->cfg->PHPINI_MAX_INPUT_TIME;
+		$phpiniDatatmp['phpiniMemoryLimit'] = $this->cfg->PHPINI_MEMORY_LIMIT;
 		return $phpiniDatatmp[$key];
 	}
 
@@ -626,10 +620,10 @@ class PhpEditor
 	 */
 	public function loadClDefaultPerm()
 	{
-		$this->_phpiniClPerm['phpiniSystem'] = 'no';
-		$this->_phpiniClPerm['phpiniAllowUrlFopen'] = 'no';
-		$this->_phpiniClPerm['phpiniDisplayErrors'] = 'no';
-		$this->_phpiniClPerm['phpiniDisableFunctions'] = 'no';
+		$this->phpiniClPerm['phpiniSystem'] = 'no';
+		$this->phpiniClPerm['phpiniAllowUrlFopen'] = 'no';
+		$this->phpiniClPerm['phpiniDisplayErrors'] = 'no';
+		$this->phpiniClPerm['phpiniDisableFunctions'] = 'no';
 	}
 
 	/**
@@ -649,13 +643,14 @@ class PhpEditor
 			WHERE
 				`domain_id` = ?
 		";
-		$stmt =  exec_query($query, (int) $domainId);
+		$stmt = exec_query($query, (int)$domainId);
 
 		if ($stmt->rowCount()) {
-			$this->_phpiniClPerm['phpiniSystem'] = $stmt->fields('phpini_perm_system');
-			$this->_phpiniClPerm['phpiniAllowUrlFopen'] = $stmt->fields('phpini_perm_allow_url_fopen');
-			$this->_phpiniClPerm['phpiniDisplayErrors'] = $stmt->fields('phpini_perm_display_errors');
-			$this->_phpiniClPerm['phpiniDisableFunctions'] = $stmt->fields('phpini_perm_disable_functions');
+			$row = $stmt->fetchRow(\PDO::FETCH_ASSOC);
+			$this->phpiniClPerm['phpiniSystem'] = $row['phpini_perm_system'];
+			$this->phpiniClPerm['phpiniAllowUrlFopen'] = $row['phpini_perm_allow_url_fopen'];
+			$this->phpiniClPerm['phpiniDisplayErrors'] = $row['phpini_perm_display_errors'];
+			$this->phpiniClPerm['phpiniDisableFunctions'] = $row['phpini_perm_disable_functions'];
 
 			return true;
 		}
@@ -673,8 +668,8 @@ class PhpEditor
 	{
 		$query = "SELECT `domain_id` FROM `domain` WHERE `domain_admin_id` = ?";
 		$stmt = exec_query($query, $customerId);
-
-		return $stmt->fields('domain_id');
+		$row = $stmt->fetchRow(\PDO::FETCH_ASSOC);
+		return $row['domain_id'];
 	}
 
 	/**
@@ -687,8 +682,9 @@ class PhpEditor
 	{
 		$query = "SELECT `domain_status` FROM `domain` WHERE `domain_id` = ?";
 		$stmt = exec_query($query, $domainId);
+		$row = $stmt->fetchRow(\PDO::FETCH_ASSOC);
 
-		if ($stmt->fields('domain_status') == 'ok') {
+		if ($row['domain_status'] == 'ok') {
 			return true;
 		}
 
@@ -703,7 +699,7 @@ class PhpEditor
 	 */
 	public function errorReportingToInteger($value)
 	{
-		switch($value) {
+		switch ($value) {
 			case 'E_ALL & ~E_NOTICE':
 				$int = E_ALL & ~E_NOTICE;
 				break;
@@ -728,7 +724,7 @@ class PhpEditor
 	 */
 	public function errorReportingToLitteral($value)
 	{
-		switch($value) {
+		switch ($value) {
 			case '30711':
 			case '32759':
 				$litteral = 'E_ALL & ~E_NOTICE';
@@ -754,7 +750,7 @@ class PhpEditor
 	 * @param string $value PHP data value
 	 * @return bool TRUE if $key is known and $value is valid, FALSE otherwise
 	 */
-	protected function _rawCheckData($key, $value)
+	protected function rawCheckData($key, $value)
 	{
 		if ($key == 'phpiniSystem' && ($value == 'yes' || $value == 'no')) {
 			return true;
@@ -769,12 +765,12 @@ class PhpEditor
 		}
 
 		if ($key == 'phpiniErrorReporting' && ($value == 'E_ALL & ~E_NOTICE' || $value == 'E_ALL | E_STRICT' ||
-			$value == 'E_ALL & ~E_DEPRECATED' || $value == '0')
+				$value == 'E_ALL & ~E_DEPRECATED' || $value == '0')
 		) {
 			return true;
 		}
 
-		if ($key == 'phpiniDisableFunctions' && $this->_checkDisableFunctionsSyntax($value)) {
+		if ($key == 'phpiniDisableFunctions' && $this->checkDisableFunctionsSyntax($value)) {
 			return true;
 		}
 
@@ -810,7 +806,7 @@ class PhpEditor
 	 * @param array|string $disabledFunctions PHP function to be disabled
 	 * @return bool True if the $disabledFunctions contains only functions that can be disabled, FALSE otherwise
 	 */
-	protected function _checkDisableFunctionsSyntax($disabledFunctions)
+	protected function checkDisableFunctionsSyntax($disabledFunctions)
 	{
 		$defaultDisabledFunctions = array(
 			'show_source', 'system', 'shell_exec', 'passthru', 'exec', 'shell', 'symlink', 'phpinfo', 'proc_open',
@@ -839,7 +835,7 @@ class PhpEditor
 	 * @param string $value PHP data value
 	 * @return bool TRUE if $key is known and $value is valid, FALSE otherwise
 	 */
-	protected function _rawCheckRePermData($key, $value)
+	protected function rawCheckRePermData($key, $value)
 	{
 		if ($key == 'phpiniSystem' && ($value == 'yes' || $value == 'no')) {
 			return true;
@@ -889,7 +885,7 @@ class PhpEditor
 	 * @param string $value Permission value
 	 * @return bool TRUE if $key is a known permission and $value is valid, FALSE otherwise
 	 */
-	protected function _rawCheckClPermData($key, $value)
+	protected function rawCheckClPermData($key, $value)
 	{
 		if ($key == 'phpiniSystem' && ($value === 'yes' || $value === 'no')) {
 			return true;
