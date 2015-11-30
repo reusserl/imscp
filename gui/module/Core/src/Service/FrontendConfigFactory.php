@@ -38,7 +38,7 @@ class FrontendConfigFactory implements FactoryInterface
 	 *
 	 * It then retrieves the config listener from the module manager, and from that the merged configuration.
 	 *
-	 * @param  ServiceLocatorInterface $serviceLocator
+	 * @param ServiceLocatorInterface $serviceLocator
 	 * @return array|\Traversable
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
@@ -47,7 +47,7 @@ class FrontendConfigFactory implements FactoryInterface
 		$moduleManager = $serviceLocator->get('ModuleManager');
 		$moduleManager->loadModules();
 		$moduleParams = $moduleManager->getEvent()->getParams();
-		$config = $moduleParams['configListener']->getMergedConfig(false);
-		return $config;
+		$frontendConfig = $moduleParams['configListener']->getMergedConfig(false);
+		return $frontendConfig;
 	}
 }

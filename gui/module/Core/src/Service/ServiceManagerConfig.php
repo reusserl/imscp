@@ -21,6 +21,7 @@
 namespace iMSCP\Core\Service;
 
 use Zend\EventManager\EventManagerAwareInterface;
+use Zend\EventManager\EventManagerInterface;
 use Zend\ServiceManager\Config;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
@@ -110,6 +111,7 @@ class ServiceManagerConfig extends Config
 		$this->initializers = [
 			'EventManagerAwareInitializer' => function ($instance, ServiceLocatorInterface $serviceLocator) {
 				if ($instance instanceof EventManagerAwareInterface) {
+					/** @var EventManagerInterface $eventManager */
 					$eventManager = $serviceLocator->get('EventManager');
 					$instance->setEventManager($eventManager);
 				}

@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Service;
+namespace iMSCP\Core\Service;
 
 use iMSCP\Core\Doctrine\Persistence\ManagerRegistry;
 use iMSCP\Core\Doctrine\Serializer\Construction\DoctrineObjectConstructor;
@@ -33,7 +33,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Class SerializerServiceFactory
- * @package iMSCP\Service
+ * @package iMSCP\Core\Service
  */
 class SerializerServiceFactory implements FactoryInterface
 {

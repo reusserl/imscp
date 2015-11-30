@@ -36,12 +36,12 @@ class EventManagerFactory implements FactoryInterface
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		$em = new EventManager();
+		$events = new EventManager();
 
-		/** @var  SharedEventManager $sem */
-		$sem = $serviceLocator->get('SharedEventManager');
+		/** @var  SharedEventManager $serviceManager */
+		$serviceManager = $serviceLocator->get('SharedEventManager');
 
-		$em->setSharedManager($sem);
-		return $em;
+		$events->setSharedManager($serviceManager);
+		return $events;
 	}
 }

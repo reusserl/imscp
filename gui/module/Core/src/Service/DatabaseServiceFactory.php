@@ -37,9 +37,11 @@ class DatabaseServiceFactory implements FactoryInterface
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
 		try {
+			$systemConfig = $serviceLocator->get('SystemConfig');
+
 			/** @var EncryptionDataService $encryptionDataService */
 			$encryptionDataService = $serviceLocator->get('EncryptionDataService');
-			$systemConfig = $serviceLocator->get('SystemConfig');
+
 			$db = Database::connect(
 				$systemConfig['DATABASE_USER'],
 				Crypt::decryptRijndaelCBC(

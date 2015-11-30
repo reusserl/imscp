@@ -20,8 +20,6 @@
 
 namespace iMSCP\Core\Service;
 
-use Zend\EventManager\EventManager;
-use Zend\EventManager\SharedEventManager;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -36,12 +34,6 @@ class NavigationServiceFactory implements FactoryInterface
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		$em = new EventManager();
-
-		/** @var  SharedEventManager $sem */
-		$sem = $serviceLocator->get('SharedEventManager');
-
-		$em->setSharedManager($sem);
-		return $em;
+		// TODO
 	}
 }

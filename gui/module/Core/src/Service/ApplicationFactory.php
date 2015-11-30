@@ -41,9 +41,9 @@ class ApplicationFactory implements FactoryInterface
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		/** @var ServiceManager $sl */
-		$sl = $serviceLocator;
+		/** @var ServiceManager $sm */
+		$serviceManager = $serviceLocator;
 
-		return new Application($serviceLocator->get('Config'), $sl);
+		return new Application($serviceLocator->get('Config'), $serviceManager);
 	}
 }

@@ -40,9 +40,9 @@ class ModuleManagerFactory implements FactoryInterface
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
 		if (!$serviceLocator->has('ServiceListener')) {
-			/** @var ServiceManager $sl */
-			$sl = $serviceLocator;
-			$sl->setFactory('ServiceListener', 'iMSCP\Service\ServiceListenerFactory');
+			/** @var ServiceManager $serviceManager */
+			$serviceManager = $serviceLocator;
+			$serviceManager->setFactory('ServiceListener', 'iMSCP\Service\ServiceListenerFactory');
 		}
 
 		$configuration = $serviceLocator->get('ApplicationConfig');

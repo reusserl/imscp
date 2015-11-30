@@ -20,7 +20,9 @@
 
 namespace iMSCP\Core\Service;
 
-use Symfony\Component\HttpFoundation\JsonResponse as Response;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse as JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -35,8 +37,15 @@ class HttpResponseServiceFactory implements FactoryInterface
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		$response = new Response();
-		$response->headers->set('Content-Type', 'application/json');
-		return $response;
+		/** @var Request $request */
+		$request = $serviceLocator->get('Request');
+
+		if ($request->headers->has('XMLHttpRequest')) {
+			$response = new JsonResponse();
+			$response->headers->set('Content-Type', 'application/json');
+			return $response;
+		}
+
+		return new Response();
 	}
 }

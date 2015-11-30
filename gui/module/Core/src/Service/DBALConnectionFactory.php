@@ -38,14 +38,14 @@ class DBALConnectionFactory implements FactoryInterface
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
 		$systemConfig = $serviceLocator->get('SystemConfig');
-		$config = new Configuration();
+		$dbalConfig = new Configuration();
 
 		// Ignore tables which are not managed through ORM service
-		$config->setFilterSchemaAssetsExpression('/^(?:admin|aps_.*)$/');
+		$dbalConfig->setFilterSchemaAssetsExpression('/^(?:admin|aps_.*)$/');
 
 		/** @var \PDO $pdo */
 		$pdo = $serviceLocator->get('Database')->getRawInstance();
-		$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['Doctrine\\DBAL\\Driver\\PDOStatement', []]);
+		$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['Doctrine\DBAL\Driver\PDOStatement', []]);
 
 		$conn = DriverManager::getConnection(
 			[
@@ -53,7 +53,7 @@ class DBALConnectionFactory implements FactoryInterface
 				'host' => $systemConfig['DATABASE_HOST'], // Only there for later referral through connection object
 				'port' => $systemConfig['DATABASE_PORT'] // Only there for later referral through connection object
 			],
-			$config
+			$dbalConfig
 		);
 
 		return $conn;

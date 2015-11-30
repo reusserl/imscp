@@ -61,10 +61,7 @@ class EncryptionDataService implements FactoryInterface
 	}
 
 	/**
-	 * Create service
-	 *
-	 * @param ServiceLocatorInterface $serviceLocator
-	 * @return mixed
+	 * {@inheritdoc}
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
