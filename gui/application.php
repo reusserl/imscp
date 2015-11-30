@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+// Doing this allows to make all paths relative to the Frontend
+// root directory.
 chdir(__DIR__);
 
 // Default error reporting
@@ -29,16 +31,16 @@ ini_set('track_errors', 1);
 include '/var/cache/imscp/packages/vendor/autoload.php';
 
 // Include core functions
-require_once 'module/Core/src/Functions/Admin.php';
-require_once 'module/Core/src/Functions/Client.php';
-require_once 'module/Core/src/Functions/Email.php';
-require_once 'module/Core/src/Functions/Input.php';
-require_once 'module/Core/src/Functions/Intl.php';
-require_once 'module/Core/src/Functions/Layout.php';
-require_once 'module/Core/src/Functions/Login.php';
-require_once 'module/Core/src/Functions/Shared.php';
-require_once 'module/Core/src/Functions/Reseller.php';
-require_once 'module/Core/src/Functions/View.php';
+require 'module/iMSCP/Core/src/Functions/Admin.php';
+require 'module/iMSCP/Core/src/Functions/Client.php';
+require 'module/iMSCP/Core/src/Functions/Email.php';
+require 'module/iMSCP/Core/src/Functions/Input.php';
+require 'module/iMSCP/Core/src/Functions/Intl.php';
+require 'module/iMSCP/Core/src/Functions/Layout.php';
+require 'module/iMSCP/Core/src/Functions/Login.php';
+require 'module/iMSCP/Core/src/Functions/Shared.php';
+require 'module/iMSCP/Core/src/Functions/Reseller.php';
+require 'module/iMSCP/Core/src/Functions/View.php';
 
-// Bootstrap and run application
-iMSCP\Core\Application::init(require 'config/application.config.php')->run();
+// Bootstrap application
+iMSCP\Core\Application::init(require 'config/application.config.php');
