@@ -81,7 +81,7 @@ class TranslatorServiceFactory implements FactoryInterface
 			'adapter' => [
 				'name' => $systemConfig['DEVMODE'] ? 'Filesystem' : 'Apc', // TODO only if available
 				'options' => [
-					'cache_dir' => CACHE_PATH . '/translations',
+					'cache_dir' => 'data/cache/translations',
 					'ttl' => 0, // Translation cache is never flushed automatically
 					'namespace' => 'iMSCP_Translations'
 				],

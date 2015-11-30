@@ -584,15 +584,15 @@ function layout_LoadNavigation()
 		switch ($_SESSION['user_type']) {
 			case 'admin':
 				$userLevel = 'admin';
-				$filepath = 'cache/translations/navigation/admin_' . $locale . '.php';
+				$filepath = 'data/cache/translations/navigation/admin_' . $locale . '.php';
 				break;
 			case 'reseller':
 				$userLevel = 'reseller';
-				$filepath = 'cache/translations/navigation/reseller_' . $locale . '.php';
+				$filepath = 'data/cache/translations/navigation/reseller_' . $locale . '.php';
 				break;
 			default:
 				$userLevel = 'client';
-				$filepath = 'cache/translations/navigation/client_' . $locale . '.php';
+				$filepath = 'data/cache/translations/navigation/client_' . $locale . '.php';
 		}
 		if(!file_exists($filepath)) {
 			layout_createNavigationFile($cfg['ROOT_TEMPLATE_PATH'] . "/$userLevel/navigation.php", $locale, $userLevel);
@@ -616,7 +616,7 @@ function layout_LoadNavigation()
  */
 function layout_createNavigationFile($filepath, $locale, $userLevel)
 {
-	$translationsCacheDir = 'cache/translations/navigation';
+	$translationsCacheDir = 'data/cache/translations/navigation';
 
 	if(!is_dir($translationsCacheDir)) {
 		if(!@mkdir($translationsCacheDir)) {

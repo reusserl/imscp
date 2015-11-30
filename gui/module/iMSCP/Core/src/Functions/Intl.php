@@ -122,8 +122,8 @@ function i18n_buildLanguageIndex()
 	}
 
 	# Remove all cached navigation translation files
-	if(@is_dir('cache/translations/navigation')) {
-		if(!utils_removeDir('cache/translations/navigation')) {
+	if(@is_dir('data/cache/translations/navigation')) {
+		if(!utils_removeDir('data/cache/translations/navigation')) {
 			throw new RuntimeException('Unable to remove directory for cached navigation translation files');
 		}
 	}

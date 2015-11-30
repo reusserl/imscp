@@ -36,28 +36,10 @@ class FileConfigHandler extends AbstractConfigHandler
 	/**
 	 * Loads all configuration parameters from a flat file
 	 *
-	 * <b>Note:</b> Default file path is set to {/usr/local}/etc/imscp/imscp.conf depending of distribution.
-	 *
 	 * @param string $configFilePath Configuration file path
 	 */
-	public function __construct($configFilePath = null)
+	public function __construct($configFilePath)
 	{
-		if (is_null($configFilePath)) {
-			if (getenv('IMSCP_CONF')) {
-				$configFilePath = getEnv('IMSCP_CONF');
-			} else {
-				switch (PHP_OS) {
-					case 'FreeBSD':
-					case 'OpenBSD':
-					case 'NetBSD':
-					$configFilePath = '/usr/local/etc/imscp/imscp.conf';
-						break;
-					default:
-						$configFilePath = '/etc/imscp/imscp.conf';
-				}
-			}
-		}
-
 		$this->configFilePath = $configFilePath;
 		$this->_parseFile();
 	}

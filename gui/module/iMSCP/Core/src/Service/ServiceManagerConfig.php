@@ -50,8 +50,8 @@ class ServiceManagerConfig extends Config
 	 * @var array
 	 */
 	protected $factories = [
-		'EventManager' => 'iMSCP\Service\EventManagerFactory',
-		'ModuleManager' => 'iMSCP\Service\ModuleManagerFactory'
+		'EventManager' => 'iMSCP\Core\Service\EventManagerFactory',
+		'ModuleManager' => 'iMSCP\Core\Service\ModuleManagerFactory'
 	];
 
 	/**
@@ -111,9 +111,13 @@ class ServiceManagerConfig extends Config
 		$this->initializers = [
 			'EventManagerAwareInitializer' => function ($instance, ServiceLocatorInterface $serviceLocator) {
 				if ($instance instanceof EventManagerAwareInterface) {
-					/** @var EventManagerInterface $eventManager */
-					$eventManager = $serviceLocator->get('EventManager');
-					$instance->setEventManager($eventManager);
+					$eventManager = $instance->getEventManager();
+
+					if ($eventManager instanceof EventManagerInterface) {
+						$eventManager->setSharedManager($serviceLocator->get('SharedEventManager'));
+					} else {
+						$instance->setEventManager($serviceLocator->get('EventManager'));
+					}
 				}
 			},
 			'ServiceManagerAwareInitializer' => function ($instance, ServiceLocatorInterface $serviceLocator) {

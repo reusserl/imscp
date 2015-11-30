@@ -613,7 +613,7 @@ class DbConfigHandler extends AbstractConfigHandler implements \iterator, \Seria
 	public function __destruct()
 	{
 		if ($this->flushCache) {
-			@unlink(DBCONFIG_CACHE_FILE_PATH);
+			@unlink('data/cache/imscp_dbconfig.conf');
 		}
 	}
 }

@@ -51,7 +51,7 @@ class MailExceptionWriter extends AbstractExceptionWriter
 		$mail = $this->prepareMail($event->getException());
 
 		if(!empty($mail)) {
-			$footprintsCacheFile = CACHE_PATH . '/mail_body_footprints.php';
+			$footprintsCacheFile = 'data/cache/mail_body_footprints.php';
 			$footprints = array();
 			$now = time();
 

@@ -53,22 +53,22 @@ class ServiceListenerFactory implements FactoryInterface
 		'invokables' => [
 		],
 		'factories' => [
-			'Application' => 'iMSCP\Service\ApplicationFactory',
-			'EncryptionDataService' => 'iMSCP\Service\EncryptionDataService',
-			'FrontendConfig' => 'iMSCP\Service\FrontendConfigFactory',
-			'SystemConfig' => 'iMSCP\Service\SystemConfig',
-			'Database' => 'iMSCP\Service\DatabaseServiceFactory',
-			'DBALConnection' => 'iMSCP\Service\DBALConnectionFactory',
-			'ORM' => 'iMSCP\Service\ORMServiceFactory',
-			'ManagerRegistry' => 'iMSCP\Service\ManagerRegistryFactory',
-			'Request' => 'iMSCP\Service\HttpRequestServiceFactory',
-			'Response' => 'iMSCP\Service\HttpResponseServiceFactory',
-			'Serializer' => 'iMSCP\Service\SerializerServiceFactory',
-			'Translator' => 'iMSCP\Service\TranslatorServiceFactory',
-			'Validator' => 'iMSCP\Service\ValidatorServiceFactory'
+			'Application' => 'iMSCP\Core\Service\ApplicationFactory',
+			'EncryptionDataService' => 'iMSCP\Core\Service\EncryptionDataService',
+			'Config' => 'iMSCP\Core\Service\ConfigFactory',
+			'SystemConfig' => 'iMSCP\Core\Service\SystemConfig',
+			'Database' => 'iMSCP\Core\Service\DatabaseServiceFactory',
+			'DBALConnection' => 'iMSCP\Core\Service\DBALConnectionFactory',
+			'ORM' => 'iMSCP\Core\Service\ORMServiceFactory',
+			'ManagerRegistry' => 'iMSCP\Core\Service\ManagerRegistryFactory',
+			'Request' => 'iMSCP\Core\Service\HttpRequestServiceFactory',
+			'Response' => 'iMSCP\Core\Service\HttpResponseServiceFactory',
+			'Serializer' => 'iMSCP\Core\Service\SerializerServiceFactory',
+			'Translator' => 'iMSCP\Core\Service\TranslatorServiceFactory',
+			'Validator' => 'iMSCP\Core\Service\ValidatorServiceFactory'
 		],
 		'aliases' => [
-			//'Configuration' => 'Config',
+			'Configuration' => 'Config',
 			'EntityManager' => 'ORM',
 			'default_manager' => 'ORM',
 			'default_connection' => 'DBALConnection'

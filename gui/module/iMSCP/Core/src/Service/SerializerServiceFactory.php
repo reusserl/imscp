@@ -50,7 +50,7 @@ class SerializerServiceFactory implements FactoryInterface
 
 		$serializer = SerializerBuilder::create()
 			->setObjectConstructor($objectConstructor)
-			->setCacheDir(CACHE_PATH . '/serializer')
+			->setCacheDir('data/cache/serializer')
 			->setDebug($systemConfig['DEVMODE']);
 
 		if ($systemConfig['DEVMODE']) {

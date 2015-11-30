@@ -20,28 +20,35 @@
 
 namespace iMSCP\Core\Service;
 
-use Zend\EventManager\EventManager;
-use Zend\EventManager\SharedEventManager;
+use iMSCP\Core\Config\FileConfigHandler;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class EventManagerFactory
+ * Class SystemConfigFactory
  * @package iMSCP\Core\Service
  */
-class EventManagerFactory implements FactoryInterface
+class SystemConfigFactory implements FactoryInterface
 {
 	/**
-	 * {@inheritdoc}
+	 * {@inheritdoc]
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		$events = new EventManager();
+		if (getenv('IMSCP_CONF')) {
+			$configFilePath = getEnv('IMSCP_CONF');
+		} else {
+			switch (PHP_OS) {
+				case 'FreeBSD':
+				case 'OpenBSD':
+				case 'NetBSD':
+					$configFilePath = '/usr/local/etc/imscp/imscp.conf';
+					break;
+				default:
+					$configFilePath = '/etc/imscp/imscp.conf';
+			}
+		}
 
-		/** @var  SharedEventManager $serviceManager */
-		$serviceManager = $serviceLocator->get('SharedEventManager');
-
-		$events->setSharedManager($serviceManager);
-		return $events;
+		return new FileConfigHandler($configFilePath);
 	}
 }

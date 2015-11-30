@@ -20,34 +20,30 @@
 
 namespace iMSCP\Core\Service;
 
-use Zend\ModuleManager\ModuleManager;
+use iMSCP\Core\Application;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\ServiceManager\ServiceManager;
 
 /**
- * Class FrontendConfigFactory
+ * Class ApplicationFactory
  * @package iMSCP\Core\Service
  */
-class FrontendConfigFactory implements FactoryInterface
+class ApplicationFactory implements FactoryInterface
 {
 	/**
-	 * Create the frontend configuration service
+	 * Create the Application service
 	 *
-	 * Retrieves the Module Manager from the service locator, and executes
-	 * {@link Zend\ModuleManager\ModuleManager::loadModules()}.
+	 * Creates a iMSCP\Core\Application service, passing it the configuration service and the service manager instance.
 	 *
-	 * It then retrieves the config listener from the module manager, and from that the merged configuration.
-	 *
-	 * @param ServiceLocatorInterface $serviceLocator
-	 * @return array|\Traversable
+	 * @param  ServiceLocatorInterface $serviceLocator
+	 * @return Application
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		/** @var ModuleManager $moduleManager */
-		$moduleManager = $serviceLocator->get('ModuleManager');
-		$moduleManager->loadModules();
-		$moduleParams = $moduleManager->getEvent()->getParams();
-		$frontendConfig = $moduleParams['configListener']->getMergedConfig(false);
-		return $frontendConfig;
+		/** @var ServiceManager $serviceManager */
+		$serviceManager = $serviceLocator;
+
+		return new Application($serviceLocator->get('Config'), $serviceManager);
 	}
 }

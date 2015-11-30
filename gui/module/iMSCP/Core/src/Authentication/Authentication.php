@@ -21,6 +21,7 @@
 namespace iMSCP\Core\Authentication;
 
 use iMSCP\Core\Application;
+use iMSCP\Core\Events;
 use Zend\EventManager\EventManager;
 
 /**
@@ -99,7 +100,7 @@ class Authentication
 		if(null !== $events) {
 			$this->eventManager = $events;
 		} elseif(null === $this->eventManager) {
-			$this->eventManager = Application::getInstance()->getEvents();
+			$this->eventManager = Application::getInstance()->getEventManager();
 		}
 
 		return $this->eventManager;

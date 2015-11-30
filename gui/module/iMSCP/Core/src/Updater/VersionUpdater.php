@@ -102,7 +102,7 @@ class VersionUpdater extends AbstractUpdater
 	public function getUpdateInfo($forceReload = false)
 	{
 		if (null === $this->updateInfo) {
-			$file = CACHE_PATH . '/imscp_info.json';
+			$file = '/data/cache/imscp_info.json';
 
 			if ($forceReload || !file_exists($file) || strtotime('+1 day', filemtime($file)) < time()) {
 				clearstatcache();

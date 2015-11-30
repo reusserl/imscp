@@ -22,14 +22,16 @@ namespace iMSCP\Core;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
+use Zend\ModuleManager\ModuleManager;
 use Zend\ServiceManager\ServiceManager;
 
 /**
  * Class Application
  * @package iMSCP
  */
-class Application implements ApplicationInterface
+class Application implements ApplicationInterface, EventManagerAwareInterface
 {
 	/** @var Application */
 	static protected $instance;
@@ -38,6 +40,16 @@ class Application implements ApplicationInterface
 	 * @var array
 	 */
 	protected $configuration = null;
+
+	/**
+	 * @var array Default listeners
+	 */
+	protected $defaultListeners = [];
+
+	/**
+	 * @var ApplicationEvent
+	 */
+	protected $event;
 
 	/**
 	 * @var EventManagerInterface
@@ -60,16 +72,6 @@ class Application implements ApplicationInterface
 	protected $serviceManager;
 
 	/**
-	 * @var array Default listeners
-	 */
-	protected $defaultListeners = [];
-
-	/**
-	 * @var ApplicationEvent
-	 */
-	protected $event;
-
-	/**
 	 * Constructor
 	 *
 	 * @param mixed $configuration
@@ -80,9 +82,7 @@ class Application implements ApplicationInterface
 		$this->configuration = $configuration;
 		$this->serviceManager = $serviceManager;
 
-		/** @var EventManagerInterface $eventManager */
-		$eventManager = $serviceManager->get('EventManager');
-		$this->setEvents($eventManager);
+		$this->setEventManager($serviceManager->get('EventManager'));
 
 		$this->request = $serviceManager->get('Request');
 		$this->response = $serviceManager->get('Response');
@@ -152,58 +152,6 @@ class Application implements ApplicationInterface
 	}
 
 	/**
-	 * Static method for quick and easy initialization of the Application
-	 *
-	 * If you use this init() method, you cannot specify a service with the name of 'ApplicationConfig' in your service
-	 * manager config. This name is reserved to hold the array from application.config.php.
-	 *
-	 * The following services can only be overridden from application.config.php:
-	 *
-	 * - ModuleManager
-	 * - SharedEventManager
-	 * - EventManager & Zend\EventManager\EventManagerInterface
-	 *
-	 * All other services are configured after module loading, thus can be
-	 * overridden by modules.
-	 *
-	 * @param array $configuration
-	 * @return Application
-	 */
-	public static function init($configuration = [])
-	{
-		$smConfig = isset($configuration['service_manager']) ? $configuration['service_manager'] : [];
-		$serviceManager = new ServiceManager(new Service\ServiceManagerConfig($smConfig));
-		$serviceManager->setService('ApplicationConfig', $configuration);
-		$serviceManager->get('ModuleManager')->loadModules();
-		$listenersFromAppConfig = isset($configuration['listeners']) ? $configuration['listeners'] : [];
-		$config = $serviceManager->get('Config');
-		$listenersFromConfigService = isset($config['listeners']) ? $config['listeners'] : [];
-		$listeners = array_unique(array_merge($listenersFromConfigService, $listenersFromAppConfig));
-		return $serviceManager->get('Application')->bootstrap($listeners);
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function run()
-	{
-		// Nothing to do ATM
-	}
-
-	/**
-	 * Set the event manager instance
-	 *
-	 * @param  EventManagerInterface $events
-	 * @return Application
-	 */
-	public function setEvents(EventManagerInterface $events)
-	{
-		$events->setIdentifiers([__CLASS__, get_class($this)]);
-		$this->events = $events;
-		return $this;
-	}
-
-	/**
 	 * Get the application event instance
 	 *
 	 * @return ApplicationEvent
@@ -214,28 +162,91 @@ class Application implements ApplicationInterface
 	}
 
 	/**
+	 * Set the event manager instance
+	 *
+	 * @param  EventManagerInterface $events
+	 * @return Application
+	 */
+	public function setEventManager(EventManagerInterface $events)
+	{
+		$events->setIdentifiers([
+			__CLASS__,
+			get_class($this)
+		]);
+		$this->events = $events;
+		return $this;
+	}
+
+
+	/**
 	 * Retrieve the event manager
 	 *
 	 * Lazy-loads an EventManager instance if none registered.
 	 *
 	 * @return EventManagerInterface
 	 */
-	public function getEvents()
+	public function getEventManager()
 	{
 		return $this->events;
 	}
 
 	/**
+	 * Static method for quick and easy initialization of the Application
+	 *
+	 * If you use this init() method, you cannot specify a service with the name of 'FrontendConfig' in your service
+	 * manager config. This name is reserved to hold the array from config/application.config.php.
+	 *
+	 * The following services can only be overridden from config/frontend.config.php:
+	 *
+	 * - ModuleManager
+	 * - SharedEventManager
+	 * - EventManager & Zend\EventManager\EventManagerInterface
+	 *
+	 * All other services are configured after module loading, thus can be overridden by modules.
+	 *
+	 * @param array $configuration
+	 * @return Application
+	 */
+	public static function init($configuration = [])
+	{
+		$serviceManagerConfig = isset($configuration['service_manager']) ? $configuration['service_manager'] : [];
+
+		$serviceManager = new ServiceManager(new Service\ServiceManagerConfig($serviceManagerConfig));
+		$serviceManager->setService('ApplicationConfig', $configuration);
+		$serviceManager->get('ModuleManager')->loadModules();
+
+		$listenersFromAppConfig = isset($configuration['listeners']) ? $configuration['listeners'] : [];
+		$config = $serviceManager->get('Config');
+
+		$listenersFromConfigService = isset($config['listeners']) ? $config['listeners'] : [];
+		$listeners = array_unique(array_merge($listenersFromConfigService, $listenersFromAppConfig));
+
+		return $serviceManager->get('Application')->bootstrap($listeners);
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function run()
+	{
+		// Nothing to do ATM. This will take place in version 2.0.0 when we will use MVC architecture
+	}
+
+
+	/**
 	 * Get application instance
 	 *
-	 * Transitional function allowing to deal with i-MSCP procedural code. Will be removed in v2.0.0
+	 * A transitional function allowing to retrieve the application instance in global functions.
+	 * That function will be removed in v2.0.0 when i-MSCP will be a full OOP application.
 	 *
 	 * @throws \Exception
 	 */
 	static public function getInstance()
 	{
-		if(null === self::$instance) {
-			throw new \Exception('Application has not been initialized yet');
+		if (null === self::$instance) {
+			throw new \LogicException(
+				'Application has not been initialized yet. You must include application.php at top of your script.'
+			);
 		}
 
 		return self::$instance;

@@ -18,23 +18,4 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Service;
-
-use iMSCP\Core\Config\FileConfigHandler;
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
-
-/**
- * Class SystemConfigFactory
- * @package iMSCP\Core\Service
- */
-class SystemConfigFactory implements FactoryInterface
-{
-	/**
-	 * {@inheritdoc]
-	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
-	{
-		return new FileConfigHandler();
-	}
-}
+return [];

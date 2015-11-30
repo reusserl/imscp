@@ -70,20 +70,20 @@ class ORMServiceFactory implements FactoryInterface
 		/** @var AnnotationReader $annotationReader */
 		$annotationReader = new CachedReader(new AnnotationReader(), $cacheImpl);
 		$annotationDriver = new AnnotationDriver($annotationReader, [
-			LIBRARY_PATH . '/iMSCP/Entity',
-			LIBRARY_PATH . '/iMSCP/ApsStandard/Entity'
+			'module/Core/src/Entity',
+			'module/ApsStandard/src/Entity'
 		]);
 		$ORMConfig->setMetadataDriverImpl($annotationDriver);
 
 		// Setup proxy configuration
-		$ORMConfig->setProxyDir(LIBRARY_PATH . '/iMSCP/proxies');
-		$ORMConfig->setProxyNamespace('iMSCP\\Proxies');
+		$ORMConfig->setProxyDir('data/doctrine/proxies');
+		$ORMConfig->setProxyNamespace('iMSCP\Proxies');
 		$ORMConfig->setAutoGenerateProxyClasses($devmode);
 
 		// Setup entity namespaces
 		$ORMConfig->setEntityNamespaces([
-			'Core' => 'iMSCP\\Entity',
-			'Aps' => 'iMSCP\\ApsStandard\\Entity'
+			'Core' => 'iMSCP\Core\Entity',
+			'Aps' => 'iMSCP\ApsStandard\Entity'
 		]);
 
 		// Setup caches
@@ -95,7 +95,7 @@ class ORMServiceFactory implements FactoryInterface
 		// Setup second-level cache
 		$cacheImpl = $this->getCacheDriverInstance($devmode, 'imscp_sec');
 		$cacheFactory = new DefaultCacheFactory(new RegionsConfiguration(), $cacheImpl);
-		//$cacheFactory->setFileLockRegionDirectory(CACHE_PATH . '/locks'); // Only needed for READ_WRITE mode
+		//$cacheFactory->setFileLockRegionDirectory('data/cache/locks'); // Only needed for READ_WRITE mode
 		$ORMConfig->setSecondLevelCacheEnabled(true);
 		$ORMConfig->getSecondLevelCacheConfiguration()->setCacheFactory($cacheFactory);
 

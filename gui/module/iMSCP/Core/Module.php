@@ -18,32 +18,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Service;
+namespace iMSCP\Core;
 
-use iMSCP\Core\Application;
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
-use Zend\ServiceManager\ServiceManager;
+use Zend\ModuleManager\Feature\ConfigProviderInterface;
 
 /**
- * Class ApplicationFactory
- * @package iMSCP\Core\Service
+ * Class Module
+ * @package iMSCP\Core
  */
-class ApplicationFactory implements FactoryInterface
+class Module implements ConfigProviderInterface
 {
 	/**
-	 * Create the Application service
-	 *
-	 * Creates a Zend\Mvc\Application service, passing it the configuration service and the service manager instance.
-	 *
-	 * @param  ServiceLocatorInterface $serviceLocator
-	 * @return Application
+	 * {@inheritdoc}
 	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
+	public function getConfig()
 	{
-		/** @var ServiceManager $sm */
-		$serviceManager = $serviceLocator;
-
-		return new Application($serviceLocator->get('Config'), $serviceManager);
+		return include __DIR__ . '/config/module.config.php';
 	}
 }
