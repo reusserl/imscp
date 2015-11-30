@@ -20,8 +20,7 @@
 
 namespace iMSCP\Core\Service;
 
-use iMSCP\Events\EventManagerAwareInterface;
-use iMSCP_Events_Manager_Interface as EventManagerInterface;
+use Zend\EventManager\EventManagerAwareInterface;
 use Zend\ServiceManager\Config;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
@@ -31,7 +30,7 @@ use Zend\Stdlib\ArrayUtils;
 
 /**
  * Class ServiceManagerConfig
- * @package iMSCP\Service
+ * @package iMSCP\Core\Service
  */
 class ServiceManagerConfig extends Config
 {
@@ -50,7 +49,7 @@ class ServiceManagerConfig extends Config
 	 * @var array
 	 */
 	protected $factories = [
-		'EventManager'  => 'iMSCP\Service\EventManagerFactory',
+		'EventManager' => 'iMSCP\Service\EventManagerFactory',
 		'ModuleManager' => 'iMSCP\Service\ModuleManagerFactory'
 	];
 
@@ -69,7 +68,7 @@ class ServiceManagerConfig extends Config
 	 * @var array
 	 */
 	protected $aliases = [
-		'Zend\EventManager\EventManagerInterface'     => 'EventManager',
+		'Zend\EventManager\EventManagerInterface' => 'EventManager',
 		'Zend\ServiceManager\ServiceLocatorInterface' => 'ServiceManager',
 		'Zend\ServiceManager\ServiceManager' => 'ServiceManager'
 	];
@@ -111,7 +110,6 @@ class ServiceManagerConfig extends Config
 		$this->initializers = [
 			'EventManagerAwareInitializer' => function ($instance, ServiceLocatorInterface $serviceLocator) {
 				if ($instance instanceof EventManagerAwareInterface) {
-					/** @var EventManagerInterface $eventManager */
 					$eventManager = $serviceLocator->get('EventManager');
 					$instance->setEventManager($eventManager);
 				}

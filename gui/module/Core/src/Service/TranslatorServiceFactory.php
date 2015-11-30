@@ -20,7 +20,6 @@
 
 namespace iMSCP\Core\Service;
 
-use iMSCP_Registry as Registry;
 use Symfony\Component\HttpFoundation\Request;
 use Zend\Cache\Storage\Adapter\Filesystem;
 use Zend\Cache\StorageFactory;
@@ -29,8 +28,8 @@ use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class SerializerServiceFactory
- * @package iMSCP\Service
+ * Class TranslatorServiceFactory
+ * @package iMSCP\Core\Service
  */
 class TranslatorServiceFactory implements FactoryInterface
 {
@@ -39,11 +38,10 @@ class TranslatorServiceFactory implements FactoryInterface
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		$config = Registry::get('config');
+		$systemConfig = $serviceLocator->get('SystemConfig');
 
 		/** @var Request $request */
 		//$request = $serviceLocator->get('Request');
-
 
 
 		/*
@@ -81,7 +79,7 @@ class TranslatorServiceFactory implements FactoryInterface
 		/** @var Filesystem $cache */
 		$cache = StorageFactory::factory([
 			'adapter' => [
-				'name' => $config['DEVMODE'] ? 'Filesystem' : 'Apc', // TODO only if available
+				'name' => $systemConfig['DEVMODE'] ? 'Filesystem' : 'Apc', // TODO only if available
 				'options' => [
 					'cache_dir' => CACHE_PATH . '/translations',
 					'ttl' => 0, // Translation cache is never flushed automatically
@@ -91,7 +89,7 @@ class TranslatorServiceFactory implements FactoryInterface
 			'plugins' => [
 				[
 					'name' => 'serializer',
-					'options' =>  []
+					'options' => []
 				],
 				'exception_handler' => [
 					'throw_exceptions' => true
@@ -104,14 +102,14 @@ class TranslatorServiceFactory implements FactoryInterface
 			'locale' => '',
 			'translation_file_patterns' => [
 				'type' => 'gettext',
-				'base_dir' => $config['GUI_ROOT_DIR'] . '/i18n/locales',
+				'base_dir' => $systemConfig['GUI_ROOT_DIR'] . '/i18n/locales',
 				'pattern' => '%s/LC_MESSAGES/%s.mo',
 				'text_domain' => 'iMSCP'
 			],
 
 		]);
 
-		if ($config['DEBUG']) {
+		if ($systemConfig['DEBUG']) {
 			$cache->clearByNamespace('translations');
 		} else {
 			$translator->setCache($cache);

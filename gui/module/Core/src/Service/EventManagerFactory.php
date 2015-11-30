@@ -27,7 +27,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Class EventManagerFactory
- * @package iMSCP\Service
+ * @package iMSCP\Core\Service
  */
 class EventManagerFactory implements FactoryInterface
 {

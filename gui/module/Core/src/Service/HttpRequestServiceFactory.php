@@ -26,7 +26,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Class HttpRequestServiceFactory
- * @package iMSCP\Service
+ * @package iMSCP\Core\Service
  */
 class HttpRequestServiceFactory implements FactoryInterface
 {

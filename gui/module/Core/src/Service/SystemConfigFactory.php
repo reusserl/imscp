@@ -18,20 +18,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+namespace iMSCP\Core\Service;
+
+use iMSCP\Core\Config\FileConfigHandler;
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
+
 /**
- * Class iMSCP_Exception
+ * Class SystemConfigFactory
+ * @package iMSCP\Core\Service
  */
-class iMSCP_Exception extends Exception
+class SystemConfigFactory implements FactoryInterface
 {
 	/**
-	 * Constructor
+	 * Create service
 	 *
-	 * @param string $msg Exception Message
-	 * @param int $code Exception code
-	 * @param Exception $previous OPTIONAL Previous exception
+	 * @param ServiceLocatorInterface $serviceLocator
+	 * @return mixed
 	 */
-	public function __construct($msg = '', $code = 0, Exception $previous = null)
+	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		parent::__construct($msg, (int)$code, $previous);
+		return new FileConfigHandler();
 	}
 }

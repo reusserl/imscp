@@ -20,60 +20,30 @@
 
 namespace iMSCP\Core\Service;
 
-use iMSCP_Config_Handler_File as ConfigFileHandler;
-use iMSCP_Registry as Registry;
+use iMSCP\Core\Application;
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\ServiceManager\ServiceManager;
 
 /**
- * Class EncryptionDataService
- * @package iMSCP\Service
+ * Class ApplicationFactory
+ * @package iMSCP\Core\Service
  */
-class EncryptionDataService
+class ApplicationFactory implements FactoryInterface
 {
 	/**
-	 * @var string Encryption key
-	 */
-	protected $key;
-
-	/**
-	 * @var string Initialization vector
-	 */
-	protected $iv;
-
-	/**
-	 * Constructor
+	 * Create the Application service
 	 *
-	 * @throws \iMSCP_Exception
-	 */
-	public function __construct()
-	{
-		$config = Registry::get('config');
-		$data = new ConfigFileHandler($config['CONF_DIR'] . '/imscp-db-keys');
-
-		if (!isset($data['KEY']) || !isset($data['IV'])) {
-			throw new \RuntimeException('Encryption data file (imscp-db-keys) is corrupted.');
-		}
-
-		$this->key = $data['KEY'];
-		$this->iv = $data['IV'];
-	}
-
-	/**
-	 * Get encryption key
+	 * Creates a Zend\Mvc\Application service, passing it the configuration service and the service manager instance.
 	 *
-	 * @return string
+	 * @param  ServiceLocatorInterface $serviceLocator
+	 * @return Application
 	 */
-	public function getKey()
+	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		return $this->key;
-	}
+		/** @var ServiceManager $sl */
+		$sl = $serviceLocator;
 
-	/**
-	 * Return initialization vector
-	 *
-	 * @return string
-	 */
-	public function getIv()
-	{
-		return $this->iv;
+		return new Application($serviceLocator->get('Config'), $sl);
 	}
 }

@@ -20,21 +20,34 @@
 
 namespace iMSCP\Core\Service;
 
-use Symfony\Component\Validator\Validation;
+use Zend\ModuleManager\ModuleManager;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class ValidatorServiceFactory
+ * Class FrontendConfigFactory
  * @package iMSCP\Core\Service
  */
-class ValidatorServiceFactory implements FactoryInterface
+class FrontendConfigFactory implements FactoryInterface
 {
 	/**
-	 * {@inheritdoc}
+	 * Create the frontend configuration service
+	 *
+	 * Retrieves the Module Manager from the service locator, and executes
+	 * {@link Zend\ModuleManager\ModuleManager::loadModules()}.
+	 *
+	 * It then retrieves the config listener from the module manager, and from that the merged configuration.
+	 *
+	 * @param  ServiceLocatorInterface $serviceLocator
+	 * @return array|\Traversable
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		return Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
+		/** @var ModuleManager $moduleManager */
+		$moduleManager = $serviceLocator->get('ModuleManager');
+		$moduleManager->loadModules();
+		$moduleParams = $moduleManager->getEvent()->getParams();
+		$config = $moduleParams['configListener']->getMergedConfig(false);
+		return $config;
 	}
 }

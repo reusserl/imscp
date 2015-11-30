@@ -20,21 +20,64 @@
 
 namespace iMSCP\Core\Service;
 
-use Symfony\Component\Validator\Validation;
+use iMSCP\Core\Config\FileConfigHandler;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class ValidatorServiceFactory
+ * Class EncryptionDataService
  * @package iMSCP\Core\Service
  */
-class ValidatorServiceFactory implements FactoryInterface
+class EncryptionDataService implements FactoryInterface
 {
 	/**
-	 * {@inheritdoc}
+	 * @var string Encryption key
+	 */
+	protected $key;
+
+	/**
+	 * @var string Initialization vector
+	 */
+	protected $iv;
+
+	/**
+	 * Get encryption key
+	 *
+	 * @return string
+	 */
+	public function getKey()
+	{
+		return $this->key;
+	}
+
+	/**
+	 * Return initialization vector
+	 *
+	 * @return string
+	 */
+	public function getIv()
+	{
+		return $this->iv;
+	}
+
+	/**
+	 * Create service
+	 *
+	 * @param ServiceLocatorInterface $serviceLocator
+	 * @return mixed
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		return Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
+		$systemConfig = $serviceLocator->get('SystemConfig');
+		$config = new FileConfigHandler($systemConfig['CONF_DIR'] . '/imscp-db-keys');
+
+		if (!isset($config['KEY']) || !isset($config['IV'])) {
+			throw new \RuntimeException('Encryption data file (imscp-db-keys) is corrupted.');
+		}
+
+		$this->key = $systemConfig['KEY'];
+		$this->iv = $systemConfig['IV'];
+
+		return $this;
 	}
 }

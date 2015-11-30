@@ -20,13 +20,13 @@
 
 namespace iMSCP\Core\Service;
 
-use iMSCP\Doctrine\Persistence\ManagerRegistry;
+use iMSCP\Core\Doctrine\Persistence\ManagerRegistry;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Class ManagerRegistryFactory
- * @package iMSCP\Service
+ * @package iMSCP\Core\Service
  */
 class ManagerRegistryFactory implements FactoryInterface
 {

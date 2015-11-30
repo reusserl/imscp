@@ -27,8 +27,8 @@ use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class ManagerRegistryFactory
- * @package iMSCP\Service
+ * Class DBALConnectionFactory
+ * @package iMSCP\Core\Service
  */
 class DBALConnectionFactory implements FactoryInterface
 {
@@ -37,9 +37,7 @@ class DBALConnectionFactory implements FactoryInterface
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		// Get main configuration object
-		$mainConfig = Registry::get('config');
-
+		$systemConfig = $serviceLocator->get('SystemConfig');
 		$config = new Configuration();
 
 		// Ignore tables which are not managed through ORM service
@@ -52,8 +50,8 @@ class DBALConnectionFactory implements FactoryInterface
 		$conn = DriverManager::getConnection(
 			[
 				'pdo' => $pdo, // Reuse PDO instance from Database service
-				'host' => $mainConfig['DATABASE_HOST'], // Only there for later referral through connection object
-				'port' => $mainConfig['DATABASE_PORT'] // Only there for later referral through connection object
+				'host' => $systemConfig['DATABASE_HOST'], // Only there for later referral through connection object
+				'port' => $systemConfig['DATABASE_PORT'] // Only there for later referral through connection object
 			],
 			$config
 		);

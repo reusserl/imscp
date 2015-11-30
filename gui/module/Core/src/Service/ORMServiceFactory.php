@@ -28,19 +28,18 @@ use Doctrine\ORM\Cache\RegionsConfiguration;
 use Doctrine\ORM\Configuration;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
-use iMSCP_Registry as Registry;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Class ORMServiceFactory
- * @package iMSCP\Service
+ * @package iMSCP\Core\Service
  */
 class ORMServiceFactory implements FactoryInterface
 {
-	const ARRAY_CACHE_DRIVER_CLASS = 'Doctrine\\Common\\Cache\\ArrayCache';
-	const APC_CACHE_DRIVER_CLASS = 'Doctrine\\Common\\Cache\\ApcCache';
-	const XCACHE_CACHE_DRIVER_CLASS = 'Doctrine\\Common\\Cache\\XcacheCache';
+	const ARRAY_CACHE_DRIVER_CLASS = 'Doctrine\Common\Cache\ArrayCache';
+	const APC_CACHE_DRIVER_CLASS = 'Doctrine\Common\Cache\ApcCache';
+	const XCACHE_CACHE_DRIVER_CLASS = 'Doctrine\Common\Cache\XcacheCache';
 
 	/**
 	 * @var string
@@ -55,11 +54,10 @@ class ORMServiceFactory implements FactoryInterface
 		/** @var  \Doctrine\DBAL\Connection $connection */
 		$connection = $serviceLocator->get('DBALConnection');
 
-		// Get main configuration object
-		$mainConfig = Registry::get('config');
+		$systemConfig = $serviceLocator->get('SystemConfig');
 
 		// Set devmode mode flag
-		$devmode = (bool)!$mainConfig['DEVMODE'];
+		$devmode = (bool)!$systemConfig['DEVMODE'];
 
 		// Create new ORM configuration object
 		/** @var Configuration $ORMConfig */

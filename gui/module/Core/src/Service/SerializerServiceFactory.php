@@ -20,9 +20,8 @@
 
 namespace iMSCP\Service;
 
-use iMSCP\Doctrine\Persistence\ManagerRegistry;
-use iMSCP_Registry as Registry;
-use iMSCP\Doctrine\Serializer\Construction\DoctrineObjectConstructor;
+use iMSCP\Core\Doctrine\Persistence\ManagerRegistry;
+use iMSCP\Core\Doctrine\Serializer\Construction\DoctrineObjectConstructor;
 use JMS\Serializer\Construction\UnserializeObjectConstructor;
 use JMS\Serializer\JsonDeserializationVisitor;
 use JMS\Serializer\JsonSerializationVisitor;
@@ -47,16 +46,21 @@ class SerializerServiceFactory implements FactoryInterface
 		$managerRegistry = $serviceLocator->get('ManagerRegistry');
 		$objectConstructor = new DoctrineObjectConstructor($managerRegistry, new UnserializeObjectConstructor());
 
-		$config = Registry::get('config');
+		$systemConfig = $serviceLocator->get('SystemConfig');
+
 		$serializer = SerializerBuilder::create()
 			->setObjectConstructor($objectConstructor)
 			->setCacheDir(CACHE_PATH . '/serializer')
-			->setDebug($config['DEVMODE']);
+			->setDebug($systemConfig['DEVMODE']);
 
-		if ($config['DEVMODE']) {
-			$jsonSerializerVisitor = new JsonSerializationVisitor(new SerializedNameAnnotationStrategy(new CamelCaseNamingStrategy()));
+		if ($systemConfig['DEVMODE']) {
+			$jsonSerializerVisitor = new JsonSerializationVisitor(
+				new SerializedNameAnnotationStrategy(new CamelCaseNamingStrategy())
+			);
 			$jsonSerializerVisitor->setOptions(JSON_PRETTY_PRINT);
-			$jsonDeserializerVisitor = new JsonDeserializationVisitor(new SerializedNameAnnotationStrategy(new CamelCaseNamingStrategy()));
+			$jsonDeserializerVisitor = new JsonDeserializationVisitor(
+				new SerializedNameAnnotationStrategy(new CamelCaseNamingStrategy())
+			);
 			$serializer->setSerializationVisitor('json', $jsonSerializerVisitor);
 			$serializer->setDeserializationVisitor('json', $jsonDeserializerVisitor);
 		}

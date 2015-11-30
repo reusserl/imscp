@@ -18,38 +18,30 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+namespace iMSCP\Core\Service;
+
+use Zend\EventManager\EventManager;
+use Zend\EventManager\SharedEventManager;
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
+
 /**
- * Class iMSCP_Exception_Database
+ * Class NavigationServiceFactory
+ * @package iMSCP\Core\Service
  */
-class iMSCP_Exception_Database extends iMSCP_Exception
+class NavigationServiceFactory implements FactoryInterface
 {
 	/**
-	 * @var string Query that failed
+	 * {@inheritdoc}
 	 */
-	protected $query = null;
-
-	/**
-	 * Constructor
-	 *
-	 * @param string $msg Exception Message
-	 * @param string $query query Last query executed
-	 * @param int $code Exception code
-	 * @param Exception $previous OPTIONAL Previous exception
-	 */
-	public function __construct($msg = '', $query = null, $code = 0, Exception $previous = null)
+	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		$this->query = (string)preg_replace("/[\t\n]+/", ' ', $query);
+		$em = new EventManager();
 
-		parent::__construct($msg, $code, $previous);
-	}
+		/** @var  SharedEventManager $sem */
+		$sem = $serviceLocator->get('SharedEventManager');
 
-	/**
-	 * Gets query
-	 *
-	 * @return string
-	 */
-	public function getQuery()
-	{
-		return $this->query;
+		$em->setSharedManager($sem);
+		return $em;
 	}
 }
