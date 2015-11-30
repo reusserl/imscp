@@ -23,7 +23,8 @@ use iMSCP\Core\Application;
 use iMSCP\Core\Config\FileConfigHandler;
 
 /**
- * Class iMSCP_PHPini
+ * Class PhpEditor
+ * @package iMSCP\Core\Php
  */
 class PhpEditor
 {
