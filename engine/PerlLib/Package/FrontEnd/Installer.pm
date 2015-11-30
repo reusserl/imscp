@@ -73,25 +73,32 @@ sub registerSetupListeners
 			'symfony/console' => '~2.7',
 			'symfony/http-foundation' => '~2.7.0',
 			'symfony/validator' => '~2.7.0',
-			"zendframework/zend-cache": "~2.4.0",
-			"zendframework/zend-config": "~2.4.0",
-			"zendframework/zend-escaper": "~2.4.0",
-			"zendframework/zend-eventmanager": "~2.4.0",
-			"zendframework/zend-i18n": "~2.4.0",
-			"zendframework/zend-modulemanager":"~2.4.0",
-			"zendframework/zend-navigation": "~2.4.0",
-			"zendframework/zend-servicemanager": "~2.4.0",
-			"zendframework/zend-session": "~2.4.0",
-			"zendframework/zend-uri": "~2.4.0",
-			"zendframework/zend-validator": "~2.4.0"
+			'phpseclib/phpseclib' => '~1.0.0',
+			'phpwhois/idna-convert' => '~0.9.0',
+			'zendframework/zend-cache' => '~2.4.0',
+			'zendframework/zend-config' => '~2.4.0',
+			'zendframework/zend-escaper' => '~2.4.0',
+			'zendframework/zend-eventmanager' => "~2.4.0',
+			'zendframework/zend-i18n' => ''~2.4.0",
+			'zendframework/zend-modulemanager' => '~2.4.0',
+			'zendframework/zend-navigation' => '~2.4.0',
+			'zendframework/zend-servicemanager' => '~2.4.0',
+			'zendframework/zend-session' => '~2.4.0',
+			'zendframework/zend-uri' => '~2.4.0',
+			'zendframework/zend-validator' => "~2.4.0'
 		});
 
-		# Add autoload mapping rules for i-MSCP frontend modules
+		# Register PSR-4 autoload mapping rules for i-MSCP frontend modules
 		for my $module(iMSCP::Dir->new( dirname => $main::imscpConfig{'GUI_ROOT_DIR'} . '/module' )->getDirs()) {
 			$composerManager->registerAutoloaderMap(
-				'psr-4', 'iMSCP\\', $main::imscpConfig{'GUI_ROOT_DIR'} . "/module/$module/src/"
+				'psr-4', "iMSCP\\\\$module\\\\", $main::imscpConfig{'GUI_ROOT_DIR'} . "/module/$module/src"
 			);
 		}
+
+		# Register PSR-0 autoload mapping rule for Net_DNS2 PEAR packages (vendor)
+		$composerManager->registerAutoloaderMap(
+			'psr-0',  'Net_DNS2', $main::imscpConfig{'GUI_ROOT_DIR'} . "/vendor"
+		);
 	});
 
 	$eventManager->register('beforeSetupDialog', sub {
