@@ -193,10 +193,10 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
 	/**
 	 * Static method for quick and easy initialization of the Application
 	 *
-	 * If you use this init() method, you cannot specify a service with the name of 'FrontendConfig' in your service
+	 * If you use this init() method, you cannot specify a service with the name of 'ApplicationConfig' in your service
 	 * manager config. This name is reserved to hold the array from config/application.config.php.
 	 *
-	 * The following services can only be overridden from config/frontend.config.php:
+	 * The following services can only be overridden from config/application.config.php:
 	 *
 	 * - ModuleManager
 	 * - SharedEventManager
