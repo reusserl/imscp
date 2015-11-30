@@ -64,14 +64,35 @@ sub registerSetupListeners
 	my ($self, $eventManager) = @_;
 
 	$eventManager->register('beforeSetupComposerPackages', sub {
-		(shift)->registerPackages({
+		my $composerManager = shift;
+
+		# Register required composer packages
+		$composerManager->registerPackages({
 			'doctrine/orm' => '~2.5.0',
 			'jms/serializer' => '~1.0.0',
 			'symfony/console' => '~2.7',
 			'symfony/http-foundation' => '~2.7.0',
 			'symfony/validator' => '~2.7.0',
-			'zendframework/zend-servicemanager' => '~2.4.0'
+			"zendframework/zend-cache": "~2.4.0",
+			"zendframework/zend-config": "~2.4.0",
+			"zendframework/zend-escaper": "~2.4.0",
+			"zendframework/zend-eventmanager": "~2.4.0",
+			"zendframework/zend-i18n": "~2.4.0",
+			"zendframework/zend-modulemanager":"~2.4.0",
+			"zendframework/zend-navigation": "~2.4.0",
+			"zendframework/zend-servicemanager": "~2.4.0",
+			"zendframework/zend-session": "~2.4.0",
+			"zendframework/zend-uri": "~2.4.0",
+			"zendframework/zend-validator": "~2.4.0",
 		});
+
+		# Register autolod maps for i-MSCP modules
+		$composerManager->registerAutoloaderMap(
+			'psr-4', 'iMSCP\\', $main::imscpConfig{'GUI_ROOT_DIR'} . '/module/Core/src/'
+		);
+		$composerManager->registerAutoloaderMap(
+			'psr-4', 'iMSCP\\', $main::imscpConfig{'GUI_ROOT_DIR'} . '/module/ApsStandard/src/'
+		);
 	});
 
 	$eventManager->register('beforeSetupDialog', sub {
