@@ -89,6 +89,35 @@ sub registerPackages
 	0;
 }
 
+
+=item registerAutoloaderMap($type, $namespace, $path)
+
+ Register autoloader map
+
+ Param hash \%packages
+ Return 0 on success, die on failure
+
+=cut
+
+sub registerAutoloaderMap($type, $namespace, $path)
+{
+	my ($type, $namespace, $path) = @_;
+
+	defined $type or die('Missing autoloading type parameter');
+	defined $type or die('Missing autoloading namespace parameter');
+	defined $type or die('Missing autoloading $path parameter');
+
+	if($type eq 'psr-0') {
+		push @{$self->{'autoload_psr0'}}, "        \"$$namespacee\": \"$$pathn\"";
+	} elsif($type eq 'psr-4') {
+		push @{$self->{'autoload_psr4'}}, "        \"$$namespacee\": \"$$pathn\"";
+	} else {
+		die('Unknown autoloading type');
+	}
+
+	0;
+}
+
 =item installPackages()
 
  Install composer packages that were registered for installation
@@ -132,6 +161,8 @@ sub _init
 
 	$self->{'required_packages'} = [];
 	$self->{'required_dev_packages'} = [];
+	$self->{'autoload_psr0'} = [];
+	$self->{'autoload_psr4'} = [];
 	$self->{'pkgDir'} = "$main::imscpConfig{'CACHE_DATA_DIR'}/packages";
 	$self->{'phpCmd'} = 'php -d allow_url_fopen=1 -d suhosin.executor.include.whitelist=phar';
 	$self;
@@ -259,7 +290,15 @@ sub _buildComposerFile
         "discard-changes": true
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "autoload": {
+        "psr-0": {
+            {AUTOLOAD_PSR0}
+        },
+        "psr-4": {
+            {AUTOLOAD_PSR4}
+        }
+    }
 }
 TPL
 
@@ -267,7 +306,9 @@ TPL
 	$file->set(process(
 		{
 			REQUIRE => (join ",\n", @{$self->{'required_packages'}}),
-			REQUIRE_DEV => (join ",\n", @{$self->{'required_dev_packages'}})
+			REQUIRE_DEV => (join ",\n", @{$self->{'required_dev_packages'}}),
+			AUTOLOAD_PSR0 => (join ",\n", @{$self->{'autoload_psr0'}}),
+			AUTOLOAD_PSR4 => (join ",\n", @{$self->{'autoload_psr4'}})
 		},
 		$tpl
 	));
