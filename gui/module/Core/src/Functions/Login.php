@@ -21,7 +21,7 @@
 /**
  * Initialize login
  *
- * @param iMSCP_Events_Manager_Interface $eventManager Events Manager
+ * @param \Zend\EventManager\EventManagerInterface $eventManager Events Manager
  * @return void
  */
 function init_login($eventManager)
@@ -30,25 +30,25 @@ function init_login($eventManager)
 	do_session_timeout();
 
 	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('config');
 
 	if ($cfg['BRUTEFORCE']) {
-		$bruteforce = new iMSCP\Plugin\Bruteforce(iMSCP_Registry::get('pluginManager'));
+		$bruteforce = new iMSCP\Core\Plugin\Bruteforce(iMSCP_Registry::get('pluginManager'));
 		$bruteforce->register($eventManager);
 	}
 
 	// Register default authentication handler with lower priority
-	$eventManager->registerListener(\iMSCP\Events\Events::onAuthentication, 'login_credentials', -99);
+	$eventManager->attach(\iMSCP\Core\Events::onAuthentication, 'login_credentials', -99);
 
 	// Register listener that is responsible to check domain status and expire date
-	$eventManager->registerListener(\iMSCP\Events\Events::onBeforeSetIdentity, 'login_checkDomainAccount');
+	$eventManager->attach(\iMSCP\Core\Events::onBeforeSetIdentity, 'login_checkDomainAccount');
 }
 
 /**
  * Credentials authentication handler
  *
- * @param iMSCP_Events_Event $event
- * @return \iMSCP\Authentication\AuthenticationResult
+ * @param \Zend\EventManager\Event $event
+ * @return \iMSCP\Core\Authentication\AuthenticationResult
  */
 function login_credentials($event)
 {
@@ -72,21 +72,21 @@ function login_credentials($event)
 		);
 
 		if(!$stmt->rowCount()) {
-			$result = new \iMSCP\Authentication\AuthenticationResult(
-				\iMSCP\Authentication\AuthenticationResult::FAILURE_IDENTITY_NOT_FOUND, null, tr('Unknown username.')
+			$result = new \iMSCP\Core\Authentication\AuthenticationResult(
+				\iMSCP\Core\Authentication\AuthenticationResult::FAILURE_IDENTITY_NOT_FOUND, null, tr('Unknown username.')
 			);
 		} else {
 			$identity = $stmt->fetchRow(PDO::FETCH_OBJ);
 			$passwordHash = $identity->admin_pass;
 
-			if(! \iMSCP\Utils\Crypt::verify($password, $passwordHash)) {
-				$result = new \iMSCP\Authentication\AuthenticationResult(
-					\iMSCP\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_INVALID, null, tr('Bad password.')
+			if(! \iMSCP\Core\Utils\Crypt::verify($password, $passwordHash)) {
+				$result = new \iMSCP\Core\Authentication\AuthenticationResult(
+					\iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_INVALID, null, tr('Bad password.')
 				);
 			} else {
 				if(strpos($passwordHash, '$2a$') !== 0) { # Not a password encrypted with Bcrypt, then re-encrypt it
 					exec_query('UPDATE admin SET admin_pass = ? WHERE admin_id = ?', array(
-						\iMSCP\Utils\Crypt::bcrypt($password), $identity->admin_id
+						\iMSCP\Core\Utils\Crypt::bcrypt($password), $identity->admin_id
 					));
 					write_log(
 						sprintf('Info: Password for user %s has been re-encrypted using bcrypt', $identity->admin_name),
@@ -94,17 +94,17 @@ function login_credentials($event)
 					);
 				}
 
-				$result = new \iMSCP\Authentication\AuthenticationResult(
-					\iMSCP\Authentication\AuthenticationResult::SUCCESS, $identity
+				$result = new \iMSCP\Core\Authentication\AuthenticationResult(
+					\iMSCP\Core\Authentication\AuthenticationResult::SUCCESS, $identity
 				);
 				$event->stopPropagation();
 			}
 		}
 	} else {
-		$result = new \iMSCP\Authentication\AuthenticationResult(
+		$result = new \iMSCP\Core\Authentication\AuthenticationResult(
 			(count($message) == 2)
-				? \iMSCP\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_EMPTY
-				: \iMSCP\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_INVALID
+				? \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_EMPTY
+				: \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_INVALID
 			,
 			null,
 			$message
@@ -119,7 +119,7 @@ function login_credentials($event)
  *
  * Note: Listen to the onBeforeSetIdentity event triggered in the iMSCP_Authentication component.
  *
- * @param iMSCP_Events_Event $event An iMSCP_Events_Events object representing an onBeforeSetIdentity event.
+ * @param \Zend\EventManager\Event $event An iMSCP_Events_Events object representing an onBeforeSetIdentity event.
  * @return void
  */
 function login_checkDomainAccount($event)
@@ -169,8 +169,7 @@ function login_checkDomainAccount($event)
  */
 function do_session_timeout()
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	// We must not remove bruteforce plugin data (AND `user_name` IS NOT NULL)
 	exec_query(
@@ -188,7 +187,7 @@ function check_login($userLevel = '', $preventExternalLogin = true)
 {
 	do_session_timeout();
 
-	$auth = iMSCP\Authentication\Authentication::getInstance();
+	$auth = iMSCP\Core\Authentication\Authentication::getInstance();
 
 	if (!$auth->hasIdentity()) {
 		$auth->unsetIdentity(); // Ensure deletion of all identity data
@@ -201,8 +200,7 @@ function check_login($userLevel = '', $preventExternalLogin = true)
 		redirectTo('/index.php');
 	}
 
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$identity = $auth->getIdentity();
 
@@ -314,7 +312,7 @@ function change_user_interface($fromId, $toId)
 		$toActionScript = ($toActionScript) ? $toActionScript : $fromToMap[$from->admin_type][$to->admin_type];
 
 		// Set new identity
-		$auth = iMSCP\Authentication\Authentication::getInstance();
+		$auth = iMSCP\Core\Authentication\Authentication::getInstance();
 		$auth->unsetIdentity();
 		$auth->setIdentity($to);
 
@@ -349,7 +347,7 @@ function change_user_interface($fromId, $toId)
  */
 function redirectToUiLevel($actionScript = 'index.php')
 {
-	$auth = iMSCP\Authentication\Authentication::getInstance();
+	$auth = iMSCP\Core\Authentication\Authentication::getInstance();
 
 	if ($auth->hasIdentity()) {
 		$userType = $auth->getIdentity()->admin_type;

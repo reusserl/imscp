@@ -43,8 +43,8 @@ function get_user_name($user_id)
 {
 	$query = "SELECT `admin_name` FROM `admin` WHERE `admin_id` = ?";
 	$stmt = exec_query($query, $user_id);
-
-	return $stmt->fields('admin_name');
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	return $row['admin_name'];
 }
 
 /***********************************************************************************************************************
@@ -243,8 +243,7 @@ function get_user_domain_id($customeId)
  */
 function shared_getCustomerProps($userId)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$stmt = exec_query("SELECT * FROM domain WHERE domain_admin_id = ?", $userId);
 
@@ -416,12 +415,11 @@ function update_reseller_c_props($resellerId)
  *
  * @param int $customerId Customer unique identifier
  * @param string $action Action to schedule
- * @return void
+ * @throws Exception
  */
 function change_domain_status($customerId, $action)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	if ($action == 'deactivate') {
 		$newStatus = 'todisable';
@@ -450,13 +448,13 @@ function change_domain_status($customerId, $action)
 		$domainId = $row['domain_id'];
 		$adminName = decode_idna($row['admin_name']);
 
-		$db = \iMSCP\Database\Database::getInstance();
+		$db = \iMSCP\Core\Database\Database::getInstance();
 
 		try {
 			$db->beginTransaction();
 
-			\iMSCP\Application::getInstance()->getEvents()->trigger(
-				\iMSCP\Events\Events::onBeforeChangeDomainStatus, array('customerId' => $customerId, 'action' => $action)
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+				\iMSCP\Core\Events::onBeforeChangeDomainStatus, array('customerId' => $customerId, 'action' => $action)
 			);
 
 			if($action == 'deactivate') {
@@ -501,8 +499,8 @@ function change_domain_status($customerId, $action)
 			);
 			exec_query('UPDATE domain_dns SET domain_dns_status = ? WHERE domain_id = ?', array($newStatus, $domainId));
 
-			\iMSCP\Application::getInstance()->getEvents()->trigger(
-				\iMSCP\Events\Events::onAfterChangeDomainStatus, array('customerId' => $customerId, 'action' => $action)
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+				\iMSCP\Core\Events::onAfterChangeDomainStatus, array('customerId' => $customerId, 'action' => $action)
 			);
 
 			$db->commit();
@@ -543,7 +541,7 @@ function change_domain_status($customerId, $action)
  */
 function sql_delete_user($domainId, $sqlUserId, $flushPrivileges = true)
 {
-	$db = \iMSCP\Database\Database::getInstance();
+	$db = \iMSCP\Core\Database\Database::getInstance();
 
 	try {
 		$db->beginTransaction();
@@ -575,7 +573,8 @@ function sql_delete_user($domainId, $sqlUserId, $flushPrivileges = true)
 		$sqlUserHost = $row['sqlu_host'];
 		$sqlDbName = $row['sqld_name'];
 
-		$results = \iMSCP\Application::getInstance()->getEvents()->trigger(\iMSCP\Events\Events::onBeforeDeleteSqlUser, array(
+		$results = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+			\iMSCP\Core\Events::onBeforeDeleteSqlUser, array(
 			'sqlUserId' => $sqlUserId,
 			'sqlUserName' => $sqlDbName
 		));
@@ -614,7 +613,7 @@ function sql_delete_user($domainId, $sqlUserId, $flushPrivileges = true)
 			execute_query('FLUSH PRIVILEGES');
 		}
 
-		\iMSCP\Application::getInstance()->getEvents()->trigger(\iMSCP\Events\Events::onAfterDeleteSqlUser, array(
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterDeleteSqlUser, array(
 			'sqlUserId' => $sqlUserId,
 			'sqlUserName' => $sqlDbName
 		));
@@ -632,10 +631,11 @@ function sql_delete_user($domainId, $sqlUserId, $flushPrivileges = true)
  * @param  int $domainId Domain unique identifier
  * @param  int $databaseId Databse unique identifier
  * @return bool TRUE on success, false otherwise
+ * @throws Exception
  */
 function delete_sql_database($domainId, $databaseId)
 {
-	$db = \iMSCP\Database\Database::getInstance();
+	$db = \iMSCP\Core\Database\Database::getInstance();
 
 	try {
 		$db->beginTransaction();
@@ -648,7 +648,8 @@ function delete_sql_database($domainId, $databaseId)
 		if ($stmt->rowCount()) {
 			$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
 
-			$results = \iMSCP\Application::getInstance()->getEvents()->trigger(\iMSCP\Events\Events::onBeforeDeleteSqlDb, array(
+			$results = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+				\iMSCP\Core\Events::onBeforeDeleteSqlDb, array(
 				'sqlDbId' => $databaseId,
 				'sqlDbName' => $row['sqld_name']
 			));
@@ -683,7 +684,7 @@ function delete_sql_database($domainId, $databaseId)
 			execute_query("DROP DATABASE IF EXISTS $databaseName");
 			execute_query('FLUSH PRIVILEGES');
 
-			\iMSCP\Application::getInstance()->getEvents()->trigger(\iMSCP\Events\Events::onAfterDeleteSqlDb, array(
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterDeleteSqlDb, array(
 				'sqlDbId' => $databaseId,
 				'sqlDbName' => $row['sqld_name']
 			));
@@ -706,13 +707,13 @@ function delete_sql_database($domainId, $databaseId)
  * @param integer $customerId Customer unique identifier
  * @param boolean $checkCreatedBy Tell whether or not customer must have been created by logged-in user
  * @return bool TRUE on success, FALSE otherwise
+ * @throws Exception
  */
 function deleteCustomer($customerId, $checkCreatedBy = false)
 {
 	$customerId = (int)$customerId;
 
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	// Get username, uid and gid of domain user
 	$query = '
@@ -742,10 +743,11 @@ function deleteCustomer($customerId, $checkCreatedBy = false)
 	$resellerId = $stmt->fields['created_by'];
 	$deleteStatus = 'todelete';
 
-	$db = \iMSCP\Database\Database::getInstance();
+	$db = \iMSCP\Core\Database\Database::getInstance();
 
 	try {
-		$results = \iMSCP\Application::getInstance()->getEvents()->trigger(\iMSCP\Events\Events::onBeforeDeleteCustomer, array(
+		$results = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+			\iMSCP\Core\Events::onBeforeDeleteCustomer, array(
 			'customerId' => $customerId,
 			'customerName' => $customerName,
 		));
@@ -908,7 +910,8 @@ function deleteCustomer($customerId, $checkCreatedBy = false)
 		// Commit all changes to database server
 		$db->commit();
 
-		\iMSCP\Application::getInstance()->getEvents()->trigger(\iMSCP\Events\Events::onAfterDeleteCustomer, array(
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+			\iMSCP\Core\Events::onAfterDeleteCustomer, array(
 			'customerId' => $customerId,
 			'customerName' => $customerName,
 		));
@@ -935,14 +938,13 @@ function deleteCustomer($customerId, $checkCreatedBy = false)
  */
 function deleteDomainAlias($aliasId, $aliasName)
 {
-	\iMSCP\Application::getInstance()->getEvents()->trigger(
-		\iMSCP\Events\Events::onBeforeDeleteDomainAlias, array('domainAliasId' => $aliasId, 'domainAliasName' => $aliasName)
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+		\iMSCP\Core\Events::onBeforeDeleteDomainAlias, array('domainAliasId' => $aliasId, 'domainAliasName' => $aliasName)
 	);
 
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
-	$db = \iMSCP\Database\Database::getInstance();
+	$db = \iMSCP\Core\Database\Database::getInstance();
 
 	try {
 		$db->beginTransaction();
@@ -1084,10 +1086,10 @@ function deleteDomainAlias($aliasId, $aliasName)
 		# Schedule deletion of the domain alias
 		exec_query('UPDATE domain_aliasses SET alias_status = ? WHERE alias_id = ?', array('todelete', $aliasId));
 
-		\iMSCP\Application::getInstance()->getEvents()->trigger(
-			\iMSCP\Events\Events::onAfterDeleteDomainAlias,
-			array('domainAliasId' => $aliasId, 'domainAliasName' => $aliasName)
-		);
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+			\iMSCP\Core\Events::onAfterDeleteDomainAlias, array(
+				'domainAliasId' => $aliasId, 'domainAliasName' => $aliasName
+		));
 
 		$db->commit();
 
@@ -1135,9 +1137,8 @@ function sub_records_count($field, $table, $where, $value, $subfield, $subtable,
 	if ($subgroupname != '') {
 		$sqld_ids = array();
 
-		while (!$stmt->EOF) {
-			array_push($sqld_ids, $stmt->fields['field']);
-			$stmt->moveNext();
+		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+			array_push($sqld_ids, $row['field']);
 		}
 
 		$sqld_ids = implode(',', $sqld_ids);
@@ -1145,13 +1146,14 @@ function sub_records_count($field, $table, $where, $value, $subfield, $subtable,
 		if ($subwhere != '') {
 			$query = "SELECT COUNT(DISTINCT $subgroupname) AS `cnt` FROM $subtable WHERE `sqld_id` IN ($sqld_ids)";
 			$subres = execute_query($query);
-			$result = $subres->fields['cnt'];
+			$row = $subres->fetchRow(PDO::FETCH_ASSOC);
+			$result = $row['cnt'];
 		} else {
 			return $result;
 		}
 	} else {
-		while (!$stmt->EOF) {
-			$contents = $stmt->fields['field'];
+		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+			$contents = $row['field'];
 
 			if ($subwhere != '') {
 				$query = "SELECT COUNT(*) AS `cnt` FROM $subtable WHERE $subwhere = ?";
@@ -1160,8 +1162,8 @@ function sub_records_count($field, $table, $where, $value, $subfield, $subtable,
 			}
 
 			$subres = exec_query($query, $contents);
-			$result += $subres->fields['cnt'];
-			$stmt->moveNext();
+			$row2 = $subres->fetchRow(PDO::FETCH_ASSOC);
+			$result += $row2['cnt'];
 		}
 	}
 
@@ -1197,8 +1199,8 @@ function sub_records_rlike_count($field, $table, $where, $value, $subfield, $sub
 		return $result;
 	}
 
-	while (!$stmt->EOF) {
-		$contents = $stmt->fields['field'];
+	while ($row = $stmt->fetchRow(\PDO::FETCH_ASSOC)) {
+		$contents = $row['field'];
 
 		if ($subwhere != '') {
 			$query = "SELECT COUNT(*) AS `cnt` FROM $subtable WHERE $subwhere RLIKE ?";
@@ -1207,8 +1209,8 @@ function sub_records_rlike_count($field, $table, $where, $value, $subfield, $sub
 		}
 
 		$stmt2 = exec_query($query, $a . $contents . $b);
-		$result += $stmt2->fields['cnt'];
-		$stmt->moveNext();
+		$row2 = $stmt2->fetchRow(PDO::FETCH_ASSOC);
+		$result += $row2['cnt'];
 	}
 
 	return $result;
@@ -1248,7 +1250,7 @@ function imscp_getResellerProperties($resellerId, $forceReload = false)
  *
  * @param  int $resellerId Reseller unique identifier.
  * @param  array $props Array that contain new properties values
- * @return \iMSCP\Database\ResultSet|null
+ * @return \iMSCP\Core\Database\DatabaseResultSet|null
  */
 function update_reseller_props($resellerId, $props)
 {
@@ -1354,8 +1356,7 @@ function encode_mime_header($string, $charset = 'UTF-8')
 function sync_mailboxes_quota($domainId, $newQuota)
 {
 	if ($newQuota != 0) {
-		/** @var $cfg \iMSCP\Config\Handler\File */
-		$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 		$stmt = exec_query(
 			'SELECT `mail_id`, `quota` FROM `mail_users` WHERE `domain_id` = ? AND `quota` IS NOT NULL', $domainId
@@ -1376,7 +1377,7 @@ function sync_mailboxes_quota($domainId, $newQuota)
 				$newQuota < $totalQuota || (isset($cfg['EMAIL_QUOTA_SYNC_MODE']) && $cfg['EMAIL_QUOTA_SYNC_MODE']) ||
 				$totalQuota == 0
 			) {
-				$db = \iMSCP\Database\Database::getRawInstance();
+				$db = \iMSCP\Core\Database\Database::getRawInstance();
 				$stmt = $db->prepare('UPDATE `mail_users` SET `quota` = ? WHERE `mail_id` = ?');
 				$result = 0;
 
@@ -1818,12 +1819,11 @@ function getUriScheme()
  */
 function getUriPort()
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$config = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	return (isSecureRequest())
-		? (($config['BASE_SERVER_VHOST_HTTPS_PORT'] == 443 ) ? '' : $config['BASE_SERVER_VHOST_HTTPS_PORT'])
-		: (($config['BASE_SERVER_VHOST_HTTP_PORT'] == 80 ) ? '' : $config['BASE_SERVER_VHOST_HTTP_PORT']);
+		? (($cfg['BASE_SERVER_VHOST_HTTPS_PORT'] == 443 ) ? '' : $cfg['BASE_SERVER_VHOST_HTTPS_PORT'])
+		: (($cfg['BASE_SERVER_VHOST_HTTP_PORT'] == 80 ) ? '' : $cfg['BASE_SERVER_VHOST_HTTP_PORT']);
 }
 
 /**
@@ -1964,8 +1964,7 @@ function calc_bar_value($value, $value_max, $bar_width)
 function write_log($msg, $logLevel = E_USER_WARNING)
 {
 	if(!defined('IMSCP_SETUP')) {
-		/** @var $cfg \iMSCP\Config\Handler\File */
-		$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 		$clientIp = getIpAddr() ? getIpAddr() : 'unknown';
 
@@ -2043,8 +2042,7 @@ AUTO_LOG_MSG;
  */
 function send_add_user_auto_msg($adminId, $uname, $upass, $uemail, $ufname, $ulname, $utype)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$data = get_welcome_email($adminId, $_SESSION['user_type']);
 
@@ -2187,12 +2185,11 @@ function send_request()
 		($socket = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP)) !== false &&
 		@socket_connect($socket, '127.0.0.1', 9876) !== false
 	) {
-		/** @var $cfg \iMSCP\Config\Handler\File */
-		$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 		if(
 			daemon_readAnswer($socket) && // Read Welcome message from i-MSCP daemon
-			daemon_sendCommand($socket, "helo {$cfg->Version}") && // Send helo command to i-MSCP daemon
+			daemon_sendCommand($socket, "helo {$cfg['Version']}") && // Send helo command to i-MSCP daemon
 			daemon_readAnswer($socket) && // Read answer from i-MSCP daemon
 			daemon_sendCommand($socket, 'execute query') && // Send execute query command to i-MSCP daemon
 			daemon_readAnswer($socket) && // Read answer from i-MSCP daemon
@@ -2229,7 +2226,7 @@ function send_request()
  * @see iMSCP_Database::execute()
  * @param string $query Sql statement to be executed
  * @param array|int|string $parameters OPTIONAL parameters - See iMSCP_Database::execute()
- * @return \iMSCP\Database\ResultSet An iMSCP_Database_ResultSet object
+ * @return \iMSCP\Core\Database\DatabaseResultSet An iMSCP_Database_ResultSet object
  * @throws Exception
  */
 function execute_query($query, $parameters = null)
@@ -2237,7 +2234,7 @@ function execute_query($query, $parameters = null)
 	static $db = null;
 
 	if (null === $db) {
-		$db = \iMSCP\Database\Database::getInstance();
+		$db = \iMSCP\Core\Database\Database::getInstance();
 	}
 
 	try {
@@ -2265,7 +2262,7 @@ function execute_query($query, $parameters = null)
  *
  * @param string $query Sql statement
  * @param string|int|array $bind Data to bind to the placeholders
- * @return \iMSCP\Database\ResultSet|null A iMSCP_Database_ResultSet object that represents a result set
+ * @return \iMSCP\Core\Database\DatabaseResultSet|null A iMSCP_Database_ResultSet object that represents a result set
  * @throws Exception
  */
 function exec_query($query, $bind = null)
@@ -2273,7 +2270,7 @@ function exec_query($query, $bind = null)
 	static $db = null;
 
 	if (null === $db) {
-		$db = \iMSCP\Database\Database::getInstance();
+		$db = \iMSCP\Core\Database\Database::getInstance();
 	}
 
 	try {
@@ -2298,8 +2295,8 @@ function quoteIdentifier($identifier)
 	static $db = null;
 
 	if (null === $db) {
-		/** @var $db \iMSCP\Database\Database */
-		$db = \iMSCP\Application::getInstance()->getServiceManager()->get('database');
+		/** @var $db \iMSCP\Core\Database\Database */
+		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('database');
 	}
 
 	return $db->quoteIdentifier($identifier);
@@ -2317,8 +2314,8 @@ function quoteValue($value, $parameterType = PDO::PARAM_STR)
 	static $db = null;
 
 	if (null === $db) {
-		/** @var $db \iMSCP\Database\Database */
-		$db = \iMSCP\Application::getInstance()->getServiceManager()->get('database');
+		/** @var $db \iMSCP\Core\Database\Database */
+		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('database');
 	}
 
 	return $db->quote($value, $parameterType);
@@ -2348,7 +2345,8 @@ function records_count($table, $where = '', $bind = '')
 		$stmt = execute_query("SELECT COUNT(*) AS `cnt` FROM `$table`");
 	}
 
-	return (int)$stmt->fields['cnt'];
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	return (int)$row['cnt'];
 }
 
 /**
@@ -2530,8 +2528,7 @@ function getDataTablesPluginTranslations($json = true)
  */
 function showBadRequestErrorPage()
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$filePath = $cfg['GUI_ROOT_DIR'] . '/public/errordocs/400.html';
 
@@ -2576,8 +2573,7 @@ function showBadRequestErrorPage()
  */
 function showNotFoundErrorPage()
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$filePath = $cfg['GUI_ROOT_DIR'] . '/public/errordocs/404.html';
 
@@ -2844,8 +2840,7 @@ function getLastDayOfMonth($month = null, $year = null)
  */
 function getWebmailList()
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$config = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$config = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	if( isset($config['WEBMAIL_PACKAGES']) && strtolower($config['WEBMAIL_PACKAGES']) != 'no' ) {
 		return explode(',', $config['WEBMAIL_PACKAGES']);

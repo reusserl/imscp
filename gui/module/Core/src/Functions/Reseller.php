@@ -36,7 +36,6 @@ function generate_reseller_user_props($resellerId)
 	$rdmnCurrent = $rdmnMax = $rsubCurrent = $rsubMax = $ralsCurrent = $ralsMax = $rmailCurrent = $rmailMax =
 	$rftpCurrent = $rftpMax = $rsqlDbCurrent = $rsqlDbMax = $rsqlUserCurrent = $rsqlUserMax = $rtraffCurrent =
 	$rtraffMax = $rdiskCurrent = $rdiskMax = 0;
-
 	$rdmnUf = $rsubUf = $ralsUf = $rmailUf = $rftpUf = $rsqlDbUf = $rsqlUserUf = $rtraffUf = $rdiskUf = '_off_';
 
 	$stmt = exec_query(
@@ -145,9 +144,9 @@ function generate_reseller_user_props($resellerId)
 /**
  * Returns information about customer traffic and disk usage
  *
- * @throws iMSCP_Exception in case customer main domain is not found
  * @param int $customerId Customer unique identifier
  * @return array An array containing information about customer traffic and disk usage
+ * @throws Exception
  */
 function get_user_trafficAndDiskUsage($customerId)
 {
@@ -227,8 +226,7 @@ function get_user_trafficAndDiskUsage($customerId)
  */
 function get_user_props($adminId)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$stmt = exec_query('SELECT * FROM domain WHERE domain_id = ?', $adminId);
 
@@ -557,8 +555,7 @@ function reseller_limits_check($resellerId, $hp)
  */
 function send_alias_order_email($aliasName)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$userId = $_SESSION['user_id'];
 	$resellerId = who_owns_this($userId, 'user');
@@ -640,7 +637,7 @@ function client_mail_add_default_accounts($dmnId, $userEmail, $dmnName, $dmnType
 	$forwardType = ($dmnType == 'alias') ? 'alias_forward' : 'normal_forward';
 	$resellerEmail = $_SESSION['user_email'];
 
-	$db = iMSCP\Database\Database::getInstance();
+	$db = iMSCP\Core\Database\Database::getInstance();
 
 	try {
 		$db->beginTransaction();
@@ -702,8 +699,7 @@ function resellerHasFeature($featureName, $forceReload = false)
 	$featureName = strtolower($featureName);
 
 	if (null == $availableFeatures || $forceReload) {
-		/** @var $cfg \iMSCP\Config\Handler\File */
-		$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 		$resellerProps = imscp_getResellerProperties($_SESSION['user_id'], true);
 

@@ -126,8 +126,7 @@ function tojs($string)
  */
 function checkPasswordSyntax($password, $unallowedChars = '/[^\x21-\x7e]/', $noErrorMsg = false)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 	$ret = true;
 	$passwordLength = strlen($password);
 

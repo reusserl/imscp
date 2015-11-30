@@ -34,8 +34,7 @@
  */
 function get_user_gui_props($user_id)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$query = "SELECT `lang`, `layout` FROM `user_gui_props` WHERE `user_id` = ?";
 	$stmt = exec_query($query, $user_id);
@@ -58,7 +57,7 @@ function get_user_gui_props($user_id)
  * Note: The default level for message is sets to 'info'.
  * See the {@link set_page_message()} function for more information.
  *
- * @param  iMSCP\TemplateEngine $tpl iMSCP_pTemplate instance
+ * @param  iMSCP\Core\TemplateEngine $tpl iMSCP_pTemplate instance
  * @return void
  */
 function generatePageMessage($tpl)
@@ -222,8 +221,7 @@ function layout_getAvailableColorSet()
 	static $colorSet = null;
 
 	if (null === $colorSet) {
-		/** @var $cfg \iMSCP\Config\Handler\File */
-		$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');;
 
 		if (file_exists($cfg['ROOT_TEMPLATE_PATH'] . '/info.php')) {
 			$themeInfo = include_once($cfg['ROOT_TEMPLATE_PATH'] . '/info.php');
@@ -287,14 +285,13 @@ function layout_getUserLayoutColor($userId)
 /**
  * Init layout
  *
- * @param iMSCP_Events_Event $event
+ * @param \Zend\EventManager\Event $event
  * @return void
  * @todo Use cookies to store user UI properties (Remember me implementation?)
  */
 function layout_init($event)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$config = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 	ini_set('default_charset', 'UTF-8');
 
 	if (isset($_SESSION['user_theme_color'])) {
@@ -309,21 +306,21 @@ function layout_init($event)
 	}
 
 	// Get user Identity
-	$identity = \iMSCP\Authentication\Authentication::getInstance()->getIdentity();
+	$identity = \iMSCP\Core\Authentication\Authentication::getInstance()->getIdentity();
 
 	// Get user locale and language
 	/** @var \Zend\I18n\Translator\Translator $translator */
-	$translator = \iMSCP\Application::getInstance()->getServiceManager()->get('Translator');
+	$translator = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Translator');
 	$locale = $translator->getLocale();
 	$localeParts = explode('_', $locale);
 	$lang = $localeParts[0];
 	unset($localeParts);
 
-	/** @var $tpl iMSCP\TemplateEngine */
+	/** @var $tpl iMSCP\Core\TemplateEngine */
 	$tpl = $event->getParam('templateEngine');
 	$tpl->assign(array(
 		'THEME_COLOR' => $color,
-		'ASSETS_PATH' => $config['ASSETS_PATH'],
+		'ASSETS_PATH' => $cfg['ASSETS_PATH'],
 		'ISP_LOGO' => (isset($_SESSION['user_id'])) ? layout_getUserLogo() : '',
 		'JS_TRANSLATIONS' => i18n_getJsTranslations(),
 		'USER_IDENTITY' => json_encode(array(
@@ -384,7 +381,6 @@ function layout_setUserLayoutColor($userId, $color)
  * Note: Only administrators and resellers can have their own logo. Search is done in the following order:
  * user logo -> user's creator logo -> theme logo --> isp logo.
  *
- * @author Laurent Declercq <l.declercq@nuxwin.com>
  * @param bool $searchForCreator Tell whether or not search must be done for user's creator in case no logo is found for user
  * @param bool $returnDefault Tell whether or not default logo must be returned
  * @return string User logo path.
@@ -392,8 +388,7 @@ function layout_setUserLayoutColor($userId, $color)
  */
 function layout_getUserLogo($searchForCreator = true, $returnDefault = true)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	// On switched level, we want show logo from logged user
 	if (isset($_SESSION['logged_from_id']) && $searchForCreator) {
@@ -450,8 +445,7 @@ function layout_getUserLogo($searchForCreator = true, $returnDefault = true)
  */
 function layout_updateUserLogo()
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	// closure that is run before move_uploaded_file() function - See the
 	// Utils_UploadFile() function for further information about implementation
@@ -519,8 +513,7 @@ function layout_updateUserLogo()
  */
 function layout_deleteUserLogo($logoFilePath = null, $onlyFile = false)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	if (null === $logoFilePath) {
 		if ($_SESSION['user_type'] == 'admin') {
@@ -562,8 +555,7 @@ function layout_deleteUserLogo($logoFilePath = null, $onlyFile = false)
  */
 function layout_isUserLogo($logoPath)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	if (
 		$logoPath == '/themes/' . $_SESSION['user_theme'] . '/assets/images/imscp_logo.png'
@@ -583,25 +575,24 @@ function layout_isUserLogo($logoPath)
 function layout_LoadNavigation()
 {
 	if (isset($_SESSION['user_type'])) {
-		/** @var $cfg \iMSCP\Config\Handler\File */
-		$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 		/** @var \Zend\I18n\Translator\Translator $translator */
-		$translator = \iMSCP\Application::getInstance()->getServiceManager()->get('Translator');
+		$translator = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Translator');
 		$locale = $translator->getLocale();
 
 		switch ($_SESSION['user_type']) {
 			case 'admin':
 				$userLevel = 'admin';
-				$filepath = CACHE_PATH . '/translations/navigation/admin_' . $locale . '.php';
+				$filepath = 'cache/translations/navigation/admin_' . $locale . '.php';
 				break;
 			case 'reseller':
 				$userLevel = 'reseller';
-				$filepath = CACHE_PATH . '/translations/navigation/reseller_' . $locale . '.php';
+				$filepath = 'cache/translations/navigation/reseller_' . $locale . '.php';
 				break;
 			default:
 				$userLevel = 'client';
-				$filepath = CACHE_PATH . '/translations/navigation/client_' . $locale . '.php';
+				$filepath = 'cache/translations/navigation/client_' . $locale . '.php';
 		}
 		if(!file_exists($filepath)) {
 			layout_createNavigationFile($cfg['ROOT_TEMPLATE_PATH'] . "/$userLevel/navigation.php", $locale, $userLevel);
@@ -610,8 +601,8 @@ function layout_LoadNavigation()
 		iMSCP_Registry::set('navigation', new Zend\Navigation\Navigation(include($filepath)));
 
 		// Set main menu labels visibility for the current environment
-		\iMSCP\Application::getInstance()->getEvents()->trigger(
-			\iMSCP\Events\Events::onBeforeGenerateNavigation, 'layout_setMainMenuLabelsVisibilityEvt'
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+			\iMSCP\Core\Events::onBeforeGenerateNavigation, 'layout_setMainMenuLabelsVisibilityEvt'
 		);
 	}
 }
@@ -625,7 +616,7 @@ function layout_LoadNavigation()
  */
 function layout_createNavigationFile($filepath, $locale, $userLevel)
 {
-	$translationsCacheDir = CACHE_PATH . '/translations/navigation';
+	$translationsCacheDir = 'cache/translations/navigation';
 
 	if(!is_dir($translationsCacheDir)) {
 		if(!@mkdir($translationsCacheDir)) {

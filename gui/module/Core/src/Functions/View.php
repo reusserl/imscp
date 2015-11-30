@@ -21,7 +21,7 @@
 /**
  * Helper function to generates domain details
  *
- * @param \iMSCP\TemplateEngine $tpl Template engine
+ * @param \iMSCP\Core\TemplateEngine $tpl Template engine
  * @param int $domainId Domain unique identifier
  * @return void
  */
@@ -67,7 +67,7 @@ function gen_domain_details($tpl, $domainId)
 /**
  * Helper function to generate logged from block.
  *
- * @param  \iMSCP\TemplateEngine $tpl iMSCP_pTemplate instance
+ * @param  \iMSCP\Core\TemplateEngine $tpl iMSCP_pTemplate instance
  * @return void
  */
 function generateLoggedFrom($tpl)
@@ -94,14 +94,13 @@ function generateLoggedFrom($tpl)
  * This method generate a HTML list of available languages. The language used by the user is pre-selected.
  * If no language is found, a specific message is shown.
  *
- * @param  \iMSCP\TemplateEngine $tpl Template engine
+ * @param  \iMSCP\Core\TemplateEngine $tpl Template engine
  * @param  string $userDefinedLanguage User defined language
  * @return void
  */
 function gen_def_language($tpl, $userDefinedLanguage)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$htmlSelected = $cfg['HTML_SELECTED'];
 	$availableLanguages = i18n_getAvailableLanguages();
@@ -130,7 +129,7 @@ function gen_def_language($tpl, $userDefinedLanguage)
 /**
  * Helper function to generate HTML list of months and years
  *
- * @param  \iMSCP\TemplateEngine $tpl iMSCP_pTemplate instance
+ * @param  \iMSCP\Core\TemplateEngine $tpl iMSCP_pTemplate instance
  * @param  int $fromMonth
  * @param  int $fromYear
  * @param  int $numberYears
@@ -141,8 +140,7 @@ function generateMonthsAndYearsHtmlList($tpl, $fromMonth = null, $fromYear = nul
 	$fromMonth = intval($fromMonth);
 	$fromYear = intval($fromYear);
 
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	if(!$fromMonth || $fromMonth > 12) {
 		$fromMonth = date('m');
@@ -180,17 +178,16 @@ function generateMonthsAndYearsHtmlList($tpl, $fromMonth = null, $fromYear = nul
  * Helper function to generate navigation
  *
  * @throws Exception
- * @param \iMSCP\TemplateEngine $tpl iMSCP_pTemplate instance
+ * @param \iMSCP\Core\TemplateEngine $tpl iMSCP_pTemplate instance
  * @return void
  */
 function generateNavigation($tpl)
 {
-	\iMSCP\Application::getInstance()->getEvents()->trigger(
-		\iMSCP\Events\Events::onBeforeGenerateNavigation, array('templateEngine' => $tpl)
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+		\iMSCP\Core\Events::onBeforeGenerateNavigation, array('templateEngine' => $tpl)
 	);
 
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$tpl->define_dynamic(array(
 		'main_menu' => 'layout',
@@ -393,8 +390,8 @@ function generateNavigation($tpl)
 		'iMSCP_CODENAME' => (isset($cfg['CodeName']) && $cfg['CodeName'] != '') ? $cfg['CodeName'] : tohtml(tr('Unknown'))
 	));
 
-	\iMSCP\Application::getInstance()->getEvents()->trigger(
-		\iMSCP\Events\Events::onAfterGenerateNavigation, array('templateEngine' => $tpl)
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+		\iMSCP\Core\Events::onAfterGenerateNavigation, array('templateEngine' => $tpl)
 	);
 }
 
@@ -431,15 +428,14 @@ function getCustomMenus($userLevel)
 /**
  * Returns admin Ip list.
  *
- * @param  \iMSCP\TemplateEngine $tpl Template engine
+ * @param  \iMSCP\Core\TemplateEngine $tpl Template engine
  * @return void
  */
 function admin_generate_ip_list($tpl)
 {
 	global $domainIp;
 
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$stmt = execute_query('SELECT * FROM server_ips');
 
@@ -459,13 +455,12 @@ function admin_generate_ip_list($tpl)
 /**
  * Helper function to generate admin list template part
  *
- * @param  \iMSCP\TemplateEngine $tpl iMSCP_pTemplate instance
+ * @param  \iMSCP\Core\TemplateEngine $tpl iMSCP_pTemplate instance
  * @return void
  */
 function gen_admin_list($tpl)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$stmt = execute_query(
 		"
@@ -538,13 +533,12 @@ function gen_admin_list($tpl)
 /**
  * Helper function to generate reseller list template part
  *
- * @param  \iMSCP\TemplateEngine $tpl iMSCP_pTemplate instance
+ * @param  \iMSCP\Core\TemplateEngine $tpl iMSCP_pTemplate instance
  * @return void
  */
 function gen_reseller_list($tpl)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$stmt = execute_query(
 		"
@@ -611,13 +605,12 @@ function gen_reseller_list($tpl)
 /**
  * Helper function to generate a user list
  *
- * @param \iMSCP\TemplateEngine $tpl iMSCP_pTemplate instance
+ * @param \iMSCP\Core\TemplateEngine $tpl iMSCP_pTemplate instance
  * @return void
  */
 function gen_user_list($tpl)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$startIndex = 0;
 	$rowsPerPage = $cfg['DOMAIN_ROWS_PER_PAGE'];
@@ -666,7 +659,8 @@ function gen_user_list($tpl)
 		$stmt = exec_query($countQuery);
 	}
 
-	$recordCount = $stmt->fields['cnt'];
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$recordCount = $row['cnt'];
 	$stmt = execute_query($searchQuery);
 
 	if(!$stmt->rowCount()) {
@@ -853,7 +847,7 @@ function gen_user_list($tpl)
 /**
  * Helper function to generate manage users template part.
  *
- * @param  \iMSCP\TemplateEngine $tpl iMSCP_pTemplate instance
+ * @param  \iMSCP\Core\TemplateEngine $tpl iMSCP_pTemplate instance
  * @return void
  */
 function get_admin_manage_users($tpl)
@@ -878,7 +872,7 @@ function get_admin_manage_users($tpl)
 /**
  * Helper function to generate domain search form template part.
  *
- * @param  \iMSCP\TemplateEngine $tpl iMSCP_pTemplate instance
+ * @param  \iMSCP\Core\TemplateEngine $tpl iMSCP_pTemplate instance
  * @param  string $searchFor Object to search for
  * @param  string $searchCommon Common object to search for
  * @param  string $searchStatus Object status to search for
@@ -886,8 +880,7 @@ function get_admin_manage_users($tpl)
  */
 function gen_admin_domain_search_options($tpl, $searchFor, $searchCommon, $searchStatus)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$htmlSelected = $cfg['HTML_SELECTED'];
 
@@ -960,7 +953,7 @@ function gen_admin_domain_search_options($tpl, $searchFor, $searchCommon, $searc
 /**
  * Returns reseller Ip list
  *
- * @param  \iMSCP\TemplateEngine $tpl Template engine
+ * @param  \iMSCP\Core\TemplateEngine $tpl Template engine
  * @param  int $resellerId Reseller unique identifier
  * @return void
  */
@@ -968,8 +961,7 @@ function reseller_generate_ip_list($tpl, $resellerId)
 {
 	global $domainIp;
 
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$htmlSelected = $cfg['HTML_SELECTED'];
 	$stmt = exec_query('SELECT reseller_ips FROM reseller_props WHERE reseller_id = ?', $resellerId);
@@ -997,7 +989,7 @@ function reseller_generate_ip_list($tpl, $resellerId)
 /**
  * Generate reseller domain search form
  *
- * @param \iMSCP\TemplateEngine $tpl
+ * @param \iMSCP\Core\TemplateEngine $tpl
  * @param string $searchFor
  * @param string $searchCommon
  * @param string $searchStatus
@@ -1006,8 +998,7 @@ function reseller_generate_ip_list($tpl, $resellerId)
 function gen_manage_domain_search_options($tpl, $searchFor, $searchCommon, $searchStatus)
 {
 
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$htmlSelected = $cfg['HTML_SELECTED'];
 

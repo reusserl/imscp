@@ -43,8 +43,7 @@ function check_gd()
  */
 function createImage($strSessionVar)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$rgBgColor = $cfg['LOSTPASSWORD_CAPTCHA_BGCOLOR'];
 	$rgTextColor = $cfg['LOSTPASSWORD_CAPTCHA_TEXTCOLOR'];
@@ -64,7 +63,7 @@ function createImage($strSessionVar)
 	$string = '';
 	for($i = 0; $i < $nbLetters; $i++) {
 		$iRandVal = strRandom(1);
-		$fontFile = LIBRARY_PATH . '/Resources/Fonts/' . $cfg['LOSTPASSWORD_CAPTCHA_FONTS'][
+		$fontFile = 'module/Core/src/Resources/Fonts/' . $cfg['LOSTPASSWORD_CAPTCHA_FONTS'][
 			mt_rand(0, count($cfg['LOSTPASSWORD_CAPTCHA_FONTS']) - 1)
 		];
 
@@ -169,7 +168,7 @@ function setPassword($uniqueKey, $userPassword)
 	}
 
 	exec_query('UPDATE `admin` SET `admin_pass` = ? WHERE `uniqkey` = ?', array(
-		\iMSCP\Utils\Crypt::bcrypt($userPassword), $uniqueKey
+		\iMSCP\Core\Utils\Crypt::bcrypt($userPassword), $uniqueKey
 	));
 }
 
@@ -210,25 +209,24 @@ function uniqkeygen()
  */
 function sendPassword($uniqueKey)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$stmt = exec_query(
 		'SELECT `admin_name`, `created_by`, `fname`, `lname`, `email` FROM `admin` WHERE `uniqkey` = ?', $uniqueKey
 	);
 
 	if($stmt->rowCount()) {
-		$adminName = $stmt->fields['admin_name'];
-		$createdBy = $stmt->fields['created_by'];
-		$adminFirstName = $stmt->fields['fname'];
-		$adminLastName = $stmt->fields['lname'];
-		$to = $stmt->fields['email'];
+		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
 
-		$userPassword = \iMSCP\Utils\Crypt::randomStr($cfg['PASSWD_CHARS']);
+		$adminName = $row['admin_name'];
+		$createdBy = $row['created_by'];
+		$adminFirstName = $row['fname'];
+		$adminLastName = $row['lname'];
+		$to = $row['email'];
+
+		$userPassword = \iMSCP\Core\Utils\Crypt::randomStr($cfg['PASSWD_CHARS']);
 		setPassword($uniqueKey, $userPassword);
-
 		write_log('Lostpassword: ' . $adminName . ': password updated', E_USER_NOTICE);
-
 		exec_query(
 			'UPDATE `admin` SET `uniqkey` = ?, `uniqkey_time` = ? WHERE `uniqkey` = ?', array('', '', $uniqueKey)
 		);
@@ -306,8 +304,7 @@ function sendPassword($uniqueKey)
  */
 function requestPassword($adminName)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$stmt = exec_query(
 		'SELECT `created_by`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_name` = ?', $adminName
@@ -317,10 +314,11 @@ function requestPassword($adminName)
 		return false;
 	}
 
-	$createdBy = $stmt->fields['created_by'];
-	$adminFirstName = $stmt->fields['fname'];
-	$adminLastName = $stmt->fields['lname'];
-	$to = $stmt->fields['email'];
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$createdBy = $row['created_by'];
+	$adminFirstName = $row['fname'];
+	$adminLastName = $row['lname'];
+	$to = $row['email'];
 
 	$uniqueKey = uniqkeygen();
 

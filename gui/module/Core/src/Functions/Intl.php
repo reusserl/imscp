@@ -38,7 +38,7 @@ function tr($messageId, $substitution = null)
 
 	if(null == $translator) {
 		/** @var \Zend\I18n\Translator\Translator $translator */
-		$translator = \iMSCP\Application::getInstance()->getServiceManager()->get('Translator');
+		$translator = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Translator');
 	}
 
 	$message = $translator->translate($messageId);
@@ -59,8 +59,8 @@ function tr($messageId, $substitution = null)
  * @param string $singular Singular translation string
  * @param string $plural Plural translation string
  * @param integer $number Number for detecting the correct plural
- * @param mixed $substitution... Substitution value(s)
  * @return string
+ * @internal param mixed $substitution ... Substitution value(s)
  */
 function ntr($singular, $plural, $number)
 {
@@ -68,7 +68,7 @@ function ntr($singular, $plural, $number)
 
 	if(null == $translator) {
 		/** @var \Zend\I18n\Translator\Translator $translator */
-		$translator = \iMSCP\Application::getInstance()->getServiceManager()->get('Translator');
+		$translator = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Translator');
 	}
 
 	$message = $translator->translatePlural($singular, $plural, $number);
@@ -109,12 +109,11 @@ function replace_html($string)
  */
 function i18n_buildLanguageIndex()
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	// Clear translation cache
 	/** @var \Zend\I18n\Translator\Translator $translator */
-	$translator = \iMSCP\Application::getInstance()->getServiceManager()->get('Translator');
+	$translator = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Translator');
 
 	if(($cache = $translator->getCache())) {
 		if($cache instanceof \Zend\Cache\Storage\ClearByNamespaceInterface) {
@@ -123,14 +122,14 @@ function i18n_buildLanguageIndex()
 	}
 
 	# Remove all cached navigation translation files
-	if(@is_dir(CACHE_PATH . '/translations/navigation')) {
-		if(!utils_removeDir(CACHE_PATH . '/translations/navigation')) {
+	if(@is_dir('cache/translations/navigation')) {
+		if(!utils_removeDir('cache/translations/navigation')) {
 			throw new RuntimeException('Unable to remove directory for cached navigation translation files');
 		}
 	}
 
 	# Clear opcode cache if any
-	iMSCP\Utils\OpcodeCache::clearAllActive();
+	iMSCP\Core\Utils\OpcodeCache::clearAllActive();
 
 	$iterator = new RecursiveIteratorIterator(
 		new RecursiveDirectoryIterator($cfg->GUI_ROOT_DIR . '/i18n/locales/', FilesystemIterator::SKIP_DOTS)
@@ -145,7 +144,7 @@ function i18n_buildLanguageIndex()
 		}
 
 		if ($item->isReadable()) {
-			$parser = new iMSCP_I18n_Parser_Gettext($item->getPathname());
+			$parser = new iMSCP\Core\I18n\GettextParser($item->getPathname());
 			$translationTable = $parser->getTranslationTable();
 
 			if(!empty($translationTable)) {
@@ -172,7 +171,7 @@ function i18n_buildLanguageIndex()
 		}
 	}
 
-	$dbConfig = \iMSCP\Application::getInstance()->getServiceManager()->get('DbConfig');
+	$dbConfig = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('DbConfig');
 
 	sort($availableLanguages);
 	$serializedData = serialize($availableLanguages);
@@ -189,8 +188,7 @@ function i18n_buildLanguageIndex()
  */
 function i18n_getAvailableLanguages()
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	if (!isset($cfg['AVAILABLE_LANGUAGES']) || !isSerialized($cfg['AVAILABLE_LANGUAGES'])) {
 		i18n_buildLanguageIndex();
@@ -209,8 +207,7 @@ function i18n_importMachineObjectFile()
 	// closure that is run before move_uploaded_file() function - See the Utils_UploadFile() function for further
 	// information about implementation details
 	$beforeMove = function () {
-		/** @var $cfg \iMSCP\Config\Handler\File */
-		$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 		$localesDirectory = $cfg['GUI_ROOT_DIR'] . '/i18n/locales';
 
 		$filePath = $_FILES['languageFile']['tmp_name'];
@@ -221,7 +218,7 @@ function i18n_importMachineObjectFile()
 		}
 
 		try {
-			$parser = new iMSCP_I18n_Parser_Gettext($filePath);
+			$parser = new iMSCP\Core\i18n\GettextParser($filePath);
 			$encoding = $parser->getContentType();
 			$locale = $parser->getLanguage();
 			$revision = $parser->getPoRevisionDate();
@@ -279,8 +276,7 @@ function i18n_importMachineObjectFile()
 function i18n_changeDefaultLanguage()
 {
 	if (isset($_POST['defaultLanguage'])) {
-		/** @var $cfg \iMSCP\Config\Handler\File */
-		$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 		$defaultLanguage = clean_input($_POST['defaultLanguage']);
 		$availableLanguages = i18n_getAvailableLanguages();
@@ -295,15 +291,15 @@ function i18n_changeDefaultLanguage()
 
 		if (!$isValidLanguage) return false;
 
-		$dbConfig = \iMSCP\Application::getInstance()->getServiceManager()->get('DbConfig');
+		$dbConfig = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('DbConfig');
 		$dbConfig['USER_INITIAL_LANG'] = $defaultLanguage;
 		$cfg['USER_INITIAL_LANG'] = $defaultLanguage;
 
 		// Ensures language change on next load for current user in case he has not yet his gui properties explicitly
 		// set (eg. for the first admin user when i-MSCP was just installed
 		$stmt = exec_query('SELECT lang FROM user_gui_props WHERE user_id = ?', $_SESSION['user_id']);
-
-		if ($stmt->fields['lang'] == null) {
+		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		if ($row['lang'] == null) {
 			unset($_SESSION['user_def_lang']);
 		}
 	} else {
@@ -327,7 +323,7 @@ function i18n_changeDefaultLanguage()
 function l10n_addTranslations($baseDir, $type = 'Array', $textDomain = 'iMSCP', $pattern = '%s.mo')
 {
 	/** @var \Zend\I18n\Translator\Translator $translator */
-	$translator = \iMSCP\Application::getInstance()->getServiceManager()->get('Translator');
+	$translator = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Translator');
 	$translator->addTranslationFilePattern($type, $baseDir, $pattern, $textDomain);
 }
 
@@ -357,8 +353,7 @@ function l10n_addTranslations($baseDir, $type = 'Array', $textDomain = 'iMSCP', 
  */
 function i18n_getJsTranslations()
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$translations = new ArrayObject(array(
 		// Core translation strings
@@ -373,7 +368,9 @@ function i18n_getJsTranslations()
 		ArrayObject::ARRAY_AS_PROPS
 	);
 
-	\iMSCP\Application::getInstance()->getEvents()->trigger('onGetJsTranslations', array('translations' => $translations));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+		'onGetJsTranslations', array('translations' => $translations)
+	);
 
 	return json_encode($translations, JSON_FORCE_OBJECT);
 }

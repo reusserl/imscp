@@ -31,7 +31,6 @@
 function get_sql_user_count()
 {
 	$stmt = execute_query('SELECT DISTINCT sqlu_name FROM sql_user');
-
 	return $stmt->rowCount();
 }
 
@@ -198,7 +197,7 @@ function gen_admin_domain_query(
 				$startIndex, $rowsPerPage
 		";
 	} else {
-		$db = \iMSCP\Database\Database::getInstance();
+		$db = \iMSCP\Core\Database\Database::getInstance();
 
 		$searchFor = str_replace(array('!', '_', '%'), array('!!', '!_', '!%'), $searchFor);
 
@@ -292,9 +291,9 @@ function systemHasResellers($minNbResellers = 1)
 
 	if (null === $resellersCount ) {
 		$stmt = exec_query('SELECT COUNT(`admin_id`) AS `count` FROM `admin` WHERE `admin_type` = ?', 'reseller');
-		$resellersCount = $stmt->fields['count'];
+		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$resellersCount = $row['count'];
 	}
-
 
 	return ($resellersCount >= $minNbResellers);
 }
@@ -315,7 +314,8 @@ function systemHasCustomers($minNbCustomers = 1)
 			array('user', 'todelete')
 		);
 
-		$customersCount = $stmt->fields['count'];
+		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$customersCount = $row['count'];
 	}
 
 	return ($customersCount >= $minNbCustomers);
@@ -378,19 +378,18 @@ function systemHasManyAdmins()
  */
 function systemHasAntiRootkits()
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$config = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	if (
 		(
-			isset($config['ANTI_ROOTKITS_PACKAGES']) && $config['ANTI_ROOTKITS_PACKAGES'] != 'No' &&
-			$config['ANTI_ROOTKITS_PACKAGES'] != '' &&
+			isset($cfg['ANTI_ROOTKITS_PACKAGES']) && $cfg['ANTI_ROOTKITS_PACKAGES'] != 'No' &&
+			$cfg['ANTI_ROOTKITS_PACKAGES'] != '' &&
 			(
-				(isset($config['CHKROOTKIT_LOG']) && $config['CHKROOTKIT_LOG'] != '') ||
-				(isset($config['RKHUNTER_LOG']) && $config['RKHUNTER_LOG'] != '')
+				(isset($cfg['CHKROOTKIT_LOG']) && $cfg['CHKROOTKIT_LOG'] != '') ||
+				(isset($cfg['RKHUNTER_LOG']) && $cfg['RKHUNTER_LOG'] != '')
 			)
 		) ||
-		isset($config['OTHER_ROOTKIT_LOG']) && $config['OTHER_ROOTKIT_LOG'] != ''
+		isset($cfg['OTHER_ROOTKIT_LOG']) && $cfg['OTHER_ROOTKIT_LOG'] != ''
 	) {
 		return true;
 	}

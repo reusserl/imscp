@@ -37,6 +37,7 @@
 function get_domain_running_sub_cnt($domain_id)
 {
 	$stmt1 = exec_query('SELECT COUNT(*) AS cnt FROM subdomain WHERE domain_id = ?', $domain_id);
+	$row1 = $stmt1->fetchRow(PDO::FETCH_ASSOC);
 
 	$stmt2 = exec_query(
 		'
@@ -49,8 +50,9 @@ function get_domain_running_sub_cnt($domain_id)
 		',
 		$domain_id
 	);
+	$row2 = $stmt2->fetchRow(PDO::FETCH_ASSOC);
 
-	return $stmt1->fields['cnt'] + $stmt2->fields['cnt'];
+	return $row1['cnt'] + $row2['cnt'];
 }
 
 /**
@@ -66,7 +68,8 @@ function get_domain_running_als_cnt($domain_id)
 		array($domain_id, 'ordered')
 	);
 
-	return $stmt->fields['cnt'];
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	return $row['cnt'];
 }
 
 /**
@@ -78,8 +81,7 @@ function get_domain_running_als_cnt($domain_id)
  */
 function get_domain_running_mail_acc_cnt($domainId)
 {
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 
 	$query = "
 		SELECT
@@ -107,16 +109,20 @@ function get_domain_running_mail_acc_cnt($domainId)
 	}
 
 	$stmt = exec_query($query, array('normal_', 'normal_catchall', $domainId));
-	$dmnMailAcc = $stmt->fields['cnt'];
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$dmnMailAcc = $row['cnt'];
 
 	$stmt = exec_query($query, array('alias_', 'alias_catchall', $domainId));
-	$alsMailAcc = $stmt->fields['cnt'];
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$alsMailAcc = $row['cnt'];
 
 	$stmt = exec_query($query, array('subdom_', 'subdom_catchall', $domainId));
-	$subMailAcc = $stmt->fields['cnt'];
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$subMailAcc = $row['cnt'];
 
 	$stmt = exec_query($query, array('alssub_', 'alssub_catchall', $domainId));
-	$alssubMailAcc = $stmt->fields['cnt'];
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$alssubMailAcc = $row['cnt'];
 
 	return array(
 		$dmnMailAcc + $alsMailAcc + $subMailAcc + $alssubMailAcc, $dmnMailAcc, $alsMailAcc, $subMailAcc, $alssubMailAcc
@@ -132,8 +138,8 @@ function get_domain_running_mail_acc_cnt($domainId)
 function get_customer_running_ftp_acc_cnt($customerId)
 {
 	$stmt = exec_query('SELECT COUNT(userid) AS cnt FROM ftp_users WHERE admin_id = ?', $customerId);
-
-	return $stmt->fields['cnt'];
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	return $row['cnt'];
 }
 
 /**
@@ -145,8 +151,8 @@ function get_customer_running_ftp_acc_cnt($customerId)
 function get_domain_running_sqld_acc_cnt($domainId)
 {
 	$stmt = exec_query('SELECT COUNT(*) AS cnt FROM sql_database WHERE domain_id = ?', $domainId);
-
-	return $stmt->fields['cnt'];
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	return $row['cnt'];
 }
 
 /**
@@ -191,8 +197,8 @@ function get_domain_running_props_cnt($domainId)
 
 	// Transitional query - Will be removed asap
 	$stmt = exec_query('SELECT domain_admin_id FROM domain WHERE domain_id = ?', $domainId);
-
-	$ftpAccCount = get_customer_running_ftp_acc_cnt($stmt->fields['domain_admin_id']);
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$ftpAccCount = get_customer_running_ftp_acc_cnt($row['domain_admin_id']);
 	list($sqlDbCount, $sqlUserCount) = get_domain_running_sql_acc_cnt($domainId);
 
 	return array($subCount, $alsCount, $mailAccCount, $ftpAccCount, $sqlDbCount, $sqlUserCount);
@@ -276,8 +282,7 @@ function customerHasFeature($featureNames, $forceReload = false)
 	static $debug = false;
 
 	if (null === $availableFeatures || $forceReload) {
-		/** @var $cfg \iMSCP\Config\Handler\File */
-		$cfg = \iMSCP\Application::getInstance()->getServiceManager()->get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
 		$debug = (bool)$cfg['DEBUG'];
 		$dmnProps = get_domain_default_props($_SESSION['user_id']);
 
