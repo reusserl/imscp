@@ -83,16 +83,15 @@ sub registerSetupListeners
 			"zendframework/zend-servicemanager": "~2.4.0",
 			"zendframework/zend-session": "~2.4.0",
 			"zendframework/zend-uri": "~2.4.0",
-			"zendframework/zend-validator": "~2.4.0",
+			"zendframework/zend-validator": "~2.4.0"
 		});
 
-		# Register autolod maps for i-MSCP modules
-		$composerManager->registerAutoloaderMap(
-			'psr-4', 'iMSCP\\', $main::imscpConfig{'GUI_ROOT_DIR'} . '/module/Core/src/'
-		);
-		$composerManager->registerAutoloaderMap(
-			'psr-4', 'iMSCP\\', $main::imscpConfig{'GUI_ROOT_DIR'} . '/module/ApsStandard/src/'
-		);
+		# Add autoload mapping rules for i-MSCP frontend modules
+		for my $module(iMSCP::Dir->new( dirname => $main::imscpConfig{'GUI_ROOT_DIR'} . '/module' )->getDirs()) {
+			$composerManager->registerAutoloaderMap(
+				'psr-4', 'iMSCP\\', $main::imscpConfig{'GUI_ROOT_DIR'} . "/module/$module/src/"
+			);
+		}
 	});
 
 	$eventManager->register('beforeSetupDialog', sub {
