@@ -46,6 +46,12 @@ use parent 'Common::SingletonClass';
 
 =item registerRepository($type, $url)
 
+ Register the given repository
+
+ Param string $type Repository type
+ Param string $url Repository URL
+ Return int 0 on success, die on failure
+
 =cut
 
 sub registerRepository
@@ -56,10 +62,10 @@ sub registerRepository
 	defined $url or die('Missing repository $url parameter');
 
 	push @{$self->{'repositories'}}, <<REPOSITORY;
-		{
-			"type": "$type",
-			"url": "$url"
-		},
+        {
+            "type": "$type",
+            "url": "$url"
+        },
 REPOSITORY
 
 	0;
@@ -72,7 +78,7 @@ REPOSITORY
  Param string $package Package name
  Param string $packageVersion OPTIONAL Package version
  Param bool $devonly OPTIONAL When set to true, indicate that the package is required in dev environment only
- Return 0
+ Return int 0 on success, die on failure
 
 =cut
 
@@ -85,11 +91,11 @@ sub registerPackage
 
 	unless($devonly) {
 		push @{$self->{'required_packages'}}, <<PACKAGE;
-	"$package": "$packageVersion",
+        "$package": "$packageVersion",
 PACKAGE
 	} else {
 		push @{$self->{'required_dev_packages'}}, <<PACKAGE;
-	"$package": "$packageVersion",
+        "$package": "$packageVersion",
 PACKAGE
 	}
 
@@ -101,7 +107,7 @@ PACKAGE
  Register the given composer packages for installation
 
  Param hash \%packages
- Return 0
+ Return int 0 on success, die on failure
 
 =cut
 
@@ -139,11 +145,11 @@ sub registerAutoloaderMap
 
 	if($type eq 'psr-0') {
 		push @{$self->{'autoload_psr0'}}, <<AUTOLOAD_MAP;
-		"$namespace": "$path",
+            "$namespace": "$path",
 AUTOLOAD_MAP
 	} elsif($type eq 'psr-4') {
 		push @{$self->{'autoload_psr4'}}, <<AUTOLOAD_MAP;
-		"$namespace": "$path",
+            "$namespace": "$path",
 AUTOLOAD_MAP
 	} else {
 		die(sprintf('Unknown autoloader mapping type: %s', $type));
@@ -185,7 +191,7 @@ sub installPackages
 
  Initialize instance
 
- Return iMSCP::Composer, die on failure
+ Return iMSCP::Composer
 
 =cut
 
