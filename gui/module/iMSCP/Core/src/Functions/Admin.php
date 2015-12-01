@@ -378,7 +378,7 @@ function systemHasManyAdmins()
  */
 function systemHasAntiRootkits()
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if (
 		(
