@@ -226,7 +226,7 @@ function get_user_trafficAndDiskUsage($customerId)
  */
 function get_user_props($adminId)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$stmt = exec_query('SELECT * FROM domain WHERE domain_id = ?', $adminId);
 
@@ -555,14 +555,15 @@ function reseller_limits_check($resellerId, $hp)
  */
 function send_alias_order_email($aliasName)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$userId = $_SESSION['user_id'];
 	$resellerId = who_owns_this($userId, 'user');
 
 	$stmt = exec_query('SELECT fname, lname FROM admin WHERE admin_id = ?', $userId);
-	$userFirstname = $stmt->fields['fname'];
-	$userLastname = $stmt->fields['lname'];
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$userFirstname = $row['fname'];
+	$userLastname = $row['lname'];
 	$userEmail = $_SESSION['user_email'];
 	$data = get_alias_order_email($resellerId);
 	$toName = $data['sender_name'];
@@ -637,7 +638,8 @@ function client_mail_add_default_accounts($dmnId, $userEmail, $dmnName, $dmnType
 	$forwardType = ($dmnType == 'alias') ? 'alias_forward' : 'normal_forward';
 	$resellerEmail = $_SESSION['user_email'];
 
-	$db = iMSCP\Core\Database\Database::getInstance();
+	/** @var \iMSCP\Core\Database\Database $db */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	try {
 		$db->beginTransaction();
@@ -699,7 +701,7 @@ function resellerHasFeature($featureName, $forceReload = false)
 	$featureName = strtolower($featureName);
 
 	if (null == $availableFeatures || $forceReload) {
-		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 		$resellerProps = imscp_getResellerProperties($_SESSION['user_id'], true);
 
@@ -742,7 +744,7 @@ function resellerHasCustomers($minNbCustomers = 1)
 {
 	static $customerCount = null;
 
-	if (null === $customerCount ) {
+	if (null === $customerCount) {
 		$stmt = exec_query(
 			'
 				SELECT
@@ -759,7 +761,8 @@ function resellerHasCustomers($minNbCustomers = 1)
 			array('user', $_SESSION['user_id'], 'todelete')
 		);
 
-		$customerCount = $stmt->fields['cnt'];
+		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$customerCount = $row['cnt'];
 	}
 
 	return ($customerCount >= $minNbCustomers);
