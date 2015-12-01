@@ -24,7 +24,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
-use Zend\ModuleManager\ModuleManager;
 use Zend\ServiceManager\ServiceManager;
 
 /**
@@ -104,7 +103,7 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
 	 * Defines and binds the ApplicationEvent, and passes it the request and response.
 	 * Triggers the bootstrap event.
 	 *
-	 * @param array $listeners List of listeners to attach.
+	 * @param array $listeners List of listeners to attach
 	 * @return Application
 	 */
 	public function bootstrap(array $listeners = [])
@@ -119,6 +118,7 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
 		}
 
 		$this->event = $event = (new ApplicationEvent('application', $this))
+			->setApplication($this)
 			->setRequest($this->request)
 			->setResponse($this->response);
 
@@ -162,28 +162,23 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
 	}
 
 	/**
-	 * Set the event manager instance
-	 *
-	 * @param  EventManagerInterface $events
-	 * @return Application
+	 * {@inheritdoc}
 	 */
 	public function setEventManager(EventManagerInterface $events)
 	{
 		$events->setIdentifiers([
 			__CLASS__,
-			get_class($this)
+			get_class($this),
+			// Needed because zend-modulemanager attach listeners using this identifier
+			// See https://github.com/zendframework/zend-modulemanager/issues/15
+			'Zend\Mvc\Application'
 		]);
 		$this->events = $events;
 		return $this;
 	}
 
-
 	/**
-	 * Retrieve the event manager
-	 *
-	 * Lazy-loads an EventManager instance if none registered.
-	 *
-	 * @return EventManagerInterface
+	 * {@inheritdoc}
 	 */
 	public function getEventManager()
 	{
@@ -221,7 +216,7 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
 		$listenersFromConfigService = isset($config['listeners']) ? $config['listeners'] : [];
 		$listeners = array_unique(array_merge($listenersFromConfigService, $listenersFromAppConfig));
 
-		return $serviceManager->get('Application')->bootstrap($listeners);
+		return self::$instance = $serviceManager->get('Application')->bootstrap($listeners);
 	}
 
 	/**
@@ -232,21 +227,18 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
 		// Nothing to do ATM. This will take place in version 2.0.0 when we will use MVC architecture
 	}
 
-
 	/**
 	 * Get application instance
 	 *
 	 * A transitional function allowing to retrieve the application instance in global functions.
 	 * That function will be removed in v2.0.0 when i-MSCP will be a full OOP application.
 	 *
-	 * @throws \Exception
+	 * @return self
 	 */
 	static public function getInstance()
 	{
 		if (null === self::$instance) {
-			throw new \LogicException(
-				'Application has not been initialized yet. You must include application.php at top of your script.'
-			);
+			throw new \LogicException('Application has not been initialized yet.');
 		}
 
 		return self::$instance;
