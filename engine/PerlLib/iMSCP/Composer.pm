@@ -52,8 +52,8 @@ sub registerRepository
 {
 	my ($self, $type, $url) = @_;
 
-	defined $type or die('Missing composer repository type parameter');
-	defined $type or die('Missing composer repository url parameter');
+	defined $type or die('Missing repository $type parameter');
+	defined $url or die('Missing repository $url parameter');
 
 	push @{$self->{'repositories'}}, <<REPOSITORY;
 		{
@@ -79,15 +79,17 @@ REPOSITORY
 sub registerPackage
 {
 	my ($self, $package, $packageVersion, $devonly) = @_;
+
+	defined $package or die('Missing $package parameter');
 	$packageVersion ||= 'dev-master';
 
 	unless($devonly) {
 		push @{$self->{'required_packages'}}, <<PACKAGE;
-		"$package": "$packageVersion",
+	"$package": "$packageVersion",
 PACKAGE
 	} else {
 		push @{$self->{'required_dev_packages'}}, <<PACKAGE;
-		"$package": "$packageVersion",
+	"$package": "$packageVersion",
 PACKAGE
 	}
 
@@ -131,9 +133,9 @@ sub registerAutoloaderMap
 {
 	my ($self, $type, $namespace, $path) = @_;
 
-	defined $type or die('Missing autoloading type parameter');
-	defined $type or die('Missing autoloading namespace parameter');
-	defined $type or die('Missing autoloading $path parameter');
+	defined $type or die('Missing autoloading $type parameter');
+	defined $namespace or die('Missing autoloading $namespace parameter');
+	defined $path or die('Missing autoloading $path parameter');
 
 	if($type eq 'psr-0') {
 		push @{$self->{'autoload_psr0'}}, <<AUTOLOAD_MAP;
