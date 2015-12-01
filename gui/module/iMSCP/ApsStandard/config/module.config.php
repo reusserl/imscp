@@ -18,4 +18,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-return [];
+return [
+	// Service manager configuration for the ApsStandard module
+	'service_manager' => [
+		'invokables' => [
+			'ApsStandardListener' => 'iMSCP\ApsStandard\Listener\ApsStandardListener'
+		],
+		'abstract_factories' => [
+			// Abstract factory for APS standard controllers
+			'iMSCP\ApsStandard\Controller\ApsControllerAbstractFactory',
+
+			// Abstract factory for APS standard services
+			'iMSCP\ApsStandard\Service\ApsServiceAbstractFactory'
+		],
+	],
+	// Listener aggregates
+	'listeners' => [
+		'ApsStandardListener'
+	]
+];
