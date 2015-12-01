@@ -66,6 +66,9 @@ sub registerSetupListeners
 	$eventManager->register('beforeSetupComposerPackages', sub {
 		my $composerManager = shift;
 
+		# Register pear repository (needed for the pear/net_dns2 package)
+		$composerManager->registerRepository('pear', 'http://pear.php.net');
+
 		# Register required composer packages
 		$composerManager->registerPackages({
 			'doctrine/orm' => '~2.5.0',
@@ -73,6 +76,7 @@ sub registerSetupListeners
 			'symfony/console' => '~2.7',
 			'symfony/http-foundation' => '~2.7.0',
 			'symfony/validator' => '~2.7.0',
+			'pear/net_dns2' => '~1.4.0',
 			'phpseclib/phpseclib' => '~1.0.0',
 			'phpwhois/idna-convert' => '~0.9.0',
 			'zendframework/zend-cache' => '~2.4.0',

@@ -44,6 +44,27 @@ use parent 'Common::SingletonClass';
 
 =over 4
 
+=item registerRepository($type, $url)
+
+=cut
+
+sub registerRepository
+{
+	my ($self, $type, $url) = @_;
+
+	defined $type or die('Missing composer repository type parameter');
+	defined $type or die('Missing composer repository url parameter');
+
+	push @{$self->{'repositories'}}, <<REPOSITORY;
+		{
+			"type": "$type",
+			"url": "$url"
+		},
+REPOSITORY
+
+	0;
+}
+
 =item registerPackage($package [, $packageVersion = 'dev-master', [$devonly = undef]])
 
  Register the given composer package for installation
@@ -61,9 +82,13 @@ sub registerPackage
 	$packageVersion ||= 'dev-master';
 
 	unless($devonly) {
-		push @{$self->{'required_packages'}}, "        \"$package\": \"$packageVersion\"";
+		push @{$self->{'required_packages'}}, <<PACKAGE;
+		"$package": "$packageVersion",
+PACKAGE
 	} else {
-		push @{$self->{'required_dev_packages'}}, "        \"$package\": \"$packageVersion\"";
+		push @{$self->{'required_dev_packages'}}, <<PACKAGE;
+		"$package": "$packageVersion",
+PACKAGE
 	}
 
 	0;
@@ -95,24 +120,31 @@ sub registerPackages
  Register autoloader map
 
  Param hash \%packages
+ Param string $type Autoloader mapping type (psr-0|psr-4)
+ Param string $namespace Namespace
+ Param string $path Path
  Return 0 on success, die on failure
 
 =cut
 
-sub registerAutoloaderMap($type, $namespace, $path)
+sub registerAutoloaderMap
 {
-	my ($type, $namespace, $path) = @_;
+	my ($self, $type, $namespace, $path) = @_;
 
 	defined $type or die('Missing autoloading type parameter');
 	defined $type or die('Missing autoloading namespace parameter');
 	defined $type or die('Missing autoloading $path parameter');
 
 	if($type eq 'psr-0') {
-		push @{$self->{'autoload_psr0'}}, "        \"$$namespacee\": \"$$pathn\"";
+		push @{$self->{'autoload_psr0'}}, <<AUTOLOAD_MAP;
+		"$namespace": "$path",
+AUTOLOAD_MAP
 	} elsif($type eq 'psr-4') {
-		push @{$self->{'autoload_psr4'}}, "        \"$$namespacee\": \"$$pathn\"";
+		push @{$self->{'autoload_psr4'}}, <<AUTOLOAD_MAP;
+		"$namespace": "$path",
+AUTOLOAD_MAP
 	} else {
-		die('Unknown autoloading type');
+		die(sprintf('Unknown autoloader mapping type: %s', $type));
 	}
 
 	0;
@@ -159,6 +191,7 @@ sub _init
 {
 	my $self = shift;
 
+	$self->{'repositories'} = [];
 	$self->{'required_packages'} = [];
 	$self->{'required_dev_packages'} = [];
 	$self->{'autoload_psr0'} = [];
@@ -230,7 +263,7 @@ sub _installPackages
 	$self->_buildComposerFile();
 
 	my $dialog = iMSCP::Dialog->getInstance();
-	my $msgHeader = "\nInstalling/Updating i-MSCP composer packages from Github\n\n";
+	my $msgHeader = "\nInstalling/Updating required composer/pear packages\n\n";
 	my $msgFooter = "\nPlease wait, depending on your connection, this may take few seconds...";
 
 	# The update option is used here but composer will automatically fallback to install mode when needed
@@ -255,7 +288,7 @@ sub _installPackages
 				}
 			}
 		}
-	) == 0 or die(sprintf('Could not install/update i-MSCP composer packages from GitHub'));
+	) == 0 or die(sprintf('Could not install/update required composer/pear packages.'));
 }
 
 =item _buildComposerFile()
@@ -276,6 +309,9 @@ sub _buildComposerFile
     "description": "i-MSCP composer packages",
     "license": "GPL-2.0+",
     "type": "metapackage",
+    "repositores": [
+{REPOSITORIES}
+    ],
     "require": {
 {REQUIRE}
     },
@@ -293,10 +329,10 @@ sub _buildComposerFile
     "prefer-stable": true,
     "autoload": {
         "psr-0": {
-            {AUTOLOAD_PSR0}
+{AUTOLOAD_PSR0}
         },
         "psr-4": {
-            {AUTOLOAD_PSR4}
+{AUTOLOAD_PSR4}
         }
     }
 }
@@ -305,10 +341,11 @@ TPL
 	my $file = iMSCP::File->new( filename => "$self->{'pkgDir'}/composer.json" );
 	$file->set(process(
 		{
-			REQUIRE => (join ",\n", @{$self->{'required_packages'}}),
-			REQUIRE_DEV => (join ",\n", @{$self->{'required_dev_packages'}}),
-			AUTOLOAD_PSR0 => (join ",\n", @{$self->{'autoload_psr0'}}),
-			AUTOLOAD_PSR4 => (join ",\n", @{$self->{'autoload_psr4'}})
+			REPOSITORIES => (join('', @{$self->{'repositories'}}) =~ s/,+$//r),
+			REQUIRE => (join('', @{$self->{'required_packages'}}) =~ s/,+$//r),
+			REQUIRE_DEV => (join('', @{$self->{'required_dev_packages'}}) =~ s/,+$//r),
+			AUTOLOAD_PSR0 => (join('', @{$self->{'autoload_psr0'}}) =~ s/,+$//r),
+			AUTOLOAD_PSR4 => (join('', @{$self->{'autoload_psr4'}}) =~ s/,+$//r)
 		},
 		$tpl
 	));
