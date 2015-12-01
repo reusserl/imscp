@@ -81,7 +81,7 @@ function get_domain_running_als_cnt($domain_id)
  */
 function get_domain_running_mail_acc_cnt($domainId)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$query = "
 		SELECT
@@ -282,7 +282,7 @@ function customerHasFeature($featureNames, $forceReload = false)
 	static $debug = false;
 
 	if (null === $availableFeatures || $forceReload) {
-		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 		$debug = (bool)$cfg['DEBUG'];
 		$dmnProps = get_domain_default_props($_SESSION['user_id']);
 
