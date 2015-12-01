@@ -43,7 +43,7 @@ function check_gd()
  */
 function createImage($strSessionVar)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$rgBgColor = $cfg['LOSTPASSWORD_CAPTCHA_BGCOLOR'];
 	$rgTextColor = $cfg['LOSTPASSWORD_CAPTCHA_TEXTCOLOR'];
@@ -209,7 +209,7 @@ function uniqkeygen()
  */
 function sendPassword($uniqueKey)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$stmt = exec_query(
 		'SELECT `admin_name`, `created_by`, `fname`, `lname`, `email` FROM `admin` WHERE `uniqkey` = ?', $uniqueKey
@@ -304,7 +304,7 @@ function sendPassword($uniqueKey)
  */
 function requestPassword($adminName)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$stmt = exec_query(
 		'SELECT `created_by`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_name` = ?', $adminName
