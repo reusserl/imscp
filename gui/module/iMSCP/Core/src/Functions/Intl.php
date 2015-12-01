@@ -109,7 +109,7 @@ function replace_html($string)
  */
 function i18n_buildLanguageIndex()
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	// Clear translation cache
 	/** @var \Zend\I18n\Translator\Translator $translator */
@@ -188,7 +188,7 @@ function i18n_buildLanguageIndex()
  */
 function i18n_getAvailableLanguages()
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if (!isset($cfg['AVAILABLE_LANGUAGES']) || !isSerialized($cfg['AVAILABLE_LANGUAGES'])) {
 		i18n_buildLanguageIndex();
@@ -207,7 +207,7 @@ function i18n_importMachineObjectFile()
 	// closure that is run before move_uploaded_file() function - See the Utils_UploadFile() function for further
 	// information about implementation details
 	$beforeMove = function () {
-		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 		$localesDirectory = $cfg['GUI_ROOT_DIR'] . '/i18n/locales';
 
 		$filePath = $_FILES['languageFile']['tmp_name'];
@@ -276,7 +276,7 @@ function i18n_importMachineObjectFile()
 function i18n_changeDefaultLanguage()
 {
 	if (isset($_POST['defaultLanguage'])) {
-		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 		$defaultLanguage = clean_input($_POST['defaultLanguage']);
 		$availableLanguages = i18n_getAvailableLanguages();
@@ -353,7 +353,7 @@ function l10n_addTranslations($baseDir, $type = 'Array', $textDomain = 'iMSCP', 
  */
 function i18n_getJsTranslations()
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$translations = new ArrayObject(array(
 		// Core translation strings
