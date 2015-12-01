@@ -99,11 +99,6 @@ sub registerSetupListeners
 				'psr-4', "iMSCP\\\\$module\\\\", $main::imscpConfig{'GUI_ROOT_DIR'} . "/module/iMSCP/$module/src"
 			);
 		}
-
-		# Register PSR-0 autoload mapping rule for Net_DNS2 PEAR packages (vendor)
-		$composerManager->registerAutoloaderMap(
-			'psr-0',  'Net_DNS2', $main::imscpConfig{'GUI_ROOT_DIR'} . '/vendor'
-		);
 	});
 
 	$eventManager->register('beforeSetupDialog', sub {
