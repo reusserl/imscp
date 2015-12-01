@@ -226,7 +226,8 @@ function get_user_domain_id($customeId)
 		$stmt = exec_query($query, $customeId);
 
 		if($stmt->rowCount()) {
-			$domainId = $stmt->fields['domain_id'];
+			$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+			$domainId = $row['domain_id'];
 		} else {
 			throw new Exception("Unable to found domain ID of user with ID '$customeId''");
 		}
@@ -243,7 +244,7 @@ function get_user_domain_id($customeId)
  */
 function shared_getCustomerProps($userId)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$stmt = exec_query("SELECT * FROM domain WHERE domain_admin_id = ?", $userId);
 
@@ -419,7 +420,7 @@ function update_reseller_c_props($resellerId)
  */
 function change_domain_status($customerId, $action)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if ($action == 'deactivate') {
 		$newStatus = 'todisable';
@@ -713,7 +714,7 @@ function deleteCustomer($customerId, $checkCreatedBy = false)
 {
 	$customerId = (int)$customerId;
 
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	// Get username, uid and gid of domain user
 	$query = '
@@ -738,9 +739,10 @@ function deleteCustomer($customerId, $checkCreatedBy = false)
 		return false;
 	}
 
-	$customerName = $stmt->fields['admin_name'];
-	$mainDomainId = $stmt->fields['domain_id'];
-	$resellerId = $stmt->fields['created_by'];
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$customerName = $row['admin_name'];
+	$mainDomainId = $row['domain_id'];
+	$resellerId = $row['created_by'];
 	$deleteStatus = 'todelete';
 
 	$db = \iMSCP\Core\Database\Database::getInstance();
@@ -942,7 +944,7 @@ function deleteDomainAlias($aliasId, $aliasName)
 		\iMSCP\Core\Events::onBeforeDeleteDomainAlias, array('domainAliasId' => $aliasId, 'domainAliasName' => $aliasName)
 	);
 
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$db = \iMSCP\Core\Database\Database::getInstance();
 
@@ -1356,7 +1358,7 @@ function encode_mime_header($string, $charset = 'UTF-8')
 function sync_mailboxes_quota($domainId, $newQuota)
 {
 	if ($newQuota != 0) {
-		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 		$stmt = exec_query(
 			'SELECT `mail_id`, `quota` FROM `mail_users` WHERE `domain_id` = ? AND `quota` IS NOT NULL', $domainId
@@ -1819,7 +1821,7 @@ function getUriScheme()
  */
 function getUriPort()
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	return (isSecureRequest())
 		? (($cfg['BASE_SERVER_VHOST_HTTPS_PORT'] == 443 ) ? '' : $cfg['BASE_SERVER_VHOST_HTTPS_PORT'])
@@ -1964,7 +1966,7 @@ function calc_bar_value($value, $value_max, $bar_width)
 function write_log($msg, $logLevel = E_USER_WARNING)
 {
 	if(!defined('IMSCP_SETUP')) {
-		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 		$clientIp = getIpAddr() ? getIpAddr() : 'unknown';
 
@@ -2042,7 +2044,7 @@ AUTO_LOG_MSG;
  */
 function send_add_user_auto_msg($adminId, $uname, $upass, $uemail, $ufname, $ulname, $utype)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$data = get_welcome_email($adminId, $_SESSION['user_type']);
 
@@ -2185,7 +2187,7 @@ function send_request()
 		($socket = @socket_create(AF_INET, SOCK_STREAM, SOL_TCP)) !== false &&
 		@socket_connect($socket, '127.0.0.1', 9876) !== false
 	) {
-		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 		if(
 			daemon_readAnswer($socket) && // Read Welcome message from i-MSCP daemon
@@ -2221,37 +2223,32 @@ function send_request()
  *
  * Note: You may pass additional parameters. They will be treated as though you
  * called PDOStatement::setFetchMode() on the resultant statement object that is
- * wrapped by the iMSCP_Database_ResultSet object.
+ * wrapped by the \iMSCP\Core\Database\DatabaseResultSet object.
  *
  * @see iMSCP_Database::execute()
  * @param string $query Sql statement to be executed
  * @param array|int|string $parameters OPTIONAL parameters - See iMSCP_Database::execute()
- * @return \iMSCP\Core\Database\DatabaseResultSet An iMSCP_Database_ResultSet object
- * @throws Exception
+ * @return \iMSCP\Core\Database\DatabaseResultSet
  */
 function execute_query($query, $parameters = null)
 {
 	static $db = null;
 
 	if (null === $db) {
-		$db = \iMSCP\Core\Database\Database::getInstance();
+		/** @var $db \iMSCP\Core\Database\Database */
+		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 	}
 
-	try {
-		if (null !== $parameters) {
-			$parameters = func_get_args();
-			array_shift($parameters);
-			$stmt = call_user_func_array(array($db, 'execute'), $parameters);
-		} else {
-			$stmt = $db->execute($query);
-		}
+	if (null !== $parameters) {
+		$parameters = func_get_args();
+		array_shift($parameters);
+		$stmt = call_user_func_array(array($db, 'execute'), $parameters);
+	} else {
+		$stmt = $db->execute($query);
+	}
 
-		if ($stmt == false) {
-			throw new Exception($db->getLastErrorMessage());
-		}
-
-	} catch (PDOException $e) {
-		throw new Exception($e->getMessage(), $e->getCode(), $e);
+	if ($stmt == false) {
+		throw new PDOException($db->getLastErrorMessage());
 	}
 
 	return $stmt;
@@ -2262,22 +2259,18 @@ function execute_query($query, $parameters = null)
  *
  * @param string $query Sql statement
  * @param string|int|array $bind Data to bind to the placeholders
- * @return \iMSCP\Core\Database\DatabaseResultSet|null A iMSCP_Database_ResultSet object that represents a result set
- * @throws Exception
+ * @return \iMSCP\Core\Database\DatabaseResultSet|null
  */
 function exec_query($query, $bind = null)
 {
 	static $db = null;
 
 	if (null === $db) {
-		$db = \iMSCP\Core\Database\Database::getInstance();
+		/** @var $db \iMSCP\Core\Database\Database */
+		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 	}
 
-	try {
-		$stmt = $db->execute($db->prepare($query), $bind);
-	} catch (PDOException $e) {
-		throw new Exception($e->getMessage(), $e->getCode(), $e);
-	}
+	$stmt = $db->execute($db->prepare($query), $bind);
 
 	return $stmt;
 }
@@ -2296,7 +2289,7 @@ function quoteIdentifier($identifier)
 
 	if (null === $db) {
 		/** @var $db \iMSCP\Core\Database\Database */
-		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('database');
+		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 	}
 
 	return $db->quoteIdentifier($identifier);
@@ -2528,7 +2521,7 @@ function getDataTablesPluginTranslations($json = true)
  */
 function showBadRequestErrorPage()
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$filePath = $cfg['GUI_ROOT_DIR'] . '/public/errordocs/400.html';
 
@@ -2573,7 +2566,7 @@ function showBadRequestErrorPage()
  */
 function showNotFoundErrorPage()
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$filePath = $cfg['GUI_ROOT_DIR'] . '/public/errordocs/404.html';
 
@@ -2840,7 +2833,7 @@ function getLastDayOfMonth($month = null, $year = null)
  */
 function getWebmailList()
 {
-	$config = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$config = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if( isset($config['WEBMAIL_PACKAGES']) && strtolower($config['WEBMAIL_PACKAGES']) != 'no' ) {
 		return explode(',', $config['WEBMAIL_PACKAGES']);
