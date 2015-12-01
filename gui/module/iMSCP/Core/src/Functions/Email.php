@@ -135,7 +135,7 @@ function set_email_tpl_data($userId, $tplName, $data)
  */
 function get_welcome_email($userId, $userType = 'user')
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$data = get_email_tpl_data($userId, 'add-user-auto-msg');
 
