@@ -34,21 +34,25 @@
  */
 function get_user_gui_props($user_id)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$query = "SELECT `lang`, `layout` FROM `user_gui_props` WHERE `user_id` = ?";
 	$stmt = exec_query($query, $user_id);
+	if ($stmt->rowCount()) {
+		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
 
-	if ($stmt->recordCount() == 0 || (empty($stmt->fields['lang']) && empty($stmt->fields['layout']))) {
-		// values for user id, some default stuff
-		return array($cfg['USER_INITIAL_LANG'], $cfg['USER_INITIAL_THEME']);
-	} elseif (empty($stmt->fields['lang'])) {
-		return array($cfg['USER_INITIAL_LANG'], $stmt->fields['layout']);
-	} elseif (empty($stmt->fields['layout'])) {
-		return array($stmt->fields['lang'], $cfg['USER_INITIAL_THEME']);
-	} else {
-		return array($stmt->fields['lang'], $stmt->fields['layout']);
+		if (!empty($row['lang']) || !empty($row['layout'])) {
+			if (empty($row['lang'])) {
+				return array($cfg['USER_INITIAL_LANG'], $row['layout']);
+			} elseif (empty($row['layout'])) {
+				return array($row['lang'], $cfg['USER_INITIAL_THEME']);
+			} else {
+				return array($row['lang'], $row['layout']);
+			}
+		}
 	}
+
+	return array($cfg['USER_INITIAL_LANG'], $cfg['USER_INITIAL_THEME']);
 }
 
 /**
@@ -57,7 +61,7 @@ function get_user_gui_props($user_id)
  * Note: The default level for message is sets to 'info'.
  * See the {@link set_page_message()} function for more information.
  *
- * @param  iMSCP\Core\TemplateEngine $tpl iMSCP_pTemplate instance
+ * @param  iMSCP\Core\Template\TemplateEngine $tpl TemplateEngine instance
  * @return void
  */
 function generatePageMessage($tpl)
@@ -167,6 +171,7 @@ function get_menu_vars($menuLink)
 			`admin_id` = ?
 	";
 	$stmt = exec_query($query, $_SESSION['user_id']);
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
 
 	$search = array();
 	$replace = array();
@@ -176,37 +181,38 @@ function get_menu_vars($menuLink)
 	$search [] = '{uname}';
 	$replace[] = tohtml($_SESSION['user_logged']);
 	$search [] = '{cid}';
-	$replace[] = tohtml($stmt->fields['customer_id']);
+	$replace[] = tohtml($row['customer_id']);
 	$search [] = '{fname}';
-	$replace[] = tohtml($stmt->fields['fname']);
+	$replace[] = tohtml($row['fname']);
 	$search [] = '{lname}';
-	$replace[] = tohtml($stmt->fields['lname']);
+	$replace[] = tohtml($row['lname']);
 	$search [] = '{company}';
-	$replace[] = tohtml($stmt->fields['firm']);
+	$replace[] = tohtml($row['firm']);
 	$search [] = '{zip}';
-	$replace[] = tohtml($stmt->fields['zip']);
+	$replace[] = tohtml($row['zip']);
 	$search [] = '{city}';
-	$replace[] = tohtml($stmt->fields['city']);
+	$replace[] = tohtml($row['city']);
 	$search [] = '{state}';
-	$replace[] = $stmt->fields['state'];
+	$replace[] = $row['state'];
 	$search [] = '{country}';
-	$replace[] = tohtml($stmt->fields['country']);
+	$replace[] = tohtml($row['country']);
 	$search [] = '{email}';
-	$replace[] = tohtml($stmt->fields['email']);
+	$replace[] = tohtml($row['email']);
 	$search [] = '{phone}';
-	$replace[] = tohtml($stmt->fields['phone']);
+	$replace[] = tohtml($row['phone']);
 	$search [] = '{fax}';
-	$replace[] = tohtml($stmt->fields['fax']);
+	$replace[] = tohtml($row['fax']);
 	$search [] = '{street1}';
-	$replace[] = tohtml($stmt->fields['street1']);
+	$replace[] = tohtml($row['street1']);
 	$search [] = '{street2}';
-	$replace[] = tohtml($stmt->fields['street2']);
+	$replace[] = tohtml($row['street2']);
 
 	$query = 'SELECT `domain_name`, `domain_admin_id` FROM `domain` WHERE `domain_admin_id` = ?';
 	$stmt = exec_query($query, $_SESSION['user_id']);
+	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
 
 	$search [] = '{domain_name}';
-	$replace[] = $stmt->fields['domain_name'];
+	$replace[] = $row['domain_name'];
 
 	return str_replace($search, $replace, $menuLink);
 }
@@ -221,7 +227,7 @@ function layout_getAvailableColorSet()
 	static $colorSet = null;
 
 	if (null === $colorSet) {
-		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');;
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();;
 
 		if (file_exists($cfg['ROOT_TEMPLATE_PATH'] . '/info.php')) {
 			$themeInfo = include_once($cfg['ROOT_TEMPLATE_PATH'] . '/info.php');
@@ -291,7 +297,7 @@ function layout_getUserLayoutColor($userId)
  */
 function layout_init($event)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 	ini_set('default_charset', 'UTF-8');
 
 	if (isset($_SESSION['user_theme_color'])) {
@@ -316,7 +322,7 @@ function layout_init($event)
 	$lang = $localeParts[0];
 	unset($localeParts);
 
-	/** @var $tpl iMSCP\Core\TemplateEngine */
+	/** @var $tpl iMSCP\Core\Template\TemplateEngine */
 	$tpl = $event->getParam('templateEngine');
 	$tpl->assign(array(
 		'THEME_COLOR' => $color,
@@ -354,9 +360,9 @@ function layout_setUserLayoutColor($userId, $color)
 		$stmt = exec_query($query, array($_SESSION['user_logged'], $sessionId));
 
 		if ($stmt->rowCount()) {
-			foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $otherSessionId) {
+			while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
 				session_write_close();
-				session_id($otherSessionId);
+				session_id($row['session_id']);
 				session_start();
 				$_SESSION['user_theme_color'] = $color; // Update user layout color
 			}
@@ -388,7 +394,7 @@ function layout_setUserLayoutColor($userId, $color)
  */
 function layout_getUserLogo($searchForCreator = true, $returnDefault = true)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	// On switched level, we want show logo from logged user
 	if (isset($_SESSION['logged_from_id']) && $searchForCreator) {
@@ -445,7 +451,7 @@ function layout_getUserLogo($searchForCreator = true, $returnDefault = true)
  */
 function layout_updateUserLogo()
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	// closure that is run before move_uploaded_file() function - See the
 	// Utils_UploadFile() function for further information about implementation
@@ -513,7 +519,7 @@ function layout_updateUserLogo()
  */
 function layout_deleteUserLogo($logoFilePath = null, $onlyFile = false)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if (null === $logoFilePath) {
 		if ($_SESSION['user_type'] == 'admin') {
@@ -555,7 +561,7 @@ function layout_deleteUserLogo($logoFilePath = null, $onlyFile = false)
  */
 function layout_isUserLogo($logoPath)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if (
 		$logoPath == '/themes/' . $_SESSION['user_theme'] . '/assets/images/imscp_logo.png'
@@ -575,7 +581,7 @@ function layout_isUserLogo($logoPath)
 function layout_LoadNavigation()
 {
 	if (isset($_SESSION['user_type'])) {
-		$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 		/** @var \Zend\I18n\Translator\Translator $translator */
 		$translator = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Translator');
