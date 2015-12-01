@@ -29,12 +29,13 @@ function init_login($eventManager)
 	// Purge expired sessions
 	do_session_timeout();
 
-	/** @var $cfg \iMSCP\Config\Handler\File */
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if ($cfg['BRUTEFORCE']) {
-		$bruteforce = new iMSCP\Core\Plugin\Bruteforce(iMSCP_Registry::get('pluginManager'));
-		$bruteforce->register($eventManager);
+		/** @var \iMSCP\Core\Plugin\PluginManager $pluginManager */
+		$pluginManager = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('PluginManager');
+		$bruteforce = new iMSCP\Core\Plugin\Bruteforce($pluginManager);
+		$bruteforce->register($pluginManager->getEventManager());
 	}
 
 	// Register default authentication handler with lower priority
@@ -139,16 +140,17 @@ function login_checkDomainAccount($event)
 				domain_admin_id = ?
         ';
 		$stmt = exec_query($query, $identity->admin_id);
+		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
 
 		$isAccountStateOk = true;
 
-		if (($stmt->fields['admin_status'] != 'ok') || ($stmt->fields['domain_status'] != 'ok')) {
+		if (($row['admin_status'] != 'ok') || ($row['domain_status'] != 'ok')) {
 			$isAccountStateOk = false;
 			set_page_message(
 				tr('Your account is currently under maintenance or disabled. Please, contact your reseller.'), 'error'
 			);
 		} else {
-			$domainExpireDate = $stmt->fields['domain_expires'];
+			$domainExpireDate = $row['domain_expires'];
 
 			if ($domainExpireDate && $domainExpireDate < time()) {
 				$isAccountStateOk = false;
@@ -169,7 +171,7 @@ function login_checkDomainAccount($event)
  */
 function do_session_timeout()
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	// We must not remove bruteforce plugin data (AND `user_name` IS NOT NULL)
 	exec_query(
@@ -200,7 +202,7 @@ function check_login($userLevel = '', $preventExternalLogin = true)
 		redirectTo('/index.php');
 	}
 
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$identity = $auth->getIdentity();
 
