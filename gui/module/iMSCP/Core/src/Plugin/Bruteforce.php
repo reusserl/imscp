@@ -23,7 +23,7 @@ namespace iMSCP\Core\Plugin;
 use iMSCP\Core\Application;
 use iMSCP\Core\Events;
 use Zend\EventManager\Event;
-use Zend\EventManager\EventManager;
+use Zend\EventManager\EventManagerInterface;
 
 /**
  * Class iMSCP_Plugin_Bruteforce
@@ -182,9 +182,9 @@ class Bruteforce extends ActionPlugin
 	/**
 	 * Register a callback for the given event(s)
 	 *
-	 * @param EventManager $eventsManager
+	 * @param EventManagerInterface $eventsManager
 	 */
-	public function register(EventManager $eventsManager)
+	public function register(EventManagerInterface $eventsManager)
 	{
 		$eventsManager->attach([Events::onBeforeAuthentication, Events::onBeforeSetIdentity], $this, -99);
 	}
