@@ -46,17 +46,17 @@ abstract class AbstractPlugin
 	private $pluginType;
 
 	/**
-	 * @var iMSCP_Plugin_Manager
+	 * @var PluginManager
 	 */
 	private $pluginManager;
 
 	/**
 	 * Constructor
 	 *
-	 * @param iMSCP_Plugin_Manager $pluginManager
+	 * @param PluginManager $pluginManager
 	 * @return AbstractPlugin
 	 */
-	public function __construct(iMSCP_Plugin_Manager $pluginManager)
+	public function __construct(PluginManager $pluginManager)
 	{
 		$this->pluginManager = $pluginManager;
 		$this->init();
@@ -65,7 +65,7 @@ abstract class AbstractPlugin
 	/**
 	 * Get plugin manager
 	 *
-	 * @return iMSCP_Plugin_Manager
+	 * @return PluginManager
 	 */
 	public function getPluginManager()
 	{
@@ -211,7 +211,7 @@ abstract class AbstractPlugin
 				$config = include($file);
 				OpcodeCache::clearAllActive($file); // Be sure to load newest version on next call
 
-				$file = PERSISTENT_PATH . "/plugins/$pluginName.php";
+				$file = "plugins/$pluginName.php";
 
 				if (@is_readable($file)) {
 					$localConfig = include($file);
@@ -306,10 +306,10 @@ abstract class AbstractPlugin
 	 * This method is automatically called by the plugin manager when the plugin is being installed.
 	 *
 	 * @throws \Exception
-	 * @param iMSCP_Plugin_Manager $pluginManager
+	 * @param PluginManager $pluginManager
 	 * @return void
 	 */
-	public function install(iMSCP_Plugin_Manager $pluginManager)
+	public function install(PluginManager $pluginManager)
 	{
 	}
 
@@ -319,10 +319,10 @@ abstract class AbstractPlugin
 	 * This method is automatically called by the plugin manager when the plugin is being enabled (activated).
 	 *
 	 * @throws \Exception
-	 * @param iMSCP_Plugin_Manager $pluginManager
+	 * @param PluginManager $pluginManager
 	 * @return void
 	 */
-	public function enable(iMSCP_Plugin_Manager $pluginManager)
+	public function enable(PluginManager $pluginManager)
 	{
 	}
 
@@ -332,10 +332,10 @@ abstract class AbstractPlugin
 	 * This method is automatically called by the plugin manager when the plugin is being disabled (deactivated).
 	 *
 	 * @throws \Exception
-	 * @param iMSCP_Plugin_Manager $pluginManager
+	 * @param PluginManager $pluginManager
 	 * @return void
 	 */
-	public function disable(iMSCP_Plugin_Manager $pluginManager)
+	public function disable(PluginManager $pluginManager)
 	{
 	}
 
@@ -345,12 +345,12 @@ abstract class AbstractPlugin
 	 * This method is automatically called by the plugin manager when the plugin is being updated.
 	 *
 	 * @throws \Exception
-	 * @param iMSCP_Plugin_Manager $pluginManager
+	 * @param PluginManager $pluginManager
 	 * @param string $fromVersion Version from which plugin update is initiated
 	 * @param string $toVersion Version to which plugin is updated
 	 * @return void
 	 */
-	public function update(iMSCP_Plugin_Manager $pluginManager, $fromVersion, $toVersion)
+	public function update(PluginManager $pluginManager, $fromVersion, $toVersion)
 	{
 	}
 
@@ -360,10 +360,10 @@ abstract class AbstractPlugin
 	 * This method is automatically called by the plugin manager when the plugin is being uninstalled.
 	 *
 	 * @throws \Exception
-	 * @param iMSCP_Plugin_Manager $pluginManager
+	 * @param PluginManager $pluginManager
 	 * @return void
 	 */
-	public function uninstall(iMSCP_Plugin_Manager $pluginManager)
+	public function uninstall(PluginManager $pluginManager)
 	{
 	}
 
@@ -373,10 +373,10 @@ abstract class AbstractPlugin
 	 * This method is automatically called by the plugin manager when the plugin is being deleted.
 	 *
 	 * @throws \Exception
-	 * @param iMSCP_Plugin_Manager $pluginManager
+	 * @param PluginManager $pluginManager
 	 * @return void
 	 */
-	public function delete(iMSCP_Plugin_Manager $pluginManager)
+	public function delete(PluginManager $pluginManager)
 	{
 	}
 

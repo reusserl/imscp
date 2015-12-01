@@ -20,7 +20,8 @@
 
 namespace iMSCP\Core\Plugin;
 
-use iMSCP\Core\Events\Events;
+use iMSCP\Core\Application;
+use iMSCP\Core\Events;
 use Zend\EventManager\Event;
 use Zend\EventManager\EventManager;
 
@@ -102,15 +103,13 @@ class Bruteforce extends ActionPlugin
 	/**
 	 * Constructor
 	 *
-	 * @param iMSCP_Plugin_Manager $pluginManager
+	 * @param PluginManager $pluginManager
 	 * @param string $type Bruteforce detection type (login|captcha) (defaulted to login)
 	 * @çeturn void
 	 */
-	public function __construct(iMSCP_Plugin_Manager $pluginManager, $type = 'login')
+	public function __construct(PluginManager $pluginManager, $type = 'login')
 	{
-		/** @var $cfg \iMSCP\Config\Handler\File */
-		$cfg = iMSCP_Registry::get('config');
-
+		$cfg = Application::getInstance()->getConfig();
 		$this->sessionId = session_id();
 		$this->type = $type;
 		$this->ipAddr = getIpAddr();
