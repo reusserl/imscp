@@ -73,10 +73,6 @@ function clean_input($input, $htmlencode = false)
 	$input = trim($input, "\x20");
 	$input = trim($input, '{..}');
 
-	if(get_magic_quotes_gpc()) {
-		$input = stripslashes($input);
-	}
-
 	if($htmlencode) {
 		return tohtml($input, 'htmlAttr');
 	} else {
@@ -126,7 +122,7 @@ function tojs($string)
  */
 function checkPasswordSyntax($password, $unallowedChars = '/[^\x21-\x7e]/', $noErrorMsg = false)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 	$ret = true;
 	$passwordLength = strlen($password);
 
@@ -204,10 +200,12 @@ function chk_email($email, $localPartOnly = false)
 	$options = array();
 
 	if($localPartOnly) {
-		$options['onlyLocalPart'] = true;
+		$options['useDomainCheck'] = false;
 	}
 
-	return iMSCP_Validate::getInstance()->email($email, $options);
+	$validator= new \Zend\Validator\EmailAddress($options);
+
+	return $validator->isValid($email);
 }
 
 /**
@@ -538,10 +536,11 @@ function who_owns_this($id, $type = 'dmn', $forcefinal = false)
 			$stmt = exec_query($r['query'], $id);
 
 			if($stmt->rowCount()) {
+				$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
 				if($r['is_final'] || $forcefinal) {
-					$who = $stmt->fields[$select];
+					$who = $row[$select];
 				} else {
-					$who = who_owns_this($stmt->fields[$select], $r['next']);
+					$who = who_owns_this($row[$select], $r['next']);
 				}
 			}
 		} else {
@@ -571,11 +570,13 @@ function who_owns_this($id, $type = 'dmn', $forcefinal = false)
  */
 function checkMimeType($pathFile, array $mimeTypes)
 {
-	$mimeTypes['headerCheck'] = true;
+	$options = [
+		'mimeType' => $mimeTypes,
+		'enableHeaderCheck' => true
+	];
 
-	$validator = new Zend_Validate_File_MimeType($mimeTypes);
-
-	if($validator->isValid($pathFile)) {
+	$validator = new \Zend\Validator\File\MimeType($options);
+	if ($validator->isValid($pathFile)) {
 		return true;
 	}
 
