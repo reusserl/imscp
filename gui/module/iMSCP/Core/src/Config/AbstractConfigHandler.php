@@ -21,15 +21,8 @@
 namespace iMSCP\Core\Config;
 
 /**
- * This class provides an interface to manage easily a set of configuration parameters from an array.
- *
- * This class implements the ArrayAccess and Iterator interfaces to improve the access to the configuration parameters.
- *
- * With this class, you can access to your data like:
- *
- * - An array
- * - Via object properties
- * - Via setter and getter methods
+ * Class AbstractConfigHandler
+ * @package iMSCP\Core\Config
  */
 class AbstractConfigHandler implements \ArrayAccess
 {

@@ -21,12 +21,8 @@
 namespace iMSCP\Core\Compression;
 
 /**
- * Gzip Filter class
- *
- * This class provides filter that allow to compress a string in GZIP file format.
- *
- * This filter can be used both for create a standard gz file, and as filter for the PHP ob_start() function.
- * This filter compresses the data by using the GZIP format specifications according the rfc 1952.
+ * Class GzipCompressor
+ * @package iMSCP\Core\Compression
  */
 class GzipCompressor
 {

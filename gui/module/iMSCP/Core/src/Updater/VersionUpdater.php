@@ -21,7 +21,8 @@
 namespace iMSCP\Core\Updater;
 
 /**
- * Class iMSCP_Update_Version
+ * Class VersionUpdater
+ * @package iMSCP\Core\Updater
  */
 class VersionUpdater extends AbstractUpdater
 {

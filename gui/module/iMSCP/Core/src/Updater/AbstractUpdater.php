@@ -21,7 +21,8 @@
 namespace iMSCP\Core\Updater;
 
 /**
- * Base class for update
+ * Class AbstractUpdater
+ * @package iMSCP\Core\Updater
  */
 abstract class AbstractUpdater
 {

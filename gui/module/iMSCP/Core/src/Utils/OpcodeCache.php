@@ -21,9 +21,8 @@
 namespace iMSCP\Core\Utils;
 
 /**
- * Class OpcodeCacheUtility
- *
- * Code borrowed to the TYPO3 CMS project.
+ * Class OpcodeCache
+ * @package iMSCP\Core\Utils
  */
 class OpcodeCache
 {

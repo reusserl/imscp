@@ -87,7 +87,6 @@ class GettextParser
 	/**
 	 * Constructor
 	 *
-	 * @throws iMSCP_i18n_Exception When file is not readable
 	 * @param string $filePath Path to gettext file
 	 */
 	public function __construct($filePath)
@@ -95,7 +94,7 @@ class GettextParser
 		$filePath = (string)$filePath;
 
 		if (!is_readable($filePath)) {
-			throw new iMSCP_i18n_Parser_Exception(sprintf('%s is not readable', $filePath));
+			throw new \InvalidArgumentException(sprintf('%s is not readable', $filePath));
 		}
 
 		$this->filePath = $filePath;
@@ -267,7 +266,6 @@ class GettextParser
 	/**
 	 * Parse a machine object file
 	 *
-	 * @throws iMSCP_i18n_Parser_Exception on failure
 	 * @param int $part iMSCP_I18n_Parser_Gettext::HEADERS|iMSCP_I18n_Parser_Gettext::TRANSLATION_TABLE
 	 * @return array|string An array of pairs key/value where the keys are the original strings (msgid) and the values,
 	 *                      the translated strings (msgstr) or a string that contains headers, eachof them separated by
@@ -277,7 +275,7 @@ class GettextParser
 	{
 		if ($this->fh === null) {
 			if (!($this->fh = fopen($this->filePath, 'rb'))) {
-				throw new iMSCP_I18n_Parser_Exception('Unable to open ' . $this->filePath);
+				throw new \RuntimeException('Unable to open ' . $this->filePath);
 			}
 		}
 
@@ -291,7 +289,7 @@ class GettextParser
 				$this->littleEndian = true;
 			} else {
 				fclose($this->fh);
-				throw new iMSCP_I18n_Parser_Exception(sprintf('%s is not a valid gettext file', $this->filePath));
+				throw new \InvalidArgumentException(sprintf('%s is not a valid gettext file', $this->filePath));
 			}
 
 			// Verify major revision (only 0 and 1 supported)
@@ -299,7 +297,7 @@ class GettextParser
 
 			if ($majorRevision !== 0 && $majorRevision !== 1) {
 				fclose($this->fh);
-				throw new iMSCP_I18n_Parser_Exception(sprintf('%s has an unknown major revision', $this->filePath));
+				throw new \InvalidArgumentException(sprintf('%s has an unknown major revision', $this->filePath));
 			}
 
 			$this->nbStrings = $this->readInteger(); // Number of strings
@@ -346,7 +344,7 @@ class GettextParser
 				return $parseResult;
 				break;
 			default:
-				throw new iMSCP_I18n_Parser_Exception('Unknown part type to parse');
+				throw new \InvalidArgumentException('Unknown part type to parse');
 		}
 	}
 

@@ -51,7 +51,7 @@ class Events
 	 *
 	 * The listeners receive an iMSCP_Events_Event object with the following parameter:
 	 *
-	 * - templateEngine: iMSCP_pTemplate instance
+	 * - templateEngine: TemplateEngine instance
 	 *
 	 * @const string
 	 */
@@ -71,7 +71,7 @@ class Events
 	 *
 	 * The listeners receive an iMSCP_Events_Event object with the following parameter:
 	 *
-	 * - templateEngine: iMSCP_pTemplate instance
+	 * - templateEngine: TemplateEngine instance
 	 *
 	 * @const string
 	 */
@@ -91,7 +91,7 @@ class Events
 	 *
 	 * The listeners receive an iMSCP_Events_Event object with the following parameter:
 	 *
-	 * - templateEngine: iMSCP_pTemplate instance
+	 * - templateEngine: TemplateEngine instance
 	 *
 	 * @const string
 	 */
@@ -111,7 +111,7 @@ class Events
 	 *
 	 * The listeners receive an iMSCP_Events_Event object with the following parameter:
 	 *
-	 * - templateEngine: iMSCP_pTemplate instance
+	 * - templateEngine: TemplateEngine instance
 	 *
 	 * @const string
 	 */
@@ -131,7 +131,7 @@ class Events
 	 *
 	 * The listeners receive an iMSCP_Events_Event object with the following parameter:
 	 *
-	 * - templateEngine: iMSCP_pTemplate instance
+	 * - templateEngine: TemplateEngine instance
 	 *
 	 * @const string
 	 */
@@ -155,7 +155,7 @@ class Events
 	 * The listeners receive an iMSCP_Events_Event object with the following parameter:
 	 *
 	 * - context: iMSCP_Exception_Writer_Browser instance
-	 * - templateEngine: iMSCP_pTemplate instance
+	 * - templateEngine: TemplateEngine instance
 	 *
 	 * @deprecated This event is deprecated and no longer triggered
 	 * @const string
@@ -1182,7 +1182,7 @@ class Events
 	 *
 	 * The listeners receive an iMSCP_Events_Event object with the following parameters:
 	 *
-	 * - context: iMSCP_pTemplate instance
+	 * - context: TemplateEngine instance
 	 * - templatePath: (string) Template file path
 	 *
 	 * @const string
@@ -1194,7 +1194,7 @@ class Events
 	 *
 	 * The listeners receive an iMSCP_Events_Event object with the following parameters:
 	 *
-	 * - context: iMSCP_pTemplate instance
+	 * - context: TemplateEngine instance
 	 * - templateContent: (string) Template content
 	 *
 	 * @const string
@@ -1206,7 +1206,7 @@ class Events
 	 *
 	 * The listeners receive an iMSCP_Events_Event object with the following parameters:
 	 *
-	 * - context: iMSCP_pTemplate instance
+	 * - context: TemplateEngine instance
 	 * - templatePath: (string) Template file path
 	 *
 	 * @const string
@@ -1218,7 +1218,7 @@ class Events
 	 *
 	 * The listeners receive an iMSCP_Events_Event object with the following parameters:
 	 *
-	 * - context: iMSCP_pTemplate instance
+	 * - context: TemplateEngine instance
 	 * - templateContent: (string) Template content
 	 *
 	 * @const string
@@ -1230,7 +1230,7 @@ class Events
 	 *
 	 * The listeners receive an iMSCP_Events_Event object with the following parameter:
 	 *
-	 * - templateEngine: iMSCP_pTemplate instance
+	 * - templateEngine: TemplateEngine instance
 	 *
 	 * @const string
 	 */
@@ -1241,7 +1241,7 @@ class Events
 	 *
 	 * The listeners receive an iMSCP_Events_Event object with the following parameter:
 	 *
-	 * - templateEngine: iMSCP_pTemplate instance
+	 * - templateEngine: TemplateEngine instance
 	 *
 	 * @const string
 	 *

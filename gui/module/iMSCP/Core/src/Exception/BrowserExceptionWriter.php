@@ -20,7 +20,7 @@
 
 namespace iMSCP\Core\Exception;
 
-use iMSCP\Core\TemplateEngine;
+use iMSCP\Core\Template\TemplateEngine;
 
 /**
  * Class BrowserExceptionWriter
@@ -96,7 +96,7 @@ class BrowserExceptionWriter extends AbstractExceptionWriter
 			if($this->templateFile) {
 				$this->render();
 			}
-		} catch(Exception $event) {
+		} catch(\Exception $event) {
 		}
 
 		# Fallback to inline template in case something goes wrong with template engine
@@ -151,7 +151,7 @@ HTML;
 	 */
 	protected function render()
 	{
-		$tpl = new iMSCP_pTemplate();
+		$tpl = new \iMSCP\Core\Template\TemplateEngine();
 		$tpl->define_dynamic(
 			array(
 				'layout' => 'shared/layouts/simple.tpl',

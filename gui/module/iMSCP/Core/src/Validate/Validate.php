@@ -19,31 +19,35 @@
  */
 
 namespace iMSCP\Core;
+use iMSCP\Core\Config\FileConfigHandler;
+use Zend\Validator\Hostname;
+use Zend\Validator\ValidatorInterface;
 
 /**
- * iMSCP validation class
+ * Class Validate
+ * @package iMSCP\Core
  */
 class Validate
 {
     /**
-     * @var iMSCP_Validate
+     * @var Validate
      */
     protected static $_instance = null;
 
     /**
-     * @var iMSCP_Config_Handler_File
+     * @var FileConfigHandler
      */
     protected $_config = null;
 
     /**
-     * @var Zend_Validate_Abstract[]
+     * @var ValidatorInterface[]
      */
     protected $_validators = array();
 
     /**
      * Instance of last Validator invoked.
      *
-     * @var Zend_Validate_Abstract
+     * @var ValidatorInterface
      */
     protected $_lastValidator = null;
 
@@ -108,7 +112,7 @@ class Validate
      * Implements singleton design pattern.
      *
      * @static
-     * @return iMSCP_Validate
+     * @return Validate
      */
     static public function getInstance()
     {
@@ -142,7 +146,7 @@ class Validate
             $options['domain'] = false;
             $email .= '@dummy';
         } else {
-            $options['hostname'] = new Zend_Validate_Hostname(array('tld' => false));
+            $options['hostname'] = new Hostname(array('tld' => false));
         }
 
         return $this->_processValidation('EmailAddress', $email, $options);

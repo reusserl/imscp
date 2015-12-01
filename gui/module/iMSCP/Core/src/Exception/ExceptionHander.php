@@ -23,7 +23,8 @@ namespace iMSCP\Core\Exception;
 use Zend\EventManager\EventManager;
 
 /**
- * Class iMSCP_Exception_Handler
+ * Class ExceptionHandler
+ * @package iMSCP\Core\Exception
  */
 class ExceptionHandler
 {
@@ -43,7 +44,7 @@ class ExceptionHandler
 	 */
 	public function __construct()
 	{
-		$this->em = new iMSCP_Events_Manager();
+		$this->em = new EventManager();
 		$this->setExceptionHandler();
 	}
 

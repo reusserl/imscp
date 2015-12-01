@@ -18,23 +18,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+namespace iMSCP\Core;
+use Zend\Uri\Exception\InvalidUriException;
+use Zend\Uri\Uri;
+
 /**
- * HTTP(S)/FTP URI handler
+ * Class Redirect
+ * @package iMSCP\Core
  */
-class iMSCP_Uri_Redirect extends Zend_Uri_Http
+class Redirect extends Uri
 {
 	/**
 	 * Creates a iMSCP_Uri_Redirect from the given string
 	 *
 	 * @param  string $uri String to create URI from, must start with prefix http://, https:// or 'ftp://
-	 * @throws iMSCP_Uri_Exception When the given URI is not a string or is not valid
-	 * @throws Zend_Uri_Exception
-	 * @return iMSCP_Uri_Redirect
+	 * @return Redirect
 	 */
 	public static function fromString($uri)
 	{
 		if (is_string($uri) === false) {
-			throw new Zend_Uri_Exception(sprintf('%s is not a string', $uri));
+			throw new InvalidUriException(sprintf('%s is not a string', $uri));
 		}
 
 		$uri = explode(':', $uri, 2);
@@ -42,10 +45,10 @@ class iMSCP_Uri_Redirect extends Zend_Uri_Http
 		$schemeSpecific = isset($uri[1]) === true ? $uri[1] : '';
 
 		if (in_array($scheme, array('http', 'https', 'ftp')) === false) {
-			throw new iMSCP_Uri_Exception(sprintf('Invalid scheme: %s', $scheme));
+			throw new InvalidUriException(sprintf('Invalid scheme: %s', $scheme));
 		}
 
-		$schemeHandler = new iMSCP_Uri_Redirect($scheme, $schemeSpecific);
+		$schemeHandler = new Redirect($scheme, $schemeSpecific);
 		return $schemeHandler;
 	}
 
@@ -57,7 +60,7 @@ class iMSCP_Uri_Redirect extends Zend_Uri_Http
 	 * @return boolean
 	 * @uses   Zend_Filter
 	 */
-	public function validateHost($host = null)
+	public static function validateHost($host = null)
 	{
 		if ($host === null) {
 			$host = $this->_host;

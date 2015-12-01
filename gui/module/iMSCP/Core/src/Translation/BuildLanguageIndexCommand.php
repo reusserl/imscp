@@ -25,8 +25,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Class UpdatePackageIndexCommand
- * @package iMSCP\ApsStandard\Command
+ * Class BuildLanguageIndexCommand
+ * @package iMSCP\Core\Translation
  */
 class BuildLanguageIndexCommand extends Command
 {

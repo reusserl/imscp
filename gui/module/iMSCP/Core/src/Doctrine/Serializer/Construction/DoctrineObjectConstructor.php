@@ -36,7 +36,7 @@ use JMS\Serializer\DeserializationContext;
  * Note: Used in place of JMS DoctrineObjectConstructors as long the bug described by
  * https://github.com/schmittjoh/serializer/pull/299 is not fixed.
  *
- * @package iMSCP\Doctrine\Serializer\Construction
+ * @package iMSCP\Core\Doctrine\Serializer\Construction
  */
 class DoctrineObjectConstructor implements ObjectConstructorInterface
 {

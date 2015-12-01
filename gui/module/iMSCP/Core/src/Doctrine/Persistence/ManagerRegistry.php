@@ -28,7 +28,7 @@ use Zend\ServiceManager\ServiceManagerAwareInterface;
 
 /**
  * Class ManagerRegistry
- * @package iMSCP\Doctrine\Persistence
+ * @package iMSCP\Core\Doctrine\Persistence
  */
 class ManagerRegistry extends AbstractManagerRegistry implements ServiceManagerAwareInterface
 {

@@ -25,7 +25,7 @@ namespace iMSCP\Core\Utils;
  *
  * Library that provides functions for passwords hashing, verification and data encryption.
  *
- * @package iMSCP
+ * @package iMSCP\Core\Utils
  */
 class Crypt
 {

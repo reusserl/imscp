@@ -25,7 +25,7 @@ use Zend\EventManager\Event;
 
 /**
  * Class ConsoleEvent
- * @package iMSCP\Tools\Console
+ * @package iMSCP\Core\Console
  */
 class ConsoleEvent extends Event
 {

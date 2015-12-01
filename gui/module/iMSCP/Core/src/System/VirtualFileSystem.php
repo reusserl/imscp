@@ -28,7 +28,8 @@ use iMSCP\Config\Handler\File as ConfigHandlerFile;
 use iMSCP\Crypt;
 
 /**
- * Class iMSCP_VirtualFileSystem
+ * Class VirtualFileSystem
+ * @package iMSCP\Core
  */
 class VirtualFileSystem
 {

@@ -29,8 +29,8 @@ use Zend\EventManager\Event;
 use Zend\EventManager\EventManager;
 
 /**
- * Class Datbase
- * @package iMSCP\Database
+ * Class Database
+ * @package iMSCP\Core\Database
  */
 class Database
 {

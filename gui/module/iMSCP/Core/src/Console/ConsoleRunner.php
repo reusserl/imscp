@@ -49,7 +49,7 @@ use Zend\ServiceManager\ServiceManager;
 
 /**
  * Class ConsoleRunner
- * @package iMSCP\Tools\Console
+ * @package iMSCP\Core\Console
  */
 class ConsoleRunner
 {

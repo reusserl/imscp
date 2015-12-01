@@ -21,7 +21,8 @@
 namespace iMSCP\Core\Updater;
 
 /**
- * Class iMSCP_Update_Database
+ * Class DatabaseUpdater
+ * @package iMSCP\Core\Updater
  */
 class DatabaseUpdater extends AbstractUpdater
 {

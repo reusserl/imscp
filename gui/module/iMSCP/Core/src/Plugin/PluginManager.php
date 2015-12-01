@@ -20,12 +20,14 @@
 
 namespace iMSCP\Core\Plugin;
 
-use iMSCP\Core\Events\Events;
+use iMSCP\Core\Events;
+use Zend\EventManager\EventManagerInterface;
 
 /**
- * Plugin Manager class
+ * Class iMSCP_Plugin_Manager
+ * @package iMSCP\Core\Plugin
  */
-class iMSCP_Plugin_Manager
+class PluginManager
 {
 	/**
 	 * @const string Plugin API version
@@ -98,7 +100,7 @@ class iMSCP_Plugin_Manager
 	protected $pluginsByType = array();
 
 	/**
-	 * @var iMSCP_Plugin[]|iMSCP_Plugin_Action[] Array containing all loaded plugins
+	 * @var AbstractPlugin[] Array containing all loaded plugins
 	 */
 	protected $loadedPlugins = array();
 
@@ -108,7 +110,7 @@ class iMSCP_Plugin_Manager
 	protected $backendRequest = false;
 
 	/**
-	 * @var iMSCP_Events_Aggregator
+	 * @var EventManagerInterface
 	 */
 	protected $eventsManager = null;
 
@@ -116,14 +118,13 @@ class iMSCP_Plugin_Manager
 	 * Constructor
 	 *
 	 * @param string $pluginRootDir Plugins root directory
-	 * @throws iMSCP_Plugin_Exception
-	 * @return iMSCP_Plugin_Manager
+	 * @return PluginManager
 	 */
 	public function __construct($pluginRootDir)
 	{
 		if (!@is_dir($pluginRootDir)) {
 			write_log(sprintf('Plugin Manager: Invalid plugin directory: %s', $pluginRootDir), E_USER_ERROR);
-			throw new iMSCP_Plugin_Exception(sprintf('Invalid plugin directory: %s', $pluginRootDir));
+			throw new \InvalidArgumentException(sprintf('Invalid plugin directory: %s', $pluginRootDir));
 		}
 
 		$this->pluginSetDirectory($pluginRootDir);
@@ -163,7 +164,7 @@ class iMSCP_Plugin_Manager
 	/**
 	 * Get event manager
 	 *
-	 * @return iMSCP_Events_Manager
+	 * @return EventManagerInterface
 	 */
 	public function getEventManager()
 	{
@@ -183,14 +184,15 @@ class iMSCP_Plugin_Manager
 	/**
 	 * Sets plugins root directory
 	 *
-	 * @throws iMSCP_Plugin_Exception In case $pluginDirectory doesn't exist or is not readable.
 	 * @param string $pluginDir Plugin directory path
 	 */
 	public function pluginSetDirectory($pluginDir)
 	{
 		if (!@is_writable($pluginDir)) {
 			write_log(sprintf("Plugin Manager: Directory %s doesn't exist or is not writable", $pluginDir), E_USER_ERROR);
-			throw new iMSCP_Plugin_Exception(sprintf("Plugin Manager: Directory %s doesn't exist or is not writable", $pluginDir));
+			throw new \InvalidArgumentException(sprintf(
+				"Plugin Manager: Directory %s doesn't exist or is not writable", $pluginDir
+			));
 		}
 
 		$this->pluginsDirectory = $pluginDir;
@@ -245,7 +247,7 @@ class iMSCP_Plugin_Manager
 	 * Loads the given plugin
 	 *
 	 * @param string $name Plugin name
-	 * @return false|iMSCP_Plugin|iMSCP_Plugin_Action Plugin instance, FALSE if plugin class is not found
+	 * @return false|ActionPlugin Plugin instance, FALSE if plugin class is not found
 	 */
 	public function pluginLoad($name)
 	{
@@ -259,7 +261,7 @@ class iMSCP_Plugin_Manager
 
 			$this->loadedPlugins[$name] = new $className($this);
 
-			if ($this->loadedPlugins[$name] instanceof iMSCP_Plugin_Action) {
+			if ($this->loadedPlugins[$name] instanceof ActionPlugin) {
 				$this->loadedPlugins[$name]->register($this->getEventManager());
 			}
 		}
@@ -282,7 +284,7 @@ class iMSCP_Plugin_Manager
 	 * Get list of loaded plugins by type
 	 *
 	 * @param string $type Type of loaded plugins to return
-	 * @return iMSCP_Plugin[]|iMSCP_Plugin_Action[] Array containing plugins instances
+	 * @return AbstractPlugin[]|ActionPlugin[] Array containing plugins instances
 	 */
 	public function pluginGetLoaded($type = 'all')
 	{
@@ -304,7 +306,7 @@ class iMSCP_Plugin_Manager
 	 *
 	 * @throws iMSCP_Plugin_Exception When $name is not loaded
 	 * @param string $name Plugin name
-	 * @return iMSCP_Plugin|iMSCP_Plugin_Action
+	 * @return AbstractPlugin|ActionPlugin
 	 */
 	public function pluginGet($name)
 	{
@@ -466,11 +468,11 @@ class iMSCP_Plugin_Manager
 		}
 
 		if (!$this->pluginIsLocked($name)) {
-			$responses = $this->eventsManager->dispatch(Events::onBeforeInstallPlugin, array(
+			$responses = $this->eventsManager->trigger(Events::onBeforeInstallPlugin, array(
 				'pluginName' => $name
 			));
 
-			if (!$responses->isStopped()) {
+			if (!$responses->stopped()) {
 				exec_query('UPDATE plugin SET plugin_locked = ? WHERE plugin_name = ?', array(1, $name));
 				$this->pluginData[$name]['locked'] = 1;
 			}
@@ -494,7 +496,7 @@ class iMSCP_Plugin_Manager
 		if ($this->pluginIsLocked($name)) {
 			$responses = $this->eventsManager->dispatch(Events::onBeforeInstallPlugin, array('pluginName' => $name));
 
-			if (!$responses->isStopped()) {
+			if (!$responses->stopped()) {
 				exec_query('UPDATE plugin SET plugin_locked = ? WHERE plugin_name = ?', array(0, $name));
 				$this->pluginData[$name]['locked'] = 0;
 			}
@@ -567,7 +569,7 @@ class iMSCP_Plugin_Manager
 						'pluginName' => $name
 					));
 
-					if (!$responses->isStopped()) {
+					if (!$responses->stopped()) {
 						$pluginInstance->install($this);
 
 						$this->eventsManager->dispatch(Events::onAfterInstallPlugin, array(
@@ -670,7 +672,7 @@ class iMSCP_Plugin_Manager
 							'pluginName' => $name
 						));
 
-						if (!$responses->isStopped()) {
+						if (!$responses->stopped()) {
 							$pluginInstance->uninstall($this);
 
 							$this->eventsManager->dispatch(Events::onAfterUninstallPlugin, array(
@@ -757,7 +759,7 @@ class iMSCP_Plugin_Manager
 						'pluginName' => $name
 					));
 
-					if (!$responses->isStopped()) {
+					if (!$responses->stopped()) {
 						$pluginInstance->enable($this);
 
 						$this->eventsManager->dispatch(Events::onAfterEnablePlugin, array(
@@ -831,7 +833,7 @@ class iMSCP_Plugin_Manager
 						'pluginName' => $name
 					));
 
-					if (!$responses->isStopped()) {
+					if (!$responses->stopped()) {
 						$pluginInstance->disable($this);
 
 						$this->eventsManager->dispatch(Events::onAfterDisablePlugin, array(
@@ -953,7 +955,7 @@ class iMSCP_Plugin_Manager
 							'toVersion' => $pluginInfo['__nversion__']
 						));
 
-						if (!$responses->isStopped()) {
+						if (!$responses->stopped()) {
 							$pluginInstance->update($this, $pluginInfo['version'], $pluginInfo['__nversion__']);
 
 							$this->eventsManager->dispatch(Events::onAfterUpdatePlugin, array(
@@ -1020,7 +1022,7 @@ class iMSCP_Plugin_Manager
 						'pluginName' => $name
 					));
 
-					if (!$responses->isStopped()) {
+					if (!$responses->stopped()) {
 						$pluginInstance->delete($this);
 
 						$this->pluginDeleteData($name);
@@ -1096,7 +1098,7 @@ class iMSCP_Plugin_Manager
 				Events::onBeforeProtectPlugin, array('pluginManager' => $this, 'pluginName' => $name)
 			);
 
-			if ($responses->isStopped()) {
+			if ($responses->stopped()) {
 				return self::ACTION_STOPPED;
 			}
 

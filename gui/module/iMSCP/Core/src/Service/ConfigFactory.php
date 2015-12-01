@@ -31,7 +31,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class ConfigFactory implements FactoryInterface
 {
 	/**
-	 * Create the frontend configuration service
+	 * Create the configuration service
 	 *
 	 * Retrieves the Module Manager from the service locator, and executes
 	 * {@link Zend\ModuleManager\ModuleManager::loadModules()}.
@@ -48,9 +48,6 @@ class ConfigFactory implements FactoryInterface
 		$moduleManager->loadModules();
 		$moduleParams = $moduleManager->getEvent()->getParams();
 		$config = $moduleParams['configListener']->getMergedConfig(false);
-		echo '<pre>';
-		print_r($config);
-			exit;
 		return $config;
 	}
 }

@@ -25,10 +25,11 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-namespace iMSCP\Core;
+namespace iMSCP\Core\Template;
 
 /**
- * Class pTemplate is the i-MSCP template engine
+ * Class TemplateEngine
+ * @package iMSCP\Core
  */
 class TemplateEngine
 {
@@ -174,7 +175,7 @@ class TemplateEngine
 		if(is_dir($rootDir)) {
 			$this->root_dir = $rootDir;
 		} else {
-			throw new iMSCP_Exception('iMSCP_pTemplate::setRootDir expects a valid directory.');
+			throw new iMSCP_Exception('TemplateEngine::setRootDir expects a valid directory.');
 		}
 	}
 
@@ -494,7 +495,7 @@ class TemplateEngine
 
 		if (!is_array($fname)) {
 			$this->eventManager->dispatch(
-				\iMSCP\Events\Events::onBeforeAssembleTemplateFiles,
+				\iMSCP\Core\Events::onBeforeAssembleTemplateFiles,
 				array('context' => $this, 'templatePath' => $this->root_dir . '/'. $fname)
 			);
 		} else { // INCLUDED file
@@ -506,7 +507,7 @@ class TemplateEngine
 			$parentTplDir = dirname($fname);
 
 			$this->eventManager->dispatch(
-				\iMSCP\Events\Events::onBeforeLoadTemplateFile,
+				\iMSCP\Core\Events::onBeforeLoadTemplateFile,
 				array('context' => $this, 'templatePath' => $this->root_dir . '/'. $fname)
 			);
 
@@ -517,7 +518,7 @@ class TemplateEngine
 			$fileContent = ob_get_clean();
 
 			$this->eventManager->dispatch(
-				\iMSCP\Events\Events::onAfterLoadTemplateFile, array('context' => $this, 'templateContent' => $fileContent)
+				\iMSCP\Core\Events::onAfterLoadTemplateFile, array('context' => $this, 'templateContent' => $fileContent)
 			);
 
 			$fileContent = preg_replace_callback($this->tpl_include, array($this, 'get_file'), $fileContent);
@@ -527,7 +528,7 @@ class TemplateEngine
 		}
 
 		$this->eventManager->dispatch(
-			\iMSCP\Events\Events::onAfterAssembleTemplateFiles, array('context' => $this, 'templateContent' => $fileContent)
+			\iMSCP\Core\Events::onAfterAssembleTemplateFiles, array('context' => $this, 'templateContent' => $fileContent)
 		);
 
 		return $fileContent;
@@ -705,7 +706,7 @@ class TemplateEngine
 	 *
 	 * @param string $newContent New content
 	 * @param string $namespace Namespace
-	 * @return iMSCP_pTemplate Provides fluent interface, returns self
+	 * @return TemplateEngine Provides fluent interface, returns self
 	 */
 	public function replaceLastParseResult($newContent, $namespace = null)
 	{

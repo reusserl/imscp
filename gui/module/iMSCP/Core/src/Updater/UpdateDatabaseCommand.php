@@ -26,8 +26,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Class UpdatePackageIndexCommand
- * @package iMSCP\ApsStandard\Command
+ * Class UpdateDatabaseCommand
+ * @package iMSCP\Core\Updater
  */
 class UpdateDatabaseCommand extends Command
 {

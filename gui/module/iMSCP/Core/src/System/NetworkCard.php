@@ -26,7 +26,7 @@ namespace iMSCP\Core;
 
 /**
  * Class NetworkCard
- * @package iMSCP
+ * @package iMSCP\Core
  */
 class NetworkCard
 {

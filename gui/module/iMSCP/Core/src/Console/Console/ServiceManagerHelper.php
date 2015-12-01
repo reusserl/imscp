@@ -7,7 +7,7 @@ use Zend\ServiceManager\ServiceManager;
 
 /**
  * Class ServiceManagerHelper
- * @package iMSCP\Tools\Console\Helper
+ * @package iMSCP\Core\Console
  */
 class ServiceManagerHelper extends Helper
 {

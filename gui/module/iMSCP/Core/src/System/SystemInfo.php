@@ -25,7 +25,8 @@
 namespace iMSCP\Core;
 
 /**
- * This class provides the functionality needed by {@see admin/system_info.php} for Linux and BSD systems
+ * Class SystemInfo
+ * @package iMSCP\Core
  */
 class SystemInfo
 {

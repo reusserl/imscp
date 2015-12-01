@@ -22,7 +22,8 @@
 namespace iMSCP\Core;
 
 /**
- * Class that allows to get services properties and their status
+ * Class SystemServices
+ * @package iMSCP\Core
  */
 class SystemServices implements \iterator, \countable
 {
