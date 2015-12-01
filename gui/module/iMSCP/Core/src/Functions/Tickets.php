@@ -70,14 +70,14 @@ function createTicket($userId, $adminId, $urgency, $subject, $message, $userLeve
 /**
  * Gets the content of the selected ticket and generates its output
  *
- * @param \iMSCP\Core\TemplateEngine $tpl Template engine
+ * @param \iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param int $ticketId Id of the ticket to display
  * @param int $userId Id of the user
  * @return bool TRUE if ticket is found, FALSE otherwise
  */
 function showTicketContent($tpl, $ticketId, $userId)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 	
 	$stmt = exec_query(
 		'
@@ -261,7 +261,7 @@ function deleteTickets($status, $userId)
 /**
  * Generates a ticket list
  *
- * @param iMSCP\Core\TemplateEngine $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param int $userId User unique identifier
  * @param int $start First ticket to show (pagination)
  * @param int $count Mmaximal count of shown tickets (pagination)
@@ -585,7 +585,7 @@ function _getTicketSender($ticketId)
  */
 function _ticketGetLastDate($ticketId)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$stmt = exec_query(
 		'SELECT ticket_date FROM tickets WHERE ticket_reply = ? ORDER BY ticket_date DESC LIMIT 1', $ticketId
@@ -613,7 +613,7 @@ function _ticketGetLastDate($ticketId)
  */
 function hasTicketSystem($userId = null)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if (!$cfg['IMSCP_SUPPORT_SYSTEM']) {
 		return false;
@@ -639,12 +639,12 @@ function hasTicketSystem($userId = null)
  *
  * @access private
  * @usedby showTicketContent()
- * @param iMSCP\Core\TemplateEngine $tpl The Template object
+ * @param iMSCP\Core\Template\TemplateEngine $tpl The Template object
  * @param int $ticketId Id of the ticket to display
  */
 function _showTicketReplies($tpl, $ticketId)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 	
 	$stmt = exec_query(
 		'
@@ -691,7 +691,7 @@ function _showTicketReplies($tpl, $ticketId)
  */
 function _sendTicketNotification($toId, $fromId, $ticketSubject, $ticketMessage, $ticketStatus, $urgency)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('SystemConfig');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	// To information
 	$stmt = exec_query('SELECT fname, lname, email, admin_name FROM admin WHERE admin_id = ?', $toId);
