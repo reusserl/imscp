@@ -104,7 +104,7 @@ class DbConfigHandler extends AbstractConfigHandler
 			throw new \InvalidArgumentException("Missing 'key_column' parameter.");
 		}
 
-		if (isset($params['value_column'])) {
+		if (!isset($params['value_column'])) {
 			throw new \InvalidArgumentException("Missing 'value_column' parameter.");
 		}
 

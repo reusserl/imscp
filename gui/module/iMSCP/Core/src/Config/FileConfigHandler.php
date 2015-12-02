@@ -27,32 +27,25 @@ namespace iMSCP\Core\Config;
 class FileConfigHandler extends AbstractConfigHandler
 {
 	/**
-	 * Configuration file path
-	 *
-	 * @var string
-	 */
-	protected $configFilePath;
-
-	/**
 	 * Constructor
 	 *
 	 * @param string $configFilePath Configuration file path
 	 */
 	public function __construct($configFilePath)
 	{
-		$this->configFilePath = $configFilePath;
-		$this->loadConfig();
+		$this->loadConfig((string)$configFilePath);
 	}
 
 	/**
-	 * Load configuration parameters
+	 * Load configuration parameters from file
 	 *
+	 * @param string $configFilePath Configuration file path
 	 * @return void
 	 */
-	protected function loadConfig()
+	protected function loadConfig($configFilePath)
 	{
-		if (($string = @file_get_contents($this->configFilePath)) == false) {
-			throw new \RuntimeException(sprintf('Could not open the `%s` configuration file ', $this->configFilePath));
+		if (($string = @file_get_contents($configFilePath)) == false) {
+			throw new \RuntimeException(sprintf('Could not open the `%s` configuration file.', $configFilePath));
 		}
 
 		$lines = explode("\n", $string);
