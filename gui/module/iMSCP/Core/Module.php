@@ -48,6 +48,23 @@ class Module implements ConfigProviderInterface
 			}
 		}
 
-		return array_merge($moduleConfig, (new FileConfigHandler($configFilePath))->toArray());
+		$config = array_merge($moduleConfig, (new FileConfigHandler($configFilePath))->toArray());
+
+		// Convert IDN to ASCII
+		$config['DEFAULT_ADMIN_ADDRESS'] = encode_idna($config['DEFAULT_ADMIN_ADDRESS']);
+		$config['SERVER_HOSTNAME'] = encode_idna($config['SERVER_HOSTNAME']);
+		$config['BASE_SERVER_VHOST'] = encode_idna($config['BASE_SERVER_VHOST']);
+		$config['DATABASE_HOST'] = encode_idna($config['DATABASE_HOST']);
+
+		// Add runtime configuration parameters
+		$config['ROOT_TEMPLATE_PATH'] = realpath(dirname(__DIR__) . '/../../themes/' . $config['USER_INITIAL_THEME']);
+		if ($config['DEVMODE']) {
+			$config['ASSETS_PATH'] = '/assets';
+		} else {
+			$config['ROOT_TEMPLATE_PATH'] .= '/dist';
+			$config['ASSETS_PATH'] = '/dist/assets';
+		}
+
+		return $config;
 	}
 }
