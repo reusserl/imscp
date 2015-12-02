@@ -32,7 +32,7 @@ return [
 		// consider that a module namespace, the value of that key the specific path to that module's Module class.
 		'module_paths' => [
 			'./module',
-			'/var/cache/imscp/packages/vendor',
+			'/var/cache/imscp/packages/vendor'
 		],
 
 		// An array of paths from which to glob configuration files after modules are loaded. These effectively override
@@ -43,25 +43,25 @@ return [
 
 		// Whether or not to enable a configuration cache. If enabled, the merged configuration will be cached and used
 		// in subsequent requests.
-		'config_cache_enabled' => false,
+		'config_cache_enabled' => true,
 
 		// The key used to create the configuration cache file name.
-		//'config_cache_key' => $stringKey,
+		'config_cache_key' => 'imscp',
 
 		// Whether or not to enable a module class map cache. If enabled, creates a module class map cache which will be
 		// used by in future requests, to reduce the autoloading process.
-		'module_map_cache_enabled' => false,
+		'module_map_cache_enabled' => true,
 
 		// The key used to create the class map cache file name.
-		//'module_map_cache_key' => $stringKey,
+		'module_map_cache_key' => 'imscp',
 
 		// The path in which to cache merged configuration.
-		'cache_dir' => 'data/cache',
+		'cache_dir' => './data/cache',
 
 		// Whether or not to enable modules dependency checking.
 		// Enabled by default, prevents usage of modules that depend on other modules
 		// that weren't loaded.
-		'check_dependencies' => true,
+		'check_dependencies' => true
 	],
 
 	// Used to create an own service manager. May contain one or more child arrays.
@@ -74,27 +74,10 @@ return [
 	//	],
 	//],
 
-	// Initial configuration with which to seed the ServiceManager.Should be compatible with Zend\ServiceManager\Config.
-	'service_manager' => [
-		/*
-		'invokables' => [
-			'ApsStandardListener' => 'iMSCP\ApsStandard\Listener\ApsStandardListener'
-		],
-		*/
-
-		/*
-		'abstract_factories' => [
-			// Abstract factory for APS standard controllers
-			'iMSCP\ApsStandard\Controller\ApsControllerAbstractFactory',
-
-			// Abstract factory for APS standard services
-			'iMSCP\ApsStandard\Service\ApsServiceAbstractFactory'
-		],
-		*/
-	],
+	// Initial configuration with which to seed the ServiceManager.
+	// Must be compatible with Zend\ServiceManager\Config.
+	'service_manager' => [],
 
 	// Listener aggregates
-	'listeners' => [
-		//'ApsStandardListener'
-	]
+	'listeners' => []
 ];

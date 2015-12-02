@@ -111,7 +111,7 @@ return [
 	// Enable or disable maintenance mode
 	// 1: Maintenance mode enabled
 	// 0: Maintenance mode disabled
-	'MAINTENANCEMODE' => 0,
+	'MAINTENANCEMODE' => 1,
 
 	// Minimum password chars
 	'PASSWD_CHARS' => 6,
@@ -158,16 +158,12 @@ return [
 	'CHECK_FOR_UPDATES' => false,
 	'ENABLE_SSL' => false,
 
-	// Converting some possible IDN to ACE
-	//'DEFAULT_ADMIN_ADDRESS' => encode_idna($config->get('DEFAULT_ADMIN_ADDRESS')),
-	//'SERVER_HOSTNAME' => encode_idna($config->get('SERVER_HOSTNAME')),
-	//'BASE_SERVER_VHOST' => encode_idna($config->get('BASE_SERVER_VHOST')),
-	//'DATABASE_HOST' => encode_idna($config->get('DATABASE_HOST')),
-
 	// Server traffic settings
 	'SERVER_TRAFFIC_LIMIT' => 0,
 	'SERVER_TRAFFIC_WARN' => 0,
 
 	// Paths appended to the default PHP open_basedir directive of customers
-	'PHPINI_OPEN_BASEDIR' => ''
+	'PHPINI_OPEN_BASEDIR' => '',
+
+	'SHOW_COMPRESSION_SIZE' => 'initial value'
 ];
