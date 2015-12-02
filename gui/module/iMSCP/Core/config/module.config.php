@@ -111,7 +111,7 @@ return [
 	// Enable or disable maintenance mode
 	// 1: Maintenance mode enabled
 	// 0: Maintenance mode disabled
-	'MAINTENANCEMODE' => 1,
+	'MAINTENANCEMODE' => 0,
 
 	// Minimum password chars
 	'PASSWD_CHARS' => 6,
@@ -163,7 +163,5 @@ return [
 	'SERVER_TRAFFIC_WARN' => 0,
 
 	// Paths appended to the default PHP open_basedir directive of customers
-	'PHPINI_OPEN_BASEDIR' => '',
-
-	'SHOW_COMPRESSION_SIZE' => 'initial value'
+	'PHPINI_OPEN_BASEDIR' => ''
 ];
