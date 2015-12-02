@@ -18,10 +18,4 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-/**
- * Class iMSCP_Events_Exception
- */
-class iMSCP_Events_Exception extends iMSCP_Exception
-{
-
-}
+return [];
