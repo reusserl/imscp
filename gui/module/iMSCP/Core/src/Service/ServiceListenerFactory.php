@@ -22,11 +22,11 @@ namespace iMSCP\Core\Service;
 
 use Zend\ModuleManager\Listener\ServiceListener;
 use Zend\ModuleManager\Listener\ServiceListenerInterface;
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\Exception\InvalidArgumentException;
 use Zend\Stdlib\Exception\RuntimeException;
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Class ServiceListenerFactory
@@ -54,11 +54,7 @@ class ServiceListenerFactory implements FactoryInterface
 		],
 		'factories' => [
 			'Application' => 'iMSCP\Core\Service\ApplicationFactory',
-			'EncryptionDataService' => 'iMSCP\Core\Service\EncryptionDataService',
 			'Config' => 'iMSCP\Core\Service\ConfigFactory',
-			'SystemConfig' => 'iMSCP\Core\Service\SystemConfig',
-			'Database' => 'iMSCP\Core\Service\DatabaseServiceFactory',
-			'DBALConnection' => 'iMSCP\Core\Service\DBALConnectionFactory',
 			'ORM' => 'iMSCP\Core\Service\ORMServiceFactory',
 			'ManagerRegistry' => 'iMSCP\Core\Service\ManagerRegistryFactory',
 			'Request' => 'iMSCP\Core\Service\HttpRequestServiceFactory',
@@ -132,6 +128,7 @@ class ServiceListenerFactory implements FactoryInterface
 						self::VALUE_TYPE_ERROR, 'service_manager', gettype($newServiceManager['service_manager'])
 					));
 				}
+
 				if (!isset($newServiceManager['config_key'])) {
 					throw new InvalidArgumentException(sprintf(self::MISSING_KEY_ERROR, $key, 'config_key'));
 				} elseif (!is_string($newServiceManager['config_key'])) {
@@ -139,6 +136,7 @@ class ServiceListenerFactory implements FactoryInterface
 						self::VALUE_TYPE_ERROR, 'config_key', gettype($newServiceManager['config_key'])
 					));
 				}
+
 				if (!isset($newServiceManager['interface'])) {
 					throw new InvalidArgumentException(sprintf(self::MISSING_KEY_ERROR, $key, 'interface'));
 				} elseif (!is_string($newServiceManager['interface'])) {
@@ -146,6 +144,7 @@ class ServiceListenerFactory implements FactoryInterface
 						self::VALUE_TYPE_ERROR, 'interface', gettype($newServiceManager['interface'])
 					));
 				}
+
 				if (!isset($newServiceManager['method'])) {
 					throw new InvalidArgumentException(sprintf(self::MISSING_KEY_ERROR, $key, 'method'));
 				} elseif (!is_string($newServiceManager['method'])) {

@@ -22,13 +22,27 @@ namespace iMSCP\Core;
 
 use iMSCP\Core\Config\FileConfigHandler;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
+use Zend\ModuleManager\Feature\InitProviderInterface;
+use Zend\ModuleManager\ModuleEvent;
+use Zend\ModuleManager\ModuleManagerInterface;
+use Zend\Stdlib\ArrayUtils;
 
 /**
  * Class Module
  * @package iMSCP\Core
  */
-class Module implements ConfigProviderInterface
+class Module implements InitProviderInterface, ConfigProviderInterface
 {
+	/**
+	 * {@inheritdoc}
+	 */
+	public function init(ModuleManagerInterface $manager)
+	{
+		// Register listener which is responsible to merge configuration
+		// from database which merged application configuration
+		$manager->getEventManager()->attach(ModuleEvent::EVENT_MERGE_CONFIG, [$this, 'onMergeConfig']);
+	}
+
 	/**
 	 * {@inheritdoc}
 	 */
@@ -48,16 +62,17 @@ class Module implements ConfigProviderInterface
 			}
 		}
 
-		$config = array_merge($moduleConfig, (new FileConfigHandler($configFilePath))->toArray());
+		$config = ArrayUtils::merge($moduleConfig, (new FileConfigHandler($configFilePath))->toArray());
 
 		// Convert IDN to ASCII
 		$config['DEFAULT_ADMIN_ADDRESS'] = encode_idna($config['DEFAULT_ADMIN_ADDRESS']);
 		$config['SERVER_HOSTNAME'] = encode_idna($config['SERVER_HOSTNAME']);
 		$config['BASE_SERVER_VHOST'] = encode_idna($config['BASE_SERVER_VHOST']);
 		$config['DATABASE_HOST'] = encode_idna($config['DATABASE_HOST']);
+		$config['DATABASE_USER_HOST'] = encode_idna($config['DATABASE_USER_HOST']);
 
 		// Add runtime configuration parameters
-		$config['ROOT_TEMPLATE_PATH'] = realpath(dirname(__DIR__) . '/../../themes/' . $config['USER_INITIAL_THEME']);
+		$config['ROOT_TEMPLATE_PATH'] = realpath('themes/' . $config['USER_INITIAL_THEME']);
 		if ($config['DEVMODE']) {
 			$config['ASSETS_PATH'] = '/assets';
 		} else {
@@ -66,5 +81,22 @@ class Module implements ConfigProviderInterface
 		}
 
 		return $config;
+	}
+
+
+	/**
+	 * Merge configuration from database with merged application configuration
+	 *
+	 * Note: When the cache is enabled, this is done only once. Subsequent requests use the cached configuration.
+	 *
+	 * @param ModuleEvent $e
+	 * @return void
+	 */
+	public function onMergeConfig(ModuleEvent $e)
+	{
+		$configListener = $e->getConfigListener();
+		$config = $configListener->getMergedConfig(false);
+		$config = ArrayUtils::merge($config, $e->getParam('ServiceManager')->get('DbConfig')->toArray());
+		$configListener->setMergedConfig($config);
 	}
 }

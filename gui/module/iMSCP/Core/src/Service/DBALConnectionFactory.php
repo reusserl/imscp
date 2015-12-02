@@ -23,6 +23,7 @@ namespace iMSCP\Core\Service;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\Configuration;
 use iMSCP_Registry as Registry;
+use Zend\ModuleManager\ModuleManager;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -37,7 +38,11 @@ class DBALConnectionFactory implements FactoryInterface
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		$systemConfig = $serviceLocator->get('SystemConfig');
+		// We cannot use the Config service here (not available yet)
+		/** @var ModuleManager $moduleManager */
+		$moduleManager = $serviceLocator->get('ModuleManager');
+		$config = $moduleManager->getEvent()->getConfigListener()->getMergedConfig();
+
 		$dbalConfig = new Configuration();
 
 		// Ignore tables which are not managed through ORM service
@@ -50,8 +55,8 @@ class DBALConnectionFactory implements FactoryInterface
 		$conn = DriverManager::getConnection(
 			[
 				'pdo' => $pdo, // Reuse PDO instance from Database service
-				'host' => $systemConfig['DATABASE_HOST'], // Only there for later referral through connection object
-				'port' => $systemConfig['DATABASE_PORT'] // Only there for later referral through connection object
+				'host' => $config['DATABASE_HOST'], // Only there for later referral through connection object
+				'port' => $config['DATABASE_PORT'] // Only there for later referral through connection object
 			],
 			$dbalConfig
 		);

@@ -25,8 +25,8 @@ use Zend\EventManager\EventManagerInterface;
 use Zend\ServiceManager\Config;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-use Zend\ServiceManager\ServiceManagerAwareInterface;
 use Zend\ServiceManager\ServiceManager;
+use Zend\ServiceManager\ServiceManagerAwareInterface;
 use Zend\Stdlib\ArrayUtils;
 
 /**
@@ -50,6 +50,10 @@ class ServiceManagerConfig extends Config
 	 * @var array
 	 */
 	protected $factories = [
+		'Database' => 'iMSCP\Core\Service\DatabaseServiceFactory',
+		'DBALConnection' => 'iMSCP\Core\Service\DBALConnectionFactory',
+		'DbConfig' => 'iMSCP\Core\Service\DbConfigFactory',
+		'EncryptionDataService' => 'iMSCP\Core\Service\EncryptionDataService',
 		'EventManager' => 'iMSCP\Core\Service\EventManagerFactory',
 		'ModuleManager' => 'iMSCP\Core\Service\ModuleManagerFactory'
 	];

@@ -22,6 +22,7 @@ namespace iMSCP\Core\Service;
 
 use iMSCP\Core\Database\Database;
 use iMSCP\Core\Utils\Crypt;
+use Zend\ModuleManager\ModuleManager;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -37,20 +38,23 @@ class DatabaseServiceFactory implements FactoryInterface
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
 		try {
-			$systemConfig = $serviceLocator->get('SystemConfig');
+			// We cannot use the Config service here (not available yet)
+			/** @var ModuleManager $moduleManager */
+			$moduleManager = $serviceLocator->get('ModuleManager');
+			$config = $moduleManager->getEvent()->getConfigListener()->getMergedConfig();
 
 			/** @var EncryptionDataService $encryptionDataService */
 			$encryptionDataService = $serviceLocator->get('EncryptionDataService');
 
 			$db = Database::connect(
-				$systemConfig['DATABASE_USER'],
+				$config['DATABASE_USER'],
 				Crypt::decryptRijndaelCBC(
-					$encryptionDataService->getKey(), $encryptionDataService->getIV(), $systemConfig['DATABASE_PASSWORD']
+					$encryptionDataService->getKey(), $encryptionDataService->getIV(), $config['DATABASE_PASSWORD']
 				),
-				$systemConfig['DATABASE_TYPE'],
-				$systemConfig['DATABASE_HOST'],
-				$systemConfig['DATABASE_PORT'],
-				$systemConfig['DATABASE_NAME'],
+				$config['DATABASE_TYPE'],
+				$config['DATABASE_HOST'],
+				$config['DATABASE_PORT'],
+				$config['DATABASE_NAME'],
 				[\PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8']
 			);
 		} catch (\PDOException $e) {

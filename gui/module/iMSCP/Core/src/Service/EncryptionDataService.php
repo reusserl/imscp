@@ -21,6 +21,7 @@
 namespace iMSCP\Core\Service;
 
 use iMSCP\Core\Config\FileConfigHandler;
+use Zend\ModuleManager\ModuleManager;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -65,15 +66,19 @@ class EncryptionDataService implements FactoryInterface
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		$systemConfig = $serviceLocator->get('SystemConfig');
-		$config = new FileConfigHandler($systemConfig['CONF_DIR'] . '/imscp-db-keys');
+		// We cannot use the Config service here (not available yet)
+		/** @var ModuleManager $moduleManager */
+		$moduleManager = $serviceLocator->get('ModuleManager');
+		$config = $moduleManager->getEvent()->getConfigListener()->getMergedConfig();
+
+		$config = new FileConfigHandler($config['CONF_DIR'] . '/imscp-db-keys');
 
 		if (!isset($config['KEY']) || !isset($config['IV'])) {
 			throw new \RuntimeException('Encryption data file (imscp-db-keys) is corrupted.');
 		}
 
-		$this->key = $systemConfig['KEY'];
-		$this->iv = $systemConfig['IV'];
+		$this->key = $config['KEY'];
+		$this->iv = $config['IV'];
 
 		return $this;
 	}
