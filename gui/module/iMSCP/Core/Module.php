@@ -39,7 +39,7 @@ class Module implements InitProviderInterface, ConfigProviderInterface
 	public function init(ModuleManagerInterface $manager)
 	{
 		// Register listener which is responsible to merge configuration
-		// from database which merged application configuration
+		// from database with merged application configuration
 		$manager->getEventManager()->attach(ModuleEvent::EVENT_MERGE_CONFIG, [$this, 'onMergeConfig']);
 	}
 
@@ -83,11 +83,11 @@ class Module implements InitProviderInterface, ConfigProviderInterface
 		return $config;
 	}
 
-
 	/**
 	 * Merge configuration from database with merged application configuration
 	 *
-	 * Note: When the cache is enabled, this is done only once. Subsequent requests use the cached configuration.
+	 * Note: When the cache is enabled, this is done only once. Subsequent
+	 * requests use the cached configuration.
 	 *
 	 * @param ModuleEvent $e
 	 * @return void
