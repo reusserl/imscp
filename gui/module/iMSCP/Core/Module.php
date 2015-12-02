@@ -20,6 +20,7 @@
 
 namespace iMSCP\Core;
 
+use iMSCP\Core\Config\FileConfigHandler;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
 
 /**
@@ -33,6 +34,24 @@ class Module implements ConfigProviderInterface
 	 */
 	public function getConfig()
 	{
-		return include __DIR__ . '/config/module.config.php';
+		$moduleConfig = include __DIR__ . '/config/module.config.php';
+
+		if (getenv('IMSCP_CONF')) {
+			$configFilePath = getEnv('IMSCP_CONF');
+		} else {
+			switch (PHP_OS) {
+				case 'FreeBSD':
+				case 'OpenBSD':
+				case 'NetBSD':
+					$configFilePath = '/usr/local/etc/imscp/imscp.conf';
+					break;
+				default:
+					$configFilePath = '/etc/imscp/imscp.conf';
+			}
+		}
+
+		$systemConfig = (new FileConfigHandler($configFilePath))->toArray();
+
+		return array_merge($moduleConfig, $systemConfig);
 	}
 }
