@@ -36,9 +36,7 @@ class Module implements ConfigProviderInterface
 	{
 		$moduleConfig = include __DIR__ . '/config/module.config.php';
 
-		if (getenv('IMSCP_CONF')) {
-			$configFilePath = getEnv('IMSCP_CONF');
-		} else {
+		if (!($configFilePath = getenv('IMSCP_CONF'))) {
 			switch (PHP_OS) {
 				case 'FreeBSD':
 				case 'OpenBSD':
