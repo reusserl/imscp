@@ -34,32 +34,40 @@ class FileConfigHandler extends AbstractConfigHandler
 	protected $configFilePath;
 
 	/**
-	 * Loads all configuration parameters from a flat file
+	 * Constructor
 	 *
 	 * @param string $configFilePath Configuration file path
 	 */
 	public function __construct($configFilePath)
 	{
 		$this->configFilePath = $configFilePath;
-		$this->_parseFile();
+		$this->loadConfig();
 	}
 
 	/**
-	 * Opens a configuration file and parses its Key = Value pairs
+	 * Load configuration parameters
 	 *
 	 * @return void
 	 */
-	protected function _parseFile()
+	protected function loadConfig()
 	{
-		if (($fd = @file_get_contents($this->configFilePath)) == false) {
-			throw new \RuntimeException(sprintf('Unable to open the configuration file `%s`', $this->configFilePath));
+		if (($string = @file_get_contents($this->configFilePath)) == false) {
+			throw new \RuntimeException(sprintf('Could not open the `%s` configuration file ', $this->configFilePath));
 		}
 
-		foreach (explode(PHP_EOL, $fd) as $line) {
-			if (!empty($line) && $line[0] != '#' && strpos($line, '=')) {
-				list($key, $value) = explode('=', $line, 2);
-				$this[trim($key)] = trim($value);
+		$lines = explode("\n", $string);
+
+		foreach ($lines as $i => $line) {
+			// Ignore empty lines and commented lines
+			if (empty($line) || strpos($line, "#") === 0) {
+				continue;
 			}
+
+			$key = substr($line, 0, strpos($line, '='));
+			$value = substr($line, strpos($line, '=') + 1, strlen($line));
+
+			$this->parameters[trim($key)] = trim($value);
+			unset($lines[$i]);
 		}
 	}
 }

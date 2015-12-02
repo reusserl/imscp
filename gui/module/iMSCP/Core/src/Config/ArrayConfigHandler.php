@@ -27,14 +27,12 @@ namespace iMSCP\Core\Config;
 class ArrayConfigHandler extends AbstractConfigHandler
 {
 	/**
-	 * Loads all configuration parameters from an array
+	 * Constructor
 	 *
 	 * @param array $parameters Configuration parameters
 	 */
 	public function __construct(array $parameters)
 	{
-		foreach($parameters as $parameter => $value) {
-			$this->$parameter = $value;
-		}
+		$this->parameters = $parameters;
 	}
 }

@@ -20,71 +20,40 @@
 
 namespace iMSCP\Core\Config;
 
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Driver\Statement;
+
 /**
  * Class DbConfigHandler
  * @package iMSCP\Core\Config
  */
-class DbConfigHandler extends AbstractConfigHandler implements \iterator, \Serializable
+class DbConfigHandler extends AbstractConfigHandler
 {
 	/**
-	 * @var \PDO PDO instance used by objects of this class
+	 * @var Connection
 	 */
-	protected $pdo;
+	protected $connection;
 
 	/**
-	 * @var array Array that contains all configuration parameters from the database
+	 * @var array Array Configuration parameters
 	 */
-	protected $parameters = array();
+	protected $parameters = [];
 
 	/**
-	 * PDOStatement to insert a configuration parameter in the database
-	 *
-	 * <b>Note:</b> For performance reason, the PDOStatement instance is created only once at the first execution of the
-	 * {@link _insert()} method.
-	 *
-	 * @var \PDOStatement
+	 * @var Statement Insert statement
 	 */
-	protected $insertStmt = null;
+	protected $insertStmt;
 
 	/**
-	 * PDOStatement to update a configuration parameter in the database
-	 *
-	 * <b>Note:</b> For performances reasons, the PDOStatement instance is created only once at the first execution of
-	 * the {@link _update()} method.
-	 *
-	 * @var \PDOStatement
+	 * @var Statement Update statement
 	 */
-	protected $updateStmt = null;
+	protected $updateStmt;
 
 	/**
-	 * PDOStatement to delete a configuration parameter in the database
-	 *
-	 * <b>Note:</b> For performances reasons, the PDOStatement instance is created only once at the first execution of
-	 * the {@link _delete()} method.
-	 *
-	 * @var \PDOStatement
+	 * @var Statement Delete statement
 	 */
-	protected $deleteStmt = null;
-
-	/**
-	 * Variable bound to the PDOStatement instances
-	 *
-	 * This variable is bound to the PDOStatement instances that are used by {@link _insert()}, {@link _update()} and
-	 * {@link _delete()} methods.
-	 *
-	 * @var string Configuration parameter key name
-	 */
-	protected $key = null;
-
-	/**
-	 * Variable bound to the PDOStatement objects
-	 *
-	 * This variable is bound to the PDOStatement instances that are used by both {@link _insert()} and
-	 * {@link _update()} methods.
-	 *
-	 * @var mixed Configuration parameter value
-	 */
-	protected $value = null;
+	protected $deleteStmt;
 
 	/**
 	 * @var int Counter for SQL update queries
@@ -104,83 +73,56 @@ class DbConfigHandler extends AbstractConfigHandler implements \iterator, \Seria
 	/**
 	 * @var string Database table name for configuration parameters
 	 */
-	protected $tableName = 'config';
+	protected $tableName;
 
 	/**
-	 * @var string Database column name for configuration parameters keys
+	 * @var string Database column name for configuration parameter keys
 	 */
-	protected $keysColumn = 'name';
+	protected $keyColumn;
 
 	/**
-	 * @var string Database column name for configuration parameters values
+	 * @var string Database column name for configuration parameter values
 	 */
-	protected $valuesColumn = 'value';
+	protected $valueColumn;
 
 	/**
-	 * @var bool Internal flag indicating whether or not cached dbconfig object must be flushed
+	 * Constructor
+	 *
+	 * @param array $params Parameters
 	 */
-	protected $flushCache = false;
-
-	/**
-	 * Loads all configuration parameters from the database
-	 *
-	 * <b>Parameters:</b>
-	 *
-	 * The constructor accepts one or more parameters passed in a array where each key represent a parameter name.
-	 *
-	 * For an array, the possible parameters are:
-	 *
-	 * - db: A PDO instance
-	 * - table_name: Database table that contain configuration parameters
-	 * - key_column: Database column name for configuration parameters key names
-	 * - value_column: Database column name for configuration parameters values
-	 *
-	 * <b>Note:</b> The three last parameters are optionals.
-	 *
-	 * For a single parameter, only a PDO instance is accepted.
-	 *
-	 * @param \PDO|array $params A PDO instance or an array of parameters that contains at least a PDO instance
-	 */
-	public function __construct($params)
+	public function __construct(array $params)
 	{
-		if (is_array($params)) {
-			if (!array_key_exists('db', $params) || !($params['db'] instanceof \PDO)) {
-				throw new \InvalidArgumentException('A PDO instance is requested for ' . __CLASS__);
-			}
-
-			$this->pdo = $params['db'];
-
-			// Overrides the database table name for configuration parameters
-			if (isset($params['table_name'])) {
-				$this->tableName = $params['table_name'];
-			}
-
-			// Override the column name for configuration parameters keys
-			if (isset($params['keys_column'])) {
-				$this->keysColumn = $params['keys_column'];
-			}
-
-			// Set the column name for configuration parameters values
-			if (isset($params['values_column'])) {
-				$this->valuesColumn = $params['values_column'];
-			}
-
-		} elseif (!$params instanceof \PDO) {
-			throw new \InvalidArgumentException('PDO instance requested for ' . __CLASS__);
+		if (!isset($params['connection']) || !($params['connection'] instanceof Connection)) {
+			throw new \InvalidArgumentException('A \Doctrine\DBAL\Connection instance is required.');
 		}
 
-		$this->pdo = $params;
-		$this->_loadAll();
+		if (!isset($params['table_name'])) {
+			throw new \InvalidArgumentException("Missing 'table_name' parameter.");
+		}
+
+		if (!isset($params['key_column'])) {
+			throw new \InvalidArgumentException("Missing 'key_column' parameter.");
+		}
+
+		if (isset($params['value_column'])) {
+			throw new \InvalidArgumentException("Missing 'value_column' parameter.");
+		}
+
+		$this->setConnection($params['connection']);
+		$this->setTable($params['table_name']);
+		$this->setKeyColumn($params['key_column']);
+		$this->setValueColumn($params['value_column']);
+		$this->loadConfig();
 	}
 
 	/**
-	 * Set PDO instance
+	 * Set database connection
 	 *
-	 * @param \PDO $db
+	 * @param Connection $connection
 	 */
-	public function setPdo(\PDO $db)
+	public function setConnection(Connection $connection)
 	{
-		$this->pdo = $db;
+		$this->connection = $connection;
 	}
 
 	/**
@@ -196,167 +138,28 @@ class DbConfigHandler extends AbstractConfigHandler implements \iterator, \Seria
 	/**
 	 * Set key column
 	 *
-	 * @param $columnName
+	 * @param string $keyColumn
 	 */
-	public function setKeyColumn($columnName)
+	public function setKeyColumn($keyColumn)
 	{
-		$this->keysColumn = (string)$columnName;
+		$this->keyColumn = (string)$keyColumn;
 	}
 
 	/**
 	 * Set value column
 	 *
-	 * @param $columnName
+	 * @param string $valueColumn
 	 */
-	public function setValueColumn($columnName)
+	public function setValueColumn($valueColumn)
 	{
-		$this->valuesColumn = (string)$columnName;
-	}
-
-	/**
-	 * Allow access as object properties
-	 *
-	 * @see set()
-	 * @param string $key Configuration parameter key name
-	 * @param mixed $value Configuration parameter value
-	 * @return void
-	 */
-	public function __set($key, $value)
-	{
-		$this->set($key, $value);
-	}
-
-	/**
-	 * Insert or update a configuration parameter in the database
-	 *
-	 * <b>Note:</b> For performances reasons, queries for updates are only done if old and new value of a parameter are
-	 * not the same.
-	 *
-	 * @param string $key Configuration parameter key name
-	 * @param mixed $value Configuration parameter value
-	 * @return void
-	 */
-	public function set($key, $value)
-	{
-		$this->key = $key;
-		$this->value = $value;
-
-		if (!$this->exists($key)) {
-			$this->_insert();
-		} elseif ($this->parameters[$key] != $value) {
-			$this->_update();
-		} else {
-			return;
-		}
-
-		$this->parameters[$key] = $value;
-	}
-
-	/**
-	 * Retrieve a configuration parameter value
-	 *
-	 * @param string $key Configuration parameter key name
-	 * @return mixed Configuration parameter value
-	 */
-	public function get($key)
-	{
-		if (!isset($this->parameters[$key])) {
-			throw new \InvalidArgumentException("Configuration variable `$key` is missing.");
-		}
-
-		return $this->parameters[$key];
-	}
-
-	/**
-	 * Checks if a configuration parameters exists
-	 *
-	 * @param string $key Configuration parameter key name
-	 * @return boolean TRUE if configuration parameter exists, FALSE otherwise
-	 */
-	public function exists($key)
-	{
-		return array_key_exists($key, $this->parameters);
-	}
-
-	/**
-	 * Replaces all parameters of this object with parameters from another
-	 *
-	 * This method replace the parameters values of this object with the same values from another
-	 * {@link ArrayConfigHandler} object.
-	 *
-	 * If a key from this object exists in the second object, its value will be replaced by the value from the second
-	 * object. If the key exists in the second object, and not in the first, it will be created in the first object.
-	 * All keys in this object that don't exist in the second object will be left untouched.
-	 *
-	 * <b>Note:</b> This method is not recursive.
-	 *
-	 * @param ArrayConfigHandler $config iMSCP_Config_Handler object
-	 * @return bool TRUE on success, FALSE otherwise
-	 */
-	public function merge(ArrayConfigHandler $config)
-	{
-		try {
-			$this->pdo->beginTransaction();
-
-			parent::merge($config);
-
-			$this->pdo->commit();
-		} catch (\PDOException $e) {
-			$this->pdo->rollBack();
-
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * PHP isset() overloading on inaccessible members
-	 *
-	 * This method is triggered by calling isset() or empty() on inaccessible members.
-	 *
-	 * <b>Note:</b> This method will return FALSE if the configuration parameter value is NULL. To test existence of a
-	 * configuration parameter, you should use the {@link exists()} method.
-	 *
-	 * @param string $key Configuration parameter key name
-	 * @return boolean TRUE if the parameter exists and its value is not NULL
-	 */
-	public function __isset($key)
-	{
-		return isset($this->parameters[$key]);
-	}
-
-	/**
-	 * PHP unset() overloading on inaccessible members
-	 *
-	 * This method is triggered by calling isset() or empty() on inaccessible members.
-	 *
-	 * @param  string $key Configuration parameter key name
-	 * @return void
-	 */
-	public function __unset($key)
-	{
-		$this->del($key);
-	}
-
-	/**
-	 * Force reload of all configuration parameters from the database
-	 *
-	 * This method will remove all the current loaded parameters and reload it from the database.
-	 *
-	 * @return void
-	 */
-	public function forceReload()
-	{
-		$this->parameters = array();
-		$this->_loadAll();
+		$this->valueColumn = (string)$valueColumn;
 	}
 
 	/**
 	 * Returns the count of SQL queries that were executed
 	 *
 	 * This method returns the count of queries that were executed since the last call of
-	 * {@link reset_queries_counter()} method.
+	 * {@link resetQueriesCounter()} method.
 	 *
 	 * @param string $queriesCounterType Query counter type (insert|update)
 	 * @return int
@@ -402,218 +205,93 @@ class DbConfigHandler extends AbstractConfigHandler implements \iterator, \Seria
 	}
 
 	/**
-	 * Deletes a configuration parameters from the database
-	 *
-	 * @param string $key Configuration parameter key name
-	 * @return void
+	 * {@inheritdoc}
 	 */
-	public function del($key)
+	public function offsetSet($offset, $value)
 	{
-		$this->key = $key;
-		$this->_delete();
-
-		unset($this->parameters[$key]);
-	}
-
-	/**
-	 * Load all configuration parameters from the database
-	 *
-	 * @return void
-	 */
-	protected function _loadAll()
-	{
-		$query = "SELECT `{$this->keysColumn}`, `{$this->valuesColumn}` FROM `{$this->tableName}`";
-
-		if (($stmt = $this->pdo->query($query, \PDO::FETCH_ASSOC))) {
-			$keyColumn = $this->keysColumn;
-			$valueColumn = $this->valuesColumn;
-
-			foreach ($stmt->fetchAll() as $row) {
-				$this->parameters[$row[$keyColumn]] = $row[$valueColumn];
+		if (!$this->offsetExists($offset)) {
+			if (null === $this->insertStmt) {
+				$this->insertStmt = $this->connection->prepare(
+					"INSERT INTO `$this->tableName` (`$this->keyColumn`, `$this->valueColumn`) VALUES (:key, :value)"
+				);
 			}
-		} else {
-			throw new \RuntimeException('Could not get configuration parameters from database.');
-		}
-	}
 
-	/**
-	 * Store a new configuration parameter in the database
-	 *
-	 * @return void
-	 */
-	protected function _insert()
-	{
-		if (!$this->insertStmt instanceof \PDOStatement) {
+			if (!$this->insertStmt->execute([':key' => $offset, ':value' => $value])) {
+				throw new \RuntimeException(sprintf(
+					"Could not insert the `%s` configuration parameter in the `%s` table.", $offset, $this->tableName
+				));
+			}
 
-			$query = "
-				INSERT INTO `{$this->tableName}` (
-					`{$this->keysColumn}`, `{$this->valuesColumn}`
-				) VALUES (
-					:index, :value
-				)
-			";
-
-			$this->insertStmt = $this->pdo->prepare($query);
-		}
-
-		if (!$this->insertStmt->execute(array(':index' => $this->key, ':value' => $this->value))) {
-			throw new \PDOException("Unable to insert new entry `{$this->key}` in config table.");
-		} else {
-			$this->flushCache = true;
 			$this->insertQueriesCounter++;
-		}
-	}
-
-	/**
-	 * Update a configuration parameter in the database
-	 *
-	 * @return void
-	 */
-	protected function _update()
-	{
-		if (!$this->updateStmt instanceof \PDOStatement) {
-			$query = "
-				UPDATE `{$this->tableName}` SET `{$this->valuesColumn}` = :value WHERE `{$this->keysColumn}` = :index
-			";
-
-			$this->updateStmt = $this->pdo->prepare($query);
-		}
-
-		if (!$this->updateStmt->execute(array(':index' => $this->key, ':value' => $this->value))) {
-			throw new \PDOException("Unable to update entry `{$this->key}` in config table.");
 		} else {
-			$this->flushCache = true;
+			if (null === $this->updateStmt) {
+				$this->updateStmt = $this->connection->prepare(
+					"UPDATE `$this->tableName` SET `$this->valueColumn` = :value WHERE `$this->keyColumn` = :key"
+				);
+			}
+
+			if (!$this->updateStmt->execute([':key' => $offset, ':value' => $value])) {
+				throw new \RuntimeException(sprintf(
+					"Could not update the `%s` configuration parameter in the `%s` table.", $offset, $this->tableName
+				));
+			}
+
 			$this->updateQueriesCounter++;
 		}
+
+		$this->parameters[$offset] = $value;
 	}
 
 	/**
-	 * Deletes a configuration parameter from the database
-	 *
-	 * @return void
+	 * {@inheritdoc}
 	 */
-	protected function _delete()
+	public function offsetUnset($offset)
 	{
-		if (!$this->deleteStmt instanceof \PDOStatement) {
-			$query = "DELETE FROM `{$this->tableName}` WHERE `{$this->keysColumn}` = :index";
-			$this->deleteStmt = $this->pdo->prepare($query);
-		}
+		if (!$this->offsetExists($offset)) {
+			if (null === $this->deleteStmt) {
+				$this->deleteStmt = $this->connection->prepare(
+					"DELETE FROM `$this->tableName` WHERE `$this->keyColumn` = :key"
+				);
+			}
 
-		if (!$this->deleteStmt->execute(array(':index' => $this->key))) {
-			throw new \PDOException('Unable to delete entry in config table.');
-		} else {
-			$this->flushCache = true;
+			if (!$this->deleteStmt->execute([':key' => $offset])) {
+				throw new \RuntimeException(sprintf(
+					"Could not delete the `%s` configuration parameter in the `%s` table.", $offset, $this->tableName
+				));
+			}
+
 			$this->deleteQueriesCounter++;
+			unset($this->parameters[$offset]);
 		}
 	}
 
 	/**
-	 * Whether or not an offset exists
-	 *
-	 * @param mixed $offset An offset to check for existence
-	 * @return boolean TRUE on success or FALSE on failure
-	 */
-	public function offsetExists($offset)
-	{
-		return array_key_exists($offset, $this->parameters);
-	}
-
-	/**
-	 * Returns an associative array that contains all configuration parameters
-	 *
-	 * @return array Array that contains configuration parameters
-	 */
-	public function toArray()
-	{
-		return $this->parameters;
-	}
-
-	/**
-	 * Returns the current element
-	 *
-	 * @return mixed Returns the current element
-	 */
-	public function current()
-	{
-		return current($this->parameters);
-	}
-
-	/**
-	 * Returns the key of the current element
-	 *
-	 * @return string|null Return the key of the current element or NULL on failure
-	 */
-	public function key()
-	{
-		return key($this->parameters);
-	}
-
-	/**
-	 * Moves the current position to the next element
+	 * Load configuration parameters from database
 	 *
 	 * @return void
 	 */
-	public function next()
+	protected function loadConfig()
 	{
-		next($this->parameters);
-	}
+		try {
+			$stmt = $this->connection->query("SELECT `$this->keyColumn`, `$this->valueColumn` FROM `$this->tableName`");
 
-	/**
-	 * Rewinds back to the first element of the Iterator.
-	 *
-	 * <b>Note:</b> This is the first method called when starting a foreach loop. It will not be executed after foreach
-	 * loops.
-	 *
-	 * @return void
-	 */
-	public function rewind()
-	{
-		reset($this->parameters);
-	}
+			if ($stmt) {
+				$keyColumn = $this->keyColumn;
+				$valueColumn = $this->valueColumn;
 
-	/**
-	 * Checks if current position is valid
-	 *
-	 * @return boolean TRUE on success or FALSE on failure
-	 */
-	public function valid()
-	{
-		return array_key_exists(key($this->parameters), $this->parameters);
-	}
-
-
-	/**
-	 * (PHP 5 &gt;= 5.1.0)<br/>
-	 * String representation of object
-	 * @link http://php.net/manual/en/serializable.serialize.php
-	 * @return string the string representation of the object or null
-	 */
-	public function serialize()
-	{
-		return serialize($this->parameters);
-	}
-
-	/**
-	 * (PHP 5 &gt;= 5.1.0)<br/>
-	 * Constructs the object
-	 * @link http://php.net/manual/en/serializable.unserialize.php
-	 * @param string $serialized <p>
-	 * The string representation of the object.
-	 * </p>
-	 * @return void
-	 */
-	public function unserialize($serialized)
-	{
-		$this->parameters = unserialize($serialized);
-	}
-
-	/**
-	 * Destructor
-	 */
-	public function __destruct()
-	{
-		if ($this->flushCache) {
-			@unlink('data/cache/imscp_dbconfig.conf');
+				while ($row = $stmt->fetch()) {
+					$this->parameters[$row[$keyColumn]] = $row[$valueColumn];
+				}
+				//foreach ($stmt->fetchAll() as $row) {
+				//	$this->parameters[$row[$keyColumn]] = $row[$valueColumn];
+				//}
+			}
+		} catch (DBALException $e) {
+			throw new \RuntimeException(
+				sprintf('Could not load configuration parameters from database: %s', $e->getMessage()),
+				$e->getCode(),
+				$e
+			);
 		}
 	}
 }
