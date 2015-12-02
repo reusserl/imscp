@@ -50,8 +50,6 @@ class Module implements ConfigProviderInterface
 			}
 		}
 
-		$systemConfig = (new FileConfigHandler($configFilePath))->toArray();
-
-		return array_merge($moduleConfig, $systemConfig);
+		return array_merge($moduleConfig, (new FileConfigHandler($configFilePath))->toArray());
 	}
 }
