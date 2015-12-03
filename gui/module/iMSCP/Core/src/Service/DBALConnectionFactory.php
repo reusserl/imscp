@@ -22,8 +22,7 @@ namespace iMSCP\Core\Service;
 
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\Configuration;
-use iMSCP_Registry as Registry;
-use Zend\ModuleManager\ModuleManager;
+use iMSCP\Core\Utils\Crypt;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -38,25 +37,27 @@ class DBALConnectionFactory implements FactoryInterface
 	 */
 	public function createService(ServiceLocatorInterface $serviceLocator)
 	{
-		// We cannot use the Config service here (not available yet)
-		/** @var ModuleManager $moduleManager */
-		$moduleManager = $serviceLocator->get('ModuleManager');
-		$config = $moduleManager->getEvent()->getConfigListener()->getMergedConfig();
+		$config = $serviceLocator->get('Config');
+
+		/** @var EncryptionDataService $encryptionDataService */
+		$encryptionDataService = $serviceLocator->get('EncryptionDataService');
 
 		$dbalConfig = new Configuration();
 
 		// Ignore tables which are not managed through ORM service
 		$dbalConfig->setFilterSchemaAssetsExpression('/^(?:admin|aps_.*)$/');
 
-		/** @var \PDO $pdo */
-		$pdo = $serviceLocator->get('Database')->getRawInstance();
-		$pdo->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['Doctrine\DBAL\Driver\PDOStatement', []]);
-
 		$conn = DriverManager::getConnection(
 			[
-				'pdo' => $pdo, // Reuse PDO instance from Database service
-				'host' => $config['DATABASE_HOST'], // Only there for later referral through connection object
-				'port' => $config['DATABASE_PORT'] // Only there for later referral through connection object
+				'driver' => 'pdo_' . $config['DATABASE_TYPE'],
+				'host' => $config['DATABASE_HOST'],
+				'port' => $config['DATABASE_PORT'],
+				'dbname' => $config['DATABASE_NAME'],
+				'user' => $config['DATABASE_USER'],
+				'password' => Crypt::decryptRijndaelCBC(
+					$encryptionDataService->getKey(), $encryptionDataService->getIV(), $config['DATABASE_PASSWORD']
+				),
+				'charset' => 'utf8'
 			],
 			$dbalConfig
 		);
