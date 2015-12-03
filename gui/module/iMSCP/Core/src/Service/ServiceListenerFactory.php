@@ -55,6 +55,9 @@ class ServiceListenerFactory implements FactoryInterface
 		'factories' => [
 			'Application' => 'iMSCP\Core\Service\ApplicationFactory',
 			'Config' => 'iMSCP\Core\Service\ConfigFactory',
+			'DBALConnection' => 'iMSCP\Core\Service\DBALConnectionFactory',
+			'DbConfig' => 'iMSCP\Core\Service\DbConfigFactory',
+			'EncryptionDataService' => 'iMSCP\Core\Service\EncryptionDataService',
 			'ORM' => 'iMSCP\Core\Service\ORMServiceFactory',
 			'ManagerRegistry' => 'iMSCP\Core\Service\ManagerRegistryFactory',
 			'Request' => 'iMSCP\Core\Service\HttpRequestServiceFactory',
@@ -67,7 +70,8 @@ class ServiceListenerFactory implements FactoryInterface
 			'Configuration' => 'Config',
 			'EntityManager' => 'ORM',
 			'default_manager' => 'ORM',
-			'default_connection' => 'DBALConnection'
+			'default_connection' => 'DBALConnection',
+			'Database' => 'DBALConnection'
 		],
 		'abstract_factories' => []
 	];
