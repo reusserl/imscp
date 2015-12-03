@@ -65,7 +65,7 @@ function generate_reseller_users_props($resellerId)
 		);
 	}
 
-	while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+	while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 		list(
 			$subConsumed, $subAssigned, $alsConsumed, $alsAssigned, $mailConsumed, $mailAssigned, $ftpConsumed,
 			$ftpAssigned, $sqlDbConsumed, $sqlDbAssigned, $sqlUserConsumed, $sqlUserAssigned, $traffAssigned, $diskAssigned
@@ -197,7 +197,8 @@ function gen_admin_domain_query(
 				$startIndex, $rowsPerPage
 		";
 	} else {
-		$db = \iMSCP\Core\Database\Database::getInstance();
+		/** @var \Doctrine\DBAL\Connection $db */
+		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 		$searchFor = str_replace(array('!', '_', '%'), array('!!', '!_', '!%'), $searchFor);
 
@@ -291,7 +292,7 @@ function systemHasResellers($minNbResellers = 1)
 
 	if (null === $resellersCount ) {
 		$stmt = exec_query('SELECT COUNT(`admin_id`) AS `count` FROM `admin` WHERE `admin_type` = ?', 'reseller');
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		$resellersCount = $row['count'];
 	}
 
@@ -314,7 +315,7 @@ function systemHasCustomers($minNbCustomers = 1)
 			array('user', 'todelete')
 		);
 
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		$customersCount = $row['count'];
 	}
 

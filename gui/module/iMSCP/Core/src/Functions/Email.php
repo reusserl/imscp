@@ -53,7 +53,7 @@ function get_email_tpl_data($userId, $tplName)
 	$stmt = exec_query("SELECT fname, lname, firm, email FROM admin WHERE admin_id = ?", $userId);
 
 	if ($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		$firstname = trim($row['fname']);
 		$lastname = trim($row['lname']);
@@ -85,7 +85,7 @@ function get_email_tpl_data($userId, $tplName)
 		);
 
 		if ($stmt->rowCount()) {
-			$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+			$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 			$data['subject'] = $row['subject'];
 			$data['message'] = $row['message'];

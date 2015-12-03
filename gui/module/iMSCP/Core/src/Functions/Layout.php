@@ -39,7 +39,7 @@ function get_user_gui_props($user_id)
 	$query = "SELECT `lang`, `layout` FROM `user_gui_props` WHERE `user_id` = ?";
 	$stmt = exec_query($query, $user_id);
 	if ($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		if (!empty($row['lang']) || !empty($row['layout'])) {
 			if (empty($row['lang'])) {
@@ -171,7 +171,7 @@ function get_menu_vars($menuLink)
 			`admin_id` = ?
 	";
 	$stmt = exec_query($query, $_SESSION['user_id']);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	$search = array();
 	$replace = array();
@@ -209,7 +209,7 @@ function get_menu_vars($menuLink)
 
 	$query = 'SELECT `domain_name`, `domain_admin_id` FROM `domain` WHERE `domain_admin_id` = ?';
 	$stmt = exec_query($query, $_SESSION['user_id']);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	$search [] = '{domain_name}';
 	$replace[] = $row['domain_name'];
@@ -360,7 +360,7 @@ function layout_setUserLayoutColor($userId, $color)
 		$stmt = exec_query($query, array($_SESSION['user_logged'], $sessionId));
 
 		if ($stmt->rowCount()) {
-			while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+			while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 				session_write_close();
 				session_id($row['session_id']);
 				session_start();
@@ -460,7 +460,7 @@ function layout_updateUserLogo()
 		$tmpFilePath = $_FILES['logoFile']['tmp_name'];
 
 		// Checking file mime type
-		if (!($fileMimeType = checkMimeType($tmpFilePath, array('image/gif', 'image/jpeg', 'image/pjpeg', 'image/png')))) {
+		if (!($fileMimeType = checkMimeType($tmpFilePath, ['image/gif', 'image/jpeg', 'image/pjpeg', 'image/png']))) {
 			set_page_message(tr('You can only upload images.'), 'error');
 			return false;
 		}
@@ -646,7 +646,8 @@ function layout_isMainMenuLabelsVisible($userId)
 	$stmt = exec_query('SELECT `show_main_menu_labels` FROM `user_gui_props` WHERE `user_id` = ?', $userId);
 
 	if ($stmt->rowCount()) {
-		return (bool)$stmt->fields['show_main_menu_labels'];
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+		return (bool)$row['show_main_menu_labels'];
 	}
 
 	return true;

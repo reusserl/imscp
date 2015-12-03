@@ -216,7 +216,7 @@ function sendPassword($uniqueKey)
 	);
 
 	if($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		$adminName = $row['admin_name'];
 		$createdBy = $row['created_by'];
@@ -314,7 +314,7 @@ function requestPassword($adminName)
 		return false;
 	}
 
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	$createdBy = $row['created_by'];
 	$adminFirstName = $row['fname'];
 	$adminLastName = $row['lname'];

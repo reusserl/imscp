@@ -77,7 +77,7 @@ function login_credentials($event)
 				\iMSCP\Core\Authentication\AuthenticationResult::FAILURE_IDENTITY_NOT_FOUND, null, tr('Unknown username.')
 			);
 		} else {
-			$identity = $stmt->fetchRow(PDO::FETCH_OBJ);
+			$identity = $stmt->fetch(PDO::FETCH_OBJ);
 			$passwordHash = $identity->admin_pass;
 
 			if(! \iMSCP\Core\Utils\Crypt::verify($password, $passwordHash)) {
@@ -140,7 +140,7 @@ function login_checkDomainAccount($event)
 				domain_admin_id = ?
         ';
 		$stmt = exec_query($query, $identity->admin_id);
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		$isAccountStateOk = true;
 

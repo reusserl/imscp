@@ -43,7 +43,7 @@ function get_user_name($user_id)
 {
 	$query = "SELECT `admin_name` FROM `admin` WHERE `admin_id` = ?";
 	$stmt = exec_query($query, $user_id);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	return $row['admin_name'];
 }
 
@@ -73,7 +73,7 @@ function imscp_domain_exists($domainName, $resellerId)
 
 	// Does the domain already exist in the domain table?
 	$stmt = exec_query('SELECT COUNT(domain_id) AS cnt FROM domain WHERE domain_name = ?', $domainName);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	if($row['cnt']) return true;
 
 	// Does the domain already exists in the domain_aliasses table?
@@ -81,7 +81,7 @@ function imscp_domain_exists($domainName, $resellerId)
 		'SELECT COUNT(alias_id) AS cnt FROM domain_aliasses INNER JOIN domain USING(domain_id) WHERE alias_name = ?',
 		$domainName
 	);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	if($row['cnt']) return true;
 
 	# Does the domain is a subzone of another domain which doesn't belong to the given reseller?
@@ -123,11 +123,11 @@ function imscp_domain_exists($domainName, $resellerId)
 
 		// Execute query the redefined queries for domains/accounts and aliases tables
 		$stmt = exec_query($queryDomain, array($parentDomain, $resellerId));
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		if($row['cnt']) return true;
 
 		$stmt = exec_query($queryAliases, array($parentDomain, $resellerId));
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		if($row['cnt']) return true;
 	}
 
@@ -204,7 +204,7 @@ function get_domain_default_props($domainAdminId, $createdBy = null)
 			showBadRequestErrorPage();
 		}
 
-		$domainProperties = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$domainProperties = $stmt->fetch(PDO::FETCH_ASSOC);
 	}
 
 	return $domainProperties;
@@ -226,7 +226,7 @@ function get_user_domain_id($customeId)
 		$stmt = exec_query($query, $customeId);
 
 		if($stmt->rowCount()) {
-			$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+			$row = $stmt->fetch(PDO::FETCH_ASSOC);
 			$domainId = $row['domain_id'];
 		} else {
 			throw new Exception("Unable to found domain ID of user with ID '$customeId''");
@@ -252,7 +252,7 @@ function shared_getCustomerProps($userId)
 		return array_fill(0, 14, 0);
 	}
 
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	// Retrieves total number of subdomains already consumed by the customer
 	$subConsumed = records_count('subdomain', 'domain_id', $row['domain_id']);
@@ -445,11 +445,12 @@ function change_domain_status($customerId, $action)
 	);
 
 	if($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		$domainId = $row['domain_id'];
 		$adminName = decode_idna($row['admin_name']);
 
-		$db = \iMSCP\Core\Database\Database::getInstance();
+		/** @var \Doctrine\DBAL\Connection $db */
+		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 		try {
 			$db->beginTransaction();
@@ -542,7 +543,8 @@ function change_domain_status($customerId, $action)
  */
 function sql_delete_user($domainId, $sqlUserId, $flushPrivileges = true)
 {
-	$db = \iMSCP\Core\Database\Database::getInstance();
+	/** @var \Doctrine\DBAL\Connection $db */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	try {
 		$db->beginTransaction();
@@ -568,7 +570,7 @@ function sql_delete_user($domainId, $sqlUserId, $flushPrivileges = true)
 			return false;
 		}
 
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		$sqlUserName = $row['sqlu_name'];
 		$sqlUserHost = $row['sqlu_host'];
@@ -591,7 +593,7 @@ function sql_delete_user($domainId, $sqlUserId, $flushPrivileges = true)
 			$sqlUserName, $sqlUserHost
 		));
 
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		if ($row['cnt'] == '1') {
 			// SQL user is assigned to one database only. We can remove it completely
@@ -636,7 +638,8 @@ function sql_delete_user($domainId, $sqlUserId, $flushPrivileges = true)
  */
 function delete_sql_database($domainId, $databaseId)
 {
-	$db = \iMSCP\Core\Database\Database::getInstance();
+	/** @var \Doctrine\DBAL\Connection $db */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	try {
 		$db->beginTransaction();
@@ -647,7 +650,7 @@ function delete_sql_database($domainId, $databaseId)
 		));
 
 		if ($stmt->rowCount()) {
-			$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+			$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 			$results = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
 				\iMSCP\Core\Events::onBeforeDeleteSqlDb, array(
@@ -671,7 +674,7 @@ function delete_sql_database($domainId, $databaseId)
 			);
 
 			if ($stmt->rowCount()) {
-				while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+				while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 					if (!sql_delete_user($domainId, $row['sqlu_id'], false)) {
 						return false;
 					}
@@ -739,13 +742,14 @@ function deleteCustomer($customerId, $checkCreatedBy = false)
 		return false;
 	}
 
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	$customerName = $row['admin_name'];
 	$mainDomainId = $row['domain_id'];
 	$resellerId = $row['created_by'];
 	$deleteStatus = 'todelete';
 
-	$db = \iMSCP\Core\Database\Database::getInstance();
+	/** @var \Doctrine\DBAL\Connection $db */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	try {
 		$results = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
@@ -764,7 +768,7 @@ function deleteCustomer($customerId, $checkCreatedBy = false)
 		// Remove customer's databases and Sql users
 		$stmt = exec_query('SELECT sqld_id FROM sql_database WHERE domain_id = ?', $mainDomainId);
 
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			delete_sql_database($mainDomainId, $row['sqld_id']);
 		}
 
@@ -946,7 +950,8 @@ function deleteDomainAlias($aliasId, $aliasName)
 
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$db = \iMSCP\Core\Database\Database::getInstance();
+	/** @var \Doctrine\DBAL\Connection $db */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	try {
 		$db->beginTransaction();
@@ -978,7 +983,7 @@ function deleteDomainAlias($aliasId, $aliasName)
 		);
 
 		if ($stmt->rowCount()) {
-			$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+			$row = $stmt->fetch(PDO::FETCH_ASSOC);
 			$ftpGname = $row['groupname'];
 			$ftpGgid = $row['gid'];
 			$ftpMembers = preg_split('/,/', $row['members'], -1, PREG_SPLIT_NO_EMPTY);
@@ -1139,7 +1144,7 @@ function sub_records_count($field, $table, $where, $value, $subfield, $subtable,
 	if ($subgroupname != '') {
 		$sqld_ids = array();
 
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			array_push($sqld_ids, $row['field']);
 		}
 
@@ -1148,13 +1153,13 @@ function sub_records_count($field, $table, $where, $value, $subfield, $subtable,
 		if ($subwhere != '') {
 			$query = "SELECT COUNT(DISTINCT $subgroupname) AS `cnt` FROM $subtable WHERE `sqld_id` IN ($sqld_ids)";
 			$subres = execute_query($query);
-			$row = $subres->fetchRow(PDO::FETCH_ASSOC);
+			$row = $subres->fetch(PDO::FETCH_ASSOC);
 			$result = $row['cnt'];
 		} else {
 			return $result;
 		}
 	} else {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$contents = $row['field'];
 
 			if ($subwhere != '') {
@@ -1164,7 +1169,7 @@ function sub_records_count($field, $table, $where, $value, $subfield, $subtable,
 			}
 
 			$subres = exec_query($query, $contents);
-			$row2 = $subres->fetchRow(PDO::FETCH_ASSOC);
+			$row2 = $subres->fetch(PDO::FETCH_ASSOC);
 			$result += $row2['cnt'];
 		}
 	}
@@ -1201,7 +1206,7 @@ function sub_records_rlike_count($field, $table, $where, $value, $subfield, $sub
 		return $result;
 	}
 
-	while ($row = $stmt->fetchRow(\PDO::FETCH_ASSOC)) {
+	while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 		$contents = $row['field'];
 
 		if ($subwhere != '') {
@@ -1211,7 +1216,7 @@ function sub_records_rlike_count($field, $table, $where, $value, $subfield, $sub
 		}
 
 		$stmt2 = exec_query($query, $a . $contents . $b);
-		$row2 = $stmt2->fetchRow(PDO::FETCH_ASSOC);
+		$row2 = $stmt2->fetch(PDO::FETCH_ASSOC);
 		$result += $row2['cnt'];
 	}
 
@@ -1241,7 +1246,7 @@ function imscp_getResellerProperties($resellerId, $forceReload = false)
 			throw new Exception(tr('Properties for reseller with ID %d were not found in database.', $resellerId));
 		}
 
-		$properties = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$properties = $stmt->fetch(PDO::FETCH_ASSOC);
 	}
 
 	return $properties;
@@ -1379,7 +1384,8 @@ function sync_mailboxes_quota($domainId, $newQuota)
 				$newQuota < $totalQuota || (isset($cfg['EMAIL_QUOTA_SYNC_MODE']) && $cfg['EMAIL_QUOTA_SYNC_MODE']) ||
 				$totalQuota == 0
 			) {
-				$db = \iMSCP\Core\Database\Database::getRawInstance();
+				/** @var \Doctrine\DBAL\Connection $db */
+				$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 				$stmt = $db->prepare('UPDATE `mail_users` SET `quota` = ? WHERE `mail_id` = ?');
 				$result = 0;
 
@@ -1777,7 +1783,6 @@ function isSerialized($data)
 /**
  * Check if the given string look like json data
  *
- * @author Laurent Declercq (nuxwin) <l.declercq@nuxwin.com>
  * @param $string $string $string to be checked
  * @return boolean TRUE if the given string look like json data, FALSE otherwise
  */
@@ -1896,7 +1901,7 @@ function shared_getCustomerStats($adminId)
 		showBadRequestErrorPage();
 	}
 
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	$diskspaceUsage = $row['diskspace_usage'];
 	$monthlyTrafficLimit = $row['monthly_traffic_limit'];
@@ -1925,7 +1930,7 @@ function shared_getCustomerStats($adminId)
 		array($domainId, $fromTimestamp, $toTImestamp)
 	);
 
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	return array(
 		$adminName, $domainId, $row['webTraffic'], $row['ftpTraffic'], $row['smtpTraffic'], $row['popTraffic'],
@@ -2223,35 +2228,40 @@ function send_request()
  *
  * Note: You may pass additional parameters. They will be treated as though you
  * called PDOStatement::setFetchMode() on the resultant statement object that is
- * wrapped by the \iMSCP\Core\Database\DatabaseResultSet object.
+ * wrapped by the \Doctrine\DBAL\Driver\Statement object.
  *
  * @see iMSCP_Database::execute()
  * @param string $query Sql statement to be executed
  * @param array|int|string $parameters OPTIONAL parameters - See iMSCP_Database::execute()
- * @return \iMSCP\Core\Database\DatabaseResultSet
+ * @return \Doctrine\DBAL\Driver\Statement
  */
 function execute_query($query, $parameters = null)
 {
 	static $db = null;
 
 	if (null === $db) {
-		/** @var $db \iMSCP\Core\Database\Database */
+		/** @var $db \Doctrine\DBAL\Connection */
 		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 	}
+
+
+	return $db->executeQuery($query);
+	/*
 
 	if (null !== $parameters) {
 		$parameters = func_get_args();
 		array_shift($parameters);
 		$stmt = call_user_func_array(array($db, 'execute'), $parameters);
 	} else {
-		$stmt = $db->execute($query);
+		$stmt = $db->exec($query);
 	}
 
 	if ($stmt == false) {
-		throw new PDOException($db->getLastErrorMessage());
+		//throw new PDOException($db->get());
 	}
 
 	return $stmt;
+	*/
 }
 
 /**
@@ -2259,20 +2269,18 @@ function execute_query($query, $parameters = null)
  *
  * @param string $query Sql statement
  * @param string|int|array $bind Data to bind to the placeholders
- * @return \iMSCP\Core\Database\DatabaseResultSet|null
+ * @return \Doctrine\DBAL\Driver\Statement
  */
 function exec_query($query, $bind = null)
 {
 	static $db = null;
 
 	if (null === $db) {
-		/** @var $db \iMSCP\Core\Database\Database */
+		/** @var $db \Doctrine\DBAL\Connection */
 		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 	}
 
-	$stmt = $db->execute($db->prepare($query), $bind);
-
-	return $stmt;
+	return $db->executeQuery($query, $bind);
 }
 
 /**
@@ -2288,7 +2296,8 @@ function quoteIdentifier($identifier)
 	static $db = null;
 
 	if (null === $db) {
-		/** @var $db \iMSCP\Core\Database\Database */
+		/** @var \Doctrine\DBAL\Connection $db */
+		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 	}
 
@@ -2307,8 +2316,8 @@ function quoteValue($value, $parameterType = PDO::PARAM_STR)
 	static $db = null;
 
 	if (null === $db) {
-		/** @var $db \iMSCP\Core\Database\Database */
-		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('database');
+		/** @var \Doctrine\DBAL\Connection $db */
+		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 	}
 
 	return $db->quote($value, $parameterType);
@@ -2338,7 +2347,7 @@ function records_count($table, $where = '', $bind = '')
 		$stmt = execute_query("SELECT COUNT(*) AS `cnt` FROM `$table`");
 	}
 
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	return (int)$row['cnt'];
 }
 

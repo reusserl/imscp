@@ -99,7 +99,7 @@ function showTicketContent($tpl, $ticketId, $userId)
 		return false;
 	}
 
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	$ticketUrgency = $row['ticket_urgency'];
 	$ticketSubject = $row['ticket_subject'];
@@ -148,7 +148,8 @@ function showTicketContent($tpl, $ticketId, $userId)
  */
 function updateTicket($ticketId, $userId, $urgency, $subject, $message, $ticketLevel, $userLevel)
 {
-	$db = \iMSCP\Core\Database\Database::getInstance();
+	/** @var \Doctrine\DBAL\Connection $db */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	$ticketDate = time();
 	$subject = clean_input($subject);
@@ -169,7 +170,7 @@ function updateTicket($ticketId, $userId, $urgency, $subject, $message, $ticketL
 	);
 
 	if ($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		try {
 			/* Ticket levels:
@@ -289,7 +290,7 @@ function generateTicketList($tpl, $userId, $start, $count, $userLevel, $status)
 		,
 		array($userId, $userId)
 	);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	$rowsCount = $row['cnt'];
 
 	if ($rowsCount != 0) {
@@ -333,7 +334,7 @@ function generateTicketList($tpl, $userId, $start, $count, $userLevel, $status)
 			));
 		}
 
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$ticketStatus = $row['ticket_status'];
 			$ticketLevel = $row['ticket_level'];
 
@@ -439,7 +440,7 @@ function getTicketStatus($ticketId)
 		array($ticketId, $userId, $userId)
 	);
 
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	return $row['ticket_status'];
 }
@@ -502,7 +503,7 @@ function getUserLevel($ticketId)
 		return false;
 	}
 
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	return $row['ticket_level'];
 }
@@ -561,7 +562,7 @@ function _getTicketSender($ticketId)
 		return false;
 	}
 
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	
 	if ($row['admin_type'] == 'user') {
 		$fromUsername = decode_idna($row['admin_name']);
@@ -595,7 +596,7 @@ function _ticketGetLastDate($ticketId)
 		return tr('Never');
 	}
 
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	return date($cfg['DATE_FORMAT'], $row['ticket_date']);
 }
@@ -621,7 +622,7 @@ function hasTicketSystem($userId = null)
 		$stmt = exec_query('SELECT support_system FROM reseller_props WHERE reseller_id = ?', $userId);
 
 		if($stmt->rowCount()) {
-			$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+			$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 			if($row['support_system'] == 'no') {
 				return false;
@@ -661,7 +662,7 @@ function _showTicketReplies($tpl, $ticketId)
 	);
 
 	if ($stmt->rowCount()) {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$ticketId = $row['ticket_id'];
 			$ticketDate = $row['ticket_date'];
 
@@ -695,7 +696,7 @@ function _sendTicketNotification($toId, $fromId, $ticketSubject, $ticketMessage,
 
 	// To information
 	$stmt = exec_query('SELECT fname, lname, email, admin_name FROM admin WHERE admin_id = ?', $toId);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	$toFname = $row['fname'];
 	$toLname = $row['lname'];
@@ -704,7 +705,7 @@ function _sendTicketNotification($toId, $fromId, $ticketSubject, $ticketMessage,
 
 	// From information
 	$stmt = exec_query('SELECT fname, lname, email, admin_name FROM admin WHERE admin_id = ?', $fromId);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	$fromFname = $row['fname'];
 	$fromLname = $row['lname'];

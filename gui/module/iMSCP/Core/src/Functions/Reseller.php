@@ -56,7 +56,7 @@ function generate_reseller_user_props($resellerId)
 		return array_fill(0, 27, 0);
 	}
 
-	while($data = $stmt->fetchRow()) {
+	while($data = $stmt->fetch()) {
 		$adminId = $data['admin_id'];
 
 		list(
@@ -166,7 +166,7 @@ function get_user_trafficAndDiskUsage($customerId)
 	if (!$stmt->rowCount()) {
 		throw new Exception("Unable to found main domain for customer with ID $customerId");
 	} else {
-		$data = $stmt->fetchRow();
+		$data = $stmt->fetch();
 
 		$domainId = $data['domain_id'];
 		$diskspaceUsage = $data['diskspace_usage'];
@@ -193,7 +193,7 @@ function get_user_trafficAndDiskUsage($customerId)
 
 		$maxMonthlyTraffic = $data['web'] = $data['ftp'] = $data['smtp'] = $data['pop'] = $data['total'] = 0;
 
-		while ($row = $stmt->fetchRow()) {
+		while ($row = $stmt->fetch()) {
 			$data['web'] += $row['web'];
 			$data['ftp'] += $row['ftp'];
 			$data['smtp'] += $row['smtp'];
@@ -234,7 +234,7 @@ function get_user_props($adminId)
 		return array_fill(0, 14, 0);
 	}
 
-	$data = $stmt->fetchRow();
+	$data = $stmt->fetch();
 	$sub_current = get_domain_running_sub_cnt($adminId);
 	$sub_max = $data['domain_subd_limit'];
 	$als_current = records_count('domain_aliasses', 'domain_id', $adminId);
@@ -424,7 +424,7 @@ function reseller_limits_check($resellerId, $hp)
 			$stmt = exec_query('SELECT props FROM hosting_plans WHERE id = ?', $hp);
 
 			if ($stmt->rowCount()) {
-				$data = $stmt->fetchRow();
+				$data = $stmt->fetch();
 				$hostingPlanProperties = $data['props'];
 			} else {
 				throw new Exception('Hosting plan not found');
@@ -440,7 +440,7 @@ function reseller_limits_check($resellerId, $hp)
 	) = explode(';', $hostingPlanProperties);
 
 	$stmt = exec_query('SELECT * FROM reseller_props WHERE reseller_id = ?', $resellerId);
-	$data = $stmt->fetchRow();
+	$data = $stmt->fetch();
 	$currentDmnLimit = $data['current_dmn_cnt'];
 	$maxDmnLimit = $data['max_dmn_cnt'];
 	$currentSubLimit = $data['current_sub_cnt'];
@@ -561,7 +561,7 @@ function send_alias_order_email($aliasName)
 	$resellerId = who_owns_this($userId, 'user');
 
 	$stmt = exec_query('SELECT fname, lname FROM admin WHERE admin_id = ?', $userId);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	$userFirstname = $row['fname'];
 	$userLastname = $row['lname'];
 	$userEmail = $_SESSION['user_email'];
@@ -638,14 +638,14 @@ function client_mail_add_default_accounts($dmnId, $userEmail, $dmnName, $dmnType
 	$forwardType = ($dmnType == 'alias') ? 'alias_forward' : 'normal_forward';
 	$resellerEmail = $_SESSION['user_email'];
 
-	/** @var \iMSCP\Core\Database\Database $db */
+	/** @var \Doctrine\DBAL\Connection $db */
 	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	try {
 		$db->beginTransaction();
 
 		// Prepare the statement once
-		$stmt = $db->getRawInstance()->prepare(
+		$stmt = $db->prepare(
 			'
 				INSERT INTO mail_users (
 					mail_acc, mail_pass, mail_forward, domain_id, mail_type, sub_id, status, mail_auto_respond, quota,
@@ -761,7 +761,7 @@ function resellerHasCustomers($minNbCustomers = 1)
 			array('user', $_SESSION['user_id'], 'todelete')
 		);
 
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		$customerCount = $row['cnt'];
 	}
 

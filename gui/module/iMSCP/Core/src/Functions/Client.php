@@ -37,7 +37,7 @@
 function get_domain_running_sub_cnt($domain_id)
 {
 	$stmt1 = exec_query('SELECT COUNT(*) AS cnt FROM subdomain WHERE domain_id = ?', $domain_id);
-	$row1 = $stmt1->fetchRow(PDO::FETCH_ASSOC);
+	$row1 = $stmt1->fetch(PDO::FETCH_ASSOC);
 
 	$stmt2 = exec_query(
 		'
@@ -50,7 +50,7 @@ function get_domain_running_sub_cnt($domain_id)
 		',
 		$domain_id
 	);
-	$row2 = $stmt2->fetchRow(PDO::FETCH_ASSOC);
+	$row2 = $stmt2->fetch(PDO::FETCH_ASSOC);
 
 	return $row1['cnt'] + $row2['cnt'];
 }
@@ -68,7 +68,7 @@ function get_domain_running_als_cnt($domain_id)
 		array($domain_id, 'ordered')
 	);
 
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	return $row['cnt'];
 }
 
@@ -109,19 +109,19 @@ function get_domain_running_mail_acc_cnt($domainId)
 	}
 
 	$stmt = exec_query($query, array('normal_', 'normal_catchall', $domainId));
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	$dmnMailAcc = $row['cnt'];
 
 	$stmt = exec_query($query, array('alias_', 'alias_catchall', $domainId));
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	$alsMailAcc = $row['cnt'];
 
 	$stmt = exec_query($query, array('subdom_', 'subdom_catchall', $domainId));
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	$subMailAcc = $row['cnt'];
 
 	$stmt = exec_query($query, array('alssub_', 'alssub_catchall', $domainId));
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	$alssubMailAcc = $row['cnt'];
 
 	return array(
@@ -138,7 +138,7 @@ function get_domain_running_mail_acc_cnt($domainId)
 function get_customer_running_ftp_acc_cnt($customerId)
 {
 	$stmt = exec_query('SELECT COUNT(userid) AS cnt FROM ftp_users WHERE admin_id = ?', $customerId);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	return $row['cnt'];
 }
 
@@ -151,7 +151,7 @@ function get_customer_running_ftp_acc_cnt($customerId)
 function get_domain_running_sqld_acc_cnt($domainId)
 {
 	$stmt = exec_query('SELECT COUNT(*) AS cnt FROM sql_database WHERE domain_id = ?', $domainId);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	return $row['cnt'];
 }
 
@@ -197,7 +197,7 @@ function get_domain_running_props_cnt($domainId)
 
 	// Transitional query - Will be removed asap
 	$stmt = exec_query('SELECT domain_admin_id FROM domain WHERE domain_id = ?', $domainId);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	$ftpAccCount = get_customer_running_ftp_acc_cnt($row['domain_admin_id']);
 	list($sqlDbCount, $sqlUserCount) = get_domain_running_sql_acc_cnt($domainId);
 
@@ -319,7 +319,7 @@ function customerHasFeature($featureNames, $forceReload = false)
 			$stmt = exec_query(
 				'SELECT support_system FROM reseller_props WHERE reseller_id = ?', $_SESSION['user_created_by']
 			);
-			$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+			$row = $stmt->fetch(PDO::FETCH_ASSOC);
 			$availableFeatures['support'] = ($row['support_system'] == 'yes') ? true : false;
 		} else {
 			$availableFeatures['support'] = false;

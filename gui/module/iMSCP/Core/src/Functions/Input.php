@@ -536,7 +536,7 @@ function who_owns_this($id, $type = 'dmn', $forcefinal = false)
 			$stmt = exec_query($r['query'], $id);
 
 			if($stmt->rowCount()) {
-				$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+				$row = $stmt->fetch(PDO::FETCH_ASSOC);
 				if($r['is_final'] || $forcefinal) {
 					$who = $row[$select];
 				} else {

@@ -49,7 +49,7 @@ function gen_domain_details($tpl, $domainId)
 		if(!$stmt->rowCount()) {
 			$tpl->assign('USER_DETAILS', '');
 		} else {
-			while($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+			while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 				$tpl->assign('ALIAS_DOMAIN', tohtml(decode_idna($row['alias_name'])));
 				$tpl->parse('USER_DETAILS', '.user_details');
 			}
@@ -440,7 +440,7 @@ function admin_generate_ip_list($tpl)
 
 	$stmt = execute_query('SELECT * FROM server_ips');
 
-	while($row = $stmt->fetchRow()) {
+	while($row = $stmt->fetch()) {
 		$ipId = $row['ip_id'];
 		$selected = ($domainIp === $ipId) ? $cfg['HTML_SELECTED'] : '';
 		$tpl->assign(array(
@@ -493,7 +493,7 @@ function gen_admin_list($tpl)
 			'TR_ADMIN_ACTIONS' => tr('Actions')
 		));
 
-		while($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$adminCreated = $row['domain_created'];
 
 			if($adminCreated == 0) {
@@ -570,7 +570,7 @@ function gen_reseller_list($tpl)
 			'TR_RSL_ACTIONS' => tr('Actions')
 		));
 
-		while($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$tpl->assign(array(
 				'TR_DELETE' => tr('Delete'),
 				'URL_DELETE_RSL' => 'user_delete.php?delete_id=' . $row['admin_id'],
@@ -660,7 +660,7 @@ function gen_user_list($tpl)
 		$stmt = exec_query($countQuery);
 	}
 
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	$recordCount = $row['cnt'];
 	$stmt = execute_query($searchQuery);
 
@@ -722,13 +722,13 @@ function gen_user_list($tpl)
 			'TR_DETAILS' => tr('Details')
 		));
 
-		while($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			// user status icon
 			$domainCreatedBy = $row['created_by'];
 
 			$stmt2 = exec_query('SELECT admin_name, admin_status FROM admin WHERE admin_id = ?', $domainCreatedBy);
 			if($stmt2->rowCount()) {
-				$row2 = $stmt->fetchRow(PDO::FETCH_ASSOC);
+				$row2 = $stmt->fetch(PDO::FETCH_ASSOC);
 				$createdByName = $row2['admin_name'];
 			} else {
 				$createdByName = tr('N/A');
@@ -966,11 +966,11 @@ function reseller_generate_ip_list($tpl, $resellerId)
 
 	$htmlSelected = $cfg['HTML_SELECTED'];
 	$stmt = exec_query('SELECT reseller_ips FROM reseller_props WHERE reseller_id = ?', $resellerId);
-	$row = $stmt->fetchRow();
+	$row = $stmt->fetch();
 	$resellerIps = $row['reseller_ips'];
 	$stmt = execute_query('SELECT * FROM server_ips');
 
-	while($row = $stmt->fetchRow()) {
+	while($row = $stmt->fetch()) {
 		$ipId = $row['ip_id'];
 
 		if(preg_match("/$ipId;/", $resellerIps) == 1) {
