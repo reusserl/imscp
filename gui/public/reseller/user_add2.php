@@ -52,7 +52,7 @@ function getPreviousPageData()
  * Generate page
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
- * @param iMSCP_PHPini $phpini
+ * @param \iMSCP\Core\Php\PhpEditor $phpini
  * @return void
  */
 function generatePage($tpl, $phpini)
@@ -189,7 +189,7 @@ function generatePage($tpl, $phpini)
  *
  * @param int $hpid Hosting plan unique identifier
  * @param int $resellerId Reseller unique identifier
- * @param iMSCP_PHPini $phpini
+ * @param \iMSCP\Core\Php\PhpEditor $phpini
  * @return void
  */
 function reseller_getHostingPlanData($hpid, $resellerId, $phpini)
@@ -245,7 +245,7 @@ function reseller_getHostingPlanData($hpid, $resellerId, $phpini)
 /**
  * Check input data
  *
- * @param iMSCP_PHPini $phpini
+ * @param \iMSCP\Core\Php\PhpEditor $phpini
  * @return bool TRUE if all data are valid, FALSE otherwise
  */
 function checkInputData($phpini)
@@ -449,8 +449,7 @@ function checkInputData($phpini)
 
 require '../../application.php';
 
-$eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(\iMSCP\Core\Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 check_login('reseller');
 
 $config = \iMSCP\Core\Application::getInstance()->getConfig();
@@ -459,7 +458,7 @@ if (isset($config['HOSTING_PLANS_LEVEL']) && $config['HOSTING_PLANS_LEVEL'] == '
 	redirectTo('users.php');
 }
 
-$phpini = iMSCP_PHPini::getInstance();
+$phpini = \iMSCP\Core\Php\PhpEditor::getInstance();
 $phpini->loadRePerm($_SESSION['user_id']);
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
@@ -592,5 +591,5 @@ if (!resellerHasFeature('backup')) {
 
 generatePageMessage($tpl);
 $tpl->parse('LAYOUT_CONTENT', 'page');
-$eventManager->dispatch(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();

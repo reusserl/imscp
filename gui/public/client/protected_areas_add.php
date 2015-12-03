@@ -385,9 +385,7 @@ gen_protect_it($tpl, get_user_domain_id($domainId));
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-
 $tpl->prnt();
 
 unsetMessages();

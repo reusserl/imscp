@@ -187,7 +187,7 @@ function client_addHtaccessUserToHtaccessGroup(&$dmn_id)
  * Remove user from a specific group.
  *
  * @param int $dmn_id Domain unique identifier
- * @return
+ * @return void
  */
 function client_removeHtaccessUserFromHtaccessGroup(&$dmn_id)
 {

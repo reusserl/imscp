@@ -87,7 +87,7 @@ function reseller_generateEmptyPage()
 /**
  * Generates page
  *
- * @param  TemplateEngine $tpl Template engine
+ * @param  \iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @return void
  */
 function reseller_generatePage($tpl)
@@ -124,7 +124,6 @@ function reseller_generatePage($tpl)
 /**
  * Add customer
  *
- * @throws iMSCP_Exception_Database
  * @return void
  */
 function reseller_addCustomer()
@@ -163,9 +162,10 @@ function reseller_addCustomer()
 	$apsStandard = str_replace('_', '', $apsStandard);
 	$extMailServer = str_replace('_', '', $extMailServer);
 	$webFolderProtection = str_replace('_', '', $webFolderProtection);
-	$encryptedPassword = \iMSCP\Crypt::bcrypt($password);
+	$encryptedPassword = \iMSCP\Core\Utils\Crypt::bcrypt($password);
 
-	$db = iMSCP_Database::getInstance();
+	/** @var \Doctrine\DBAL\Connection $db */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	try {
 		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeAddDomain, array(
@@ -192,7 +192,7 @@ function reseller_addCustomer()
 			)
 		);
 
-		$recordId = $db->insertId();
+		$recordId = $db->lastInsertId();
 
 		exec_query(
 			"
@@ -214,12 +214,11 @@ function reseller_addCustomer()
 			)
 		);
 
-		$dmnId = $db->insertId();
+		$dmnId = $db->lastInsertId();
 
 		// save php.ini if exist
 		if ($phpEditor == 'yes') {
-			/* @var $phpini iMSCP_PHPini */
-			$phpini = iMSCP_PHPini::getInstance();
+			$phpini = \iMSCP\Core\Php\PhpEditor::getInstance();
 			// fill it with the custom values - other take from default
 			$phpini->setData('phpiniSystem', 'yes');
 			$phpini->setData('phpiniPostMaxSize', $phpiniPostMaxSize);
@@ -236,7 +235,7 @@ function reseller_addCustomer()
 		));
 
 		exec_query('INSERT INTO htaccess_groups (dmn_id, ugroup, members, status) VALUES (?, ?, ?, ?)', array(
-			$dmnId, 'statistics', $db->insertId(), 'toadd'
+			$dmnId, 'statistics', $db->lastInsertId(), 'toadd'
 		));
 
 		// Create default addresses if needed
@@ -265,7 +264,7 @@ function reseller_addCustomer()
 		write_log("{$_SESSION['user_logged']} added new customer: $adminName", E_USER_NOTICE);
 		set_page_message(tr('Customer account successfully scheduled for creation.'), 'success');
 		redirectTo('users.php');
-	} catch (iMSCP_Exception_Database $e) {
+	} catch (PDOException $e) {
 		$db->rollBack();
 		throw $e;
 	}
@@ -277,8 +276,7 @@ function reseller_addCustomer()
 
 require '../../application.php';
 
-$eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(\iMSCP\Core\Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 check_login('reseller');
 
 if (!getPreviousPageData()) {
@@ -344,5 +342,5 @@ reseller_generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-$eventManager->dispatch(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();

@@ -80,7 +80,7 @@ function updateFtpAccount($userid, $mainDomainName)
 		}
 
 		$passwd = $_POST['password'];
-		$encPasswd = \iMSCP\Crypt::sha512($passwd);
+		$encPasswd = \iMSCP\Core\Utils\Crypt::sha512($passwd);
 	} else {
 		$passwd = null;
 		$encPasswd = null;
@@ -100,7 +100,7 @@ function updateFtpAccount($userid, $mainDomainName)
 			}
 
 			if($ret) {
-				$vfs = new iMSCP_VirtualFileSystem($mainDomainName);
+				$vfs = new \iMSCP\Core\VirtualFileSystem($mainDomainName);
 
 				// Check for directory existence
 				if (!$vfs->exists($homeDir)) {

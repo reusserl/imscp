@@ -95,7 +95,8 @@ if (customerHasFeature('domain_aliases') && isset($_GET['id'])) {
 					'subdomainId' => $alssubId, 'type' => 'alssub', 'subdomainName' => $alssubName
 			));
 
-			$db = \iMSCP\Core\Database\Database::getInstance();
+			/** @var \Doctrine\DBAL\Connection $db */
+			$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 			try {
 				$db->beginTransaction();

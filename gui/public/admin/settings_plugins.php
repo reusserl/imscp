@@ -548,13 +548,13 @@ function doBulkAction($pluginManager)
  */
 function updatePluginList($pluginManager)
 {
-	$eventManager = $pluginManager->getEventManager();
+	$eventManager = \iMSCP\Core\Application::getInstance()->getEventManager();
 
-	$responses = $eventManager->trigger(Events::onBeforeUpdatePluginList, array('pluginManager' => $pluginManager));
+	$responses = $eventManager->trigger(\iMSCP\Core\Events::onBeforeUpdatePluginList, array('pluginManager' => $pluginManager));
 
 	if(!$responses->stopped()) {
 		$updateInfo = $pluginManager->pluginUpdateList();
-		$eventManager->dispatch(\iMSCP\Core\Events::onAfterUpdatePluginList, array('pluginManager' => $pluginManager));
+		$eventManager->trigger(\iMSCP\Core\Events::onAfterUpdatePluginList, array('pluginManager' => $pluginManager));
 
 		set_page_message(
 			tr(
@@ -572,14 +572,13 @@ function updatePluginList($pluginManager)
 
 require '../../application.php';
 
-EventManager::getInstance()->dispatch(\iMSCP\Core\Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
 /** @var PluginManager $pluginManager */
 $pluginManager = Registry::get('pluginManager');
 
-// Dispatches the request
 if(!empty($_POST) || !empty($_GET) || !empty($_FILES)) {
 	if(isset($_GET['update_plugin_list'])) {
 		updatePluginList($pluginManager);
@@ -635,7 +634,7 @@ if(!empty($_POST) || !empty($_GET) || !empty($_FILES)) {
 	} elseif(isset($_POST['bulk_actions'])) {
 		doBulkAction($pluginManager);
 	} elseif(!empty($_FILES) && uploadPlugin($pluginManager)) {
-		OpcodeCacheUtils::clearAllActive(); // Force newest files to be loaded on next run
+		\iMSCP\Core\Utils\OpcodeCache::clearAllActive(); // Force newest files to be loaded on next run
 		set_page_message(tr('Plugin has been successfully uploaded.'), 'success');
 		redirectTo('settings_plugins.php?update_plugin_list');
 	}
@@ -643,7 +642,7 @@ if(!empty($_POST) || !empty($_GET) || !empty($_FILES)) {
 	redirectTo('settings_plugins.php');
 }
 
-$tpl = new TemplateEngine();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/settings_plugins.tpl',
@@ -656,8 +655,8 @@ $tpl->define_dynamic(array(
 	'plugin_protected_link' => 'plugin_block'
 ));
 
-EventManager::getInstance()->registerListener(Events::onGetJsTranslations, function ($event) {
-	/** @var $event \iMSCP_Events_Event $translations */
+\iMSCP\Core\Application::getInstance()->getEventManager()->attach(\iMSCP\Core\Events::onGetJsTranslations, function ($event) {
+	/** @var $event \Zend\EventManager\Event $translations */
 	$event->getParam('translations')->core = array_merge($event->getParam('translations')->core, array(
 		'dataTable' => getDataTablesPluginTranslations(false),
 		'force_retry' => tr('Force retry'),
@@ -699,7 +698,7 @@ generatePage($tpl, $pluginManager);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-EventManager::getInstance()->dispatch(Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();
 
 unsetMessages();

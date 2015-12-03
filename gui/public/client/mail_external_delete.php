@@ -25,7 +25,6 @@
 /**
  * Delete one or many external mail server related entries
  *
- * @throws iMSCP_Exception_Database
  * @param array $items Item(s) to delete
  * @param bool $postRequest Flag indicating whether POST data were received
  * @return void
@@ -35,8 +34,8 @@ function client_deleteExternalMailServers($items, $postRequest)
 	if(isset($items['normal']) || isset($items['alias'])) {
 		$domainId = get_user_domain_id($_SESSION['user_id']);
 
-		/** @var $db iMSCP_Database */
-		$db = iMSCP_Database::getInstance();
+		/** @var \Doctrine\DBAL\Connection $db */
+		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 		try {
 			$db->beginTransaction();
@@ -144,7 +143,7 @@ function client_deleteExternalMailServers($items, $postRequest)
 			} else {
 				set_page_message(tr('Nothing has been scheduled for deactivation.'), 'error');
 			}
-		} catch(iMSCP_Exception_Database $e) {
+		} catch(PDOException $e) {
 			$db->rollBack();
 			throw $e;
 		}

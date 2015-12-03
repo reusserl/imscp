@@ -52,7 +52,6 @@ function client_getEmailAccountData($mailId)
 /**
  * Edit mail account
  *
- * @throws iMSCP_Exception
  * @return bool TRUE on success, FALSE otherwise
  */
 function client_editMailAccount()
@@ -70,7 +69,7 @@ function client_editMailAccount()
 		if(preg_match('/^(.*?)_(?:mail|forward)/', $mailData['mail_type'], $match)) {
 			$domainType = $match[1];
 		} else {
-			throw new iMSCP_Exception('Unable to determine mail type');
+			throw new InvalidArgumentException('Unable to determine mail type');
 		}
 
 		$mailTypeNormal = (isset($_POST['account_type']) && in_array($_POST['account_type'], array('1', '3')));
@@ -101,7 +100,7 @@ function client_editMailAccount()
 					return false;
 				}
 
-				$password = \iMSCP\Crypt::sha512($password);
+				$password = \iMSCP\Core\Utils\Crypt::sha512($password);
 			} else {
 				$password = $mailData['mail_pass'];
 			}
@@ -339,14 +338,11 @@ if (isset($_GET['id']) && customerHasFeature('mail')) {
 		)
 	);
 
-	client_generatePage($tpl, $_SESSION['user_id']);
-	generateNavigation($tpl);
+	client_generatePage($tpl);
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-
 	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-
 	$tpl->prnt();
 } else {
 	showBadRequestErrorPage();

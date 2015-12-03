@@ -84,9 +84,6 @@ $tpl->define_dynamic(
 	)
 );
 
-/**
- * Dispatches request
- */
 if (isset($_POST['uaction'])) {
 	if ($_POST['uaction'] == 'changeLayoutColor' && isset($_POST['layoutColor'])) {
 		if (layout_setUserLayoutColor($_SESSION['user_id'], $_POST['layoutColor'])) {

@@ -54,8 +54,7 @@ if (isset($_GET['psi'])) {
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic('layout', 'shared/layouts/ui.tpl');
-$tpl->define_dynamic(
-	array(
+$tpl->define_dynamic(array(
 		 'page' => 'client/ticket_closed.tpl',
 		 'page_message' => 'layout',
 		 'tickets_list' => 'page',
@@ -63,11 +62,10 @@ $tpl->define_dynamic(
 		 'scroll_prev_gray' => 'page',
 		 'scroll_prev' => 'page',
 		 'scroll_next_gray' => 'page',
-		 'scroll_next' => 'page')
-);
+		 'scroll_next' => 'page'
+));
 
-$tpl->assign(
-	array(
+$tpl->assign(array(
 		 'TR_PAGE_TITLE' => tr('Client / Support / Closed Tickets'),
 		 'TR_TICKET_STATUS' => tr('Status'),
 		 'TR_TICKET_FROM' => tr('From'),
@@ -84,16 +82,15 @@ $tpl->assign(
 		 'TR_TICKETS_DELETE_MESSAGE' => tr("Are you sure you want to delete the '%s' ticket?", '%s'),
 		 'TR_TICKETS_DELETE_ALL_MESSAGE' => tr('Are you sure you want to delete all closed tickets?'),
 		 'TR_PREVIOUS' => tr('Previous'),
-		 'TR_NEXT' => tr('Next')));
+		 'TR_NEXT' => tr('Next')
+));
 
 generateNavigation($tpl);
 generateTicketList($tpl, $_SESSION['user_id'], $start, $cfg['DOMAIN_ROWS_PER_PAGE'], 'client', 'closed');
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-
 $tpl->prnt();
 
 unsetMessages();

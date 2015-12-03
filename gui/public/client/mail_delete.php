@@ -21,7 +21,6 @@
 /**
  * Schedule deletion of the given mail account
  *
- * @throws iMSCP_Exception on error
  * @param int $mailId Mail account unique identifier
  * @param array $dmnProps Main domain properties
  * @return void
@@ -54,7 +53,7 @@ function client_deleteMailAccount($mailId, $dmnProps)
 			array($toDeleteStatus, $mailAddr, "$mailAddr,%", "%,$mailAddr,%", "%,$mailAddr")
 		);
 
-		delete_autoreplies_log_entries($mailAddr);
+		delete_autoreplies_log_entries();
 
 		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterDeleteMail, array('mailId' => $mailId));
 
@@ -66,7 +65,7 @@ function client_deleteMailAccount($mailId, $dmnProps)
 			'success'
 		);
 	} else {
-		throw new iMSCP_Exception('Bad request.', 400);
+		throw new Exception('Bad request.', 400);
 	}
 }
 
@@ -88,8 +87,8 @@ if (customerHasFeature('mail') && isset($_REQUEST['id'])) {
 	$mailIds = (array)$_REQUEST['id'];
 
 	if (!empty($mailIds)) {
-		/** @var $db iMSCP_Database */
-		$db = iMSCP_Database::getInstance();
+		/** @var \Doctrine\DBAL\Connection $db */
+		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 		try {
 			$db->beginTransaction();
@@ -103,7 +102,7 @@ if (customerHasFeature('mail') && isset($_REQUEST['id'])) {
 			$db->commit();
 			send_request();
 			write_log(sprintf("{$_SESSION['user_logged']} deleted %d mail account(s)", $nbDeletedMails), E_USER_NOTICE);
-		} catch (iMSCP_Exception $e) {
+		} catch (PDOException $e) {
 			$db->rollBack();
 
 			if (Zend_Session::namespaceIsset('pageMessages')) {

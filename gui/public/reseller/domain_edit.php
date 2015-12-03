@@ -247,7 +247,7 @@ function &reseller_getData($domainId, $forUpdate = false)
 
 		// Load reseller and customer permissions if needed
 		if($data['reseller_php_ini_system'] == 'yes') {
-			$phpEditor = iMSCP_PHPini::getInstance();
+			$phpEditor = \iMSCP\Core\Php\PhpEditor::getInstance();
 			$phpEditor->loadRePerm($data['reseller_id']);
 
 			if($data['customer_php_ini_system'] == 'yes') {
@@ -465,7 +465,7 @@ function _reseller_generateFeaturesForm($tpl, &$data)
 		$tplVars['PHP_EDITOR_JS'] = '';
 		$tplVars['PHP_EDITOR_BLOCK'] = '';
 	} else {
-		$phpEditor = iMSCP_PHPini::getInstance();
+		$phpEditor = \iMSCP\Core\Php\PhpEditor::getInstance();
 
 		$tplVars['TR_SETTINGS'] = tr('Settings');
 		$tplVars['TR_PHP_EDITOR'] = tr('PHP Editor');
@@ -602,7 +602,6 @@ function _reseller_generateFeaturesForm($tpl, &$data)
 /**
  * Check and updates domain data.
  *
- * @throws iMSCP_Exception_Database
  * @param int $domainId Domain unique identifier
  * @return bool TRUE on success, FALSE otherwise
  */
@@ -610,8 +609,8 @@ function reseller_checkAndUpdateData($domainId)
 {
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	/** @var $db iMSCP_Database */
-	$db = iMSCP_Database::getInstance();
+	/** @var \Doctrine\DBAL\Connection $db */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	$errFieldsStack = array();
 
@@ -784,7 +783,7 @@ function reseller_checkAndUpdateData($domainId)
 			? $data['domain_php'] : $data['fallback_domain_php'];
 
 		// Check for PHP editor values - Begin
-		$phpEditor = iMSCP_PHPini::getInstance();
+		$phpEditor = \iMSCP\Core\Php\PhpEditor::getInstance();
 
 		// Needed to check if something changed (see below)
 		$phpEditorOld = array_merge($phpEditor->getData(), $phpEditor->getClPerm());
@@ -1030,7 +1029,7 @@ function reseller_checkAndUpdateData($domainId)
 
 			return true;
 		}
-	} catch (iMSCP_Exception_Database $e) {
+	} catch (PDOException $e) {
 		$db->rollBack();
 		throw $e;
 	}
@@ -1090,7 +1089,6 @@ if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] != 'resell
 	redirectTo('users.php');
 }
 
-// Dispatches the request
 if(!isset($_GET['edit_id'])) {
 	showBadRequestErrorPage();
 } else {

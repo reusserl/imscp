@@ -33,7 +33,7 @@
  * Adds Htaccess group.
  *
  * @param int $domainId Domain unique identifier
- * @return
+ * @çeturn void
  */
 function client_addHtaccessGroup($domainId)
 {
@@ -94,7 +94,6 @@ function client_addHtaccessGroup($domainId)
  * Main script
  */
 
-// Include core library
 require_once 'imscp-lib.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
@@ -129,9 +128,7 @@ client_addHtaccessGroup(get_user_domain_id($_SESSION['user_id']));
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-
 $tpl->prnt();
 
 unsetMessages();

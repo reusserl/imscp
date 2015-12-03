@@ -1073,7 +1073,6 @@ if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] != 'admin'
 	redirectTo('manage_users.php');
 }
 
-// Dispatches the request
 if(!isset($_GET['edit_id'])) {
 	showBadRequestErrorPage();
 } else {

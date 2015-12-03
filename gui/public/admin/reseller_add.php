@@ -618,7 +618,6 @@ $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 check_login('admin');
 
-// Dispatches the request
 if (!empty($_POST) && admin_checkAndCreateResellerAccount()) {
 	redirectTo('manage_users.php');
 }

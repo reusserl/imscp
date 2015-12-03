@@ -92,7 +92,7 @@ function client_generateDirectoriesList($tpl)
 	$path = isset($_GET['cur_dir']) ? clean_input($_GET['cur_dir']) : '';
 	$domain = encode_idna($_SESSION['user_logged']);
 
-	$vfs = new iMSCP_VirtualFileSystem($domain);
+	$vfs = new \iMSCP\Core\VirtualFileSystem($domain);
 	$list = $vfs->ls($path);
 
 	if (!$list) {
@@ -119,7 +119,7 @@ function client_generateDirectoriesList($tpl)
 		$directory = $path . '/' . $entry['file'];
 
 		if (
-			$entry['type'] != iMSCP_VirtualFileSystem::VFS_TYPE_DIR ||
+			$entry['type'] != \iMSCP\Core\VirtualFileSystem::VFS_TYPE_DIR ||
 			($entry['file'] == '.' || $entry['file'] == '..') ||
 			!isAllowedDir(get_user_domain_id($_SESSION['user_id']), $directory)
 		) {

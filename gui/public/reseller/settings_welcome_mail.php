@@ -31,8 +31,7 @@ require '../../application.php';
 
 check_login('reseller');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(

@@ -41,7 +41,7 @@ function generateErrorPageData($tpl, $errorPageId)
 	$domain = $_SESSION['user_logged'];
 
 	// Check if we already have an error page
-	$vfs = new iMSCP_VirtualFileSystem($domain);
+	$vfs = new \iMSCP\Core\VirtualFileSystem($domain);
 	$errorPageContent = $vfs->get('/errors/' . $errorPageId . '.html');
 
 	if (false !== $errorPageContent) {

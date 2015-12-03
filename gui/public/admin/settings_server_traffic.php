@@ -116,7 +116,6 @@ check_login('admin');
 
 $trafficLimit = $trafficWarning = 0;
 
-// Dispatches the request
 if (!empty($_POST)) {
 	$trafficLimit = !isset($_POST['max_traffic']) ? : clean_input($_POST['max_traffic']);
 	$trafficWarning = !isset($_POST['traffic_warning']) ? : clean_input($_POST['traffic_warning']);

@@ -66,7 +66,7 @@ function _reseller_getAliasData($domainAliasId)
 /**
  * Generate page
  *
- * @param $tpl TemplateEngine
+ * @param $tpl \iMSCP\Core\Template\TemplateEngine
  * @return void
  */
 function reseller_generatePage($tpl)
@@ -148,7 +148,7 @@ function reseller_editDomainAlias()
 						try {
 							$uri = iMSCP_Uri_Redirect::fromString($forwardUrl);
 						} catch(Zend_Uri_Exception $e) {
-							throw new iMSCP_Exception(tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>"));
+							throw new InvalidArgumentException(tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>"));
 						}
 
 						$uri->setHost(encode_idna($uri->getHost()));
@@ -156,7 +156,7 @@ function reseller_editDomainAlias()
 						$uri->setPath($uriPath);
 
 						if ($uri->getHost() == $domainAliasData['alias_name'] && $uri->getPath() == '/') {
-							throw new iMSCP_Exception(
+							throw new InvalidArgumentException(
 								tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>") . ' ' .
 								tr('Domain alias %s cannot be forwarded on itself.', "<strong>{$domainAliasData['alias_name_utf8']}</strong>")
 							);

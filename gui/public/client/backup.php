@@ -43,6 +43,7 @@ function scheduleBackupRestoration($userId)
 	set_page_message(tr('Backup has been successfully scheduled for restoration.'), 'success');
 
 }
+
 /***********************************************************************************************************************
  * Main
  */
@@ -56,7 +57,7 @@ check_login('user');
 
 customerHasFeature('backup') or showBadRequestErrorPage();
 
-if(isset($_POST['uaction']) && $_POST['uaction'] == 'bk_restore') {
+if (isset($_POST['uaction']) && $_POST['uaction'] == 'bk_restore') {
 	scheduleBackupRestoration($_SESSION['user_id']);
 }
 
@@ -79,30 +80,26 @@ if ($cfg['ZIP'] == 'gzip') {
 	$name = '.*-backup-%Y.%m.%d-%H-%M.tar.lzma';
 }
 
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Client / Webtools / Daily Backup'),
-		'TR_BACKUP' => tr('Backup'),
-		'TR_DAILY_BACKUP' => tr('Daily backup'),
-		'TR_DOWNLOAD_DIRECTION' => tr("Instructions to download today's backup"),
-		'TR_FTP_LOG_ON' => tr('Login with your FTP account'),
-		'TR_SWITCH_TO_BACKUP' => tr('Switch to the backups directory'),
-		'TR_DOWNLOAD_FILE' => tr('Download the archives stored in this directory'),
-		'TR_USUALY_NAMED' => tr('(usually named') . ' ' . tohtml($name) . ')',
-		'TR_RESTORE_BACKUP' => tr('Restore backup'),
-		'TR_RESTORE_DIRECTIONS' => tr('Click the Restore button and the system will restore the last daily backup'),
-		'TR_RESTORE' => tr('Restore'),
-		'TR_CONFIRM_MESSAGE' => tr('Are you sure you want to restore the backup?')
-	)
-);
+$tpl->assign([
+	'TR_PAGE_TITLE' => tr('Client / Webtools / Daily Backup'),
+	'TR_BACKUP' => tr('Backup'),
+	'TR_DAILY_BACKUP' => tr('Daily backup'),
+	'TR_DOWNLOAD_DIRECTION' => tr("Instructions to download today's backup"),
+	'TR_FTP_LOG_ON' => tr('Login with your FTP account'),
+	'TR_SWITCH_TO_BACKUP' => tr('Switch to the backups directory'),
+	'TR_DOWNLOAD_FILE' => tr('Download the archives stored in this directory'),
+	'TR_USUALY_NAMED' => tr('(usually named') . ' ' . tohtml($name) . ')',
+	'TR_RESTORE_BACKUP' => tr('Restore backup'),
+	'TR_RESTORE_DIRECTIONS' => tr('Click the Restore button and the system will restore the last daily backup'),
+	'TR_RESTORE' => tr('Restore'),
+	'TR_CONFIRM_MESSAGE' => tr('Are you sure you want to restore the backup?')
+]);
 
 generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-
 $tpl->prnt();
 
 unsetMessages();

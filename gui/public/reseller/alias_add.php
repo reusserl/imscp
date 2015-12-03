@@ -151,7 +151,8 @@ function _reseller_getDomainsList($customerId)
 /**
  * Generate page
  *
- * @param $tpl TemplateEngine
+ * @param $tpl \iMSCP\Core\Template\TemplateEngine
+ *
  * @return void
  */
 function reseller_generatePage($tpl)
@@ -210,8 +211,6 @@ function reseller_generatePage($tpl)
  *
  * @return bool
  * @throws Exception
- * @throws iMSCP_Exception
- * @throws iMSCP_Exception_Database
  */
 function reseller_addDomainAlias()
 {
@@ -284,7 +283,7 @@ function reseller_addDomainAlias()
 				try {
 					$uri = iMSCP_Uri_Redirect::fromString($forwardUrl);
 				} catch(Zend_Uri_Exception $e) {
-					throw new iMSCP_Exception(tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>"));
+					throw new InvalidArgumentException(tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>"));
 				}
 
 				$uri->setHost(encode_idna($uri->getHost()));
@@ -292,7 +291,7 @@ function reseller_addDomainAlias()
 				$uri->setPath($uriPath);
 
 				if ($uri->getHost() == $domainAliasNameAscii && $uri->getPath() == '/') {
-					throw new iMSCP_Exception(
+					throw new InvalidArgumentException(
 						tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>") . ' ' .
 						tr('Domain alias %s cannot be forwarded on itself.', "<strong>$domainAliasName</strong>")
 					);
@@ -311,7 +310,9 @@ function reseller_addDomainAlias()
 	$mainDmnProps = get_domain_default_props($customerId, $_SESSION['user_id']);
 	$domainId = $mainDmnProps['domain_id'];
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-	$db = iMSCP_Database::getInstance();
+
+	/** @var \Doctrine\DBAL\Connection $db */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	try {
 		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeAddDomainAlias, array(
@@ -335,7 +336,7 @@ function reseller_addDomainAlias()
 			)
 		);
 
-		$alsId = $db->insertId();
+		$alsId = $db->lastInsertId();
 
 		if ($cfg['CREATE_DEFAULT_EMAIL_ADDRESSES']) {
 			$query = '
@@ -368,7 +369,7 @@ function reseller_addDomainAlias()
 		send_request();
 		write_log("{$_SESSION['user_logged']}: scheduled addition of domain alias: $domainAliasName.", E_USER_NOTICE);
 		set_page_message(tr('Domain alias successfully scheduled for addition.'), 'success');
-	} catch(iMSCP_Exception_Database $e) {
+	} catch(PDOException $e) {
 		$db->rollBack();
 		throw $e;
 	}

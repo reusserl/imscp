@@ -234,14 +234,12 @@ function client_generateSelfSignedCert($domainName)
 /**
  * Add or update an SSL certificate
  *
- * @throws iMSCP_Exception
- * @throws iMSCP_Exception_Database
  * @param int $domainId domain unique identifier
  * @param string $domainType Domain type (dmn, als, sub, alssub)
  */
 function client_addSslCert($domainId, $domainType)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+	$config= \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$domainName = _client_getDomainName($domainId, $domainType);
 	$allowHSTS = isset($_POST['allow_hsts']) ? 'on' : 'off';
@@ -346,7 +344,8 @@ function client_addSslCert($domainId, $domainType)
 				if(!Zend_Session::namespaceIsset('pageMessages')) {
 					# Inserting/updating data into database
 
-					$db = iMSCP_Database::getInstance();
+					/** @var \Doctrine\DBAL\Connection $db */
+					$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 					try {
 						$db->beginTransaction();
@@ -415,7 +414,7 @@ function client_addSslCert($domainId, $domainType)
 						}
 
 						redirectTo("cert_view.php?domain_id=$domainId&domain_type=$domainType");
-					} catch(iMSCP_Exception_Database $e) {
+					} catch(PDOException $e) {
 						$db->rollBack();
 						write_log('Unable to add/update SSL certificate in database', E_USER_ERROR);
 						set_page_message('An unexpected error occurred. Please contact your reseller.');
@@ -431,8 +430,6 @@ function client_addSslCert($domainId, $domainType)
 /**
  * Delete an SSL certificate
  *
- * @throws iMSCP_Exception
- * @throws iMSCP_Exception_Database
  * @param int $domainId domain unique identifier
  * @param string $domainType Domain type (dmn, als, sub, alssub)
  */
@@ -444,7 +441,8 @@ function client_deleteSslCert($domainId, $domainType)
 		if(isset($_POST['cert_id'])) {
 			$certId = intval($_POST['cert_id']);
 
-			$db = iMSCP_Database::getInstance();
+			/** @var \Doctrine\DBAL\Connection $db */
+			$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 			try {
 				$db->beginTransaction();
@@ -466,9 +464,9 @@ function client_deleteSslCert($domainId, $domainType)
 				);
 
 				redirectTo('domains_manage.php');
-			} catch(iMSCP_Exception_Database $e) {
+			} catch(PDOException $e) {
 				$db->rollBack();
-				throw new iMSCP_Exception_Database(sprintf('Unable to delete SSL certificate: %s', $e->getMessage()));
+				throw new RuntimeException(sprintf('Unable to delete SSL certificate: %s', $e->getMessage()));
 			}
 		}
 	} else {
@@ -479,8 +477,6 @@ function client_deleteSslCert($domainId, $domainType)
 /**
  * Generate page
  *
- * @throws iMSCP_Exception
- * @throws iMSCP_Exception_Database
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param int $domainId Domain entity unique identifier
  * @param string $domainType Domain entity type

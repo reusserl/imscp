@@ -157,7 +157,7 @@ function reseller_updateUserData($adminId)
 			redirectTo('user_edit.php?edit_id=' . $adminId);
 		}
 
-		$encryptedPassword = \iMSCP\Crypt::bcrypt($password);
+		$encryptedPassword = \iMSCP\Core\Utils\Crypt::bcrypt($password);
 
 		exec_query(
 			'

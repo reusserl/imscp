@@ -158,7 +158,6 @@ function _client_getVerifiedData($itemId, $itemType)
  *
  * Note: In case all entries are marked as to be deleted, the external mail server is deactivated
  *
- * @throws iMSCP_Exception_Database
  * @param array $item Item data (item id and item type)
  * @return void
  */
@@ -199,8 +198,8 @@ function client_editExternalMailServerEntries($item)
 
 			// Add entries into database
 			if (!$error) {
-				/** @var $db iMSCP_Database */
-				$db = iMSCP_Database::getInstance();
+				/** @var \Doctrine\DBAL\Connection $db */
+				$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 				try {
 					$db->beginTransaction();
@@ -334,7 +333,7 @@ function client_editExternalMailServerEntries($item)
 					}
 
 					redirectTo('mail_external.php');
-				} catch (iMSCP_Exception_Database $e) {
+				} catch (PDOException $e) {
 					$db->rollBack();
 
 					if ($e->getCode() === 23000) {

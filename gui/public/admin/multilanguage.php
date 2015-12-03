@@ -64,7 +64,6 @@ check_login('admin');
 
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-// Dispatches the request
 if (isset($_POST['uaction'])) {
 	if ($_POST['uaction'] == 'uploadLanguage') {
 		if (i18n_importMachineObjectFile()) {

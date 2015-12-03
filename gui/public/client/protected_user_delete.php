@@ -56,7 +56,7 @@ $rs = exec_query($query, array($change_status, $uuser_id, $dmn_id));
 $query = "SELECT `id`, `members` FROM `htaccess_groups` WHERE `dmn_id` = ?";
 $rs = exec_query($query, $dmn_id);
 
- if ($rs->recordCount() !== 0) {
+ if ($rs->rowCount() !== 0) {
 
 	 while (!$rs->EOF) {
 		$members = explode(',',$rs->fields['members']);

@@ -68,7 +68,8 @@ function client_checkMailAccountOwner($mailAccountId)
  */
 function client_deactivateAutoresponder($mailAccountId)
 {
-	$db = iMSCP_Database::getInstance();
+	/** @var \Doctrine\DBAL\Connection $db */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	try {
 		$db->beginTransaction();
@@ -84,7 +85,6 @@ function client_deactivateAutoresponder($mailAccountId)
 
 		$db->commit();
 
-		// Ask iMSCP daemon to trigger engine dispatcher
 		send_request();
 		write_log(
 			sprintf(
@@ -95,7 +95,7 @@ function client_deactivateAutoresponder($mailAccountId)
 			E_USER_NOTICE
 		);
 		set_page_message(tr('Auto-responder successfully scheduled for deactivation.'), 'success');
-	} catch (iMSCP_Exception_Database $e) {
+	} catch (PDOException $e) {
 		$db->rollBack();
 		throw $e;
 	}

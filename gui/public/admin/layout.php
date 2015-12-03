@@ -83,9 +83,6 @@ $tpl->define_dynamic(array(
 	'layout_color_block' => 'layout_colors_block'
 ));
 
-/**
- * Dispatches request
- */
 if (isset($_POST['uaction'])) {
 	if ($_POST['uaction'] == 'updateIspLogo') {
 		if (layout_updateUserLogo()) {

@@ -93,7 +93,7 @@ function _client_getDomainsList()
 /**
  * Generate page
  *
- * @param $tpl TemplateEngine
+ * @param $tpl \iMSCP\Core\Template\TemplateEngine
  * @return void
  */
 function client_generatePage($tpl)
@@ -240,7 +240,7 @@ function client_addSubdomain()
 				try {
 					$uri = iMSCP_Uri_Redirect::fromString($forwardUrl);
 				} catch(Zend_Uri_Exception $e) {
-					throw new iMSCP_Exception(tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>"));
+					throw new InvalidArgumentException(tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>"));
 				}
 
 				$uri->setHost(encode_idna($uri->getHost()));
@@ -248,7 +248,7 @@ function client_addSubdomain()
 				$uri->setPath($uriPath);
 
 				if ($uri->getHost() == $subdomainNameAscii && $uri->getPath() == '/') {
-					throw new iMSCP_Exception(
+					throw new InvalidArgumentException(
 						tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>") . ' ' .
 						tr('Subdomain %s cannot be forwarded on itself.', "<strong>$subdomainName</strong>")
 					);
@@ -264,7 +264,8 @@ function client_addSubdomain()
 		}
 	}
 
-	$db = iMSCP_Database::getInstance();
+	/** @var \Doctrine\DBAL\Connection $db */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeAddSubdomain, array(
 		'subdomainName' => $subdomainName,
@@ -306,7 +307,7 @@ function client_addSubdomain()
 		'forwardUrl' => $forwardUrl,
 		'forwardType' => $forwardType,
 		'customerId' => $_SESSION['user_id'],
-		'subdomainId' => $db->insertId()
+		'subdomainId' => $db->lastInsertId()
 	));
 
 	send_request();

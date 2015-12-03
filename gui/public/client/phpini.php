@@ -28,8 +28,7 @@ customerHasFeature('php_editor') or showBadRequestErrorPage();
 
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-/* @var $phpini iMSCP_PHPini */
-$phpini = iMSCP_PHPini::getInstance();
+$phpini = \iMSCP\Core\Php\PhpEditor::getInstance();
 
 // Getting customer's domain id
 $domainId = $phpini->getDomId($_SESSION['user_id']);
@@ -218,9 +217,7 @@ if (!$firstBlock) {
 $tpl->assign($tplVars);
 
 generatePageMessage($tpl);
-
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();

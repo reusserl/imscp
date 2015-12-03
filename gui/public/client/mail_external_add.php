@@ -126,7 +126,6 @@ function _client_getVerifiedData($itemId, $itemType)
 /**
  * Add external mail server entries
  *
- * @throws iMSCP_Exception_Database
  * @param array $item Item data (item id and item type)
  * @return void
  */
@@ -178,8 +177,8 @@ function client_addExternalMailServerEntries($item)
 
 			// Add DNS entries into database
 			if (!$error) {
-				/** @var $db iMSCP_Database */
-				$db = iMSCP_Database::getInstance();
+				/** @var \Doctrine\DBAL\Connection $db */
+				$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 				try {
 					$db->beginTransaction(); // All successfully inserted or nothing
@@ -210,7 +209,7 @@ function client_addExternalMailServerEntries($item)
 							)
 						);
 
-						$dnsEntriesIds .= ',' . $db->insertId();
+						$dnsEntriesIds .= ',' . $db->lastInsertId();
 					}
 
 					if ($verifiedData['item_type'] == 'normal') {
@@ -253,7 +252,7 @@ function client_addExternalMailServerEntries($item)
 					send_request();
 					set_page_message(tr('External mail server successfully scheduled for addition.'), 'success');
 					redirectTo('mail_external.php');
-				} catch (iMSCP_Exception_Database $e) {
+				} catch (PDOException $e) {
 					$db->rollBack();
 
 					if ($e->getCode() === 23000) {

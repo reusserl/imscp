@@ -212,7 +212,7 @@ function client_addDomainAlias()
 				$uri->setPath($uriPath);
 
 				if ($uri->getHost() == $domainAliasNameAscii && $uri->getPath() == '/') {
-					throw new iMSCP_Exception(
+					throw new InvalidArgumentException(
 						tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>") . ' ' .
 						tr('Domain alias %s cannot be forwarded on itself.', "<strong>$domainAliasName</strong>")
 					);
@@ -230,7 +230,9 @@ function client_addDomainAlias()
 
 	$mainDmnProps = get_domain_default_props($_SESSION['user_id']);
 	$domainId = $mainDmnProps['domain_id'];
-	$db = \iMSCP\Core\Database\Database::getInstance();
+
+	/** @var \Doctrine\DBAL\Connection $db */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeAddDomainAlias, array(
 		'domainId' => $domainId,
@@ -254,7 +256,7 @@ function client_addDomainAlias()
 	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterAddDomainAlias, array(
 		'domainId' => $domainId,
 		'domainAliasName' => $domainAliasNameAscii,
-		'domainAliasId' => $db->insertId()
+		'domainAliasId' => $db->lastInsertId()
 	));
 
 	send_alias_order_email($domainAliasName); // // Notify the reseller

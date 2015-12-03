@@ -97,8 +97,6 @@ function client_isDatabase($dbName)
  *
  * @param int $userId
  * @throws Exception
- * @throws iMSCP_Exception
- * @throws iMSCP_Exception_Database
  */
 function client_addSqlDb($userId)
 {

@@ -217,7 +217,6 @@ if (is_xhr()) {
 	exit;
 }
 
-/** @var $tpl TemplateEngine */
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 
 $tpl->define_dynamic(array(
@@ -241,8 +240,8 @@ $tpl->assign(array(
 	'TR_PROCESSING_DATA' => tr('Processing...')
 ));
 
-iMSCP_Events_Aggregator::getInstance()->registerListener('onGetJsTranslations', function ($e) {
-	/** @var $e \iMSCP_Events_Event */
+\iMSCP\Core\Application::getInstance()->getEventManager()->attach('onGetJsTranslations', function ($e) {
+	/** @var $e \Zend\EventManager\Event */
 	$e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations(false);
 });
 
@@ -265,9 +264,9 @@ generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array(
+	'templateEngine' => $tpl
+));
 $tpl->prnt();
 
 unsetMessages();

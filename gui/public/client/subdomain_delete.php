@@ -96,8 +96,8 @@ if (customerHasFeature('subdomains') && isset($_GET['id'])) {
 
 			$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-			/** @var $db iMSCP_Database */
-			$db = iMSCP_Database::getInstance();
+			/** @var \Doctrine\DBAL\Connection $db */
+			$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 			try {
 				$db->beginTransaction();
@@ -109,7 +109,7 @@ if (customerHasFeature('subdomains') && isset($_GET['id'])) {
 				$stmt = exec_query($query, array('todelete', $subId, 'sub'));
 
 				$db->commit();
-			} catch (iMSCP_Exception_Database $e) {
+			} catch (PDOException $e) {
 				$db->rollBack();
 				throw $e;
 			}

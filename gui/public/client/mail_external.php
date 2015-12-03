@@ -121,8 +121,8 @@ function _client_generateItemList($tpl, $domainId, $domainName)
  */
 function client_generateView($tpl)
 {
-	iMSCP_Events_Aggregator::getInstance()->registerListener(\iMSCP\Core\Events::onGetJsTranslations, function($e) {
-		/** @var iMSCP_Events_Description $e */
+	\iMSCP\Core\Application::getInstance()->getEventManager()->attach(\iMSCP\Core\Events::onGetJsTranslations, function($e) {
+		/** @var \Zend\EventManager\Event  $e */
 		$translations = $e->getParam('translations');
 		$translations['core']['datatable'] = getDataTablesPluginTranslations(false);
 		$translations['core']['deactivate_message'] = tr(

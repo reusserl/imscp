@@ -199,7 +199,6 @@ function ftp_generatePageData($mainDmn, $mainDmnId, $tpl)
 /**
  * Add FTP account
  *
- * @throws iMSCP_Exception_Database
  * @param string $mainDmnName Customer main domain
  * @return bool TRUE on success, FALSE otherwise
  */
@@ -242,7 +241,7 @@ function ftp_addAccount($mainDmnName)
 			}
 
 			if ($ret) {
-				$vfs = new iMSCP_VirtualFileSystem($mainDmnName);
+				$vfs = new \iMSCP\Core\VirtualFileSystem($mainDmnName);
 
 				if (!$vfs->exists($homeDir)) {
 					set_page_message(tr("Home directory '%s' doesn't exist", $homeDir), 'error');
@@ -298,8 +297,8 @@ function ftp_addAccount($mainDmnName)
 				)
 			);
 
-			/** @var $db iMSCP_Database */
-			$db = iMSCP_Database::getInstance();
+			/** @var \Doctrine\DBAL\Connection $db */
+			$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 			try {
 				$db->beginTransaction();
@@ -346,7 +345,7 @@ function ftp_addAccount($mainDmnName)
 				}
 
 				$db->commit();
-			} catch (iMSCP_Exception_Database $e) {
+			} catch (PDOException $e) {
 				$db->rollBack();
 
 				if($e->getCode() == 23000) {

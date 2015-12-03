@@ -32,7 +32,7 @@
 /**
  * Generates users list.
  *
- * @param  TemplateEngine $tpl Template engine
+ * @param  \iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param  int $resellerId Reseller unique identifier
  * @return void
  */

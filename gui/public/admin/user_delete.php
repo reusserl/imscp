@@ -397,8 +397,7 @@ function admin_generateCustomerAcountDeletionValidationPage($userId)
 
 require '../../application.php';
 
-$eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(\iMSCP\Core\Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
@@ -426,7 +425,7 @@ if (isset($_GET['delete_id']) && !empty($_GET['delete_id'])) { # admin/reseller 
 			sprintf('%s scheduled deletion of the customer account with ID %d', $_SESSION['user_logged'], $userId),
 			E_USER_NOTICE
 		);
-	} catch (iMSCP_Exception $e) {
+	} catch (Exception $e) {
 		if (($previous = $e->getPrevious()) && ($previous instanceof iMSCP_Exception_Database)) {
 			/** @var $previous iMSCP_Exception_Database */
 			$queryMessagePart = ' Query was: ' . $previous->getQuery();
@@ -461,7 +460,7 @@ if (isset($_GET['delete_id']) && !empty($_GET['delete_id'])) { # admin/reseller 
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-$eventManager->dispatch(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();
 
 unsetMessages();

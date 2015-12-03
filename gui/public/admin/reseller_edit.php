@@ -816,7 +816,6 @@ $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 check_login('admin');
 
-// Dispatches the request
 if (!isset($_GET['edit_id'])) {
 	showBadRequestErrorPage();
 } else {

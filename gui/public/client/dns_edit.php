@@ -255,7 +255,6 @@ function client_validate_SRV($record, &$errorString, &$dns, &$text)
 /**
  * Check for DNS record conflict
  *
- * @throws iMSCP_Exception in case check cannot be done (eg. when DNS server is down or in error state)
  * @param string $name Name part of the DNS record to check
  * @param string $type DNS record type to check (A|AAAA|CNAME...)
  * @param string &$errorString Reference to variable, which contain error string
@@ -479,7 +478,6 @@ function client_generatePage($tpl, $dnsRecordId)
 /**
  * Check and save DNS record
  *
- * @throws iMSCP_Exception_Database
  * @param int $dnsRecordId DNS record unique identifier (0 for new record)
  * @return bool TRUE on success, FALSE otherwise
  */
@@ -682,7 +680,7 @@ function client_saveDnsRecord($dnsRecordId)
 					),
 					E_USER_NOTICE
 				);
-			} catch (iMSCP_Exception_Database $e) {
+			} catch (PDOException $e) {
 				if ($e->getCode() == 23000) { // Duplicate entries
 					set_page_message(tr('DNS record already exist.'), 'error');
 					return false;

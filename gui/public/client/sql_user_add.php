@@ -136,7 +136,6 @@ function client_isSqlUser($sqlUser, $sqlUserHost)
  * Add SQL user for the given database
  *
  * @throws Exception
- * @throws iMSCP_Exception_Database
  * @param int $customerId
  * @param int $databaseId
  * @return void
@@ -284,12 +283,12 @@ function client_addSqlUser($customerId, $databaseId)
 				exec_query('INSERT INTO sql_user (sqld_id, sqlu_name, sqlu_host) VALUES (?, ?, ?)', array(
 					$databaseId, $sqlUser, $sqlUserHost,
 				));
-			} catch (iMSCP_Exception_Database $e) {
+			} catch (PDOException $e) {
 				if ($sqlUserCreated) {
 					try {
 						// We don't care about result here - An exception is throw in case the user do not exists
 						exec_query('DROP USER ?@?', array($sqlUser, $sqlUserHost));
-					} catch (iMSCP_Exception_Database $x) {
+					} catch (PDOException $x) {
 
 					}
 				}
@@ -438,9 +437,7 @@ generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-
 $tpl->prnt();
 
 unsetMessages();

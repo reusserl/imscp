@@ -105,10 +105,13 @@ function client_addCatchall($itemId)
 							)
 						);
 
+						/** @var \Doctrine\DBAL\Connection $db */
+						$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
+
 						\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
 							\iMSCP\Core\Events::onAfterAddMailCatchall,
 							array(
-								'mailCatchallId' => iMSCP_Database::getInstance()->insertId(),
+								'mailCatchallId' => $db->lastInsertId(),
 								'mailCatchall' => $mailAddr,
 								'mailForwardList' => array($mailAccount)
 							)
@@ -247,10 +250,13 @@ function client_addCatchall($itemId)
 					)
 				);
 
+				/** @var \Doctrine\DBAL\Connection $db */
+				$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
+
 				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
 					\iMSCP\Core\Events::onAfterAddMailCatchall,
 					array(
-						'mailCatchallId' => iMSCP_Database::getInstance()->insertId(),
+						'mailCatchallId' => $db->lastInsertId(),
 						'mailCatchall' => $mailAddr,
 						'mailForwardList' => $mailAccount
 					)

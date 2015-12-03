@@ -56,27 +56,22 @@ function client_generateDomainsList($tpl, $userId)
 		$domainName = decode_idna($row['domain_name']);
 
 		if ($row['domain_status'] == 'ok') {
-			$tpl->assign(
-				array(
+			$tpl->assign(array(
 					'DOMAIN_NAME' => tohtml($domainName),
 					'DOMAIN_STATUS_RELOAD_FALSE' => ''
-				)
-			);
+			));
 
 			$tpl->parse('DOMAIN_STATUS_RELOAD_TRUE', 'domain_status_reload_true');
 		} else {
-			$tpl->assign(
-				array(
-					'DOMAIN_NAME' => tohtml($domainName),
+			$tpl->assign(array(
+				'DOMAIN_NAME' => tohtml($domainName),
 					'DOMAIN_STATUS_RELOAD_TRUE' => ''
-				)
-			);
+			));
 
 			$tpl->parse('DOMAIN_STATUS_RELOAD_FALSE', 'domain_status_reload_false');
 		}
 
-		$tpl->assign(
-			array(
+		$tpl->assign(array(
 				'DOMAIN_NAME' => tohtml($domainName),
 				'DOMAIN_CREATE_DATE' => tohtml(date($cfg['DATE_FORMAT'], $row['domain_created'])),
 				'DOMAIN_EXPIRE_DATE' => ($row['domain_expires'] != 0)
@@ -84,9 +79,7 @@ function client_generateDomainsList($tpl, $userId)
 				'DOMAIN_STATUS' => translate_dmn_status($row['domain_status']),
 				'CERT_SCRIPT' => tohtml('cert_view.php?domain_id=' . $row['domain_id'] . '&domain_type=dmn'),
 				'VIEW_CERT' => (customerHasFeature('ssl')) ? tr('Add / Edit SSL certificate') : tr('View SSL certificate'),
-			)
-		);
-
+		));
 
 		$tpl->parse('DOMAIN_ITEM', '.domain_item');
 	}

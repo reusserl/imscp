@@ -24,7 +24,7 @@
 /**
  * Generate List of Domains assigned to IPs
  *
- * @param  TemplateEngine $tpl Template engine
+ * @param  \iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @return void
  */
 function listIPDomains($tpl)
@@ -103,8 +103,6 @@ check_login('reseller');
 
 if (resellerHasCustomers()) {
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
-	/** @var $tpl TemplateEngine */
 	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 
 	$tpl->define_dynamic(array(
@@ -129,9 +127,7 @@ if (resellerHasCustomers()) {
 	listIPDomains($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-
 	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
-
 	$tpl->prnt();
 
 	unsetMessages();

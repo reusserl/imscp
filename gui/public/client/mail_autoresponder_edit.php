@@ -75,7 +75,8 @@ function client_updateAutoresponder($mailAccountId, $autoresponderMessage)
 		set_page_message(tr('Auto-responder message cannot be empty.'), 'error');
 		redirectTo("mail_autoresponder_enable.php?mail_account_id=$mailAccountId");
 	} else {
-		$db = iMSCP_Database::getInstance();
+		/** @var \Doctrine\DBAL\Connection $db */
+		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 		try {
 			$db->beginTransaction();
@@ -91,7 +92,6 @@ function client_updateAutoresponder($mailAccountId, $autoresponderMessage)
 
 			$db->commit();
 
-			// Ask iMSCP daemon to trigger engine dispatcher
 			send_request();
 
 			write_log(
@@ -103,7 +103,7 @@ function client_updateAutoresponder($mailAccountId, $autoresponderMessage)
 				E_USER_NOTICE
 			);
 			set_page_message(tr('Auto-responder successfully scheduled for update.'), 'success');
-		} catch (iMSCP_Exception_Database $e) {
+		} catch (PDOException $e) {
 			$db->rollBack();
 			throw $e;
 		}
@@ -162,7 +162,7 @@ if (customerHasFeature('mail') && (isset($_REQUEST['mail_account_id']) && is_num
 			);
 
 			generateNavigation($tpl);
-			client_generatePage($tpl, $mailAccountId, !isset($_POST['uaction']));
+			client_generatePage($tpl, $mailAccountId);
 			generatePageMessage($tpl);
 
 			$tpl->parse('LAYOUT_CONTENT', 'page');

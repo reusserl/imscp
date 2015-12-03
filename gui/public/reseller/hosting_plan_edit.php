@@ -33,7 +33,7 @@
  * Generate PHP editor block
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl
- * @param iMSCP_PHPini $phpini
+ * @param \iMSCP\Core\Php\PhpEditor $phpini
  * @return void
  */
 function _reseller_generatePhpBlock($tpl, $phpini)
@@ -125,10 +125,10 @@ function _reseller_generatePhpBlock($tpl, $phpini)
 /**
  * Generate page
  *
- * @param $tpl TemplateEngine
+ * @param $tpl \iMSCP\Core\Template\TemplateEngine
  * @param int $id Hosting plan unique identifier
  * @param int $resellerId Reseller unique identifier
- * @param $phpini iMSCP_PHPini
+ * @param $phpini \iMSCP\Core\Php\PhpEditor
  * @return void
  */
 function reseller_generatePage($tpl, $id, $resellerId, $phpini)
@@ -251,7 +251,7 @@ function reseller_generatePage($tpl, $id, $resellerId, $phpini)
  * Generate error page
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl
- * @param iMSCP_PHPini $phpini
+ * @param \iMSCP\Core\Php\PhpEditor $phpini
  * @return void
  */
 function reseller_generateErrorPage($tpl, $phpini)
@@ -319,7 +319,7 @@ function reseller_generateErrorPage($tpl, $phpini)
 /**
  * Check input data
  *
- * @param iMSCP_PHPini $phpini
+ * @param \iMSCP\Core\Php\PhpEditor $phpini
  * @return bool TRUE if data are valid, FALSE otherwise
  */
 function reseller_checkData($phpini)
@@ -493,7 +493,7 @@ function reseller_checkData($phpini)
 /**
  * Update hosting plan
  *
- * @param iMSCP_PHPini $phpini
+ * @param \iMSCP\Core\Php\PhpEditor $phpini
  * @return bool TRUE on success, FALSE otherwise
  */
 function reseller_UpdateHostingPlan($phpini)
@@ -565,8 +565,7 @@ if (isset($_GET['id'])) {
 	global $id;
 	$id = clean_input($_GET['id']);
 
-	/* @var $phpini iMSCP_PHPini */
-	$phpini = iMSCP_PHPini::getInstance();
+	$phpini = \iMSCP\Core\Php\PhpEditor::getInstance();
 	$phpini->loadRePerm($_SESSION['user_id']);
 
 	if (!empty($_POST)) {

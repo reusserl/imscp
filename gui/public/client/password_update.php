@@ -42,7 +42,7 @@ function customer_updatePassword()
 			set_page_message(tr("Passwords do not match."), 'error');
 		} elseif (checkPasswordSyntax($_POST['password'])) {
 			$query = 'UPDATE `admin` SET `admin_pass` = ? WHERE `admin_id` = ?';
-			exec_query($query, array(\iMSCP\Crypt::bcrypt($_POST['password']), $userId));
+			exec_query($query, array(\iMSCP\Core\Utils\Crypt::bcrypt($_POST['password']), $userId));
 
 			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditUser, array('userId' => $userId));
 
@@ -65,7 +65,7 @@ function _customer_checkCurrentPassword($password)
 	if (!$stmt->rowCount()) {
 		set_page_message(tr('Unable to retrieve your password from the database.'), 'error');
 		return false;
-	} elseif (!\iMSCP\Crypt::verify($password, $stmt->fields['admin_pass'])) {
+	} elseif (!\iMSCP\Core\Utils\Crypt::verify($password, $stmt->fields['admin_pass'])) {
 		return false;
 	}
 
@@ -112,9 +112,7 @@ generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-
 $tpl->prnt();
 
 unsetMessages();

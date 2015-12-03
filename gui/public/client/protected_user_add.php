@@ -33,8 +33,6 @@
  * Add htuser
  *
  * @param int $domainId
- * @throws iMSCP_Exception
- * @throws iMSCP_Exception_Database
  */
 function client_addHtaccessUser($domainId)
 {
@@ -57,7 +55,7 @@ function client_addHtaccessUser($domainId)
 
 			$status = 'toadd';
 			$uname = clean_input($_POST['username']);
-			$upass = \iMSCP\Crypt::htpasswd($_POST['pass']);
+			$upass = \iMSCP\Core\Utils\Crypt::htpasswd($_POST['pass']);
 
 			$query = "
 				SELECT
@@ -140,9 +138,7 @@ client_addHtaccessUser(get_user_domain_id($_SESSION['user_id']));
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-
 $tpl->prnt();
 
 unsetMessages();

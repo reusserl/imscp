@@ -62,8 +62,6 @@ function client_generatePage($tpl, $sqlUserId)
  * @param string $sqlUserName
  * @param string $sqlUserHost
  * @throws Exception
- * @throws iMSCP_Exception
- * @throws iMSCP_Exception_Database
  */
 function client_updateSqlUserPassword($sqlUserId, $sqlUserName, $sqlUserHost)
 {

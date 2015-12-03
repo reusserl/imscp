@@ -63,8 +63,8 @@ if (isset($_GET['action']) && $_GET['action'] == "delete") {
 			$alsName = $stmt->fields['alias_name'];
 			$mainDmnId = $stmt->fields['domain_id'];
 
-			/** @var $db iMSCP_Database */
-			$db = iMSCP_Database::getInstance();
+			/** @var \Doctrine\DBAL\Connection $db */
+			$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 			try {
 				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
@@ -119,7 +119,7 @@ if (isset($_GET['action']) && $_GET['action'] == "delete") {
 				send_request();
 				set_page_message(tr('Order successfully processed.'), 'success');
 				redirectTo('alias.php');
-			} catch(iMSCP_Exception_Database $e) {
+			} catch(PDOException $e) {
 				$db->rollBack();
 				throw $e;
 			}

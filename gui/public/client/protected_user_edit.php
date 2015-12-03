@@ -35,8 +35,7 @@
  *
  * @param int $dmn_id
  * @param int $uuser_id
- * @throws iMSCP_Exception
- * @throws iMSCP_Exception_Database
+ * @return void
  */
 function client_updateHtaccessUser(&$dmn_id, &$uuser_id)
 {
@@ -52,7 +51,7 @@ function client_updateHtaccessUser(&$dmn_id, &$uuser_id)
 				return;
 			}
 
-			$nadmin_password = \iMSCP\Crypt::htpasswd($_POST['pass']);
+			$nadmin_password = \iMSCP\Core\Utils\Crypt::htpasswd($_POST['pass']);
 
 			$change_status = 'tochange';
 

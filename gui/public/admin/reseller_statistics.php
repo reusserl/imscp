@@ -150,21 +150,20 @@ function generatePage($tpl)
 
 require '../../application.php';
 
-$eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(\iMSCP\Core\Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
 if (systemHasResellers()) {
 	$tpl = new \iMSCP\Core\Template\TemplateEngine();
-	$tpl->define_dynamic(array(
+	$tpl->define_dynamic([
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'admin/reseller_statistics.tpl',
 		'page_message' => 'layout',
 		'reseller_statistics_block' => 'page'
-	));
+	]);
 
-	$tpl->assign(array(
+	$tpl->assign([
 		'TR_PAGE_TITLE' => tohtml(tr('Admin / Statistics / Reseller Statistics')),
 		'TR_RESELLER_NAME' => tohtml(tr('Reseller')),
 		'TR_TRAFFIC_USAGE' => tohtml(tr('Traffic usage')),
@@ -177,10 +176,10 @@ if (systemHasResellers()) {
 		'TR_SQL_DATABASES' => tohtml(tr('SQL databases')),
 		'TR_SQL_USERS' => tohtml(tr('SQL users')),
 		'TR_DETAILED_STATS_TOOLTIPS' => tohtml(tr('Show detailed statistics for this reseller'), 'htmlAttr')
-	));
+	]);
 
-	$eventManager->registerListener('onGetJsTranslations', function ($e) {
-		/** @var $e \iMSCP_Events_Event */
+	\iMSCP\Core\Application::getInstance()->getEventManager()->attach('onGetJsTranslations', function ($e) {
+		/** @var $e \Zend\EventManager\Event */
 		$e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations(false);
 	});
 
@@ -189,7 +188,9 @@ if (systemHasResellers()) {
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	$eventManager->dispatch(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+		'templateEngine' => $tpl
+	]);
 	$tpl->prnt();
 
 	unsetMessages();

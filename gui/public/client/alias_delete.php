@@ -31,7 +31,6 @@ check_login('user');
 
 if (customerHasFeature('domain_aliases') && isset($_GET['id'])) {
 	$alsId = intval($_GET['id']);
-
 	$stmt = exec_query(
 		'
 			SELECT alias_name FROM

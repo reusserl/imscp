@@ -33,7 +33,7 @@
  * Generates customer account deletion validation page.
  *
  * @param int $customerId Customer unique identifier
- * @return TemplateEngine
+ * @return \iMSCP\Core\Template\TemplateEngine
  */
 function reseller_generateCustomerAcountDeletionValidationPage($customerId)
 {
@@ -293,7 +293,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
 			sprintf('%s scheduled deletion of the customer account with ID %d', $_SESSION['user_logged'], $customerId),
 			E_USER_NOTICE
 		);
-	} catch (iMSCP_Exception $e) {
+	} catch (Exception $e) {
 		set_page_message(
 			tr('Unable to schedule deletion of the customer account. A message has been sent to the administrator.'),
 			'error'
@@ -322,9 +322,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
-
 $tpl->prnt();
 
 unsetMessages();

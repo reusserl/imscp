@@ -56,7 +56,7 @@ function write_error_page($user_id, $eid) {
 
 	$error = $_POST['error'];
 	$file = '/errors/' . $eid . '.html';
-	$vfs = new iMSCP_VirtualFileSystem($_SESSION['user_logged']);
+	$vfs = new \iMSCP\Core\VirtualFileSystem($_SESSION['user_logged']);
 
 	return $vfs->put($file, $error);
 }

@@ -156,7 +156,7 @@ function client_addMailAccount()
 					return false;
 				}
 
-				$password = \iMSCP\Crypt::sha512($password);
+				$password = \iMSCP\Core\Utils\Crypt::sha512($password);
 
 				// Check for quota
 				$quota = clean_input($_POST['quota']);
@@ -248,8 +248,8 @@ function client_addMailAccount()
 
 			// Add mail account into database
 			try {
-				/** @var $db iMSCP_Database */
-				$db = iMSCP_Registry::get('db');
+				/** @var \Doctrine\DBAL\Connection $db */
+				$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
 					\iMSCP\Core\Events::onBeforeAddMail, array('mailUsername' => $username, 'MailAddress' => $mailAddr)
@@ -269,7 +269,7 @@ function client_addMailAccount()
 
 				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
 					\iMSCP\Core\Events::onAfterAddMail,
-					array('mailUsername' => $username, 'mailAddress' => $mailAddr, 'mailId' => $db->insertId())
+					array('mailUsername' => $username, 'mailAddress' => $mailAddr, 'mailId' => $db->lastInsertId())
 				);
 
 				// Schedule mail account addition
@@ -277,7 +277,7 @@ function client_addMailAccount()
 
 				write_log("{$_SESSION['user_logged']}: added new Email account: $mailAddr", E_USER_NOTICE);
 				set_page_message(tr('Email account successfully scheduled for addition.'), 'success');
-			} catch (iMSCP_Exception_Database $e) {
+			} catch (PDOException $e) {
 				if ($e->getCode() == 23000) {
 					set_page_message(tr('Email account already exists.'), 'error');
 					return false;
@@ -415,7 +415,7 @@ $tpl->assign(
 	)
 );
 
-client_generatePage($tpl, $_SESSION['user_id']);
+client_generatePage($tpl);
 generateNavigation($tpl);
 generatePageMessage($tpl);
 
