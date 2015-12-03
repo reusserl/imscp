@@ -53,7 +53,7 @@ function reseller_generateSupportQuestionsMessage()
 		',
 		$_SESSION['user_id']
 	);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	if ($row['nb_tickets'] > 0) {
 		set_page_message(tr('You have received %s new support ticket(s).', '<strong>' . $row['nb_tickets'] . '</strong>'), 'info');
@@ -94,7 +94,7 @@ function reseller_generateOrdersAliasesMessage()
 /**
  * Generates traffic usage bar
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param int $trafficUsageBytes Current traffic usage
  * @param int $trafficLimitBytes Traffic max usage
  * @return void
@@ -119,7 +119,7 @@ function reseller_generateTrafficUsageBar($tpl, $trafficUsageBytes, $trafficLimi
 /**
  * Generates disk usage bar.
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param int $diskspaceUsageBytes Disk usage
  * @param int $diskspaceLimitBytes Max disk usage
  * @return void
@@ -144,7 +144,7 @@ function reseller_generateDiskUsageBar($tpl, $diskspaceUsageBytes, $diskspaceLim
 /**
  * Generates page data
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param int $resellerId Reseller unique identifier
  * @param string $resellerName Reseller name
  * @return void
@@ -236,18 +236,16 @@ function reseller_generatePageData($tpl, $resellerId, $resellerName)
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
 $eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(iMSCP_Events::onResellerScriptStart);
+$eventManager->dispatch(\iMSCP\Core\Events::onResellerScriptStart);
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 check_login('reseller', $cfg['PREVENT_EXTERNAL_LOGIN_RESELLER']);
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'reseller/index.tpl',
@@ -270,7 +268,7 @@ reseller_generatePageData($tpl, $_SESSION['user_id'], $_SESSION['user_logged']);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-$eventManager->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+$eventManager->dispatch(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();
 
 unsetMessages();

@@ -54,7 +54,7 @@ function reseller_gen_mail_quota_limit_mgs($customerId)
 /**
  * Generates page
  *
- * @param iMSCP_pTemplate $tpl Template instance engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template instance engine
  * @param int $domainId Domain unique identifier
  * @return void
  */
@@ -186,10 +186,9 @@ function reseller_generatePage($tpl, $domainId)
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
@@ -198,10 +197,9 @@ if (!isset($_GET['domain_id'])) {
 	redirectTo('manage_users.php');
 }
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -243,7 +241,7 @@ $tpl->assign(
 	)
 );
 
-if (isset($cfg->HOSTING_PLANS_LEVEL) && $cfg->HOSTING_PLANS_LEVEL != 'reseller') {
+if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] != 'reseller') {
 	$tpl->assign('EDIT_OPTION', '');
 }
 
@@ -253,7 +251,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

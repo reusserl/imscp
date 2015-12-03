@@ -47,7 +47,7 @@ function _getServerTraffic($beginDate, $endDate)
 	);
 
 	if ($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		return array(
 			$row['swbin'],
@@ -69,7 +69,7 @@ function _getServerTraffic($beginDate, $endDate)
 /**
  * Generates statistics page for the given period
  *
- * @param iMSCP_pTemplate $tpl template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl template engine instance
  * @return void
  */
 function generatePage($tpl)
@@ -88,7 +88,7 @@ function generatePage($tpl)
 	$stmt = exec_query('SELECT traff_time FROM server_traffic ORDER BY traff_time ASC LIMIT 1');
 
 	if ($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		$numberYears = date('y') - date('y', $row['traff_time']);
 		$numberYears = $numberYears ? $numberYears + 1 : 1;
 	} else {
@@ -175,14 +175,14 @@ function generatePage($tpl)
  * Main
  */
 
-require 'imscp-lib.php';
+require '../../application.php';
 
 $eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(iMSCP_Events::onAdminScriptStart);
+$eventManager->dispatch(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/server_statistic.tpl',
@@ -217,7 +217,7 @@ generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-$eventManager->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+$eventManager->dispatch(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();
 
 unsetMessages();

@@ -33,14 +33,13 @@
 require_once 'imscp-lib.php';
 require_once LIBRARY_PATH . '/Functions/Tickets.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
 resellerHasFeature('support') or showBadRequestErrorPage();
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $userId = $_SESSION['user_id'];
 $_SESSION['previousPage'] = 'ticket_system.php';
@@ -58,7 +57,7 @@ if (isset($_GET['psi'])) {
     $start = 0;
 }
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -92,12 +91,12 @@ $tpl->assign(
 		'TR_NEXT' => tr('Next')));
 
 generateNavigation($tpl);
-generateTicketList($tpl, $userId, $start, $cfg->DOMAIN_ROWS_PER_PAGE, 'reseller', 'open');
+generateTicketList($tpl, $userId, $start, $cfg['DOMAIN_ROWS_PER_PAGE'], 'reseller', 'open');
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 unsetMessages();

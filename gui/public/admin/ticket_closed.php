@@ -33,12 +33,11 @@
 require_once 'imscp-lib.php';
 require_once LIBRARY_PATH . '/Functions/Tickets.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 // Checks if support ticket system is activated
 if (!hasTicketSystem()) {
@@ -53,7 +52,7 @@ if (isset($_GET['psi'])) {
     $start = 0;
 }
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -87,12 +86,12 @@ $tpl->assign(
 		'TR_NEXT' => tr('Next')));
 
 generateNavigation($tpl);
-generateTicketList($tpl, $_SESSION['user_id'], $start, $cfg->DOMAIN_ROWS_PER_PAGE, 'admin', 'closed');
+generateTicketList($tpl, $_SESSION['user_id'], $start, $cfg['DOMAIN_ROWS_PER_PAGE'], 'admin', 'closed');
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 unsetMessages();

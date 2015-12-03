@@ -43,7 +43,7 @@ function client_getEmailAccountData($mailId)
 			showBadRequestErrorPage();
 		}
 
-		$mailData = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$mailData = $stmt->fetch(PDO::FETCH_ASSOC);
 	}
 
 	return $mailData;
@@ -196,8 +196,8 @@ function client_editMailAccount()
 
 		// Update mail account into database
 
-		iMSCP_Events_Aggregator::getInstance()->dispatch(
-			iMSCP_Events::onBeforeEditMail, array('mailId' => $mailData['mail_id'])
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+			\iMSCP\Core\Events::onBeforeEditMail, array('mailId' => $mailData['mail_id'])
 		);
 
 		$query = '
@@ -212,8 +212,8 @@ function client_editMailAccount()
 			$query, array($password, $forwardList, $mailType, 'tochange', $quota, $mailData['mail_id'])
 		);
 
-		iMSCP_Events_Aggregator::getInstance()->dispatch(
-			iMSCP_Events::onAfterEditMail, array('mailId' => $mailData['mail_id'])
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+			\iMSCP\Core\Events::onAfterEditMail, array('mailId' => $mailData['mail_id'])
 		);
 
 		// Schedule mail account addition
@@ -231,7 +231,7 @@ function client_editMailAccount()
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  */
 function client_generatePage($tpl)
 {
@@ -247,11 +247,10 @@ function client_generatePage($tpl)
 
 	$quota = $stmt->fields['quota'];
 
-	/** @var iMSCP_Config_Handler_File $cfg */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$checked = $cfg->HTML_CHECKED;
-	$selected = $cfg->HTML_SELECTED;
+	$checked = $cfg['HTML_CHECKED'];
+	$selected = $cfg['HTML_SELECTED'];
 
 	$mailType = '';
 
@@ -299,10 +298,9 @@ function client_generatePage($tpl)
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
@@ -313,7 +311,7 @@ if (isset($_GET['id']) && customerHasFeature('mail')) {
 		}
 	}
 
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(
 		array(
 			'layout' => 'shared/layouts/ui.tpl',
@@ -347,7 +345,7 @@ if (isset($_GET['id']) && customerHasFeature('mail')) {
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 	$tpl->prnt();
 } else {

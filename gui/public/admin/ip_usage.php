@@ -24,14 +24,14 @@
 /**
  * Generate List of Domains assigned to IPs
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @return void
  */
 function listIPDomains($tpl)
 {
 	$stmt = execute_query('SELECT ip_id, ip_number FROM server_ips');
 
-	while ($ip = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+	while ($ip = $stmt->fetch(PDO::FETCH_ASSOC)) {
 		$stmt2 = exec_query(
 			'
 				SELECT
@@ -71,7 +71,7 @@ function listIPDomains($tpl)
 		);
 
 		if ($domainsCount) {
-			while ($data = $stmt2->fetchRow(PDO::FETCH_ASSOC)) {
+			while ($data = $stmt2->fetch(PDO::FETCH_ASSOC)) {
 				$tpl->assign(
 					array(
 						'DOMAIN_NAME' => tohtml(idn_to_utf8($data['domain_name'])),
@@ -94,43 +94,38 @@ function listIPDomains($tpl)
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
 if (systemHasCustomers()) {
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 
-	$tpl->define_dynamic(
-		array(
-			'layout' => 'shared/layouts/ui.tpl',
-			'page' => 'admin/ip_usage.tpl',
-			'ip_row' => 'page',
-			'domain_row' => 'ip_row'
-		)
-	);
+	$tpl->define_dynamic(array(
+		'layout' => 'shared/layouts/ui.tpl',
+		'page' => 'admin/ip_usage.tpl',
+		'ip_row' => 'page',
+		'domain_row' => 'ip_row'
+	));
 
-	$tpl->assign(
-		array(
-			'TR_PAGE_TITLE' => tr('Admin / Statistics / IP Usage'),
-			'TR_SERVER_STATISTICS' => tr('Server statistics'),
-			'TR_IP_ADMIN_USAGE_STATISTICS' => tr('Admin/IP usage statistics'),
-			'TR_DOMAIN_NAME' => tr('Domain Name'),
-			'TR_RESELLER_NAME' => tr('Reseller Name')
-		)
-	);
+	$tpl->assign(array(
+		'TR_PAGE_TITLE' => tr('Admin / Statistics / IP Usage'),
+		'TR_SERVER_STATISTICS' => tr('Server statistics'),
+		'TR_IP_ADMIN_USAGE_STATISTICS' => tr('Admin/IP usage statistics'),
+		'TR_DOMAIN_NAME' => tr('Domain Name'),
+		'TR_RESELLER_NAME' => tr('Reseller Name')
+	));
 
 	generateNavigation($tpl);
 	listIPDomains($tpl);
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+		'templateEngine' => $tpl
+	));
 	$tpl->prnt();
 
 	unsetMessages();

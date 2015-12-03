@@ -25,7 +25,7 @@
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @param int $year Year
  * @param int $month Month
  * @param int $day Day
@@ -53,7 +53,7 @@ function generatePage($tpl, $year, $month, $day)
 	if ($stmt->rowCount()) {
 		$all = array_fill(0, 8, 0);
 
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$otherIn = $row['all_in'] - ($row['mail_in'] + $row['pop_in'] + $row['web_in']);
 			$otherOut = $row['all_out'] - ($row['mail_out'] + $row['pop_out'] + $row['web_out']);
 
@@ -110,14 +110,14 @@ function generatePage($tpl, $year, $month, $day)
  * Main
  */
 
-require 'imscp-lib.php';
+require '../../application.php';
 
 $eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(iMSCP_Events::onAdminScriptStart);
+$eventManager->dispatch(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/server_statistic_day.tpl',
@@ -158,7 +158,7 @@ if (isset($_GET['month']) && isset($_GET['year']) && isset($_GET['day'])) {
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	$eventManager->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+	$eventManager->dispatch(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 	$tpl->prnt();
 
 	unsetMessages();

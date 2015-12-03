@@ -26,7 +26,7 @@
  * Generate an external mail server item
  *
  * @access private
- * @param iMSCP_pTemplate $tpl Template instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template instance
  * @param string $externalMail Status of external mail for the domain
  * @param int $domainId Domain id
  * @param string $domainName Domain name
@@ -36,8 +36,7 @@
  */
 function _client_generateItem($tpl, $externalMail, $domainId, $domainName, $status, $type)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 	$idnDomainName = decode_idna($domainName);
 	$statusOk = 'ok';
 	$queryParam = urlencode("$domainId;$type");
@@ -84,7 +83,7 @@ function _client_generateItem($tpl, $externalMail, $domainId, $domainName, $stat
  * Generate external mail server item list
  *
  * @access private
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param int $domainId Domain id
  * @param string $domainName Domain name
  * @return void
@@ -92,7 +91,7 @@ function _client_generateItem($tpl, $externalMail, $domainId, $domainName, $stat
 function _client_generateItemList($tpl, $domainId, $domainName)
 {
 	$stmt = exec_query('SELECT domain_status, external_mail FROM domain WHERE domain_id = ?', $domainId);
-	$data = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$data = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	_client_generateItem($tpl, $data['external_mail'], $domainId, $domainName, $data['domain_status'], 'normal');
 
@@ -104,7 +103,7 @@ function _client_generateItemList($tpl, $domainId, $domainName)
 	);
 
 	if ($stmt->rowCount()) {
-		while ($data = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			_client_generateItem(
 				$tpl, $data['external_mail'], $data['alias_id'], $data['alias_name'], $data['alias_status'], 'alias'
 			);
@@ -117,12 +116,12 @@ function _client_generateItemList($tpl, $domainId, $domainName)
 /**
  * Generates view
  *
- * @param iMSCP_ptemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @return void
  */
 function client_generateView($tpl)
 {
-	iMSCP_Events_Aggregator::getInstance()->registerListener(iMSCP_Events::onGetJsTranslations, function($e) {
+	iMSCP_Events_Aggregator::getInstance()->registerListener(\iMSCP\Core\Events::onGetJsTranslations, function($e) {
 		/** @var iMSCP_Events_Description $e */
 		$translations = $e->getParam('translations');
 		$translations['core']['datatable'] = getDataTablesPluginTranslations(false);
@@ -155,12 +154,12 @@ function client_generateView($tpl)
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 if (customerHasFeature('external_mail')) {
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(
 		array(
 			'layout' => 'shared/layouts/ui.tpl',
@@ -178,7 +177,7 @@ if (customerHasFeature('external_mail')) {
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 	$tpl->prnt();
 	unsetMessages();
 } else {

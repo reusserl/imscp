@@ -29,18 +29,16 @@
  * Main
  */
 
-// Include needed libraries
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 // Check for login
 check_login('admin');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/server_status.tpl',
@@ -92,6 +90,6 @@ foreach ($services as $service) {
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();

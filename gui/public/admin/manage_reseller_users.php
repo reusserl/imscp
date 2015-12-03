@@ -32,12 +32,11 @@
 /**
  * Generates user table.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  */
 function admin_generateCustomersTable($tpl)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$query = 'SELECT `admin_id`, `admin_name` FROM `admin` WHERE `admin_type` = ? ORDER BY `admin_name`';
 	$stmt = exec_query($query, 'reseller');
@@ -54,12 +53,12 @@ function admin_generateCustomersTable($tpl)
 		if ((isset($_POST['uaction']) && $_POST['uaction'] == 'change_src') && (isset($_POST['src_reseller']) &&
 			$_POST['src_reseller'] == $stmt->fields['admin_id'])
 		) {
-			$selected = $cfg->HTML_SELECTED;
+			$selected = $cfg['HTML_SELECTED'];
 			$resellerId = $_POST['src_reseller'];
 		} elseif ((isset($_POST['uaction']) && $_POST['uaction'] == 'move_user') && (isset($_POST['dst_reseller']) &&
 			$_POST['dst_reseller'] == $stmt->fields['admin_id'])
 		) {
-			$selected = $cfg->HTML_SELECTED;
+			$selected = $cfg['HTML_SELECTED'];
 			$resellerId = $_POST['dst_reseller'];
 		} else {
 			$selected = '';
@@ -86,7 +85,7 @@ function admin_generateCustomersTable($tpl)
 	}
 
 	if (isset($_POST['src_reseller']) && $_POST['src_reseller'] == 0) {
-		$selected = $cfg->HTML_SELECTED;
+		$selected = $cfg['HTML_SELECTED'];
 		$resellerId = 0;
 	} else {
 		$selected = '';
@@ -102,7 +101,8 @@ function admin_generateCustomersTable($tpl)
 
 	// Must never occur in normal usage. Any user returned here are not assigned to a reseller
 	if ($resellerId == 0) {
-		$db = iMSCP_Database::getRawInstance();
+		/** @var \Doctrine\DBAL\Connection $db */
+		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 		$query = '
 			SELECT
@@ -161,7 +161,7 @@ function check_user_data()
 
 	$selectedUsers = '';
 
-	while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+	while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 		$adminId = $row['admin_id'];
 		$adminIdVarname = 'admin_id_' . $adminId;
 
@@ -447,10 +447,9 @@ function check_ip_sets($to, $customersList, &$errorsStack)
  *
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
@@ -458,15 +457,14 @@ if(!systemHasResellers(2)) {
 	showBadRequestErrorPage();
 }
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if (isset($_POST['uaction']) && $_POST['uaction'] == 'move_user' && check_user_data()) {
 	set_page_message(tr('Customer(s) successfully moved.'), 'success');
 	redirectTo('manage_users.php');
 }
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/manage_reseller_users.tpl',
@@ -502,7 +500,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

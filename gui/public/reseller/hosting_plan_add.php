@@ -32,15 +32,14 @@
 /**
  * Generate PHP editor block
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @param iMSCP_PHPini $phpini
  * @return void
  */
 function _reseller_generatePhpBlock($tpl, $phpini)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
-	$checked = $cfg->HTML_CHECKED;
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+	$checked = $cfg['HTML_CHECKED'];
 
 	$tplVars = array();
 
@@ -134,15 +133,14 @@ function _reseller_generatePhpBlock($tpl, $phpini)
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @param iMSCP_PHPini $phpini
  * @return void
  */
 function reseller_generatePage($tpl, $phpini)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
-	$checked = $cfg->HTML_CHECKED;
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+	$checked = $cfg['HTML_CHECKED'];
 
 	$tpl->assign(
 		array(
@@ -204,7 +202,7 @@ function reseller_generatePage($tpl, $phpini)
 /**
  * Generate error page
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @param iMSCP_PHPini $phpini
  * @return void
  */
@@ -213,9 +211,8 @@ function reseller_generateErrorPage($tpl, $phpini)
 	global $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $traffic, $diskSpace, $php, $cgi,
 		   $backup, $dns, $apsStandard, $extMail, $webFolderProtection, $status;
 
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
-	$checked = $cfg->HTML_CHECKED;
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+	$checked = $cfg['HTML_CHECKED'];
 
 	$tpl->assign(
 		array(
@@ -233,7 +230,7 @@ function reseller_generateErrorPage($tpl, $phpini)
 			'HP_DISK_VALUE' => tohtml($diskSpace),
 
 			'TR_PHP_YES' => ($php == '_yes_') ? $checked : '',
-			'TR_PHP_NO' => ($php == '_no_') ? $cfg->HTML_CHECKED : '',
+			'TR_PHP_NO' => ($php == '_no_') ? $cfg['HTML_CHECKED'] : '',
 			'TR_CGI_YES' => ($cgi == '_yes_') ? $checked : '',
 			'TR_CGI_NO' => ($cgi == '_no_') ? $checked : '',
 			'TR_DNS_YES' => ($dns == '_yes_') ? $checked : '',
@@ -283,8 +280,7 @@ function reseller_checkData($phpini)
 	global $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $traffic, $diskSpace, $php, $cgi,
 		   $dns, $apsStandard, $backup, $extMail, $webFolderProtection, $status;
 
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$name = isset($_POST['hp_name']) ? clean_input($_POST['hp_name']) : '';
 	$description = isset($_POST['hp_description']) ? clean_input($_POST['hp_description']) : '';
@@ -495,19 +491,17 @@ function reseller_addHostingPlan($resellerId, $phpini)
  * Functions
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-if (isset($cfg->HOSTING_PLANS_LEVEL) && $cfg->HOSTING_PLANS_LEVEL == 'reseller') {
+if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] == 'reseller') {
 
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(
 		array(
 			'layout' => 'shared/layouts/ui.tpl',
@@ -610,7 +604,7 @@ if (isset($cfg->HOSTING_PLANS_LEVEL) && $cfg->HOSTING_PLANS_LEVEL == 'reseller')
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 	$tpl->prnt();
 } else {

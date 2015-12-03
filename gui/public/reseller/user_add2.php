@@ -51,7 +51,7 @@ function getPreviousPageData()
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param iMSCP_PHPini $phpini
  * @return void
  */
@@ -60,7 +60,7 @@ function generatePage($tpl, $phpini)
 	global $hpName, $php, $cgi, $sub, $als, $mail, $mailQuota, $ftp, $sqlDb, $sqlUser, $traffic, $diskSpace, $backup,
 	       $dns, $apsStandard, $extMailServer, $webFolderProtection;
 
-	$config = iMSCP_Registry::get('config');
+	$config = \iMSCP\Core\Application::getInstance()->getConfig();
 	$htmlChecked = $config['HTML_CHECKED'];
 	$tplVars = array();
 
@@ -202,7 +202,7 @@ function reseller_getHostingPlanData($hpid, $resellerId, $phpini)
 		$stmt = exec_query($query, array($resellerId, $hpid));
 
 		if ($stmt->rowCount()) {
-			$data = $stmt->fetchRow();
+			$data = $stmt->fetch();
 			$props = $data['props'];
 
 			list(
@@ -253,7 +253,7 @@ function checkInputData($phpini)
 	global $php, $cgi, $sub, $als, $mail, $mailQuota, $ftp, $sqlDb, $sqlUser, $traffic, $diskSpace, $backup, $dns,
 	       $apsStandard, $extMailServer, $webFolderProtection;
 
-	$config = iMSCP_Registry::get('config');
+	$config = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	// Default value for Limits/features
 	$sub = $als = $mail = $ftp = $sqlDb = $sqlUser = -1;
@@ -447,13 +447,13 @@ function checkInputData($phpini)
  * Main
  */
 
-require 'imscp-lib.php';
+require '../../application.php';
 
 $eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(iMSCP_Events::onResellerScriptStart);
+$eventManager->dispatch(\iMSCP\Core\Events::onResellerScriptStart);
 check_login('reseller');
 
-$config = iMSCP_Registry::get('config');
+$config = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if (isset($config['HOSTING_PLANS_LEVEL']) && $config['HOSTING_PLANS_LEVEL'] == 'admin') {
 	redirectTo('users.php');
@@ -462,7 +462,7 @@ if (isset($config['HOSTING_PLANS_LEVEL']) && $config['HOSTING_PLANS_LEVEL'] == '
 $phpini = iMSCP_PHPini::getInstance();
 $phpini->loadRePerm($_SESSION['user_id']);
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'reseller/user_add2.tpl',
@@ -592,5 +592,5 @@ if (!resellerHasFeature('backup')) {
 
 generatePageMessage($tpl);
 $tpl->parse('LAYOUT_CONTENT', 'page');
-$eventManager->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+$eventManager->dispatch(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();

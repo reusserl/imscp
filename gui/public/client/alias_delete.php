@@ -25,7 +25,7 @@
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
@@ -46,7 +46,7 @@ if (customerHasFeature('domain_aliases') && isset($_GET['id'])) {
 	);
 
 	if ($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		deleteDomainAlias($alsId, $row['alias_name']);
 		redirectTo('domains_manage.php');
 	}

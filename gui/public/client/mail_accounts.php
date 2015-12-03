@@ -73,7 +73,7 @@ function _client_generateUserMailAction($mailId, $mailStatus)
 /**
  * Generate auto-resonder action links
  *
- * @param iMSCP_pTemplate $tpl pTemplate instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl pTemplate instance
  * @param int $mailId Mail uique identifier
  * @param string $mailStatus Mail status
  * @param bool $mailAutoRespond
@@ -114,14 +114,13 @@ function _client_generateUserMailAutoRespond($tpl, $mailId, $mailStatus, $mailAu
 /**
  * Generate Mail accounts list
  *
- * @param iMSCP_pTemplate $tpl reference to the template object
+ * @param iMSCP\Core\Template\TemplateEngine $tpl reference to the template object
  * @param int $mainDmnId Customer main domain unique identifier
  * @return int number of subdomain mails addresses
  */
 function _client_generateMailAccountsList($tpl, $mainDmnId)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$stmt = exec_query(
 		"
@@ -159,7 +158,7 @@ function _client_generateMailAccountsList($tpl, $mainDmnId)
 
 		$imapTimeoutReached = false;
 
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			list(
 				$mailDelete, $mailDeleteScript, $mailEdit, $mailEditScript
 			) = _client_generateUserMailAction($row['mail_id'], $row['status']);
@@ -231,7 +230,7 @@ function _client_generateMailAccountsList($tpl, $mainDmnId)
 					'MAIL_EDIT_SCRIPT' => $mailEditScript,
 					'MAIL_QUOTA_VALUE' => $txtQuota,
 					'DEL_ITEM' => $row['mail_id'],
-					'DISABLED_DEL_ITEM' => ($row['status'] != 'ok') ? $cfg->HTML_DISABLED : ''
+					'DISABLED_DEL_ITEM' => ($row['status'] != 'ok') ? $cfg['HTML_DISABLED'] : ''
 				)
 			);
 
@@ -247,14 +246,13 @@ function _client_generateMailAccountsList($tpl, $mainDmnId)
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl Reference to the pTemplate object
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Reference to the pTemplate object
  * @return void
  */
 function client_generatePage($tpl)
 {
 	if (customerHasFeature('mail')) {
-		/** @var $cfg iMSCP_Config_Handler_File */
-		$cfg = iMSCP_Registry::get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 		$dmnProps = get_domain_default_props($_SESSION['user_id']);
 		$mainDmnId = $dmnProps['domain_id'];
@@ -263,7 +261,7 @@ function client_generatePage($tpl)
 		$countedMails = _client_generateMailAccountsList($tpl, $mainDmnId);
 		$defaultMails = _client_countDefaultMails($mainDmnId);
 
-		if (!$cfg->COUNT_DEFAULT_EMAIL_ADDRESSES) {
+		if (!$cfg['COUNT_DEFAULT_EMAIL_ADDRESSES']) {
 			$countedMails -= $defaultMails;
 		}
 
@@ -272,7 +270,7 @@ function client_generatePage($tpl)
 			$countedMails,
 			translate_limit_value($dmnMailAccLimit),
 			($defaultMails)
-				? ($cfg->COUNT_DEFAULT_EMAIL_ADDRESSES)
+				? ($cfg['COUNT_DEFAULT_EMAIL_ADDRESSES'])
 					? '(' . tr('Incl. default mails') . ')'
 					: '(' .  tr('Excl. default mails') . ')'
 				: ''
@@ -297,12 +295,12 @@ function client_generatePage($tpl)
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 if (customerHasMailOrExtMailFeatures()) {
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'client/mail_accounts.tpl',
@@ -339,7 +337,7 @@ if (customerHasMailOrExtMailFeatures()) {
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 	$tpl->prnt();
 
 	unsetMessages();

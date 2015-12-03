@@ -36,8 +36,7 @@
  */
 function reseller_checkData()
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if (isset($_POST['dmn_name']) && $_POST['dmn_name'] != '') {
 		$dmnName = strtolower(trim($_POST['dmn_name']));
@@ -60,7 +59,7 @@ function reseller_checkData()
 
 	$asciiDmnName = encode_idna($dmnName);
 
-	if (imscp_domain_exists($asciiDmnName, $_SESSION['user_id']) || $asciiDmnName == $cfg->BASE_SERVER_VHOST) {
+	if (imscp_domain_exists($asciiDmnName, $_SESSION['user_id']) || $asciiDmnName == $cfg['BASE_SERVER_VHOST']) {
 		set_page_message(tr('Domain %s is unavailable.', "<strong>$dmnName</strong>"), 'error');
 		return;
 	}
@@ -85,7 +84,7 @@ function reseller_checkData()
 	}
 
 	// Whether or not reseller want customize hosting plan
-	if ((isset($cfg->HOSTING_PLANS_LEVEL) && $cfg->HOSTING_PLANS_LEVEL == 'admin')) {
+	if ((isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] == 'admin')) {
 		$customizeHp = '_no_';
 	} elseif (!isset($_POST['chtpl'])) {
 		$customizeHp = '_no_';
@@ -120,20 +119,19 @@ function reseller_checkData()
 /**
  * Show first page of add user with data.
  *
- * @param  iMSCP_pTemplate $tpl Template engine
+ * @param  TemplateEngine $tpl Template engine
  * @return void
  */
 function reseller_generatePage($tpl)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$tpl->assign(
 		array(
 			'DOMAIN_NAME_VALUE' => isset($_POST['dmn_name']) ? tohtml($_POST['dmn_name']) : '',
 			'DATEPICKER_VALUE' => isset($_POST['datepicker']) ? tohtml($_POST['datepicker']) : '',
-			'CHTPL1_VAL' => (isset($_POST['chtpl']) && $_POST['chtpl'] == '_yes_') ? $cfg->HTML_CHECKED : '',
-			'CHTPL2_VAL' => (isset($_POST['chtpl']) && $_POST['chtpl'] == '_yes_') ? '' : $cfg->HTML_CHECKED
+			'CHTPL1_VAL' => (isset($_POST['chtpl']) && $_POST['chtpl'] == '_yes_') ? $cfg['HTML_CHECKED'] : '',
+			'CHTPL2_VAL' => (isset($_POST['chtpl']) && $_POST['chtpl'] == '_yes_') ? '' : $cfg['HTML_CHECKED']
 		)
 	);
 }
@@ -141,16 +139,15 @@ function reseller_generatePage($tpl)
 /**
  * Generate hosting plan list.
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param int $resellerId Reseller unique identifier
  * @return void
  */
 function reseller_generateHostingPlanList($tpl, $resellerId)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	if (isset($cfg->HOSTING_PLANS_LEVEL) && $cfg->HOSTING_PLANS_LEVEL == 'admin') {
+	if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
 		$query = "
 			SELECT
 				`t1`.`id`, `t1`.`name`
@@ -179,13 +176,13 @@ function reseller_generateHostingPlanList($tpl, $resellerId)
 	}
 
 	if ($stmt->rowCount()) {
-		while (($data = $stmt->fetchRow())) {
+		while (($data = $stmt->fetch())) {
 			$hpId = isset($_POST['dmn_tpl']) ? $_POST['dmn_tpl'] : '';
 			$tpl->assign(
 				array(
 					'HP_NAME' => tohtml($data['name']),
 					'HP_ID' => $data['id'],
-					'HP_SELECTED' => ($data['id'] == $hpId) ? $cfg->HTML_SELECTED : ''
+					'HP_SELECTED' => ($data['id'] == $hpId) ? $cfg['HTML_SELECTED'] : ''
 				)
 			);
 
@@ -200,21 +197,19 @@ function reseller_generateHostingPlanList($tpl, $resellerId)
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if (isset($_POST['uaction']) && $_POST['uaction'] == 'user_add_next') {
 	reseller_checkData();
 }
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -251,7 +246,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

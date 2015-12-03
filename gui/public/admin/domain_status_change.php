@@ -29,10 +29,9 @@
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
@@ -41,7 +40,7 @@ if (isset($_GET['domain_id'])) {
 	$stmt = exec_query('SELECT domain_admin_id, domain_status FROM domain WHERE domain_id = ?', $domainId);
 
 	if ($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		if ($row['domain_status'] == 'ok') {
 			change_domain_status($row['domain_admin_id'], 'deactivate');

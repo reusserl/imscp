@@ -32,7 +32,7 @@
 /**
  * Generates page.
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @return void
  */
 function client_generatePage($tpl)
@@ -54,40 +54,31 @@ function client_generatePage($tpl)
  * Generates IPs list.
  *
  * @access private
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @return void
  */
 function _client_generateIpsList($tpl)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$query = "SELECT * FROM `server_ips`";
 	$stmt = execute_query($query);
 
 	if ($stmt->rowCount()) {
-		while (!$stmt->EOF) {
-			list(
-				$actionName, $actionUrl
-			) = _client_generateIpAction($stmt->fields['ip_id'], $stmt->fields['ip_status']);
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+			list($actionName, $actionUrl) = _client_generateIpAction($row['ip_id'], $row['ip_status']);
 
-			$tpl->assign(
-				array(
-					 'IP' => $stmt->fields['ip_number'],
-					 'NETWORK_CARD' => ($stmt->fields['ip_card'] === NULL) ? '' : tohtml($stmt->fields['ip_card'])
-				)
-			);
+			$tpl->assign(array(
+				'IP' => $row['ip_number'],
+				'NETWORK_CARD' => ($row['ip_card'] === NULL) ? '' : tohtml($row['ip_card'])
+			));
 
-			$tpl->assign(
-				array(
-					 'ACTION_NAME' => ($cfg->BASE_SERVER_IP == $stmt->fields['ip_number'])
-						 ? tr('Protected') : $actionName,
-					 'ACTION_URL' => ($cfg->BASE_SERVER_IP == $stmt->fields['ip_number']) ? '#' : $actionUrl
-				)
-			);
+			$tpl->assign(array(
+				'ACTION_NAME' => ($cfg['BASE_SERVER_IP'] == $row['ip_number']) ? tr('Protected') : $actionName,
+				'ACTION_URL' => ($cfg['BASE_SERVER_IP'] == $row['ip_number']) ? '#' : $actionUrl
+			));
 
 			$tpl->parse('IP_ADDRESS_BLOCK', '.ip_address_block');
-			$stmt->moveNext();
 		}
 	} else { // Should never occur but who knows.
 		$tpl->assign('IP_ADDRESSES_BLOCK', '');
@@ -127,7 +118,7 @@ function _client_generateIpAction($ipId, $status)
  * Generates network cards list.
  *
  * @access private
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @return void
  */
 function _client_generateNetcardsList($tpl)
@@ -216,10 +207,9 @@ function client_registerIp($ipNumber, $netcard)
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
@@ -235,19 +225,17 @@ if (!empty($_POST)) {
 	}
 }
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/ip_manage.tpl',
-		'page_message' => 'layout',
-		'ip_addresses_block' => 'page',
-		'ip_address_block' => 'ip_addresses_block',
-		'ip_address_form_block' => 'page',
-		'network_card_block' => 'ip_address_form_block'
-	)
-);
+$tpl->define_dynamic(array(
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/ip_manage.tpl',
+	'page_message' => 'layout',
+	'ip_addresses_block' => 'page',
+	'ip_address_block' => 'ip_addresses_block',
+	'ip_address_form_block' => 'page',
+	'network_card_block' => 'ip_address_form_block'
+));
 
 $tpl->assign(array(
 	'TR_PAGE_TITLE' => tr('Admin / Settings / IP Addresses Management'),
@@ -266,8 +254,8 @@ $tpl->assign(array(
 	'TR_TIP' => tr('This interface allow to add or remove IP addresses. IP addresses listed below are already under the control of i-MSCP. IP addresses which are added through this interface will be automatically added into the i-MSCP database, and will be available for assignment to one or many of your resellers. If an IP address is not already configured on the system, it will be attached to the selected network interface.')
 ));
 
-iMSCP_Events_Aggregator::getInstance()->registerListener('onGetJsTranslations', function ($e) {
-	/** @var $e \iMSCP_Events_Event */
+\iMSCP\Core\Application::getInstance()->getEventManager()->attach('onGetJsTranslations', function ($e) {
+	/** @var $e \Zend\EventManager\Event */
 	$e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations(false);
 });
 
@@ -277,7 +265,9 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+	'templateEngine' => $tpl
+));
 
 $tpl->prnt();
 

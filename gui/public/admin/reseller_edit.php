@@ -56,7 +56,7 @@ function &admin_getData($resellerId, $forUpdate = false)
 		";
 		$stmt = exec_query($query, $resellerId);
 
-		if (!($data = $stmt->fetchRow())) {
+		if (!($data = $stmt->fetch())) {
 			set_page_message(tr("The reseller account that you are trying to edit has not been found."), 'error');
 			redirectTo('manage_users.php');
 		}
@@ -157,7 +157,7 @@ function &admin_getData($resellerId, $forUpdate = false)
 /**
  * Generates account form.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
  * @return void
  */
@@ -180,17 +180,16 @@ function _admin_generateAccountForm($tpl, &$data)
 /**
  * Generates IP list form.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
  * @return void
  */
 function _admin_generateIpListForm($tpl, &$data)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$htmlChecked = $cfg->HTML_CHECKED;
-	$htmlDisabled = "$cfg->HTML_READONLY title=\"" . tr("You cannot unassign an IP address already in use.") . '"';
+	$htmlChecked = $cfg['HTML_CHECKED'];
+	$htmlDisabled = "{$cfg['HTML_READONLY']} title=\"" . tr("You cannot unassign an IP address already in use.") . '"';
 	$assignedTranslation = tr("Already in use");
 	$unusedTranslation = tr("Not used");
 
@@ -225,7 +224,7 @@ function _admin_generateIpListForm($tpl, &$data)
 /**
  * Generates features form.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
  * @return void
  */
@@ -259,16 +258,15 @@ function _admin_generateLimitsForm($tpl, &$data)
 /**
  * Generates features form.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
  * @return void
  */
 function _admin_generateFeaturesForm($tpl, &$data)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$htmlChecked = $cfg->HTML_CHECKED;
+	$htmlChecked = $cfg['HTML_CHECKED'];
 
 	$tpl->assign(
 		array(
@@ -345,16 +343,15 @@ function _admin_generateFeaturesForm($tpl, &$data)
 /**
  * Generates features form.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array $data Domain data
  * @return void
  */
 function  _admin_generatePersonalDataFrom($tpl, &$data)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$htmlSelected = $cfg->HTML_SELECTED;
+	$htmlSelected = $cfg['HTML_SELECTED'];
 
 	$tpl->assign(
 		array(
@@ -397,7 +394,7 @@ function  _admin_generatePersonalDataFrom($tpl, &$data)
 /**
  * Generate edit form.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
  * @return void
  */
@@ -419,9 +416,9 @@ function admin_generateForm($tpl, &$data)
  */
 function admin_checkAndUpdateData($resellerId)
 {
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeEditUser, array('userId' => $resellerId));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditUser, array('userId' => $resellerId));
 
 	$errFieldsStack = array();
 
@@ -734,7 +731,7 @@ function admin_checkAndUpdateData($resellerId)
 
 			$db->commit();
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditUser, array('userId' => $resellerId));
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditUser, array('userId' => $resellerId));
 
 			// Send mail to reseller for new password
 			if ($data['password'] != '') {
@@ -811,13 +808,11 @@ function admin_checkResellerLimit($newLimit, $assignedByReseller, $consumedByCus
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 check_login('admin');
 
@@ -835,7 +830,7 @@ if (!isset($_GET['edit_id'])) {
 // Getting domain data
 $data =& admin_getData($resellerId);
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -865,7 +860,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

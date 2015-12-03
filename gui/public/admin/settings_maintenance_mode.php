@@ -25,17 +25,15 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -50,19 +48,17 @@ if (isset($_POST['uaction']) and $_POST['uaction'] == 'apply') {
 	$db_cfg->MAINTENANCEMODE = $maintenancemode;
 	$db_cfg->MAINTENANCEMODE_MESSAGE = $maintenancemode_message;
 
-	$cfg->merge($db_cfg);
-
 	set_page_message(tr('Settings saved.'), 'success');
 }
 
 $selected_on = '';
 $selected_off = '';
 
-if ($cfg->MAINTENANCEMODE) {
-	$selected_on = $cfg->HTML_SELECTED;
+if ($cfg['MAINTENANCEMODE']) {
+	$selected_on = $cfg['HTML_SELECTED'];
 	set_page_message(tr('Maintenance mode is activated. In this mode, only administrators can login.'), 'static_info');
 } else {
-	$selected_off = $cfg->HTML_SELECTED;
+	$selected_off = $cfg['HTML_SELECTED'];
 	set_page_message(tr('In maintenance mode, only administrators can login.'), 'static_info');
 }
 
@@ -86,7 +82,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

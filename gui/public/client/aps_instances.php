@@ -18,25 +18,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\ApsStandard;
+// Include application library
+require 'application.php';
 
-use iMSCP\ApsStandard\Controller\ApsInstanceController;
-use iMSCP_Events_Aggregator as EventManager;
-use iMSCP_Events as Events;
-use iMSCP_pTemplate as TemplateEngine;
-use iMSCP_Registry as Registry;
-
-require 'imscp-lib.php';
-
-$eventManager = EventManager::getInstance();
-$eventManager->dispatch(Events::onClientScriptStart);
+$eventManager = \iMSCP\Core\Application::getInstance()->getEventManager();
+$eventManager->trigger(\iMSCP\Core\Events::onClientScriptStart);
 check_login('user');
 
 if (customerHasFeature('aps_standard')) {
 	if (is_xhr()) {
 		try {
-			/** @var ApsInstanceController $controller */
-			$controller = Registry::get('ServiceManager')->get('ApsInstanceController');
+			/** @var \iMSCP\ApsStandard\Controller\ApsInstanceController $controller */
+			$controller = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('ApsInstanceController');
 			$controller->handleRequest();
 		} catch (\Exception $e) {
 			header('Status: 500 Internal Server Error');
@@ -44,22 +37,22 @@ if (customerHasFeature('aps_standard')) {
 		exit;
 	}
 
-	$tpl = new TemplateEngine();
-	$tpl->define_dynamic(array(
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
+	$tpl->define_dynamic([
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'assets/angular/aps-standard/aps-instance/aps-instances.tpl',
 		'page_message' => 'layout'
-	));
+	]);
 
-	$tpl->assign(array(
+	$tpl->assign([
 		'TR_PAGE_TITLE' => tohtml(tr('Client / APS Standard / Application instances'), 'htmlAttr'),
-	));
+	]);
 
 	generateNavigation($tpl);
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	$eventManager->dispatch(Events::onClientScriptEnd, array('templateEngine' => $tpl));
+	$eventManager->trigger(\iMSCP\Core\Events::onClientScriptEnd, ['templateEngine' => $tpl]);
 	$tpl->prnt();
 } else {
 	showBadRequestErrorPage();

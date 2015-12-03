@@ -55,7 +55,7 @@ function reseller_getMailData($domainId, $mailQuota)
 			',
 			$domainId
  		);
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		if ($mailQuota == 0) {
 			$mailData = array(
@@ -98,7 +98,7 @@ function reseller_getResellerProps($resellerId)
 		$resellerId
 	);
 
-	return $stmt->fetchRow();
+	return $stmt->fetch();
 }
 
 /**
@@ -125,7 +125,7 @@ function reseller_getDomainProps($domainId)
 		',
 		$domainId
 	);
-	$data = $stmt->fetchRow();
+	$data = $stmt->fetch();
 
 	// domain traffic
 
@@ -147,7 +147,7 @@ function reseller_getDomainProps($domainId)
 		',
 		array($domainId, $fdofmnth, $ldofmnth)
 	);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	$data['domainTraffic'] = $row['traffic'];
 
 	return $data;
@@ -164,8 +164,7 @@ function &reseller_getData($domainId, $forUpdate = false)
 {
 	static $data = null;
 
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if(null == $data) {
 		$statusOk = "ok|disabled|ordered";
@@ -194,7 +193,7 @@ function &reseller_getData($domainId, $forUpdate = false)
 			',
 			array($statusOk, $statusOk, $statusOk, $domainId, $_SESSION['user_id'])
 		);
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 
 		if($row['domain_status'] == '') {
@@ -320,7 +319,7 @@ function &reseller_getData($domainId, $forUpdate = false)
 /**
  * Generate edit form.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Domain related data
  * @return void
  */
@@ -335,7 +334,7 @@ function reseller_generateForm($tpl, &$data)
  *
  * Note: Only shows the limits on which the domain reseller has permissions.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array $data Domain data
  * @return void
  */
@@ -442,14 +441,13 @@ function _reseller_generateLimitsForm($tpl, &$data)
  * Note: For now most block for the features are always show. That will change when
  * admin will be able to disable them for a specific reseller.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array $data Domain data
  * @return void
  */
 function _reseller_generateFeaturesForm($tpl, &$data)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$htmlChecked = $cfg['HTML_CHECKED'];
 
@@ -610,8 +608,7 @@ function _reseller_generateFeaturesForm($tpl, &$data)
  */
 function reseller_checkAndUpdateData($domainId)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	/** @var $db iMSCP_Database */
 	$db = iMSCP_Database::getInstance();
@@ -906,8 +903,8 @@ function reseller_checkAndUpdateData($domainId)
 				return true;
 			}
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(
-				iMSCP_Events::onBeforeEditDomain, array('domainId' => $domainId)
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+				\iMSCP\Core\Events::onBeforeEditDomain, array('domainId' => $domainId)
 			);
 
 			// Start transaction
@@ -1017,8 +1014,8 @@ function reseller_checkAndUpdateData($domainId)
 
 			$db->commit();
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(
-				iMSCP_Events::onAfterEditDomain, array('domainId' => $domainId)
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+				\iMSCP\Core\Events::onAfterEditDomain, array('domainId' => $domainId)
 			);
 
 			if ($daemonRequest) {
@@ -1081,15 +1078,13 @@ function _reseller_isValidServiceLimit($newCustomerLimit, $customerConsumption,
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] != 'reseller') {
 	redirectTo('users.php');
@@ -1109,7 +1104,7 @@ if(!isset($_GET['edit_id'])) {
 // Getting domain data
 $data =& reseller_getData($domainId);
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'shared/partials/forms/domain_edit.tpl',
@@ -1167,5 +1162,5 @@ reseller_generateForm($tpl, $data);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();

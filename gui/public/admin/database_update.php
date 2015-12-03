@@ -32,20 +32,18 @@
 /**
  * Generate database update details.
  *
- * @param $tpl iMSCP_pTemplate
+ * @param $tpl \iMSCP\Core\Template\TemplateEngine
  * return void
  */
 function admin_generateDatabaseUpdateDetail($tpl)
 {
-	$dbUpdatesDetail = iMSCP_Update_Database::getInstance()->getDatabaseUpdatesDetails();
+	$dbUpdatesDetail = \iMSCP\Core\Updater\DatabaseUpdater::getInstance()->getDatabaseUpdatesDetails();
 
 	foreach ($dbUpdatesDetail as $revision => $detail) {
-		$tpl->assign(
-			array(
-				'DB_UPDATE_REVISION' => (int)$revision,
-				'DB_UPDATE_DETAIL' => _admin_generateIssueTrackerLink($detail)
-			)
-		);
+		$tpl->assign(array(
+			'DB_UPDATE_REVISION' => (int)$revision,
+			'DB_UPDATE_DETAIL' => _admin_generateIssueTrackerLink($detail)
+		));
 
 		$tpl->parse('DATABASE_UPDATE', '.database_update');
 	}
@@ -71,24 +69,20 @@ function _admin_generateIssueTrackerLink($detail)
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
-// Check for login
 check_login('admin');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-/** @var $dbUpdate iMSCP_Update_Database */
-$dbUpdate = iMSCP_Update_Database::getInstance();
+$dbUpdate = \iMSCP\Core\Updater\DatabaseUpdater::getInstance();
 
 if (isset($_POST['uaction']) && $_POST['uaction'] == 'update') {
 	// Execute all available db updates
 	if (!$dbUpdate->applyUpdates()) {
-		throw new iMSCP_Exception($dbUpdate->getError());
+		throw new Exception($dbUpdate->getError());
 	}
 
 	// Set success page message
@@ -96,14 +90,14 @@ if (isset($_POST['uaction']) && $_POST['uaction'] == 'update') {
 	redirectTo('system_info.php');
 }
 
-$tpl = new iMSCP_pTemplate();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/database_update.tpl',
-		'page_message' => 'layout',
-		'database_updates' => 'page',
-		'database_update' => 'database_updates'));
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic(array(
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/database_update.tpl',
+	'page_message' => 'layout',
+	'database_updates' => 'page',
+	'database_update' => 'database_updates'
+));
 
 $tpl->assign('TR_PAGE_TITLE', tr('Admin / System Tools / Database Update'));
 
@@ -113,11 +107,11 @@ if ($dbUpdate->isAvailableUpdate()) {
 	set_page_message(tr('One or more database updates are now available. See the details below.'), 'static_info');
 	admin_generateDatabaseUpdateDetail($tpl);
 
-	$tpl->assign(
-		array(
-			'TR_DATABASE_UPDATES' => tr('Database Update Revision'),
-			'TR_DATABASE_UPDATE_DETAIL' => tr('Database Update details'),
-			'TR_PROCESS_UPDATES' => tr('Process update')));
+	$tpl->assign(array(
+		'TR_DATABASE_UPDATES' => tr('Database Update Revision'),
+		'TR_DATABASE_UPDATE_DETAIL' => tr('Database Update details'),
+		'TR_PROCESS_UPDATES' => tr('Process update')
+	));
 } else {
 	$tpl->assign('DATABASE_UPDATES', '');
 	set_page_message(tr('No database update available.'), 'static_info');
@@ -126,11 +120,9 @@ if ($dbUpdate->isAvailableUpdate()) {
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-iMSCP_Events_Aggregator::getInstance()->dispatch(
-	iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl)
-);
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+	'templateEngine' => $tpl
+));
 $tpl->prnt();
 
 unsetMessages();

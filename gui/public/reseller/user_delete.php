@@ -33,12 +33,11 @@
  * Generates customer account deletion validation page.
  *
  * @param int $customerId Customer unique identifier
- * @return iMSCP_pTemplate
+ * @return TemplateEngine
  */
 function reseller_generateCustomerAcountDeletionValidationPage($customerId)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$query = "SELECT `admin_name` FROM `admin` WHERE `admin_id` = ? AND `created_by` = ?";
 	$stmt = exec_query($query, array($customerId, $_SESSION['user_id']));
@@ -49,7 +48,7 @@ function reseller_generateCustomerAcountDeletionValidationPage($customerId)
 
 	$adminName = decode_idna($stmt->fields['admin_name']);
 
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(
 		array(
 			'layout' => 'shared/layouts/ui.tpl',
@@ -107,7 +106,7 @@ function reseller_generateCustomerAcountDeletionValidationPage($customerId)
 	$stmt = exec_query($query, $customerId);
 
 	if ($stmt->rowCount()) {
-		while ($data = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$mailTypes = explode(',', $data['mail_type']);
 			$mailTypesdisplayArray = array();
 
@@ -137,13 +136,13 @@ function reseller_generateCustomerAcountDeletionValidationPage($customerId)
 	$stmt = exec_query($query, $customerId);
 
 	if ($stmt->rowCount()) {
-		while ($data = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$username = explode('@', $data['userid']);
 
 			$tpl->assign(
 				array(
 					'FTP_USER' => tohtml($username[0] . '@' . decode_idna($username[1])),
-					'FTP_HOME' => tohtml(substr($data['homedir'], strlen($cfg->USER_WEB_DIR)))
+					'FTP_HOME' => tohtml(substr($data['homedir'], strlen($cfg['USER_WEB_DIR'])))
 				)
 			);
 
@@ -172,7 +171,7 @@ function reseller_generateCustomerAcountDeletionValidationPage($customerId)
 	$stmt = exec_query($query, $domainId);
 
 	if ($stmt->rowCount()) {
-		while ($data = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$aliasIds[] = $data['alias_id'];
 
 			$tpl->assign(
@@ -194,7 +193,7 @@ function reseller_generateCustomerAcountDeletionValidationPage($customerId)
 	$stmt = exec_query($query, $domainId);
 
 	if ($stmt->rowCount()) {
-		while ($data = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$tpl->assign(
 				array(
 					'SUB_NAME' => tohtml(decode_idna($data['subdomain_name'])),
@@ -224,7 +223,7 @@ function reseller_generateCustomerAcountDeletionValidationPage($customerId)
 		$stmt = execute_query($query);
 
 		if ($stmt->rowCount()) {
-			while ($data = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+			while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
 				$tpl->assign(
 					array(
 						'SUB_NAME' => tohtml(decode_idna($data['subdomain_alias_name'])),
@@ -242,13 +241,13 @@ function reseller_generateCustomerAcountDeletionValidationPage($customerId)
 	$stmt = exec_query('SELECT sqld_id, sqld_name FROM sql_database WHERE domain_id = ?', $domainId);
 
 	if ($stmt->rowCount()) {
-		while ($data = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$stmt2 = exec_query('SELECT sqlu_name FROM sql_user WHERE sqld_id = ?', $data['sqld_id']);
 
 			$sqlUsersList = array();
 
 			if ($stmt2->rowCount()) {
-				while ($data2 = $stmt2->fetchRow(PDO::FETCH_ASSOC)) {
+				while ($data2 = $stmt2->fetch(PDO::FETCH_ASSOC)) {
 					$sqlUsersList[] = $data2['sqlu_name'];
 				}
 			}
@@ -273,10 +272,9 @@ function reseller_generateCustomerAcountDeletionValidationPage($customerId)
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
@@ -325,7 +323,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

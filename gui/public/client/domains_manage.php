@@ -32,14 +32,13 @@
 /**
  * Generates domains list.
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param int $userId Customer unique identifier
  * @return void
  */
 function client_generateDomainsList($tpl, $userId)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$query = "
 		SELECT
@@ -53,7 +52,7 @@ function client_generateDomainsList($tpl, $userId)
 	";
 	$stmt = exec_query($query, (int)$userId);
 
-	while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+	while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 		$domainName = decode_idna($row['domain_name']);
 
 		if ($row['domain_status'] == 'ok') {
@@ -96,7 +95,7 @@ function client_generateDomainsList($tpl, $userId)
 /**
  * Generates domain aliases list.
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param int $userId User unique identifier
  * @return void
  */
@@ -127,7 +126,7 @@ function client_generateDomainAliasesList($tpl, $userId)
 				)
 			);
 		} else {
-			while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+			while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 				$alsId = $row['alias_id'];
 				$alsName = $row['alias_name'];
 				$alsStatus = $row['alias_status'];
@@ -252,7 +251,7 @@ function _client_generateDomainAliasRedirect($id, $status, $redirectUrl)
 /**
  * Generates subdomains list.
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param int $userId User unique identifier
  * @return void
  */
@@ -304,7 +303,7 @@ function client_generateSubdomainsList($tpl, $userId)
 				)
 			);
 		} else {
-			while ($row = $stmt1->fetchRow(PDO::FETCH_ASSOC)) {
+			while ($row = $stmt1->fetch(PDO::FETCH_ASSOC)) {
 				$domainName = $row['domain_name'];
 				$subId = $row['subdomain_id'];
 				$subName = $row['subdomain_name'];
@@ -367,7 +366,7 @@ function client_generateSubdomainsList($tpl, $userId)
 				$tpl->parse('SUB_ITEM', '.sub_item');
 			}
 
-			while ($row = $stmt2->fetchRow(PDO::FETCH_ASSOC)) {
+			while ($row = $stmt2->fetch(PDO::FETCH_ASSOC)) {
 				$alsName = $row['alias_name'];
 				$alssubId = $row['subdomain_alias_id'];
 				$alssubName = $row['subdomain_alias_name'];
@@ -510,7 +509,7 @@ function _client_generateSubdomainAliasAction($id, $status)
 /**
  * Generates custom DNS records list.
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param int $userId User unique identifier
  * @return void
  */
@@ -542,7 +541,7 @@ function client_generateCustomDnsRecordsList($tpl, $userId)
 	);
 
 	if ($stmt->rowCount()) {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			list(
 				$actionEdit, $actionScriptEdit
 			) = _client_generateCustomDnsRecordAction(
@@ -653,14 +652,14 @@ function _client_generateCustomDnsRecordAction($action, $id, $status, $ownedBy =
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 // If the feature is disabled, redirects in silent way
 //customerHasFeature('domain') or showBadRequestErrorPage();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -733,7 +732,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

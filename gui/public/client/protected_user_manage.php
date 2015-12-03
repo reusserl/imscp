@@ -65,7 +65,7 @@ function _client_generateHtgroupAction($status, $group)
 /**
  * Generates users list.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param int $domainId Domain unique identifier
  * @return void
  */
@@ -107,7 +107,7 @@ function client_generateUsersList($tpl, $domainId)
 /**
  * Generates groups list.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param int $domainId Domain unique identifier
  * @return void
  */
@@ -161,16 +161,15 @@ function client_genetateGroupsList($tpl, $domainId)
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 customerHasFeature('protected_areas') or showBadRequestErrorPage();
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic('layout', 'shared/layouts/ui.tpl');
 $tpl->define_dynamic(
 	array(
@@ -213,7 +212,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

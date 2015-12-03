@@ -25,7 +25,7 @@
 /**
  * Generates statistics for the given reseller
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param int $resellerId Reseller unique identifier
  * @param string $resellerName Reseller name
  * @return void
@@ -131,14 +131,14 @@ function _generateResellerStatistics($tpl, $resellerId, $resellerName)
 /**
  * Generates page
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
  */
 function generatePage($tpl)
 {
 	$stmt = execute_query("SELECT admin_id, admin_name FROM admin WHERE admin_type = 'reseller'");
 
-	while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+	while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 		_generateResellerStatistics($tpl, $row['admin_id'], $row['admin_name']);
 		$tpl->parse('RESELLER_STATISTICS_BLOCK', '.reseller_statistics_block');
 	}
@@ -148,15 +148,15 @@ function generatePage($tpl)
  * Main
  */
 
-require 'imscp-lib.php';
+require '../../application.php';
 
 $eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(iMSCP_Events::onAdminScriptStart);
+$eventManager->dispatch(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
 if (systemHasResellers()) {
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'admin/reseller_statistics.tpl',
@@ -189,7 +189,7 @@ if (systemHasResellers()) {
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	$eventManager->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+	$eventManager->dispatch(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 	$tpl->prnt();
 
 	unsetMessages();

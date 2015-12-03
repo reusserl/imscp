@@ -32,7 +32,7 @@
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @param int $sqlUserId Sql user id
  * @return array
  */
@@ -41,7 +41,7 @@ function client_generatePage($tpl, $sqlUserId)
 	$stmt = exec_query('SELECT sqlu_name, sqlu_host FROM sql_user WHERE sqlu_id = ?', $sqlUserId);
 
 	if($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		$tpl->assign(array(
 			'USER_NAME' => tohtml($row['sqlu_name']),
@@ -99,14 +99,14 @@ function client_updateSqlUserPassword($sqlUserId, $sqlUserName, $sqlUserHost)
 		return;
 	}
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeEditSqlUser, array('sqlUserId' => $sqlUserId));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditSqlUser, array('sqlUserId' => $sqlUserId));
 	exec_query('SET PASSWORD FOR ?@? = PASSWORD(?)', array($sqlUserName, $sqlUserHost, $password));
 	set_page_message(tr('SQL user password successfully updated.'), 'success');
 	write_log(
 		sprintf("%s updated %s@%s SQL user password.", $_SESSION['user_logged'], $sqlUserName, $sqlUserHost),
 		E_USER_NOTICE
 	);
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditSqlUser, array('sqlUserId' => $sqlUserId));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditSqlUser, array('sqlUserId' => $sqlUserId));
 	redirectTo('sql_manage.php');
 }
 
@@ -116,7 +116,7 @@ function client_updateSqlUserPassword($sqlUserId, $sqlUserName, $sqlUserHost)
 
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 check_login('user');
 customerHasFeature('sql') or showBadRequestErrorPage();
 
@@ -131,7 +131,7 @@ if (isset($_REQUEST['id'])) {
 	exit;
 }
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'client/sql_change_password.tpl',
@@ -154,6 +154,6 @@ generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();
 unsetMessages();

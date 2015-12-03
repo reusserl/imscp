@@ -140,11 +140,11 @@ function client_addExternalMailServerEntries($item)
 		$data['priority'] = (isset($_POST['priority'])) ? $_POST['priority'] : array();
 		$data['host'] = (isset($_POST['host'])) ? $_POST['host'] : array();
 
-		$responses = iMSCP_Events_Aggregator::getInstance()->dispatch(
-			iMSCP_Events::onBeforeAddExternalMailServer, array('externalMailServerEntries' => $data)
+		$responses = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+			\iMSCP\Core\Events::onBeforeAddExternalMailServer, array('externalMailServerEntries' => $data)
 		);
 
-		if(!$responses->isStopped()) {
+		if(!$responses->stopped()) {
 			$entriesCount = count($data['type']);
 			$error = false;
 
@@ -246,8 +246,8 @@ function client_addExternalMailServerEntries($item)
 
 					$db->commit();
 
-					iMSCP_Events_Aggregator::getInstance()->dispatch(
-						iMSCP_Events::onAfterAddExternalMailServer, array('externalMailServerEntries' => $data)
+					\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+						\iMSCP\Core\Events::onAfterAddExternalMailServer, array('externalMailServerEntries' => $data)
 					);
 
 					send_request();
@@ -284,11 +284,10 @@ function client_addExternalMailServerEntries($item)
  */
 function client_generateView($verifiedData, $data)
 {
-	/** @var $tpl iMSCP_pTemplate */
+	/** @var $tpl TemplateEngine */
 	$tpl = iMSCP_Registry::get('templateEngine');
 
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$selectedOption = $cfg['HTML_SELECTED'];
 	$idnItemName = $verifiedData['item_name'];
@@ -372,13 +371,13 @@ function client_generateView($verifiedData, $data)
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 if (customerHasFeature('external_mail')) {
 	if (isset($_REQUEST['item']) && count($item = explode(';', $_REQUEST['item'], 2)) == 2) {
-		$tpl = iMSCP_Registry::set('templateEngine', new iMSCP_pTemplate());
+		$tpl = iMSCP_Registry::set('templateEngine', new \iMSCP\Core\Template\TemplateEngine());
 		$tpl->define_dynamic(
 			array(
 				'layout' => 'shared/layouts/ui.tpl',
@@ -394,7 +393,7 @@ if (customerHasFeature('external_mail')) {
 		client_addExternalMailServerEntries($item);
 		generatePageMessage($tpl);
 		$tpl->parse('LAYOUT_CONTENT', 'page');
-		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 		$tpl->prnt();
 		unsetMessages();
 	} else {

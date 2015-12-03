@@ -37,12 +37,11 @@
  */
 function admin_deleteUser($userId)
 {
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeDeleteUser, array('userId' => $userId));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeDeleteUser, array('userId' => $userId));
 
 	$userId = (int)$userId;
 
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	/** @var $db iMSCP_Database */
 	$db = iMSCP_Database::getInstance();
@@ -60,7 +59,7 @@ function admin_deleteUser($userId)
 		',
 		$userId
 	);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	$userType = $row['admin_type'];
 
 	if (empty($userType) || $userType == 'user') {
@@ -128,7 +127,7 @@ function admin_deleteUser($userId)
 		throw $e;
 	}
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterDeleteUser, array('userId' => $userId));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterDeleteUser, array('userId' => $userId));
 
 	redirectTo('manage_users.php');
 }
@@ -163,7 +162,7 @@ function admin_validateUserDeletion($userId)
 
 		// User has not been found or it's a customer
 		if($stmt->rowCount()) {
-			$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+			$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 			if($row['admin_type'] == 'user') {
 				showBadRequestErrorPage();
@@ -184,12 +183,11 @@ function admin_validateUserDeletion($userId)
  * Generates customer account deletion validation page.
  *
  * @param int $userId Customer account unique identifier
- * @return iMSCP_pTemplate
+ * @return TemplateEngine
  */
 function admin_generateCustomerAcountDeletionValidationPage($userId)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$stmt = exec_query('SELECT admin_name FROM admin WHERE admin_id = ?', $userId);
 
@@ -199,7 +197,7 @@ function admin_generateCustomerAcountDeletionValidationPage($userId)
 
 	$adminName = decode_idna($stmt->fields['admin_name']);
 
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'admin/user_delete.tpl',
@@ -253,7 +251,7 @@ function admin_generateCustomerAcountDeletionValidationPage($userId)
 	);
 
 	if ($stmt->rowCount()) {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$mailTypes = explode(',', $row['mail_type']);
 			$mailTypesdisplayArray = array();
 
@@ -280,12 +278,12 @@ function admin_generateCustomerAcountDeletionValidationPage($userId)
 	$stmt = exec_query('SELECT userid, homedir FROM ftp_users WHERE admin_id = ?', $userId);
 
 	if ($stmt->rowCount()) {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$username = explode('@', $row['userid']);
 
 			$tpl->assign(array(
 				'FTP_USER' => tohtml($username[0] . '@' . decode_idna($username[1])),
-				'FTP_HOME' => tohtml(substr($row['homedir'], strlen($cfg->USER_WEB_DIR)))
+				'FTP_HOME' => tohtml(substr($row['homedir'], strlen($cfg['USER_WEB_DIR'])))
 			));
 
 			$tpl->parse('FTP_ITEM', '.ftp_item');
@@ -311,7 +309,7 @@ function admin_generateCustomerAcountDeletionValidationPage($userId)
 	$stmt = exec_query('SELECT alias_id, alias_name, alias_mount FROM domain_aliasses WHERE domain_id = ?', $domainId);
 
 	if ($stmt->rowCount()) {
-		while ($data = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$aliasIds[] = $data['alias_id'];
 
 			$tpl->assign(array(
@@ -330,7 +328,7 @@ function admin_generateCustomerAcountDeletionValidationPage($userId)
 	$stmt = exec_query('SELECT subdomain_name, subdomain_mount FROM subdomain WHERE domain_id = ?', $domainId);
 
 	if ($stmt->rowCount()) {
-		while ($data = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$tpl->assign(array(
 				'SUB_NAME' => tohtml(decode_idna($data['subdomain_name'])),
 				'SUB_MNT' => tohtml($data['subdomain_mount'])
@@ -352,7 +350,7 @@ function admin_generateCustomerAcountDeletionValidationPage($userId)
 		);
 
 		if ($stmt->rowCount()) {
-			while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+			while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 				$tpl->assign(array(
 					'SUB_NAME' => tohtml(decode_idna($row['subdomain_alias_name'])),
 					'SUB_MNT' => tohtml($row['subdomain_alias_mount'])
@@ -368,13 +366,13 @@ function admin_generateCustomerAcountDeletionValidationPage($userId)
 	$stmt = exec_query('SELECT sqld_id, sqld_name FROM sql_database WHERE domain_id = ?', $domainId);
 
 	if ($stmt->rowCount()) {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$stmt2 = exec_query('SELECT sqlu_name FROM sql_user WHERE sqld_id = ?', $row['sqld_id']);
 
 			$sqlUsersList = array();
 
 			if ($stmt2->rowCount()) {
-				while ($row2 = $stmt2->fetchRow(PDO::FETCH_ASSOC)) {
+				while ($row2 = $stmt2->fetch(PDO::FETCH_ASSOC)) {
 					$sqlUsersList[] = $row2['sqlu_name'];
 				}
 			}
@@ -397,16 +395,14 @@ function admin_generateCustomerAcountDeletionValidationPage($userId)
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
 $eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(iMSCP_Events::onAdminScriptStart);
+$eventManager->dispatch(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if (isset($_GET['delete_id']) && !empty($_GET['delete_id'])) { # admin/reseller deletion
 	if (admin_validateUserDeletion($_GET['delete_id'])) {
@@ -465,7 +461,7 @@ if (isset($_GET['delete_id']) && !empty($_GET['delete_id'])) { # admin/reseller 
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-$eventManager->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+$eventManager->dispatch(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();
 
 unsetMessages();

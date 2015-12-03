@@ -32,7 +32,7 @@
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
@@ -91,12 +91,11 @@ if (customerHasFeature('domain_aliases') && isset($_GET['id'])) {
 		}
 
 		if (!$ret) {
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeDeleteSubdomain, array(
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeDeleteSubdomain, array(
 					'subdomainId' => $alssubId, 'type' => 'alssub', 'subdomainName' => $alssubName
 			));
 
-			/** @var $db iMSCP_Database */
-			$db = iMSCP_Database::getInstance();
+			$db = \iMSCP\Core\Database\Database::getInstance();
 
 			try {
 				$db->beginTransaction();
@@ -108,12 +107,12 @@ if (customerHasFeature('domain_aliases') && isset($_GET['id'])) {
 				$stmt = exec_query($query, array('todelete', $alssubId, 'alssub'));
 
 				$db->commit();
-			} catch (iMSCP_Exception_Database $e) {
+			} catch (PDOException $e) {
 				$db->rollBack();
 				throw $e;
 			}
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterDeleteSubdomain, array(
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterDeleteSubdomain, array(
 					'subdomainId' => $alssubId, 'type' => 'alssub', 'subdomainName' => $alssubName
 			));
 

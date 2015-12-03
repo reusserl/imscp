@@ -24,12 +24,11 @@
 /**
  * Generates page.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  */
 function client_generatePage($tpl)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$query = "SELECT domain_created from admin where admin_id = ?";
 	$stmt = exec_query($query, (int)$_SESSION['user_id']);
@@ -56,24 +55,22 @@ function client_generatePage($tpl)
 			'TR_ACCOUNT_TYPE' => tr('Account type'),
 			'ACCOUNT_TYPE' => $trUserType,
 			'TR_REGISTRATION_DATE' => tr('Registration date'),
-			'REGISTRATION_DATE' => ($stmt->fields['domain_created'] != 0) ? date($cfg->DATE_FORMAT, $stmt->fields['domain_created']) : tr('Unknown')));
+			'REGISTRATION_DATE' => ($stmt->fields['domain_created'] != 0) ? date($cfg['DATE_FORMAT'], $stmt->fields['domain_created']) : tr('Unknown')));
 }
 
 /*******************************************************************************
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 check_login('user');
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -88,7 +85,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

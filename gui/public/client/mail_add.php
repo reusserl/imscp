@@ -251,8 +251,8 @@ function client_addMailAccount()
 				/** @var $db iMSCP_Database */
 				$db = iMSCP_Registry::get('db');
 
-				iMSCP_Events_Aggregator::getInstance()->dispatch(
-					iMSCP_Events::onBeforeAddMail, array('mailUsername' => $username, 'MailAddress' => $mailAddr)
+				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+					\iMSCP\Core\Events::onBeforeAddMail, array('mailUsername' => $username, 'MailAddress' => $mailAddr)
 				);
 
 				$query = '
@@ -267,8 +267,8 @@ function client_addMailAccount()
 					$subId, 'toadd', '0', NULL, $quota, $mailAddr
 				));
 
-				iMSCP_Events_Aggregator::getInstance()->dispatch(
-					iMSCP_Events::onAfterAddMail,
+				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+					\iMSCP\Core\Events::onAfterAddMail,
 					array('mailUsername' => $username, 'mailAddress' => $mailAddr, 'mailId' => $db->insertId())
 				);
 
@@ -296,7 +296,7 @@ function client_addMailAccount()
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  */
 function client_generatePage($tpl)
 {
@@ -316,11 +316,10 @@ function client_generatePage($tpl)
 		);
 		$tpl->assign('MAIL_ACCOUNT', '');
 	} else {
-		/** @var iMSCP_Config_Handler_File $cfg */
-		$cfg = iMSCP_Registry::get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-		$checked = $cfg->HTML_CHECKED;
-		$selected = $cfg->HTML_SELECTED;
+		$checked = $cfg['HTML_CHECKED'];
+		$selected = $cfg['HTML_SELECTED'];
 
 		$mailType = (isset($_POST['account_type']) && in_array($_POST['account_type'], array('1', '2', '3')))
 			? $_POST['account_type'] : '1';
@@ -358,10 +357,9 @@ function client_generatePage($tpl)
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
@@ -387,7 +385,7 @@ if (!empty($_POST)) {
 	}
 }
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -423,6 +421,6 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();

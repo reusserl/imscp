@@ -29,10 +29,9 @@
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
@@ -57,7 +56,7 @@ if (isset($_GET['domain_id'])) {
 	);
 
 	if ($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		if ($row['domain_status'] == 'ok') {
 			change_domain_status($row['admin_id'], 'deactivate');

@@ -76,7 +76,7 @@ function _client_getSubdomainData($subdomainId, $subdomainType)
 			return false;
 		}
 
-		$subdomainData = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$subdomainData = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		if ($subdomainType == 'dmn') {
 			$subdomainData['subdomain_name'] .= '.' . $domainName;
@@ -93,7 +93,7 @@ function _client_getSubdomainData($subdomainId, $subdomainType)
 /**
  * Generate page
  *
- * @param $tpl iMSCP_pTemplate
+ * @param $tpl TemplateEngine
  * @return void
  */
 function client_generatePage($tpl)
@@ -128,7 +128,7 @@ function client_generatePage($tpl)
 				? $_POST['forward_type'] : '302';
 		}
 
-		$cfg = iMSCP_Registry::get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 		$checked = $cfg['HTML_CHECKED'];
 		$selected = $cfg['HTML_SELECTED'];
 
@@ -204,7 +204,7 @@ function client_editSubdomain()
 				}
 			}
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeEditSubdomain, array(
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditSubdomain, array(
 				'subdomainId' => $subdomainId,
 				'subdomainName' => $subdomainName,
 				'subdomainType' => $subdomainType
@@ -232,7 +232,7 @@ function client_editSubdomain()
 
 			exec_query($query, array($forwardUrl, $forwardType, 'tochange', $subdomainId));
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditSubdomain, array(
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditSubdomain, array(
 				'subdomainId' => $subdomainId,
 				'subdomainName' => $subdomainName,
 				'subdomainType' => $subdomainType
@@ -256,7 +256,7 @@ function client_editSubdomain()
 
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 check_login('user');
 customerHasFeature('subdomains') or showBadRequestErrorPage();
 
@@ -264,7 +264,7 @@ if (!empty($_POST) && client_editSubdomain()) {
 	set_page_message(tr('Subdomain successfully scheduled for update'), 'success');
 	redirectTo('domains_manage.php');
 } else {
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'client/subdomain_edit.tpl',
@@ -297,7 +297,7 @@ if (!empty($_POST) && client_editSubdomain()) {
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 	$tpl->prnt();
 	unsetMessages();
 }

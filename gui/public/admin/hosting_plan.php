@@ -32,7 +32,7 @@
 /**
  * Generates page.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
  */
 function admin_generatePage($tpl)
@@ -73,7 +73,7 @@ function admin_generatePage($tpl)
 
 		$i = 1;
 
-		while ($data = $stmt->fetchRow()) {
+		while ($data = $stmt->fetch()) {
 			$tpl->assign(
 				array(
 					'NUMBER' => $i++,
@@ -92,18 +92,16 @@ function admin_generatePage($tpl)
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-if ($cfg->HOSTING_PLANS_LEVEL == 'admin') {
-	$tpl = new iMSCP_pTemplate();
+if ($cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(
 		array(
 			'layout' => 'shared/layouts/ui.tpl',
@@ -122,7 +120,7 @@ if ($cfg->HOSTING_PLANS_LEVEL == 'admin') {
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 
 	$tpl->prnt();
 

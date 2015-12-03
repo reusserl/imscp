@@ -55,7 +55,7 @@ function client_generateAction($mailId, $mailStatus)
 /**
  * Generate catchall item
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @param string $action Action
  * @param int $dmnId Domain unique identifier
  * @param string $dmnName Domain name
@@ -107,7 +107,7 @@ function client_generateCatchallItem($tpl, $action, $dmnId, $dmnName, $mailId, $
 /**
  * Generate catchall list
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @param int $dmnId Domain unique identifier
  * @param string $dmnName Domain Name
  */
@@ -143,7 +143,7 @@ function client_generateCatchallList($tpl, $dmnId, $dmnName)
 	$query = "SELECT `alias_id`, `alias_name` FROM `domain_aliasses` WHERE `domain_id` = ? AND `alias_status` = ?";
 	$stmt = exec_query($query, array($dmnId, $statusOk));
 
-	while ($data = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+	while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
 		$alsId = $data['alias_id'];
 		$alsName = $data['alias_name'];
 
@@ -187,7 +187,7 @@ function client_generateCatchallList($tpl, $dmnId, $dmnName)
 	";
 	$stmt = exec_query($query, array($dmnId, $statusOk));
 
-	while ($data = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+	while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
 		$alsId = $data['subdomain_alias_id'];
 		$alsName = $data['subdomain_name'];
 
@@ -231,7 +231,7 @@ function client_generateCatchallList($tpl, $dmnId, $dmnName)
 	";
 	$stmt = exec_query($query, array($dmnId, $statusOk));
 
-	while ($data = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+	while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
 		$alsId = $data['subdomain_id'];
 		$alsName = $data['subdomain_name'];
 
@@ -265,7 +265,7 @@ function client_generateCatchallList($tpl, $dmnId, $dmnName)
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  */
 function client_generatePage($tpl)
 {
@@ -283,16 +283,15 @@ function client_generatePage($tpl)
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 customerHasFeature('mail') or showBadRequestErrorPage();
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'client/mail_catchall.tpl',
@@ -323,7 +322,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

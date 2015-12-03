@@ -24,12 +24,12 @@
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @return void
  */
 function admin_generateLanguagesList($tpl)
 {
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 	$defaultLanguage = $cfg['USER_INITIAL_LANG'];
 	$availableLanguages = i18n_getAvailableLanguages();
 
@@ -54,17 +54,15 @@ function admin_generateLanguagesList($tpl)
  * Main
  */
 
-// Include needed libraries
-require 'imscp-lib.php';
+require '../../application.php';
 
-$eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(iMSCP_Events::onAdminScriptStart);
+$eventManager = \iMSCP\Core\Application::getInstance()->getEventManager();
+$eventManager->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 // Check for login
 check_login('admin');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 // Dispatches the request
 if (isset($_POST['uaction'])) {
@@ -86,7 +84,7 @@ if (isset($_POST['uaction'])) {
 	}
 }
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/multilanguage.tpl',
@@ -110,8 +108,8 @@ $tpl->assign(array(
 	'TR_IMPORT' => tohtml(tr('Import'), 'htmlAttr')
 ));
 
-$eventManager->registerListener('onGetJsTranslations', function($e) {
-	/* @var $e iMSCP_Events_Event */
+$eventManager->attach('onGetJsTranslations', function($e) {
+	/* @var $e \Zend\EventManager\Event */
 	$e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations();
 });
 
@@ -120,5 +118,5 @@ admin_generateLanguagesList($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-$eventManager->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+$eventManager->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();

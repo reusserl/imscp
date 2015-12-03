@@ -33,7 +33,7 @@
 require_once 'imscp-lib.php';
 require_once LIBRARY_PATH . '/Functions/Tickets.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 

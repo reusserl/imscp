@@ -30,9 +30,9 @@
  */
 
 /**
- * Generates menus list.
+ * Generates menus list
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
  */
 function admin_generateMenusList($tpl)
@@ -44,12 +44,12 @@ function admin_generateMenusList($tpl)
 		$tpl->assign('MENUS_LIST_BLOCK', '');
 		set_page_message(tr('No custom menu found.'), 'static_info');
 	} else {
-		while (!$stmt->EOF) {
-			$menuId = $stmt->fields['menu_id'];
-			$menuLevel = $stmt->fields['menu_level'];
-			$menuOrder = $stmt->fields['menu_order'];
-			$menuName = $stmt->fields['menu_name'];
-			$menuLink = $stmt->fields['menu_link'];
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+			$menuId = $row['menu_id'];
+			$menuLevel = $row['menu_level'];
+			$menuOrder = $row['menu_order'];
+			$menuName = $row['menu_name'];
+			$menuLink = $row['menu_link'];
 
 			if ($menuLevel == 'A') {
 				$menuLevel = tr('Administrator');
@@ -67,19 +67,16 @@ function admin_generateMenusList($tpl)
 				$menuLevel = tr('All');
 			}
 
-			$tpl->assign(
-				array(
-					'MENU_LINK' => tohtml($menuLink),
-					'MENU_ID' => $menuId,
-					'LEVEL' => tohtml($menuLevel),
-					'ORDER' => $menuOrder,
-					'MENU_NAME' => tohtml($menuName),
-					'LINK' => tohtml($menuLink)
-				)
-			);
+			$tpl->assign([
+				'MENU_LINK' => tohtml($menuLink),
+				'MENU_ID' => $menuId,
+				'LEVEL' => tohtml($menuLevel),
+				'ORDER' => $menuOrder,
+				'MENU_NAME' => tohtml($menuName),
+				'LINK' => tohtml($menuLink)
+			]);
 
 			$tpl->parse('MENU_BLOCK', '.menu_block');
-			$stmt->moveNext();
 		}
 	}
 }
@@ -87,18 +84,17 @@ function admin_generateMenusList($tpl)
 /**
  * Generate form.
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  */
 function admin_generateForm($tpl)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
-	$selected = $cfg->HTML_SELECTED;
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+	$selected = $cfg['HTML_SELECTED'];
 
-	$customMenu = array(
+	$customMenu = [
 		'menu_id' => '', 'menu_name' => '', 'menu_link' => '', 'menu_target' => '_self', 'menu_level' => 'a',
 		'menu_order' => ''
-	);
+	];
 
 	if (empty($_POST) && isset($_GET['edit_id'])) {
 		$query = "SELECT * FROM `custom_menus` WHERE `menu_id` = ?";
@@ -109,67 +105,57 @@ function admin_generateForm($tpl)
 			redirectTo('custom_menus.php');
 		}
 
-		$customMenu = $stmt->fetchRow();
+		$customMenu = $stmt->fetch();
 	} elseif (!empty($_POST)) {
 		$customMenu = $_POST;
 	}
 
 	if (isset($_REQUEST['edit_id'])) {
-		$tpl->assign(
-			array(
-				'TR_DYNAMIC_TITLE' => tr('Edit custom menu'),
-				'TR_UPDATE' => tr('Update'),
-				'EDIT_ID' => tohtml($_REQUEST['edit_id']),
-				'ADD_MENU' => ''
-			)
-		);
+		$tpl->assign([
+			'TR_DYNAMIC_TITLE' => tr('Edit custom menu'),
+			'TR_UPDATE' => tr('Update'),
+			'EDIT_ID' => tohtml($_REQUEST['edit_id']),
+			'ADD_MENU' => ''
+		]);
 	} else {
-		$tpl->assign(
-			array(
-				'TR_DYNAMIC_TITLE' => tr('Add custom menu'),
-				'TR_ADD' => tr('Add'),
-				'EDIT_MENU' => ''
-			)
-		);
+		$tpl->assign([
+			'TR_DYNAMIC_TITLE' => tr('Add custom menu'),
+			'TR_ADD' => tr('Add'),
+			'EDIT_MENU' => ''
+		]);
 	}
 
-	foreach (array('_blank', '_parent', '_self', '_top') as $target) {
-		$tpl->assign(
-			array(
-				'TR_TARGET' => tr('%s page', str_replace('_', '', $target)),
-				'TARGET_VALUE' => $target,
-				'SELECTED_TARGET' => ($customMenu['menu_target'] == $target) ? $selected : ''
-			)
-		);
+	foreach (['_blank', '_parent', '_self', '_top'] as $target) {
+		$tpl->assign([
+			'TR_TARGET' => tr('%s page', str_replace('_', '', $target)),
+			'TARGET_VALUE' => $target,
+			'SELECTED_TARGET' => ($customMenu['menu_target'] == $target) ? $selected : ''
+		]);
 
 		$tpl->parse('MENU_TARGET_BLOCK', '.menu_target_block');
 	}
 
 	foreach (
-		array(
+		[
 			'A' => tr('Administrator level'), 'R' => tr('Reseller level'), 'C' => tr('Customer level'),
 			'AR' => tr('Administrator and Reseller levels'), 'AC' => tr('Administrator and customer levels'),
 			'RC' => tr('Reseller and customer levels'), 'ARC' => tr('All levels')
-		) as $level => $trLevel
+		] as $level => $trLevel
 	) {
-		$tpl->assign(
-			array(
-				'TR_LEVEL' => $trLevel,
-				'LEVEL_VALUE' => $level,
-				'SELECTED_LEVEL' => ($customMenu['menu_level'] == $level) ? $selected : ''
-			)
-		);
+		$tpl->assign([
+			'TR_LEVEL' => $trLevel,
+			'LEVEL_VALUE' => $level,
+			'SELECTED_LEVEL' => ($customMenu['menu_level'] == $level) ? $selected : ''
+		]);
 
 		$tpl->parse('MENU_LEVEL_BLOCK', '.menu_level_block');
 	}
 
-	$tpl->assign(
-		array(
-			'MENU_NAME' => tohtml($customMenu['menu_name']),
-			'MENU_LINK' => tohtml($customMenu['menu_link']),
-			'MENU_ORDER' => $customMenu['menu_order']
-		)
-	);
+	$tpl->assign([
+		'MENU_NAME' => tohtml($customMenu['menu_name']),
+		'MENU_LINK' => tohtml($customMenu['menu_link']),
+		'MENU_ORDER' => $customMenu['menu_order']
+	]);
 }
 
 /**
@@ -184,8 +170,7 @@ function admin_generateForm($tpl)
  */
 function admin_isValidMenu($menuName, $menuLink, $menuTarget, $menuLevel, $menuOrder)
 {
-
-	$errorFieldsStack = array();
+	$errorFieldsStack = [];
 
 	if (empty($menuName)) {
 		set_page_message(tr('Invalid name.'), 'error');
@@ -199,12 +184,12 @@ function admin_isValidMenu($menuName, $menuLink, $menuTarget, $menuLevel, $menuO
 		$errorFieldsStack[] = 'menu_link';
 	}
 
-	if (!empty($menuTarget) && !in_array($menuTarget, array('_blank', '_parent', '_self', '_top'))) {
+	if (!empty($menuTarget) && !in_array($menuTarget, ['_blank', '_parent', '_self', '_top'])) {
 		set_page_message(tr('Invalid target.'), 'error');
 		$errorFieldsStack[] = 'menu_target';
 	}
 
-	if (!in_array($menuLevel, array('A', 'R', 'C', 'AR', 'AC', 'RC', 'ARC'))) {
+	if (!in_array($menuLevel, ['A', 'R', 'C', 'AR', 'AC', 'RC', 'ARC'])) {
 		showBadRequestErrorPage();
 	}
 
@@ -243,7 +228,7 @@ function admin_addMenu()
 					?, ?, ?, ?, ?
 				)
 		";
-		exec_query($query, array($visibilityLevel, $menuOrder, $menuName, $menuLink, $menuTarget));
+		exec_query($query, [$visibilityLevel, $menuOrder, $menuName, $menuLink, $menuTarget]);
 
 		set_page_message(tr('Custom menu successfully added.'), 'success');
 
@@ -306,10 +291,9 @@ function admin_deleteMenu($menuId)
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
@@ -329,11 +313,10 @@ if (isset($_POST['uaction'])) {
 	admin_deleteMenu($_GET['delete_id']);
 }
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
-$tpl->define_dynamic(array(
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic([
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/custom_menus.tpl',
 	'page_message' => 'layout',
@@ -344,7 +327,7 @@ $tpl->define_dynamic(array(
 	'menu_level_block' => 'page',
 	'add_menu' => 'page',
 	'edit_menu' => 'page'
-));
+]);
 
 $tpl->assign(array(
 	'TR_PAGE_TITLE' => tr('Admin / Settings / {TR_DYNAMIC_TITLE}'),
@@ -367,8 +350,8 @@ $tpl->assign(array(
 		? json_encode(iMSCP_Registry::get('errorFieldsStack')) : '[]'
 ));
 
-iMSCP_Events_Aggregator::getInstance()->registerListener('onGetJsTranslations', function ($e) {
-	/** @var $e \iMSCP_Events_Event */
+\iMSCP\Core\Application::getInstance()->getEventManager()->attach('onGetJsTranslations', function ($e) {
+	/** @var $e \Zend\EventManager\Event */
 	$e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations(false);
 });
 
@@ -378,11 +361,9 @@ admin_generateForm($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-iMSCP_Events_Aggregator::getInstance()->dispatch(
-	iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl)
-);
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

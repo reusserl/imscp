@@ -37,9 +37,9 @@
  */
 function admin_updateUserData($userId)
 {
-	iMSCP_Events_Aggregator::getInstance()->dispatch(
-		iMSCP_Events::onBeforeEditUser, array('userId' => $userId)
-	);
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditUser, [
+		'userId' => $userId
+	]);
 
 	$fname = isset($_POST['fname']) ? clean_input($_POST['fname']) : '';
 	$lname = isset($_POST['lname']) ? clean_input($_POST['lname']) : '';
@@ -56,7 +56,7 @@ function admin_updateUserData($userId)
 	$street2 = isset($_POST['street2']) ? clean_input($_POST['street2']) : '';
 	$userName = get_user_name($userId);
 
-	if(empty($_POST['password'])) {
+	if (empty($_POST['password'])) {
 		$query = "
 			UPDATE
 				`admin`
@@ -66,13 +66,10 @@ function admin_updateUserData($userId)
 			WHERE
 				`admin_id` = ?
 		";
-		exec_query(
-			$query,
-			array(
-				$fname, $lname, $firm, $zip, $city, $state, $country, $email, $phone, $fax, $street1, $street2,
-				$gender, $userId
-			)
-		);
+		exec_query($query, [
+			$fname, $lname, $firm, $zip, $city, $state, $country, $email, $phone, $fax, $street1, $street2, $gender,
+			$userId
+		]);
 	} else {
 		$query = "
 			UPDATE
@@ -83,10 +80,10 @@ function admin_updateUserData($userId)
 			WHERE
 				`admin_id` = ?
 		";
-		exec_query($query, array(
-			\iMSCP\Crypt::bcrypt($_POST['password']), $fname, $lname, $firm, $zip, $city, $state, $country, $email,
-			$phone, $fax, $street1, $street2, $gender, $userId
-		));
+		exec_query($query, [
+			\iMSCP\Core\Utils\Crypt::bcrypt($_POST['password']), $fname, $lname, $firm, $zip, $city, $state, $country,
+			$email, $phone, $fax, $street1, $street2, $gender, $userId
+		]);
 
 		$query = "DELETE FROM `login` WHERE `user_name` = ?";
 		$stmt = exec_query($query, $userName);
@@ -96,17 +93,18 @@ function admin_updateUserData($userId)
 		}
 	}
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(
-		iMSCP_Events::onAfterEditUser, array('userId' => $userId)
-	);
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditUser, [
+		'userId' => $userId
+	]);
 
 	if (isset($_POST['send_data']) && !empty($_POST['password'])) {
 		$query = 'SELECT `admin_type` FROM `admin` WHERE `admin_id` = ?';
 		$stmt = exec_query($query, $userId);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-		if ($stmt->fields['admin_type'] == 'admin') {
+		if ($row['admin_type'] == 'admin') {
 			$admin_type = tr('Administrator');
-		} elseif ($stmt->fields['admin_type'] == 'reseller') {
+		} elseif ($row['admin_type'] == 'reseller') {
 			$admin_type = tr('Reseller');
 		} else {
 			$admin_type = tr('Customer');
@@ -132,7 +130,7 @@ function admin_isValidData()
 		set_page_message(tr("Incorrect email length or syntax."), 'error');
 	}
 
-	if(!empty($_POST['password']) && !empty($_POST['password_confirmation'])) {
+	if (!empty($_POST['password']) && !empty($_POST['password_confirmation'])) {
 		if ($_POST['password'] != $_POST['password_confirmation']) {
 			set_page_message(tr("Passwords do not match."), 'error');
 		}
@@ -141,7 +139,7 @@ function admin_isValidData()
 
 	}
 
-	if(Zend_Session::namespaceIsset('pageMessages')) {
+	if (Zend_Session::namespaceIsset('pageMessages')) {
 		return false;
 	}
 
@@ -152,15 +150,13 @@ function admin_isValidData()
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if (isset($_GET['edit_id'])) {
 	$userId = intval($_GET['edit_id']);
@@ -169,21 +165,19 @@ if (isset($_GET['edit_id'])) {
 	exit;
 }
 
-if(!empty($_POST) && admin_isValidData()) {
+if (!empty($_POST) && admin_isValidData()) {
 	admin_updateUserData($userId);
 	set_page_message(tr('User data successfully updated.'), 'success');
 	redirectTo('manage_users.php');
 }
 
-$tpl = new iMSCP_pTemplate();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/admin_edit.tpl',
-		'page_message' => 'layout',
-		'hosting_plans' => 'page'
-	)
-);
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic([
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/admin_edit.tpl',
+	'page_message' => 'layout',
+	'hosting_plans' => 'page'
+]);
 
 // For admin, we redirect to it own personal change page.
 if ($userId == $_SESSION['user_id']) {
@@ -204,63 +198,64 @@ if (!$stmt->rowCount()) {
 	redirectTo('manage_users.php');
 }
 
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+/** @var $db \Doctrine\DBAL\Connection */
+$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 generateNavigation($tpl);
 
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Admin / Users / Overview / Edit Admin'),
-		'TR_EMPTY_OR_WORNG_DATA' => tr('Empty data or wrong field.'),
-		'TR_PASSWORD_NOT_MATCH' => tr("Passwords do not match."),
-		'TR_CORE_DATA' => tr('Core data'),
-		'TR_USERNAME' => tr('Username'),
-		'TR_PASSWORD' => tr('Password'),
-		'TR_PASSWORD_REPEAT' => tr('Password confirmation'),
-		'TR_EMAIL' => tr('Email'),
-		'TR_ADDITIONAL_DATA' => tr('Additional data'),
-		'TR_FIRST_NAME' => tr('First name'),
-		'TR_LAST_NAME' => tr('Last name'),
-		'TR_COMPANY' => tr('Company'),
-		'TR_ZIP_POSTAL_CODE' => tr('Zip/Postal code'),
-		'TR_CITY' => tr('City'),
-		'TR_STATE_PROVINCE' => tr('State/Province'),
-		'TR_COUNTRY' => tr('Country'),
-		'TR_STREET_1' => tr('Street 1'),
-		'TR_STREET_2' => tr('Street 2'),
-		'TR_PHONE' => tr('Phone'),
-		'TR_FAX' => tr('Fax'),
-		'TR_GENDER' => tr('Gender'),
-		'TR_MALE' => tr('Male'),
-		'TR_FEMALE' => tr('Female'),
-		'TR_UNKNOWN' => tr('Unknown'),
-		'TR_UPDATE' => tr('Update'),
-		'TR_SEND_DATA' => tr('Send new login data'),
-		'FIRST_NAME' => isset($_POST['fname']) ? tohtml($_POST['fname']) : tohtml($stmt->fields['fname']),
-		'LAST_NAME' => isset($_POST['lname']) ? tohtml($_POST['lname']) : tohtml($stmt->fields['lname']),
-		'FIRM' => isset($_POST['firm']) ? tohtml($_POST['firm']) : tohtml($stmt->fields['firm']),
-		'ZIP' => isset($_POST['zip']) ? tohtml($_POST['zip']) : tohtml($stmt->fields['zip']),
-		'CITY' => isset($_POST['city']) ? tohtml($_POST['city']) : tohtml($stmt->fields['city']),
-		'STATE_PROVINCE' => isset($_POST['state']) ? tohtml($_POST['state']) : tohtml($stmt->fields['state']),
-		'COUNTRY' => isset($_POST['country']) ? tohtml($_POST['country']) : tohtml($stmt->fields['country']),
-		'STREET_1' => isset($_POST['street1']) ? tohtml($_POST['street1']) : tohtml($stmt->fields['street1']),
-		'STREET_2' => isset($_POST['street2']) ? tohtml($_POST['street2']) : tohtml($stmt->fields['street2']),
-		'PHONE' => isset($_POST['phone']) ? tohtml($_POST['phone']) : tohtml($stmt->fields['phone']),
-		'FAX' => isset($_POST['fax']) ? tohtml($_POST['fax']) : tohtml($stmt->fields['fax']),
-		'USERNAME' => tohtml(decode_idna($stmt->fields['admin_name'])),
-		'EMAIL' => isset($_POST['email']) ? tohtml($_POST['email']) : tohtml($stmt->fields['email']),
-		'VL_MALE' => (isset($_POST['gender']) && $_POST['gender'] == 'M' || $stmt->fields['gender'] == 'M') ? $cfg->HTML_SELECTED : '',
-		'VL_FEMALE' => (isset($_POST['gender']) && $_POST['gender'] == 'F' || $stmt->fields['gender'] == 'F') ? $cfg->HTML_SELECTED : '',
-		'VL_UNKNOWN' => (isset($_POST['gender']) && $_POST['gender'] == 'U' || (!isset($_POST['gender']) && ($stmt->fields['gender'] == 'U' || empty($stmt->fields['gender'])))) ? $cfg->HTML_SELECTED : '',
-		'SEND_DATA_CHECKED' => (isset($_POST['send_data'])) ? $cfg->HTML_CHECKED : '',
-		'EDIT_ID' => $userId
-	)
-);
+$tpl->assign([
+	'TR_PAGE_TITLE' => tr('Admin / Users / Overview / Edit Admin'),
+	'TR_EMPTY_OR_WORNG_DATA' => tr('Empty data or wrong field.'),
+	'TR_PASSWORD_NOT_MATCH' => tr("Passwords do not match."),
+	'TR_CORE_DATA' => tr('Core data'),
+	'TR_USERNAME' => tr('Username'),
+	'TR_PASSWORD' => tr('Password'),
+	'TR_PASSWORD_REPEAT' => tr('Password confirmation'),
+	'TR_EMAIL' => tr('Email'),
+	'TR_ADDITIONAL_DATA' => tr('Additional data'),
+	'TR_FIRST_NAME' => tr('First name'),
+	'TR_LAST_NAME' => tr('Last name'),
+	'TR_COMPANY' => tr('Company'),
+	'TR_ZIP_POSTAL_CODE' => tr('Zip/Postal code'),
+	'TR_CITY' => tr('City'),
+	'TR_STATE_PROVINCE' => tr('State/Province'),
+	'TR_COUNTRY' => tr('Country'),
+	'TR_STREET_1' => tr('Street 1'),
+	'TR_STREET_2' => tr('Street 2'),
+	'TR_PHONE' => tr('Phone'),
+	'TR_FAX' => tr('Fax'),
+	'TR_GENDER' => tr('Gender'),
+	'TR_MALE' => tr('Male'),
+	'TR_FEMALE' => tr('Female'),
+	'TR_UNKNOWN' => tr('Unknown'),
+	'TR_UPDATE' => tr('Update'),
+	'TR_SEND_DATA' => tr('Send new login data'),
+	'FIRST_NAME' => isset($_POST['fname']) ? tohtml($_POST['fname']) : tohtml($row['fname']),
+	'LAST_NAME' => isset($_POST['lname']) ? tohtml($_POST['lname']) : tohtml($row['lname']),
+	'FIRM' => isset($_POST['firm']) ? tohtml($_POST['firm']) : tohtml($row['firm']),
+	'ZIP' => isset($_POST['zip']) ? tohtml($_POST['zip']) : tohtml($row['zip']),
+	'CITY' => isset($_POST['city']) ? tohtml($_POST['city']) : tohtml($row['city']),
+	'STATE_PROVINCE' => isset($_POST['state']) ? tohtml($_POST['state']) : tohtml($row['state']),
+	'COUNTRY' => isset($_POST['country']) ? tohtml($_POST['country']) : tohtml($row['country']),
+	'STREET_1' => isset($_POST['street1']) ? tohtml($_POST['street1']) : tohtml($row['street1']),
+	'STREET_2' => isset($_POST['street2']) ? tohtml($_POST['street2']) : tohtml($row['street2']),
+	'PHONE' => isset($_POST['phone']) ? tohtml($_POST['phone']) : tohtml($row['phone']),
+	'FAX' => isset($_POST['fax']) ? tohtml($_POST['fax']) : tohtml($row['fax']),
+	'USERNAME' => tohtml(decode_idna($row['admin_name'])),
+	'EMAIL' => isset($_POST['email']) ? tohtml($_POST['email']) : tohtml($row['email']),
+	'VL_MALE' => (isset($_POST['gender']) && $_POST['gender'] == 'M' || $row['gender'] == 'M') ? $cfg['HTML_SELECTED'] : '',
+	'VL_FEMALE' => (isset($_POST['gender']) && $_POST['gender'] == 'F' || $row['gender'] == 'F') ? $cfg['HTML_SELECTED'] : '',
+	'VL_UNKNOWN' => (isset($_POST['gender']) && $_POST['gender'] == 'U' || (!isset($_POST['gender']) && ($row['gender'] == 'U' || empty($row['gender'])))) ? $cfg['HTML_SELECTED'] : '',
+	'SEND_DATA_CHECKED' => (isset($_POST['send_data'])) ? $cfg['HTML_CHECKED'] : '',
+	'EDIT_ID' => $userId
+]);
 
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(
-	iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl)
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+	\iMSCP\Core\Events::onAdminScriptEnd, ['templateEngine' => $tpl]
 );
 
 $tpl->prnt();

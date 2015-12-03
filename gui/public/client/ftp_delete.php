@@ -25,14 +25,14 @@
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 if (customerHasFeature('ftp') && isset($_GET['id'])) {
 	$ftpUserId = clean_input($_GET['id']);
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeDeleteFtp, array('ftpUserId' => $ftpUserId));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeDeleteFtp, array('ftpUserId' => $ftpUserId));
 
 	$query = "SELECT `gid` FROM `ftp_users` WHERE `userid` = ? AND `admin_id` = ?";
 	$stmt = exec_query($query, array($ftpUserId, $_SESSION['user_id']));
@@ -72,7 +72,7 @@ if (customerHasFeature('ftp') && isset($_GET['id'])) {
 			}
 		}
 
-		$cfg = iMSCP_Registry::get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 		if($cfg['FTPD_SERVER'] == 'vsftpd') {
 			exec_query('UPDATE ftp_users SET status = ? WHERE userid = ?', array('todelete', $ftpUserId));
@@ -80,10 +80,10 @@ if (customerHasFeature('ftp') && isset($_GET['id'])) {
 			exec_query('DELETE FROM ftp_users WHERE userid = ?', $ftpUserId);
 		}
 
-		if(isset($cfg->FILEMANAGER_PACKAGE) && $cfg->FILEMANAGER_PACKAGE == 'Pydio') {
+		if(isset($cfg['FILEMANAGER_PACKAGE']) && $cfg['FILEMANAGER_PACKAGE'] == 'Pydio') {
 			// Quick fix to delete FTP preferences directory as created by Pydio
 			// FIXME: Move this statement at engine level
-			$userPrefDir = $cfg->GUI_PUBLIC_DIR . '/tools/ftp/data/plugins/auth.serial/' . $ftpUserId;
+			$userPrefDir = $cfg['GUI_PUBLIC_DIR'] . '/tools/ftp/data/plugins/auth.serial/' . $ftpUserId;
 			if(is_dir($userPrefDir)) {
 				utils_removeDir($userPrefDir);
 			}
@@ -91,7 +91,7 @@ if (customerHasFeature('ftp') && isset($_GET['id'])) {
 
 		$db->commit();
 
-		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterDeleteFtp, array('ftpUserId' => $ftpUserId));
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterDeleteFtp, array('ftpUserId' => $ftpUserId));
 
 		if($cfg['FTPD_SERVER'] == 'vsftpd') {
 			send_request();

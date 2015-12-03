@@ -32,7 +32,7 @@
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
@@ -90,12 +90,11 @@ if (customerHasFeature('subdomains') && isset($_GET['id'])) {
 		}
 
 		if (!$ret) {
-			iMSCP_Events_Aggregator::getInstance()->dispatch(
-				iMSCP_Events::onBeforeDeleteSubdomain, array('subdomainId' => $subId, 'type' => 'sub')
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+				\iMSCP\Core\Events::onBeforeDeleteSubdomain, array('subdomainId' => $subId, 'type' => 'sub')
 			);
 
-			/** @var $cfg iMSCP_Config_Handler_File */
-			$cfg = iMSCP_Registry::get('config');
+			$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 			/** @var $db iMSCP_Database */
 			$db = iMSCP_Database::getInstance();
@@ -115,8 +114,8 @@ if (customerHasFeature('subdomains') && isset($_GET['id'])) {
 				throw $e;
 			}
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(
-				iMSCP_Events::onAfterDeleteSubdomain, array('subdomainId' => $subId, 'type' => 'sub')
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+				\iMSCP\Core\Events::onAfterDeleteSubdomain, array('subdomainId' => $subId, 'type' => 'sub')
 			);
 
 			send_request();

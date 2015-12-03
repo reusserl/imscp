@@ -33,7 +33,7 @@
  * Generates database sql users list.
  *
  * @access private
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param int $databaseId Database unique identifier
  * @return void
  */
@@ -66,7 +66,7 @@ function _client_generateDatabaseSqlUserList($tpl, $databaseId)
 			)
 		);
 
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$sqlUserName = $row['sqlu_name'];
 			$tpl->assign(
 				array(
@@ -85,7 +85,7 @@ function _client_generateDatabaseSqlUserList($tpl, $databaseId)
 /**
  * Generates databases list
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param int $domainId Domain unique identifier
  * @return void
  */
@@ -109,7 +109,7 @@ function client_databasesList($tpl, $domainId)
 		set_page_message(tr('You do not have databases.'), 'static_info');
 		$tpl->assign('SQL_DATABASES_USERS_LIST', '');
 	} else {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$tpl->assign(
 				array(
 					'DB_ID' => $row['sqld_id'],
@@ -132,7 +132,7 @@ function client_databasesList($tpl, $domainId)
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
@@ -140,10 +140,9 @@ customerHasFeature('sql') or showBadRequestErrorPage();
 
 $domainProperties = get_domain_default_props($_SESSION['user_id']);
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -176,7 +175,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

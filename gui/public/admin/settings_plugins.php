@@ -22,32 +22,19 @@
  * Functions
  */
 
-namespace admin;
-
-use iMSCP_Events_Aggregator as EventManager;
-use iMSCP_Registry as Registry;
-use iMSCP_Plugin_Manager as PluginManager;
-use iMSCP_Events as Events;
-use iMSCP_Events_Listener_ResponseCollection as EventCollection;
-use iMSCP_pTemplate as TemplateEngine;
-use iMSCP_Utility_OpcodeCache as OpcodeCacheUtils;
-use PharData;
-use ZipArchive;
-use iMSCP_Exception as iMSCPException;
-use Exception;
 
 /**
  * Upload plugin archive into the gui/plugins directory
  *
  * Supported archives: zip tar.gz and tar.bz2
  *
- * @param PluginManager $pluginManager
+ * @param \iMSCP\Core\Plugin\PluginManager $pluginManager
  * @return bool TRUE on success, FALSE on failure
  */
 function uploadPlugin($pluginManager)
 {
 	$pluginDirectory = $pluginManager->pluginGetDirectory();
-	$tmpDirectory = GUI_ROOT_DIR . '/data/tmp';
+	$tmpDirectory = 'data/tmp';
 	$ret = false;
 
 	if(isset($_FILES['plugin_archive'])) {
@@ -90,7 +77,7 @@ function uploadPlugin($pluginManager)
 					$pluginName = $arch->getBasename();
 
 					if(!isset($arch["$pluginName/$pluginName.php"])) {
-						throw new iMSCPException(tr('File %s is missing in plugin archive.', "$pluginName.php"));
+						throw new RuntimeException(tr('File %s is missing in plugin archive.', "$pluginName.php"));
 					}
 
 					$arch->extractTo($tmpDirectory, "$pluginName/info.php", true);
@@ -106,45 +93,45 @@ function uploadPlugin($pluginManager)
 							if($index !== false) {
 								if(($stats = $arch->statIndex($index))) {
 									if($stats['name'] != "$pluginName/$pluginName.php") {
-										throw new iMSCPException(
+										throw new RuntimeException(
 											tr('File %s is missing in plugin archive.', "$pluginName.php")
 										);
 									}
 								} else {
-									throw new iMSCPException(tr('Unable to get stats for file %s.', "$pluginName.php"));
+									throw new RuntimeException(tr('Unable to get stats for file %s.', "$pluginName.php"));
 								}
 							} else {
-								throw new iMSCPException(tr('File %s is missing in plugin archive.', "$pluginName.php"));
+								throw new RuntimeException(tr('File %s is missing in plugin archive.', "$pluginName.php"));
 							}
 						} else {
-							throw new iMSCPException(tr('Unable to find plugin root directory withing archive.'));
+							throw new RuntimeException(tr('Unable to find plugin root directory withing archive.'));
 						}
 
 						if($arch->extractTo($tmpDirectory, "$pluginName/info.php")) {
 							$pluginManager->pluginCheckCompat($pluginName, include("$tmpDirectory/$pluginName/info.php"));
 						} else {
-							throw new iMSCPException(tr('Unable to extract info.php file'));
+							throw new RuntimeException(tr('Unable to extract info.php file'));
 						}
 					} else {
-						throw new iMSCPException(tr('Unable to open plugin archive.'));
+						throw new RuntimeException(tr('Unable to open plugin archive.'));
 					}
 				}
 
 				if($pluginManager->pluginIsKnown($pluginName) && $pluginManager->pluginIsProtected($pluginName)) {
-					throw new iMSCPException(tr('You are not allowed to update a protected plugin.'));
+					throw new BadFunctionCallException(tr('You are not allowed to update a protected plugin.'));
 				}
 
 				# Backup current plugin directory in temporary directory if exists
 				if(is_dir("$pluginDirectory/$pluginName")) {
 					if(!@rename("$pluginDirectory/$pluginName", "$tmpDirectory/$pluginName" . '-old')) {
-						throw new iMSCPException(tr('Unable to backup %s plugin directory.', $pluginName));
+						throw new RuntimeException(tr('Unable to backup %s plugin directory.', $pluginName));
 					}
 				}
 
 				if(!$zipArch) {
 					$arch->extractTo($pluginDirectory, null, true);
 				} elseif(!$arch->extractTo($pluginDirectory)) {
-					throw new iMSCPException(tr('Unable to extract plugin archive.'));
+					throw new RuntimeException(tr('Unable to extract plugin archive.'));
 				}
 
 				$ret = true;
@@ -214,8 +201,8 @@ function translateStatus($pluginStatus)
 /**
  * Generates plugin list
  *
- * @param TemplateEngine $tpl Template engine instance
- * @param PluginManager $pluginManager
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
+ * @param \iMSCP\Core\Plugin\PluginManager $pluginManager
  * @return void
  */
 function generatePage($tpl, $pluginManager)
@@ -227,7 +214,7 @@ function generatePage($tpl, $pluginManager)
 		set_page_message(tr('Plugin list is empty.'), 'static_info');
 	} else {
 		natsort($pluginList);
-		$cacheFile = PERSISTENT_PATH . '/protected_plugins.php';
+		$cacheFile = 'data/persistent/protected_plugins.php';
 
 		foreach($pluginList as $pluginName) {
 			$pluginInfo = $pluginManager->pluginGetInfo($pluginName);
@@ -325,7 +312,7 @@ function generatePage($tpl, $pluginManager)
 /**
  * Check plugin action
  *
- * @param PluginManager $pluginManager
+ * @param \iMSCP\Core\Plugin\PluginManager $pluginManager
  * @param string $pluginName Name of plugin on which the action is being performed
  * @param string $action Action Plugin action name ( install|uninstall|update|change|enable|disable|delete|protect )
  * @return bool TRUE if the plugin action is allowed, FALSE otherwise
@@ -419,7 +406,7 @@ function checkAction($pluginManager, $pluginName, $action)
 /**
  * Do the given action for the given plugin
  *
- * @param PluginManager $pluginManager
+ * @param \iMSCP\Core\Plugin\PluginManager $pluginManager
  * @param string $pluginName Plugin name
  * @param string $action Action ( install|uninstall|update|change|enable|disable|delete|protect )
  * @return void
@@ -436,8 +423,8 @@ function doAction($pluginManager, $pluginName, $action)
 				$ret = call_user_func(array($pluginManager, 'plugin' . ucfirst($action)), $pluginName);
 
 				if($ret !== false) {
-					if($ret == PluginManager::ACTION_FAILURE || $ret == PluginManager::ACTION_STOPPED) {
-						$msg = ($ret == PluginManager::ACTION_FAILURE)
+					if($ret == \iMSCP\Core\Plugin\PluginManager::ACTION_FAILURE || $ret == \iMSCP\Core\Plugin\PluginManager::ACTION_STOPPED) {
+						$msg = ($ret == \iMSCP\Core\Plugin\PluginManager::ACTION_FAILURE)
 							? tr('Action has failed.') : tr('Action has been stopped.');
 
 						switch ($action) {
@@ -523,7 +510,7 @@ function doAction($pluginManager, $pluginName, $action)
 					set_page_message(tr('An unexpected error occurred'));
 				}
 			}
-		} catch(iMSCPException $e) {
+		} catch(Exception $e) {
 			set_page_message($e->getMessage(), 'error');
 		}
 	} else {
@@ -534,7 +521,7 @@ function doAction($pluginManager, $pluginName, $action)
 /**
  * Do bulk action (activate|deactivate|protect)
  *
- * @param PluginManager $pluginManager
+ * @param \iMSCP\Core\Plugin\PluginManager $pluginManager
  * @return void
  */
 function doBulkAction($pluginManager)
@@ -555,7 +542,7 @@ function doBulkAction($pluginManager)
 /**
  * Update plugin list
  *
- * @param PluginManager $pluginManager
+ * @param iMSCP\Core\Plugin\ $pluginManager
  * @param iMSCP
  * @return void
  */
@@ -563,12 +550,11 @@ function updatePluginList($pluginManager)
 {
 	$eventManager = $pluginManager->getEventManager();
 
-	/** @var EventCollection $responses */
-	$responses = $eventManager->dispatch(Events::onBeforeUpdatePluginList, array('pluginManager' => $pluginManager));
+	$responses = $eventManager->trigger(Events::onBeforeUpdatePluginList, array('pluginManager' => $pluginManager));
 
-	if(!$responses->isStopped()) {
+	if(!$responses->stopped()) {
 		$updateInfo = $pluginManager->pluginUpdateList();
-		$eventManager->dispatch(Events::onAfterUpdatePluginList, array('pluginManager' => $pluginManager));
+		$eventManager->dispatch(\iMSCP\Core\Events::onAfterUpdatePluginList, array('pluginManager' => $pluginManager));
 
 		set_page_message(
 			tr(
@@ -584,10 +570,9 @@ function updatePluginList($pluginManager)
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-EventManager::getInstance()->dispatch(Events::onAdminScriptStart);
+EventManager::getInstance()->dispatch(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 

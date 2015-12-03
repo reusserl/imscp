@@ -25,33 +25,33 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();;
 
-$tpl = new iMSCP_pTemplate();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/manage_reseller_owners.tpl',
-		'page_message' => 'layout',
-		'hosting_plans' => 'page',
-		'reseller_list' => 'page',
-		'reseller_item' => 'reseller_list',
-		'select_admin' => 'page',
-		'select_admin_option' => 'select_admin'));
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic(array(
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/manage_reseller_owners.tpl',
+	'page_message' => 'layout',
+	'hosting_plans' => 'page',
+	'reseller_list' => 'page',
+	'reseller_item' => 'reseller_list',
+	'select_admin' => 'page',
+	'select_admin_option' => 'select_admin'
+));
 
 /**
- * @todo check if it's useful to have the table admin two times in the same query
+ * @param \iMSCP\Core\Template\TemplateEngine $tpl
  */
-function gen_reseller_table($tpl) {
+function gen_reseller_table($tpl)
+{
 
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$query = "
 		SELECT
@@ -70,35 +70,26 @@ function gen_reseller_table($tpl) {
 
 	$i = 0;
 
-	if ($rs->recordCount() == 0) {
-		$tpl->assign(
-			array(
-				'MESSAGE' => tr('Reseller list is empty.'),
-				'RESELLER_LIST' => '',
-			)
-		);
+	if ($rs->rowCount() == 0) {
+		$tpl->assign(array(
+			'MESSAGE' => tr('Reseller list is empty.'),
+			'RESELLER_LIST' => '',
+		));
 
 		$tpl->parse('PAGE_MESSAGE', 'page_message');
 	} else {
-		while (!$rs->EOF) {
+		while ($row = $rs->fetch(PDO::FETCH_ASSOC)) {
+			$admin_id = $row['admin_id'];
+			$admin_id_var_name = "admin_id_" . $admin_id;
 
-			$admin_id = $rs->fields['admin_id'];
-
-			$admin_id_var_name = "admin_id_".$admin_id;
-
-			$tpl->assign(
-				array(
-					'NUMBER' => $i + 1,
-					'RESELLER_NAME' => tohtml($rs->fields['admin_name']),
-					'OWNER' => tohtml($rs->fields['created_by']),
-					'CKB_NAME' => $admin_id_var_name,
-				)
-			);
+			$tpl->assign(array(
+				'NUMBER' => $i + 1,
+				'RESELLER_NAME' => tohtml($row['admin_name']),
+				'OWNER' => tohtml($row['created_by']),
+				'CKB_NAME' => $admin_id_var_name,
+			));
 
 			$tpl->parse('RESELLER_ITEM', '.reseller_item');
-
-			$rs->moveNext();
-
 			$i++;
 		}
 
@@ -120,39 +111,33 @@ function gen_reseller_table($tpl) {
 
 	$rs = execute_query($query);
 
-	while (!$rs->EOF) {
+	while ($row = $rs->fetch(PDO::FETCH_ASSOC)) {
 
 		if ((isset($_POST['uaction']) && $_POST['uaction'] === 'reseller_owner') && (isset($_POST['dest_admin']) &&
-			$_POST['dest_admin'] == $rs->fields['admin_id'])
+				$_POST['dest_admin'] == $row['admin_id'])
 		) {
-			$selected = $cfg->HTML_SELECTED;
+			$selected = $cfg['HTML_SELECTED'];
 		} else {
 			$selected = '';
 		}
 
-		$tpl->assign(
-			array(
-				'OPTION' => tohtml($rs->fields['admin_name']),
-				'VALUE' => $rs->fields['admin_id'],
-				'SELECTED' => $selected));
+		$tpl->assign(array(
+			'OPTION' => tohtml($row['admin_name']),
+			'VALUE' => $row['admin_id'],
+			'SELECTED' => $selected
+		));
 
 		$tpl->parse('SELECT_ADMIN_OPTION', '.select_admin_option');
-
-		$rs->moveNext();
-
 		$i++;
 	}
 
 	$tpl->parse('SELECT_ADMIN', 'select_admin');
-
 	$tpl->assign('PAGE_MESSAGE', '');
 }
 
-/**
- *
- */
-function update_reseller_owner() {
 
+function update_reseller_owner()
+{
 	if (isset($_POST['uaction']) && $_POST['uaction'] === 'reseller_owner') {
 		$query = "
 			SELECT
@@ -166,9 +151,8 @@ function update_reseller_owner() {
 		";
 		$rs = execute_query($query);
 
-		while (!$rs->EOF) {
-			$admin_id = $rs->fields['admin_id'];
-
+		while ($row = $rs->fetch(PDO::FETCH_ASSOC)) {
+			$admin_id = $row['admin_id'];
 			$admin_id_var_name = "admin_id_$admin_id";
 
 			if (isset($_POST[$admin_id_var_name]) && $_POST[$admin_id_var_name] === 'on') {
@@ -185,8 +169,6 @@ function update_reseller_owner() {
 
 				exec_query($query, array($dest_admin, $admin_id));
 			}
-
-			$rs->moveNext();
 		}
 	}
 }
@@ -197,21 +179,21 @@ generateNavigation($tpl);
 update_reseller_owner();
 gen_reseller_table($tpl);
 
-$tpl->assign(
-	array(
-		'TR_RESELLER_ASSIGNMENT' => tr('Reseller assignment'),
-		'TR_RESELLER_USERS' => tr('Reseller users'),
-		'TR_NUMBER' => tr('No.'),
-		'TR_MARK' => tr('Mark'),
-		'TR_RESELLER_NAME' => tr('Reseller name'),
-		'TR_OWNER' => tr('Owner'),
-		'TR_TO_ADMIN' => tr('To Admin'),
-		'TR_MOVE' => tr('Move')));
+$tpl->assign(array(
+	'TR_RESELLER_ASSIGNMENT' => tr('Reseller assignment'),
+	'TR_RESELLER_USERS' => tr('Reseller users'),
+	'TR_NUMBER' => tr('No.'),
+	'TR_MARK' => tr('Mark'),
+	'TR_RESELLER_NAME' => tr('Reseller name'),
+	'TR_OWNER' => tr('Owner'),
+	'TR_TO_ADMIN' => tr('To Admin'),
+	'TR_MOVE' => tr('Move')
+));
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+	'templateEngine' => $tpl
+));
 $tpl->prnt();
 
 unsetMessages();

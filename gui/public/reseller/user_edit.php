@@ -56,7 +56,7 @@ function reseller_loadUserData($adminId)
 	);
 
 	if($stmt->rowCount()) {
-		$data = $stmt->fetchRow();
+		$data = $stmt->fetch();
 
 		$adminName = $data['admin_name'];
 		$email = $data['email'];
@@ -81,7 +81,7 @@ function reseller_loadUserData($adminId)
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @return void
  */
 function reseller_generatePage($tpl)
@@ -89,7 +89,7 @@ function reseller_generatePage($tpl)
 	global $adminName, $email, $customerId, $firstName, $lastName, $firm, $zip, $gender, $city, $state, $country,
 		$street1, $street2, $phone, $fax;
 
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$tpl->assign(
 		array(
@@ -122,7 +122,7 @@ function reseller_generatePage($tpl)
  */
 function reseller_updateUserData($adminId)
 {
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeEditUser, array('userId' => $adminId));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditUser, array('userId' => $adminId));
 
 	global $adminName, $email, $customerId, $firstName, $lastName, $firm, $zip, $gender, $city, $state, $country,
 		$street1, $street2, $phone, $fax, $password, $passwordRepeat;
@@ -182,7 +182,7 @@ function reseller_updateUserData($adminId)
 		exec_query('DELETE FROM login WHERE user_name = ?', $adminName);
 	}
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditUser, array('userId' => $adminId));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditUser, array('userId' => $adminId));
 
 	set_page_message(tr('User data successfully updated'), 'success');
 	write_log("{$_SESSION['user_logged']} updated data for $adminName.", E_USER_NOTICE);
@@ -198,20 +198,18 @@ function reseller_updateUserData($adminId)
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 check_login('reseller');
 
 if(isset($_REQUEST['edit_id'])) {
 	$adminId = intval($_GET['edit_id']);
 
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(
 		array(
 			'layout' => 'shared/layouts/ui.tpl',
@@ -264,7 +262,7 @@ if(isset($_REQUEST['edit_id'])) {
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 	$tpl->prnt();
 } else {

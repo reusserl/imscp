@@ -32,16 +32,15 @@
 /**
  * Generates users list.
  *
- * @param  iMSCP_pTemplate $tpl Template engine
+ * @param  TemplateEngine $tpl Template engine
  * @param  int $resellerId Reseller unique identifier
  * @return void
  */
 function generate_users_list($tpl, $resellerId)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$rowsPerPage = $cfg->DOMAIN_ROWS_PER_PAGE;
+	$rowsPerPage = $cfg['DOMAIN_ROWS_PER_PAGE'];
 
 	if (isset($_POST['details']) && !empty($_POST['details'])) {
 		$_SESSION['details'] = $_POST['details'];
@@ -160,7 +159,7 @@ function generate_users_list($tpl, $resellerId)
 			);
 		}
 
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			if ($row['admin_status'] == 'ok' && $row['domain_status'] == 'ok') {
 				$statusIcon = 'ok';
 				$statusDomain = translate_dmn_status($row['domain_status']);
@@ -230,7 +229,7 @@ function generate_users_list($tpl, $resellerId)
 			if ($domainCreated == 0) {
 				$domainCreated = tr('N/A');
 			} else {
-				$domainCreated = date($cfg->DATE_FORMAT, $domainCreated);
+				$domainCreated = date($cfg['DATE_FORMAT'], $domainCreated);
 			}
 
 			$tpl->assign(
@@ -293,16 +292,16 @@ function check_externel_events()
 /***********************************************************************************************************************
  * Main script
  */
-require 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+require '../../application.php';
+
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -345,7 +344,7 @@ $tpl->assign(
 	)
 );
 
-if (isset($cfg->HOSTING_PLANS_LEVEL) && $cfg->HOSTING_PLANS_LEVEL == 'admin') {
+if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
 	$tpl->assign('EDIT_OPTION', '');
 }
 
@@ -357,7 +356,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

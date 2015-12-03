@@ -30,17 +30,14 @@
  */
 
 /**
- * Generate layout color form.
+ * Generate layout color form
  *
- * @author Laurent Declercq <l.declerq@nuxwin.com>
- * @since iMSCP 1.0.1.6
- * @param $tpl iMSCP_pTemplate Template engine instance
+ * @param $tpl \iMSCP\Core\Template\TemplateEngine Template engine instance
  * @return void
  */
 function admin_generateLayoutColorForm($tpl)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$colors = layout_getAvailableColorSet();
 
@@ -52,10 +49,10 @@ function admin_generateLayoutColorForm($tpl)
 
 	if (!empty($colors)) {
 		foreach ($colors as $color) {
-			$tpl->assign(
-				array(
-					'COLOR' => $color,
-					'SELECTED_COLOR' => ($color == $selectedColor) ? $cfg->HTML_SELECTED : ''));
+			$tpl->assign(array(
+				'COLOR' => $color,
+				'SELECTED_COLOR' => ($color == $selectedColor) ? $cfg['HTML_SELECTED'] : ''
+			));
 
 			$tpl->parse('LAYOUT_COLOR_BLOCK', '.layout_color_block');
 		}
@@ -68,27 +65,23 @@ function admin_generateLayoutColorForm($tpl)
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/layout.tpl',
-		'page_message' => 'layout',
-		'logo_remove_button' => 'page',
-		'layout_colors_block' => 'page',
-		'layout_color_block' => 'layout_colors_block'
-	)
-);
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic(array(
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/layout.tpl',
+	'page_message' => 'layout',
+	'logo_remove_button' => 'page',
+	'layout_colors_block' => 'page',
+	'layout_color_block' => 'layout_colors_block'
+));
 
 /**
  * Dispatches request
@@ -120,55 +113,54 @@ if (isset($_POST['uaction'])) {
 	}
 }
 
-$html_selected = $cfg->HTML_SELECTED;
+$html_selected = $cfg['HTML_SELECTED'];
 $userId = $_SESSION['user_id'];
 
 if ($_SESSION['show_main_menu_labels']) {
-    $tpl->assign(
-        array(
-            'MAIN_MENU_SHOW_LABELS_ON' => $html_selected,
-            'MAIN_MENU_SHOW_LABELS_OFF' => ''));
+	$tpl->assign(array(
+		'MAIN_MENU_SHOW_LABELS_ON' => $html_selected,
+		'MAIN_MENU_SHOW_LABELS_OFF' => ''
+	));
 } else {
-    $tpl->assign(
-        array(
-            'MAIN_MENU_SHOW_LABELS_ON' => '',
-            'MAIN_MENU_SHOW_LABELS_OFF' => $html_selected));
+	$tpl->assign(array(
+		'MAIN_MENU_SHOW_LABELS_ON' => '',
+		'MAIN_MENU_SHOW_LABELS_OFF' => $html_selected
+	));
 }
-
 
 $ispLogo = layout_getUserLogo();
 
 if (layout_isUserLogo($ispLogo)) {
-    $tpl->parse('LOGO_REMOVE_BUTTON', '.logo_remove_button');
+	$tpl->parse('LOGO_REMOVE_BUTTON', '.logo_remove_button');
 } else {
-    $tpl->assign('LOGO_REMOVE_BUTTON', '');
+	$tpl->assign('LOGO_REMOVE_BUTTON', '');
 }
 
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Admin / Profile / Layout'),
-		'ISP_LOGO' => $ispLogo,
-		'OWN_LOGO' => $ispLogo,
-		'TR_UPLOAD_LOGO' => tr('Upload logo'),
-		'TR_LOGO_FILE' => tr('Logo file'),
-        'TR_ENABLED' => tr('Enabled'),
-        'TR_DISABLED' => tr('Disabled'),
-		'TR_UPLOAD' => tr('Upload'),
-		'TR_REMOVE' => tr('Remove'),
-		'TR_LAYOUT_COLOR' => tr('Layout color'),
-		'TR_CHOOSE_LAYOUT_COLOR' =>  tr('Choose layout color'),
-		'TR_CHANGE' => tr('Change'),
-        'TR_OTHER_SETTINGS' => tr('Other settings'),
-        'TR_MAIN_MENU_SHOW_LABELS' => tr('Show labels for main menu links')));
+$tpl->assign(array(
+	'TR_PAGE_TITLE' => tr('Admin / Profile / Layout'),
+	'ISP_LOGO' => $ispLogo,
+	'OWN_LOGO' => $ispLogo,
+	'TR_UPLOAD_LOGO' => tr('Upload logo'),
+	'TR_LOGO_FILE' => tr('Logo file'),
+	'TR_ENABLED' => tr('Enabled'),
+	'TR_DISABLED' => tr('Disabled'),
+	'TR_UPLOAD' => tr('Upload'),
+	'TR_REMOVE' => tr('Remove'),
+	'TR_LAYOUT_COLOR' => tr('Layout color'),
+	'TR_CHOOSE_LAYOUT_COLOR' => tr('Choose layout color'),
+	'TR_CHANGE' => tr('Change'),
+	'TR_OTHER_SETTINGS' => tr('Other settings'),
+	'TR_MAIN_MENU_SHOW_LABELS' => tr('Show labels for main menu links')
+));
 
 generateNavigation($tpl);
 admin_generateLayoutColorForm($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+	'templateEngine' => $tpl
+));
 $tpl->prnt();
 
 unsetMessages();

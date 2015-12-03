@@ -29,10 +29,9 @@
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
@@ -58,7 +57,7 @@ if (resellerHasFeature('domain_aliases') && isset($_GET['id'])) {
 	);
 
 	if ($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		deleteDomainAlias($alsId, $row['alias_name']);
 		redirectTo('alias.php');
 	}

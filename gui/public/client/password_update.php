@@ -32,7 +32,7 @@ function customer_updatePassword()
 	if(!empty($_POST)) {
 		$userId = $_SESSION['user_id'];
 
-		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeEditUser, array('userId' => $userId));
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditUser, array('userId' => $userId));
 
 		if (empty($_POST['current_password']) || empty($_POST['password']) || empty($_POST['password_confirmation'])) {
 			set_page_message(tr('All fields are required.'), 'error');
@@ -44,7 +44,7 @@ function customer_updatePassword()
 			$query = 'UPDATE `admin` SET `admin_pass` = ? WHERE `admin_id` = ?';
 			exec_query($query, array(\iMSCP\Crypt::bcrypt($_POST['password']), $userId));
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditUser, array('userId' => $userId));
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditUser, array('userId' => $userId));
 
 			write_log($_SESSION['user_logged'] . ': updated password.', E_USER_NOTICE);
 			set_page_message(tr('Password successfully updated.'), 'success');
@@ -79,16 +79,15 @@ function _customer_checkCurrentPassword($password)
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 customer_updatePassword();
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 
 $tpl->define_dynamic(
 	array(
@@ -114,7 +113,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

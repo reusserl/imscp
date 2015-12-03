@@ -74,7 +74,7 @@ function reseller_sendToCustomers($senderName, $senderEmail, $subject, $body)
 			'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `created_by` = ?', $_SESSION['user_id']
 		);
 
-		while ($rcptToData = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			reseller_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
 		}
 	}
@@ -136,19 +136,19 @@ function reseller_sendCircular()
 		$body = clean_input($_POST['body'], false);
 
 		if (reseller_isValidCircular($senderName, $senderEmail, $subject, $body)) {
-			$responses = iMSCP_Events_Aggregator::getInstance()->dispatch(
-				iMSCP_Events::onBeforeSendCircular,
+			$responses = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+				\iMSCP\Core\Events::onBeforeSendCircular,
 				array(
 					'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => 'customers',
 					'subject' => $subject, 'body' => $body
 				)
 			);
 
-			if (!$responses->isStopped()) {
+			if (!$responses->stopped()) {
 				reseller_sendToCustomers($senderName, $senderEmail, $subject, $body);
 
-				iMSCP_Events_Aggregator::getInstance()->dispatch(
-					iMSCP_Events::onAfterSendCircular,
+				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+					\iMSCP\Core\Events::onAfterSendCircular,
 					array(
 						'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => 'customers',
 						'subject' => $subject, 'body' => $body
@@ -171,7 +171,7 @@ function reseller_sendCircular()
 /**
  * Generate page data
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @return void
  */
 function reseller_generatePageData($tpl)
@@ -184,7 +184,7 @@ function reseller_generatePageData($tpl)
 	if ($senderName == '' && $senderEmail == '') {
 		$query = 'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_id` = ?';
 		$stmt = exec_query($query, $_SESSION['user_id']);
-		$data = $stmt->fetchRow();
+		$data = $stmt->fetch();
 
 		if (!empty($data['fname']) && !empty($data['lname'])) {
 			$senderName = $data['fname'] . ' ' . $data['lname'];
@@ -199,7 +199,7 @@ function reseller_generatePageData($tpl)
 		if ($data['email'] != '') {
 			$senderEmail = $data['email'];
 		} else {
-			$config = iMSCP_Registry::get('config');
+			$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 			if (isset($config['DEFAULT_ADMIN_ADDRESS']) && $config['DEFAULT_ADMIN_ADDRESS'] != '') {
 				$senderEmail = $config['DEFAULT_ADMIN_ADDRESS'];
@@ -223,10 +223,9 @@ function reseller_generatePageData($tpl)
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
@@ -235,7 +234,7 @@ if (!resellerHasCustomers()) {
 }
 
 if (!(!empty($_POST) && reseller_sendCircular())) {
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(
 		array(
 			'layout' => 'shared/layouts/ui.tpl',
@@ -264,7 +263,7 @@ if (!(!empty($_POST) && reseller_sendCircular())) {
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 	$tpl->prnt();
 

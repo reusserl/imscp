@@ -48,7 +48,7 @@ function _getUserTraffic($domainId, $beginTime, $endTime)
 	);
 
 	if ($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		return array($row['web_traffic'], $row['ftp_traffic'], $row['mail_traffic'], $row['pop_traffic']);
 	}
 
@@ -58,7 +58,7 @@ function _getUserTraffic($domainId, $beginTime, $endTime)
 /**
  * Generate statistics for the given period
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
  */
 function generatePage($tpl)
@@ -81,7 +81,7 @@ function generatePage($tpl)
 	);
 
 	if ($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		$numberYears = date('y') - date('y', $row['dtraff_time']);
 		$numberYears = $numberYears ? $numberYears + 1 : 1;
 	} else {
@@ -99,7 +99,8 @@ function generatePage($tpl)
 		$requestedPeriod = getLastDayOfMonth($month, $year);
 		$toDay = ($requestedPeriod < time()) ? date('j', $requestedPeriod) : date('j');
 		$all = array_fill(0, 8, 0);
-		$dateFormat = iMSCP_Registry::get('config')->DATE_FORMAT;
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();;
+		$dateFormat =$cfg['DATE_FORMAT'];
 
 		for ($fromDay = 1; $fromDay <= $toDay; $fromDay++) {
 			$beginTime = mktime(0, 0, 0, $month, $fromDay, $year);
@@ -143,14 +144,14 @@ function generatePage($tpl)
  * Main
  */
 
-require 'imscp-lib.php';
+require '../../application.php';
 
-$eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(iMSCP_Events::onClientScriptStart);
+$eventManager = \iMSCP\Core\Application::getInstance()->getEventManager();
+$eventManager->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'client/traffic_statistics.tpl',
@@ -181,7 +182,7 @@ generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-$eventManager->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+$eventManager->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();
 
 unsetMessages();

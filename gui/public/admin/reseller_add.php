@@ -50,7 +50,7 @@ function &admin_getData()
 			redirectTo('manage_users.php');
 		}
 
-		$phpEditor = iMSCP_PHPini::getInstance();
+		$phpEditor = \iMSCP\Core\Php\PhpEditor::getInstance();
 
 		foreach (
 			array(
@@ -117,56 +117,53 @@ function &admin_getData()
 /**
  * Generates account form.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
  * @return void
  */
 function _admin_generateAccountForm($tpl, &$data)
 {
-	$tpl->assign(
-		array(
-			 'TR_ACCOUNT_DATA' => tr('Account data'),
-			 'TR_RESELLER_NAME' => tr('Name'),
-			 'RESELLER_NAME' => tohtml($data['admin_name']),
-			 'TR_PASSWORD' => tr('Password'),
-			 'TR_PASSWORD_CONFIRMATION' => tr('Password confirmation'),
-			 'PASSWORD_CONFIRMATION' => tohtml($data['password_confirmation']),
-			 'TR_EMAIL' => tr('Email'),
-			 'EMAIL' => tohtml($data['email'])
-		)
-	);
+	$tpl->assign(array(
+		'TR_ACCOUNT_DATA' => tr('Account data'),
+		'TR_RESELLER_NAME' => tr('Name'),
+		'RESELLER_NAME' => tohtml($data['admin_name']),
+		'TR_PASSWORD' => tr('Password'),
+		'TR_PASSWORD_CONFIRMATION' => tr('Password confirmation'),
+		'PASSWORD_CONFIRMATION' => tohtml($data['password_confirmation']),
+		'TR_EMAIL' => tr('Email'),
+		'EMAIL' => tohtml($data['email'])
+	));
 }
 
 /**
  * Generates IP list form.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
  * @return void
  */
 function _admin_generateIpListForm($tpl, &$data)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$htmlChecked = $cfg->HTML_CHECKED;
+	$htmlChecked = $cfg['HTML_CHECKED'];
 
 	$tpl->assign(array(
-		 'TR_IP_ADDRESS' => tr('IP address'),
-		 'TR_IP_LABEL' => tr('Label'),
-		 'TR_ASSIGN' => tr('Assign')
+		'TR_IP_ADDRESS' => tr('IP address'),
+		'TR_IP_LABEL' => tr('Label'),
+		'TR_ASSIGN' => tr('Assign')
 	));
 
-	iMSCP_Events_Aggregator::getInstance()->registerListener('onGetJsTranslations', function ($e) {
-		/** @var $e \iMSCP_Events_Event */
+	\iMSCP\Core\Application::getInstance()->getEventManager()->attach('onGetJsTranslations', function ($e) {
+		/** @var $e \Zend\EventManager\Event */
 		$e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations(false);
 	});
 
 	foreach ($data['server_ips'] as $ipData) {
 		$tpl->assign(array(
-			 'IP_ID' => tohtml($ipData['ip_id']),
-			 'IP_NUMBER' => tohtml($ipData['ip_number']),
-			 'IP_ASSIGNED' => in_array($ipData['ip_id'], $data['reseller_ips']) ? $htmlChecked : ''
+			'IP_ID' => tohtml($ipData['ip_id']),
+			'IP_NUMBER' => tohtml($ipData['ip_number']),
+			'IP_ASSIGNED' => in_array($ipData['ip_id'], $data['reseller_ips']) ? $htmlChecked : ''
 		));
 
 		$tpl->parse('IP_BLOCK', '.ip_block');
@@ -176,167 +173,165 @@ function _admin_generateIpListForm($tpl, &$data)
 /**
  * Generates features form.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
  * @return void
  */
 function _admin_generateLimitsForm($tpl, &$data)
 {
-	$tpl->assign(
-		array(
-			 'TR_ACCOUNT_LIMITS' => tr('Account limits'),
-			 'TR_MAX_DMN_CNT' => tr('Domain limit') . '<br/><i>(0 ' . tr('unlimited') . ')</i>',
-			 'MAX_DMN_CNT' => tohtml($data['max_dmn_cnt']),
-			 'TR_MAX_SUB_CNT' => tr('Subdomain limit') . '<br /><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
-			 'MAX_SUB_CNT' => tohtml($data['max_sub_cnt']),
-			 'TR_MAX_ALS_CNT' => tr('Domain alias limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
-			 'MAX_ALS_CNT' => tohtml($data['max_als_cnt']),
-			 'TR_MAX_MAIL_CNT' => tr('Email account limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
-			 'MAX_MAIL_CNT' => tohtml($data['max_mail_cnt']),
-			 'TR_MAX_FTP_CNT' => tr('FTP account limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
-			 'MAX_FTP_CNT' => tohtml($data['max_ftp_cnt']),
-			 'TR_MAX_SQL_DB_CNT' => tr('SQL database limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
-			 'MAX_SQL_DB_CNT' => tohtml($data['max_sql_db_cnt']),
-			 'TR_MAX_SQL_USER_CNT' => tr('SQL user limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
-			 'MAX_SQL_USER_CNT' => tohtml($data['max_sql_user_cnt']),
-			 'TR_MAX_TRAFF_AMNT' => tr('Monthly traffic limit [MiB]') . '<br/><i>(0 ' . tr('unlimited') . ')</i>',
-			 'MAX_TRAFF_AMNT' => tohtml($data['max_traff_amnt']),
-			 'TR_MAX_DISK_AMNT' => tr('Disk space limit [MiB]') . '<br/><i>(0 ' . tr('unlimited') . ')</i>',
-			 'MAX_DISK_AMNT' => tohtml($data['max_disk_amnt'])));
+	$tpl->assign(array(
+		'TR_ACCOUNT_LIMITS' => tr('Account limits'),
+		'TR_MAX_DMN_CNT' => tr('Domain limit') . '<br/><i>(0 ' . tr('unlimited') . ')</i>',
+		'MAX_DMN_CNT' => tohtml($data['max_dmn_cnt']),
+		'TR_MAX_SUB_CNT' => tr('Subdomain limit') . '<br /><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
+		'MAX_SUB_CNT' => tohtml($data['max_sub_cnt']),
+		'TR_MAX_ALS_CNT' => tr('Domain alias limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
+		'MAX_ALS_CNT' => tohtml($data['max_als_cnt']),
+		'TR_MAX_MAIL_CNT' => tr('Email account limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
+		'MAX_MAIL_CNT' => tohtml($data['max_mail_cnt']),
+		'TR_MAX_FTP_CNT' => tr('FTP account limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
+		'MAX_FTP_CNT' => tohtml($data['max_ftp_cnt']),
+		'TR_MAX_SQL_DB_CNT' => tr('SQL database limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
+		'MAX_SQL_DB_CNT' => tohtml($data['max_sql_db_cnt']),
+		'TR_MAX_SQL_USER_CNT' => tr('SQL user limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
+		'MAX_SQL_USER_CNT' => tohtml($data['max_sql_user_cnt']),
+		'TR_MAX_TRAFF_AMNT' => tr('Monthly traffic limit [MiB]') . '<br/><i>(0 ' . tr('unlimited') . ')</i>',
+		'MAX_TRAFF_AMNT' => tohtml($data['max_traff_amnt']),
+		'TR_MAX_DISK_AMNT' => tr('Disk space limit [MiB]') . '<br/><i>(0 ' . tr('unlimited') . ')</i>',
+		'MAX_DISK_AMNT' => tohtml($data['max_disk_amnt'])
+	));
 }
 
 /**
  * Generates features form.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
  * @return void
  */
 function _admin_generateFeaturesForm($tpl, &$data)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$htmlChecked = $cfg->HTML_CHECKED;
+	$htmlChecked = $cfg['HTML_CHECKED'];
 
-	$tpl->assign(
-		array(
-			'TR_FEATURES' => tr('Features'),
+	$tpl->assign(array(
+		'TR_FEATURES' => tr('Features'),
 
-			'TR_SETTINGS' => tr('Settings'),
-			'TR_PHP_EDITOR' => tr('PHP Editor'),
-			'TR_PHP_EDITOR_SETTINGS' => tr('PHP Editor Settings'),
-			'TR_PERMISSIONS' => tr('Permissions'),
-			'TR_DIRECTIVES_VALUES' => tr('PHP directives values'),
-			'TR_FIELDS_OK' => tr('All fields seem to be valid.'),
-			'TR_VALUE_ERROR' => tr('Value for the PHP <strong>%%s</strong> directive must be between %%d and %%d.'),
-			'TR_CLOSE' => tr('Close'),
+		'TR_SETTINGS' => tr('Settings'),
+		'TR_PHP_EDITOR' => tr('PHP Editor'),
+		'TR_PHP_EDITOR_SETTINGS' => tr('PHP Editor Settings'),
+		'TR_PERMISSIONS' => tr('Permissions'),
+		'TR_DIRECTIVES_VALUES' => tr('PHP directives values'),
+		'TR_FIELDS_OK' => tr('All fields seem to be valid.'),
+		'TR_VALUE_ERROR' => tr('Value for the PHP <strong>%%s</strong> directive must be between %%d and %%d.'),
+		'TR_CLOSE' => tr('Close'),
 
-			'PHP_INI_SYSTEM_YES' => ($data['php_ini_system'] == 'yes') ? $htmlChecked : '',
-			'PHP_INI_SYSTEM_NO' => ($data['php_ini_system'] != 'yes') ? $htmlChecked : '',
+		'PHP_INI_SYSTEM_YES' => ($data['php_ini_system'] == 'yes') ? $htmlChecked : '',
+		'PHP_INI_SYSTEM_NO' => ($data['php_ini_system'] != 'yes') ? $htmlChecked : '',
 
-			'TR_PHP_INI_AL_ALLOW_URL_FOPEN' => tr('Can edit the PHP %s directive', '<b>allow_url_fopen</b>'),
-			'PHP_INI_AL_ALLOW_URL_FOPEN_YES' => ($data['php_ini_al_allow_url_fopen'] == 'yes') ? $htmlChecked : '',
-			'PHP_INI_AL_ALLOW_URL_FOPEN_NO' => ($data['php_ini_al_allow_url_fopen'] != 'yes') ? $htmlChecked : '',
+		'TR_PHP_INI_AL_ALLOW_URL_FOPEN' => tr('Can edit the PHP %s directive', '<b>allow_url_fopen</b>'),
+		'PHP_INI_AL_ALLOW_URL_FOPEN_YES' => ($data['php_ini_al_allow_url_fopen'] == 'yes') ? $htmlChecked : '',
+		'PHP_INI_AL_ALLOW_URL_FOPEN_NO' => ($data['php_ini_al_allow_url_fopen'] != 'yes') ? $htmlChecked : '',
 
-			'TR_PHP_INI_AL_DISPLAY_ERRORS' => tr('Can edit the PHP %s directive', '<b>display_errors</b>'),
-			'PHP_INI_AL_DISPLAY_ERRORS_YES' => ($data['php_ini_al_display_errors'] == 'yes') ? $htmlChecked : '',
-			'PHP_INI_AL_DISPLAY_ERRORS_NO' => ($data['php_ini_al_display_errors'] != 'yes') ? $htmlChecked : '',
+		'TR_PHP_INI_AL_DISPLAY_ERRORS' => tr('Can edit the PHP %s directive', '<b>display_errors</b>'),
+		'PHP_INI_AL_DISPLAY_ERRORS_YES' => ($data['php_ini_al_display_errors'] == 'yes') ? $htmlChecked : '',
+		'PHP_INI_AL_DISPLAY_ERRORS_NO' => ($data['php_ini_al_display_errors'] != 'yes') ? $htmlChecked : '',
 
-			'TR_PHP_INI_MAX_MEMORY_LIMIT' => tr('Max value for the %s PHP directive', '<b>memory_limit</b>'),
-			'PHP_INI_MAX_MEMORY_LIMIT' => tohtml($data['php_ini_max_memory_limit']),
+		'TR_PHP_INI_MAX_MEMORY_LIMIT' => tr('Max value for the %s PHP directive', '<b>memory_limit</b>'),
+		'PHP_INI_MAX_MEMORY_LIMIT' => tohtml($data['php_ini_max_memory_limit']),
 
-			'TR_PHP_INI_MAX_UPLOAD_MAX_FILESIZE' => tr('Max value for the %s PHP directive', '<b>upload_max_filesize</b>'),
-			'PHP_INI_MAX_UPLOAD_MAX_FILESIZE' => tohtml($data['php_ini_max_upload_max_filesize']),
+		'TR_PHP_INI_MAX_UPLOAD_MAX_FILESIZE' => tr('Max value for the %s PHP directive', '<b>upload_max_filesize</b>'),
+		'PHP_INI_MAX_UPLOAD_MAX_FILESIZE' => tohtml($data['php_ini_max_upload_max_filesize']),
 
-			'TR_PHP_INI_MAX_POST_MAX_SIZE' => tr('Max value for the %s PHP directive', '<b>post_max_size</b>'),
-			'PHP_INI_MAX_POST_MAX_SIZE' => tohtml($data['php_ini_max_post_max_size']),
+		'TR_PHP_INI_MAX_POST_MAX_SIZE' => tr('Max value for the %s PHP directive', '<b>post_max_size</b>'),
+		'PHP_INI_MAX_POST_MAX_SIZE' => tohtml($data['php_ini_max_post_max_size']),
 
-			'TR_PHP_INI_MAX_MAX_EXECUTION_TIME' => tr('Max value for the %s PHP directive', '<b>max_execution_time</b>'),
-			'PHP_INI_MAX_MAX_EXECUTION_TIME' => tohtml($data['php_ini_max_max_execution_time']),
+		'TR_PHP_INI_MAX_MAX_EXECUTION_TIME' => tr('Max value for the %s PHP directive', '<b>max_execution_time</b>'),
+		'PHP_INI_MAX_MAX_EXECUTION_TIME' => tohtml($data['php_ini_max_max_execution_time']),
 
-			'TR_PHP_INI_MAX_MAX_INPUT_TIME' => tr('Max value for the %s PHP directive', '<b>max_input_time</b>'),
-			'PHP_INI_MAX_MAX_INPUT_TIME' => tohtml($data['php_ini_max_max_input_time']),
+		'TR_PHP_INI_MAX_MAX_INPUT_TIME' => tr('Max value for the %s PHP directive', '<b>max_input_time</b>'),
+		'PHP_INI_MAX_MAX_INPUT_TIME' => tohtml($data['php_ini_max_max_input_time']),
 
-			'TR_APS_STANDARD' => tr('APS Standard'),
-			'APS_STANDARD_YES' => ($data['aps_standard'] == 'yes') ? $htmlChecked : '',
-			'APS_STANDARD_NO' => ($data['aps_standard'] != 'yes') ? $htmlChecked : '',
+		'TR_APS_STANDARD' => tr('APS Standard'),
+		'APS_STANDARD_YES' => ($data['aps_standard'] == 'yes') ? $htmlChecked : '',
+		'APS_STANDARD_NO' => ($data['aps_standard'] != 'yes') ? $htmlChecked : '',
 
-			'TR_SUPPORT_SYSTEM' => tr('Support system'),
-			'SUPPORT_SYSTEM_YES' => ($data['support_system'] == 'yes') ? $htmlChecked : '',
-			'SUPPORT_SYSTEM_NO' => ($data['support_system'] != 'yes') ? $htmlChecked : '',
+		'TR_SUPPORT_SYSTEM' => tr('Support system'),
+		'SUPPORT_SYSTEM_YES' => ($data['support_system'] == 'yes') ? $htmlChecked : '',
+		'SUPPORT_SYSTEM_NO' => ($data['support_system'] != 'yes') ? $htmlChecked : '',
 
-			'TR_PHP_INI_PERMISSION_HELP' => tr('Yes means that the reseller can allow his customers to edit this directive'),
-			'TR_YES' => tr('Yes'),
-			'TR_NO' => tr('No'),
-			'TR_MIB' => tr('MiB'),
-			'TR_SEC' => tr('Sec.')));
+		'TR_PHP_INI_PERMISSION_HELP' => tr('Yes means that the reseller can allow his customers to edit this directive'),
+		'TR_YES' => tr('Yes'),
+		'TR_NO' => tr('No'),
+		'TR_MIB' => tr('MiB'),
+		'TR_SEC' => tr('Sec.')
+	));
 
-		if($cfg['HTTPD_SERVER'] != 'apache_itk') {
-			$tpl->assign(
-				array(
-					'TR_PHP_INI_AL_DISABLE_FUNCTIONS' => tr('Can edit the PHP %s directive', '<b>disable_functions</b>'),
-					'PHP_INI_AL_DISABLE_FUNCTIONS_YES' => ($data['php_ini_al_disable_functions'] == 'yes') ? $htmlChecked : '',
-					'PHP_INI_AL_DISABLE_FUNCTIONS_NO' => ($data['php_ini_al_disable_functions'] != 'yes') ? $htmlChecked : ''));
-		} else {
-			$tpl->assign('PHP_EDITOR_DISABLE_FUNCTIONS_BLOCK', '');
-		}
+	if ($cfg['HTTPD_SERVER'] != 'apache_itk') {
+		$tpl->assign(array(
+			'TR_PHP_INI_AL_DISABLE_FUNCTIONS' => tr('Can edit the PHP %s directive', '<b>disable_functions</b>'),
+			'PHP_INI_AL_DISABLE_FUNCTIONS_YES' => ($data['php_ini_al_disable_functions'] == 'yes') ? $htmlChecked : '',
+			'PHP_INI_AL_DISABLE_FUNCTIONS_NO' => ($data['php_ini_al_disable_functions'] != 'yes') ? $htmlChecked : ''
+		));
+	} else {
+		$tpl->assign('PHP_EDITOR_DISABLE_FUNCTIONS_BLOCK', '');
+	}
 }
 
 /**
  * Generates features form.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array $data Domain data
  * @return void
  */
 function  _admin_generatePersonalDataFrom($tpl, &$data)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$htmlSelected = $cfg->HTML_SELECTED;
+	$htmlSelected = $cfg['HTML_SELECTED'];
 
-	$tpl->assign(
-		array(
-			 'TR_PERSONAL_DATA' => tr('Personal data'),
-			 'TR_CUSTOMER_ID' => tr('Customer ID'),
-			 'CUSTOMER_ID' => tohtml($data['customer_id']),
-			 'TR_FNAME' => tr('First name'),
-			 'FNAME' => tohtml($data['fname']),
-			 'TR_LNAME' => tr('Last name'),
-			 'LNAME' => tohtml($data['lname']),
-			 'TR_GENDER' => tr('Gender'),
-			 'TR_MALE' => tr('Male'),
-			 'MALE' => ($data['gender'] == 'M') ? $htmlSelected : '',
-			 'TR_FEMALE' => tr('Female'),
-			 'FEMALE' => ($data['gender'] == 'F') ? $htmlSelected : '',
-			 'TR_UNKNOWN' => tr('Unknown'),
-			 'UNKNOWN' => ($data['gender'] != 'M' && $data['gender'] != 'F') ? $htmlSelected : '',
-			 'TR_FIRM' => tr('Company'),
-			 'FIRM' => tohtml($data['firm']),
-			 'TR_STREET1' => tr('Street 1'),
-			 'STREET1' => tohtml($data['street1']),
-			 'TR_STREET2' => tr('Street 2'),
-			 'STREET2' => tohtml($data['street2']),
-			 'TR_ZIP' => tr('Zip code'),
-			 'ZIP' => tohtml($data['zip']),
-			 'TR_CITY' => tr('City'),
-			 'CITY' => tohtml($data['city']),
-			 'TR_STATE' => tr('State'),
-			 'STATE' => tohtml($data['state']),
-			 'TR_COUNTRY' => tr('Country'),
-			 'COUNTRY' => tohtml($data['country']),
-			 'TR_PHONE' => tr('Phone'),
-			 'PHONE' => tohtml($data['phone']),
-			 'TR_FAX' => tr('Fax'),
-			 'FAX' => tohtml($data['fax'])));
+	$tpl->assign(array(
+			'TR_PERSONAL_DATA' => tr('Personal data'),
+			'TR_CUSTOMER_ID' => tr('Customer ID'),
+			'CUSTOMER_ID' => tohtml($data['customer_id']),
+			'TR_FNAME' => tr('First name'),
+			'FNAME' => tohtml($data['fname']),
+			'TR_LNAME' => tr('Last name'),
+			'LNAME' => tohtml($data['lname']),
+			'TR_GENDER' => tr('Gender'),
+			'TR_MALE' => tr('Male'),
+			'MALE' => ($data['gender'] == 'M') ? $htmlSelected : '',
+			'TR_FEMALE' => tr('Female'),
+			'FEMALE' => ($data['gender'] == 'F') ? $htmlSelected : '',
+			'TR_UNKNOWN' => tr('Unknown'),
+			'UNKNOWN' => ($data['gender'] != 'M' && $data['gender'] != 'F') ? $htmlSelected : '',
+			'TR_FIRM' => tr('Company'),
+			'FIRM' => tohtml($data['firm']),
+			'TR_STREET1' => tr('Street 1'),
+			'STREET1' => tohtml($data['street1']),
+			'TR_STREET2' => tr('Street 2'),
+			'STREET2' => tohtml($data['street2']),
+			'TR_ZIP' => tr('Zip code'),
+			'ZIP' => tohtml($data['zip']),
+			'TR_CITY' => tr('City'),
+			'CITY' => tohtml($data['city']),
+			'TR_STATE' => tr('State'),
+			'STATE' => tohtml($data['state']),
+			'TR_COUNTRY' => tr('Country'),
+			'COUNTRY' => tohtml($data['country']),
+			'TR_PHONE' => tr('Phone'),
+			'PHONE' => tohtml($data['phone']),
+			'TR_FAX' => tr('Fax'),
+			'FAX' => tohtml($data['fax'])
+	));
 }
 
 /**
  * Generate edit form.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
  * @return void
  */
@@ -353,24 +348,21 @@ function admin_generateForm($tpl, &$data)
  * Create reseller account
  *
  * @throws Exception
- * @throws iMSCP_Exception
- * @throws iMSCP_Exception_Database
  * @return bool
  */
 function admin_checkAndCreateResellerAccount()
 {
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeAddUser);
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeAddUser);
 
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$errFieldsStack = array();
 
 	// Get needed data
 	$data =& admin_getData();
 
-	/** @var $db iMSCP_Database */
-	$db = iMSCP_Database::getInstance();
+	/** @var \Doctrine\DBAL\Connection $db */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	try {
 		$db->beginTransaction();
@@ -379,26 +371,27 @@ function admin_checkAndCreateResellerAccount()
 
 		$query = "SELECT COUNT(`admin_id`) `usernameExist` FROM `admin` WHERE `admin_name` = ? LIMIT 1";
 		$stmt = exec_query($query, $data['admin_name']);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-		if ($stmt->fields['usernameExist']) {
+		if ($row['usernameExist']) {
 			set_page_message(tr("The username %s is not available.", '<b>' . $data['admin_name'] . '</b>'), 'error');
 			$errFieldsStack[] = 'admin_name';
-		} elseif(!validates_username($data['admin_name'])) {
+		} elseif (!validates_username($data['admin_name'])) {
 			set_page_message(tr('Incorrect username length or syntax.'), 'error');
 			$errFieldsStack[] = 'admin_name';
 		}
 
 		// check for password
 
-		if(empty($data['password'])) {
+		if (empty($data['password'])) {
 			set_page_message(tr('You must provide a password.'), 'error');
 			$errFieldsStack[] = 'password';
 			$errFieldsStack[] = 'password_confirmation';
-		} elseif($data['password'] != $data['password_confirmation']) {
+		} elseif ($data['password'] != $data['password_confirmation']) {
 			set_page_message(tr("Passwords do not match."), 'error');
 			$errFieldsStack[] = 'password';
 			$errFieldsStack[] = 'password_confirmation';
-		} elseif(!checkPasswordSyntax($data['password'])) {
+		} elseif (!checkPasswordSyntax($data['password'])) {
 			$errFieldsStack[] = 'password';
 			$errFieldsStack[] = 'password_confirmation';
 		}
@@ -412,17 +405,17 @@ function admin_checkAndCreateResellerAccount()
 
 		// Check for ip addresses - We are safe here
 
-		$resellerIps  = array();
+		$resellerIps = array();
 
-		foreach($data['server_ips'] as $serverIpData) {
-			if(in_array($serverIpData['ip_id'], $data['reseller_ips'])) {
+		foreach ($data['server_ips'] as $serverIpData) {
+			if (in_array($serverIpData['ip_id'], $data['reseller_ips'])) {
 				$resellerIps[] = $serverIpData['ip_id'];
 			}
 		}
 
 		sort($resellerIps);
 
-		if(empty($resellerIps)) {
+		if (empty($resellerIps)) {
 			set_page_message(tr('You must assign at least one IP per reseller.'), 'error');
 		}
 
@@ -496,15 +489,15 @@ function admin_checkAndCreateResellerAccount()
 
 		// Check for PHP editor settings
 
-		$phpEditor = iMSCP_PHPini::getInstance();
+		$phpEditor = \iMSCP\Core\Php\PhpEditor::getInstance();
 
-		if($data['php_ini_system'] == 'yes') {
+		if ($data['php_ini_system'] == 'yes') {
 
 			// Check for permissions - We are safe here (If a permissions is wrong, default value is used)
 
 			$phpEditor->setRePerm('phpiniSystem', 'yes');
 
-			if($cfg['HTTPD_SERVER'] != 'apache_itk') {
+			if ($cfg['HTTPD_SERVER'] != 'apache_itk') {
 				$phpEditor->setRePerm('phpiniDisableFunctions', $data['php_ini_al_disable_functions']);
 			} else {
 				$phpEditor->setRePerm('phpiniDisableFunctions', 'no');
@@ -527,7 +520,6 @@ function admin_checkAndCreateResellerAccount()
 		}
 
 		if (empty($errFieldsStack) && !Zend_Session::namespaceIsset('pageMessages')) { // Update process begin here
-
 			// Insert reseller personal data into database
 
 			$query = "
@@ -540,19 +532,19 @@ function admin_checkAndCreateResellerAccount()
 				)
 			";
 			exec_query($query, array(
-				$data['admin_name'], \iMSCP\Crypt::bcrypt($data['password']), 'reseller', time(), $_SESSION['user_id'],
+				$data['admin_name'], \iMSCP\Core\Utils\Crypt::bcrypt($data['password']), 'reseller', time(), $_SESSION['user_id'],
 				$data['fname'], $data['lname'], $data['firm'], $data['zip'], $data['city'], $data['state'],
 				$data['country'], $data['email'], $data['phone'], $data['fax'], $data['street1'], $data['street2'],
 				$data['gender']
 			));
 
 			// Get new reseller unique identifier
-			$resellerId = $db->insertId();
+			$resellerId = $db->lastInsertId();
 
 			// Insert reseller GUI properties into database
 
 			$query = 'REPLACE INTO `user_gui_props` (`user_id`, `lang`, `layout`) VALUES (?, ?, ?)';
-			exec_query($query, array($resellerId, $cfg->USER_INITIAL_LANG, $cfg->USER_INITIAL_THEME));
+			exec_query($query, array($resellerId, $cfg['USER_INITIAL_LANG'}, $cfg['USER_INITIAL_THEME']));
 
 
 			// Insert reseller properties into database
@@ -588,7 +580,7 @@ function admin_checkAndCreateResellerAccount()
 
 			$db->commit();
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterAddUser);
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterAddUser);
 
 			// Send welcome mail to the new reseller
 			send_add_user_auto_msg(
@@ -601,13 +593,13 @@ function admin_checkAndCreateResellerAccount()
 			set_page_message(tr('Reseller account successfully created.'), 'success');
 
 			return true;
-		}
-	} catch(iMSCP_Exception_Database $e) {
+	} catch(Exception $e) {
 		$db->rollBack();
 		throw $e;
 	}
 
-	if(!empty($errFieldsStack)) {
+
+	if (!empty($errFieldsStack)) {
 		iMSCP_Registry::set('errFieldsStack', $errFieldsStack);
 	}
 
@@ -618,54 +610,50 @@ function admin_checkAndCreateResellerAccount()
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 check_login('admin');
 
 // Dispatches the request
-if(!empty($_POST) && admin_checkAndCreateResellerAccount()) {
+if (!empty($_POST) && admin_checkAndCreateResellerAccount()) {
 	redirectTo('manage_users.php');
 }
 
 // Getting domain data
 $data =& admin_getData();
 
-$tpl = new iMSCP_pTemplate();
-$tpl->define_dynamic(
-	array(
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'admin/reseller_add.tpl',
 		'page_message' => 'layout',
 		'ips_block' => 'page',
 		'ip_block' => 'ips_block',
 		'php_editor_disable_functions_block' => 'page'
-	)
-);
+));
 
 $tpl->assign(
 	array(
-		 'TR_PAGE_TITLE' => tr('Admin / Users / Add Reseller'),
-		 'TR_ADD_RESELLER' => tr('Add reseller'),
-		 'TR_NOTICE' => tr('i-MSCP Notice'),
-		 'TR_EVENT_NOTICE' => tojs(tr('The `Enter` key is disabled for performance reasons.')),
-		 'TR_CREATE' => tr('Create'),
-		 'TR_CANCEL' => tr('Cancel'),
-		 'ERR_FIELDS_STACK' => (iMSCP_Registry::isRegistered('errFieldsStack')) ? json_encode(iMSCP_Registry::get('errFieldsStack')) : '[]'));
+		'TR_PAGE_TITLE' => tr('Admin / Users / Add Reseller'),
+		'TR_ADD_RESELLER' => tr('Add reseller'),
+		'TR_NOTICE' => tr('i-MSCP Notice'),
+		'TR_EVENT_NOTICE' => tojs(tr('The `Enter` key is disabled for performance reasons.')),
+		'TR_CREATE' => tr('Create'),
+		'TR_CANCEL' => tr('Cancel'),
+		'ERR_FIELDS_STACK' => (iMSCP_Registry::isRegistered('errFieldsStack')) ? json_encode(iMSCP_Registry::get('errFieldsStack')) : '[]'));
 
 generateNavigation($tpl);
 admin_generateForm($tpl, $data);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+	'templateEngine' => $tpl
+));
 $tpl->prnt();
 
 unsetMessages();

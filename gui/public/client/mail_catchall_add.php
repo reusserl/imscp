@@ -73,7 +73,7 @@ function client_addCatchall($itemId)
 					$stmt = exec_query('SELECT domain_id, sub_id FROM mail_users WHERE mail_id = ?', $mailId);
 
 					if($stmt->rowCount()) {
-						$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+						$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 						$dmnId = $row['domain_id'];
 						$subId = $row['sub_id'];
@@ -82,8 +82,8 @@ function client_addCatchall($itemId)
 						$match = explode('@', $mailAccount);
 						$mailAddr = '@' . $match[1];
 
-						iMSCP_Events_Aggregator::getInstance()->dispatch(
-							iMSCP_Events::onBeforeAddMailCatchall,
+						\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+							\iMSCP\Core\Events::onBeforeAddMailCatchall,
 							array(
 								'mailCatchall' => $mailAddr,
 								'mailForwardList' => array($mailAccount)
@@ -105,8 +105,8 @@ function client_addCatchall($itemId)
 							)
 						);
 
-						iMSCP_Events_Aggregator::getInstance()->dispatch(
-							iMSCP_Events::onAfterAddMailCatchall,
+						\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+							\iMSCP\Core\Events::onAfterAddMailCatchall,
 							array(
 								'mailCatchallId' => iMSCP_Database::getInstance()->insertId(),
 								'mailCatchall' => $mailAddr,
@@ -137,7 +137,7 @@ function client_addCatchall($itemId)
 					$dmnId = $itemId;
 					$stmt = exec_query('SELECT domain_name FROM domain WHERE domain_id = ?', $dmnId);
 					if($stmt->rowCount()) {
-						$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+						$row = $stmt->fetch(PDO::FETCH_ASSOC);
 						$mailAddr = '@' . $row['domain_name'];
 					} else {
 						showBadRequestErrorPage();
@@ -148,7 +148,7 @@ function client_addCatchall($itemId)
 					$stmt = exec_query('SELECT domain_id, alias_name FROM domain_aliasses WHERE alias_id = ?', $itemId);
 
 					if($stmt->rowCount()) {
-						$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+						$row = $stmt->fetch(PDO::FETCH_ASSOC);
 						$dmnId = $row['domain_id'];
 						$mailAddr = '@' . $row['alias_name'];
 					} else {
@@ -172,7 +172,7 @@ function client_addCatchall($itemId)
 					);
 
 					if($stmt->rowCount()) {
-						$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+						$row = $stmt->fetch(PDO::FETCH_ASSOC);
 						$dmnId = $row['domain_id'];
 						$mailAddr = '@' . $row['subdomain_name'];
 					} else {
@@ -196,7 +196,7 @@ function client_addCatchall($itemId)
 					);
 
 					if($stmt->rowCount()) {
-						$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+						$row = $stmt->fetch(PDO::FETCH_ASSOC);
 						$dmnId = $row['domain_id'];
 						$mailAddr = '@' . $row['subdomain_alias_name'];
 					} else {
@@ -224,8 +224,8 @@ function client_addCatchall($itemId)
 					$mailAccount[] = $value;
 				}
 
-				iMSCP_Events_Aggregator::getInstance()->dispatch(
-					iMSCP_Events::onBeforeAddMailCatchall,
+				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+					\iMSCP\Core\Events::onBeforeAddMailCatchall,
 					array(
 						'mailCatchall' => $mailAddr,
 						'mailForwardList' => $mailAccount
@@ -247,8 +247,8 @@ function client_addCatchall($itemId)
 					)
 				);
 
-				iMSCP_Events_Aggregator::getInstance()->dispatch(
-					iMSCP_Events::onAfterAddMailCatchall,
+				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+					\iMSCP\Core\Events::onAfterAddMailCatchall,
 					array(
 						'mailCatchallId' => iMSCP_Database::getInstance()->insertId(),
 						'mailCatchall' => $mailAddr,
@@ -275,13 +275,13 @@ function client_addCatchall($itemId)
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @param int $id
  * @return void
  */
 function client_generatePage($tpl, $id)
 {
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$domainProps = get_domain_default_props($_SESSION['user_id']);
 	$dmnId = $domainProps['domain_id'];
@@ -334,7 +334,7 @@ function client_generatePage($tpl, $id)
 					)
 				);
 
-				while($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+				while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 					$showMailAccount = decode_idna($row['mail_acc']);
 					$showDomainName = decode_idna($row['domain_name']);
 					$mailAccount = $row['mail_acc'];
@@ -392,7 +392,7 @@ function client_generatePage($tpl, $id)
 					)
 				);
 
-				while($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+				while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 					$showMailAccount = decode_idna($row['mail_acc']);
 					$show_alias_name = decode_idna($row['alias_name']);
 					$mailAccount = $row['mail_acc'];
@@ -453,7 +453,7 @@ function client_generatePage($tpl, $id)
 					)
 				);
 
-				while($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+				while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 					$showMailAccount = decode_idna($row['mail_acc']);
 					$showAliasName = decode_idna($row['subdomain_name']);
 					$mailAccount = $row['mail_acc'];
@@ -514,7 +514,7 @@ function client_generatePage($tpl, $id)
 					)
 				);
 
-				while($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+				while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 					$showMailAccount = decode_idna($row['mail_acc']);
 					$showAliasName = decode_idna($row['subdomain_name']);
 					$mailAccount = $row['mail_acc'];
@@ -544,7 +544,7 @@ function client_generatePage($tpl, $id)
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
@@ -555,7 +555,7 @@ if(customerHasFeature('mail') && isset($_REQUEST['id'])) {
 		client_addCatchall($itemId);
 	}
 
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(
 		array(
 			'layout' => 'shared/layouts/ui.tpl',
@@ -587,7 +587,7 @@ if(customerHasFeature('mail') && isset($_REQUEST['id'])) {
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 	$tpl->prnt();
 

@@ -34,13 +34,12 @@
  *
  * @author Laurent Declercq <l.declerq@nuxwin.com>
  * @since iMSCP 1.0.1.6
- * @param $tpl iMSCP_pTemplate Template engine instance
+ * @param $tpl TemplateEngine Template engine instance
  * @return void
  */
 function reseller_generateLayoutColorForm($tpl)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$colors = layout_getAvailableColorSet();
 
@@ -55,7 +54,7 @@ function reseller_generateLayoutColorForm($tpl)
 			$tpl->assign(
 				array(
 					'COLOR' => $color,
-					'SELECTED_COLOR' => ($color == $selectedColor) ? $cfg->HTML_SELECTED : ''));
+					'SELECTED_COLOR' => ($color == $selectedColor) ? $cfg['HTML_SELECTED'] : ''));
 
 			$tpl->parse('LAYOUT_COLOR_BLOCK', '.layout_color_block');
 		}
@@ -68,17 +67,15 @@ function reseller_generateLayoutColorForm($tpl)
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -118,7 +115,7 @@ if (isset($_POST['uaction'])) {
 	}
 }
 
-$html_selected = $cfg->HTML_SELECTED;
+$html_selected = $cfg['HTML_SELECTED'];
 $userId = $_SESSION['user_id'];
 
 if (layout_isMainMenuLabelsVisible($userId)) {
@@ -165,7 +162,7 @@ reseller_generateLayoutColorForm($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

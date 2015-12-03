@@ -309,15 +309,14 @@ function client_checkConflict($name, $type, &$errorString)
  */
 function client_create_options($data, $value = null)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$options = '';
 	reset($data);
 
 	foreach ($data as $item) {
 		$options .=
-			'<option value="' . $item . '"' . (($item == $value) ? $cfg->HTML_SELECTED : '') . '>' .
+			'<option value="' . $item . '"' . (($item == $value) ? $cfg['HTML_SELECTED'] : '') . '>' .
 			$item .
 			'</option>';
 	}
@@ -383,14 +382,13 @@ function client_decodeDnsRecordData($data)
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @param int $dnsRecordId DNS record unique identifier (0 for new record)
  * @return void
  */
 function client_generatePage($tpl, $dnsRecordId)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$mainDomainId = get_user_domain_id($_SESSION['user_id']);
 
@@ -417,10 +415,10 @@ function client_generatePage($tpl, $dnsRecordId)
 		);
 
 		$domainId = client_getPost('domain_id', '0');
-		$selected = $cfg->HTML_SELECTED;
+		$selected = $cfg['HTML_SELECTED'];
 		$selectOptions = '';
 
-		while ($data = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$selectOptions .=
 				'<option value="' . $data['domain_id'] . '"' . (($data['domain_id'] == $domainId) ? $selected : '') . '>' .
 					decode_idna($data['domain_name']) .
@@ -436,7 +434,7 @@ function client_generatePage($tpl, $dnsRecordId)
 			showBadRequestErrorPage();
 		}
 
-		$data = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$data = $stmt->fetch(PDO::FETCH_ASSOC);
 		$tpl->assign('ADD_RECORD', '');
 	}
 
@@ -542,7 +540,7 @@ function client_saveDnsRecord($dnsRecordId)
 			showBadRequestErrorPage();
 		}
 
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		$domainId = ($row['alias_id']) ? $row['alias_id'] : $row['domain_id'];
 		$domainName = $row['domain_name'];
@@ -706,7 +704,7 @@ function client_saveDnsRecord($dnsRecordId)
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
@@ -727,7 +725,7 @@ if(!empty($_POST)) {
 	}
 }
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'client/dns_edit.tpl',
@@ -767,7 +765,7 @@ client_generatePage($tpl, $dnsRecordId);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();
 
 unsetMessages();

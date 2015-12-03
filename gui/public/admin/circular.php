@@ -74,7 +74,7 @@ function admin_sendToAdministrators($senderName, $senderEmail, $subject, $body)
 			'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'admin'
 		);
 
-		while ($rcptToData = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
 		}
 	}
@@ -95,7 +95,7 @@ function admin_sendToResellers($senderName, $senderEmail, $subject, $body)
 			'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'reseller'
 		);
 
-		while ($rcptToData = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
 		}
 	}
@@ -116,7 +116,7 @@ function admin_sendToCustomers($senderName, $senderEmail, $subject, $body)
 			'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'user'
 		);
 
-		while ($rcptToData = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
 		}
 	}
@@ -179,15 +179,15 @@ function admin_sendCircular()
 		$body = clean_input($_POST['body'], false);
 
 		if (admin_isValidCircular($senderName, $senderEmail, $subject, $body)) {
-			$responses = iMSCP_Events_Aggregator::getInstance()->dispatch(
-				iMSCP_Events::onBeforeSendCircular,
+			$responses = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+				\iMSCP\Core\Events::onBeforeSendCircular,
 				array(
 					'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => $rcptTo,
 					'subject' => $subject, 'body' => $body
 				)
 			);
 
-			if (!$responses->isStopped()) {
+			if (!$responses->stopped()) {
 				if (
 					$rcptTo == 'all_users' || $rcptTo == 'administrators_resellers' ||
 					$rcptTo == 'administrators_customers' || $rcptTo == 'administrators'
@@ -209,8 +209,8 @@ function admin_sendCircular()
 					admin_sendToCustomers($senderName, $senderEmail, $subject, $body);
 				}
 
-				iMSCP_Events_Aggregator::getInstance()->dispatch(
-					iMSCP_Events::onAfterSendCircular,
+				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+					\iMSCP\Core\Events::onAfterSendCircular,
 					array(
 						'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => $rcptTo,
 						'subject' => $subject, 'body' => $body
@@ -233,7 +233,7 @@ function admin_sendCircular()
 /**
  * Generate page data
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @return void
  */
 function admin_generatePageData($tpl)
@@ -247,14 +247,14 @@ function admin_generatePageData($tpl)
 	if ($senderName == '' && $senderEmail == '') {
 		$query = 'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_id` = ?';
 		$stmt = exec_query($query, $_SESSION['user_id']);
-		$data = $stmt->fetchRow();
+		$data = $stmt->fetch();
 
 		if (!empty($data['fname']) && !empty($data['lname'])) {
 			$senderName = $data['fname'] . ' ' . $data['lname'];
 		} elseif (!empty($data['fname'])) {
-			$senderName = $stmt->fields['fname'];
+			$senderName = $data['fname'];
 		} elseif (!empty($data['lname'])) {
-			$senderName = $stmt->fields['lname'];
+			$senderName = $data['lname'];
 		} else {
 			$senderName = $data['admin_name'];
 		}
@@ -262,7 +262,7 @@ function admin_generatePageData($tpl)
 		if ($data['email'] != '') {
 			$senderEmail = $data['email'];
 		} else {
-			$config = iMSCP_Registry::get('config');
+			$config = \iMSCP\Core\Application::getInstance()->getConfig();
 
 			if (isset($config['DEFAULT_ADMIN_ADDRESS']) && $config['DEFAULT_ADMIN_ADDRESS'] != '') {
 				$senderEmail = $config['DEFAULT_ADMIN_ADDRESS'];
@@ -310,13 +310,11 @@ function admin_generatePageData($tpl)
 	}
 
 	foreach ($rcptToOptions as $option) {
-		$tpl->assign(
-			array(
-				'RCPT_TO' => $option[0],
-				'TR_RCPT_TO' => $option[1],
-				'SELECTED' => ($rcptTo == $option[0]) ? ' selected="selected"' : ''
-			)
-		);
+		$tpl->assign(array(
+			'RCPT_TO' => $option[0],
+			'TR_RCPT_TO' => $option[1],
+			'SELECTED' => ($rcptTo == $option[0]) ? ' selected="selected"' : ''
+		));
 
 		$tpl->parse('RCPT_TO_OPTION', '.rcpt_to_option');
 	}
@@ -326,10 +324,9 @@ function admin_generatePageData($tpl)
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
@@ -338,40 +335,34 @@ if (!systemHasAdminsOrResellersOrCustomers()) {
 }
 
 if (!(!empty($_POST) && admin_sendCircular())) {
-	$tpl = new iMSCP_pTemplate();
-	$tpl->define_dynamic(
-		array(
-			'layout' => 'shared/layouts/ui.tpl',
-			'page' => 'admin/circular.tpl',
-			'page_message' => 'layout',
-			'rcpt_to_option' => 'page'
-		)
-	);
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
+	$tpl->define_dynamic([
+		'layout' => 'shared/layouts/ui.tpl',
+		'page' => 'admin/circular.tpl',
+		'page_message' => 'layout',
+		'rcpt_to_option' => 'page'
+	]);
 
-	$tpl->assign(
-		array(
-			'TR_PAGE_TITLE' => tr('Admin / Users / Circular'),
-			'TR_CIRCULAR' => tr('Circular'),
-			'TR_SEND_TO' => tr('Send to'),
-			'TR_SUBJECT' => tr('Subject'),
-			'TR_BODY' => tr('Body'),
-			'TR_SENDER_EMAIL' => tr('Sender email'),
-			'TR_SENDER_NAME' => tr('Sender name'),
-			'TR_SEND_CIRCULAR' => tr('Send circular'),
-			'TR_CANCEL' => tr('Cancel')
-		)
-	);
+	$tpl->assign([
+		'TR_PAGE_TITLE' => tr('Admin / Users / Circular'),
+		'TR_CIRCULAR' => tr('Circular'),
+		'TR_SEND_TO' => tr('Send to'),
+		'TR_SUBJECT' => tr('Subject'),
+		'TR_BODY' => tr('Body'),
+		'TR_SENDER_EMAIL' => tr('Sender email'),
+		'TR_SENDER_NAME' => tr('Sender name'),
+		'TR_SEND_CIRCULAR' => tr('Send circular'),
+		'TR_CANCEL' => tr('Cancel')
+	]);
 
 	generateNavigation($tpl);
 	generatePageMessage($tpl);
 	admin_generatePageData($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-
-	iMSCP_Events_Aggregator::getInstance()->dispatch(
-		iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl)
-	);
-
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+		'templateEngine' => $tpl
+	]);
 	$tpl->prnt();
 
 	unsetMessages();

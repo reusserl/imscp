@@ -43,18 +43,19 @@ function admin_gen_mail_quota_limit_mgs($customerId)
 		'SELECT SUM(quota) AS quota FROM mail_users WHERE domain_id = ? AND quota IS NOT NULL',
 		$mainDmnProps['domain_id']
 	);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	if ($mainDmnProps['mail_quota'] == 0) {
-		return array(bytesHuman($stmt->fields['quota']), tr('Unlimited'));
+		return [bytesHuman($row['quota']), tr('Unlimited')];
 	} else {
-		return array(bytesHuman($stmt->fields['quota']), bytesHuman($mainDmnProps['mail_quota']));
+		return [bytesHuman($row['quota']), bytesHuman($mainDmnProps['mail_quota'])];
 	}
 }
 
 /**
  * Generates page
  *
- * @param iMSCP_pTemplate $tpl Template instance engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template instance engine
  * @param int $domainId Domain unique identifier
  * @return void
  */
@@ -66,8 +67,8 @@ function admin_generatePage($tpl, $domainId)
 		showBadRequestErrorPage();
 	}
 
-	$domainAdminId = $stmt->fields['domain_admin_id'];
-
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
+	$domainAdminId = $row['domain_admin_id'];
 	$domainProperties = get_domain_default_props($domainAdminId);
 
 	// Domain IP address info
@@ -76,7 +77,8 @@ function admin_generatePage($tpl, $domainId)
 	if (!$stmt->rowCount()) {
 		$domainIpAddr = tr('Not found.');
 	} else {
-		$domainIpAddr = $stmt->fields['ip_number'];
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+		$domainIpAddr = $row['ip_number'];
 	}
 
 	$domainStatus = $domainProperties['domain_status'];
@@ -91,7 +93,7 @@ function admin_generatePage($tpl, $domainId)
 	) {
 		$domainStatus = '<span style="color:green">' . tohtml(translate_dmn_status($domainStatus)) . '</span>';
 	} else {
-		$domainStatus = '<b><font size="3" color="red">' . $domainStatus . "</font></b>";
+		$domainStatus = '<b><span style="color:red">' . $domainStatus . "</span></b>";
 	}
 
 	// Get total domain traffic usage in bytes
@@ -107,11 +109,11 @@ function admin_generatePage($tpl, $domainId)
 		AND
 			dtraff_time BETWEEN ? AND ?
 	";
-	$stmt = exec_query($query, array($domainProperties['domain_id'], getFirstDayOfMonth(), getLastDayOfMonth()));
+	$stmt = exec_query($query, [$domainProperties['domain_id'], getFirstDayOfMonth(), getLastDayOfMonth()]);
 
-	if($stmt->rowCount()) {
-		$trafficUsageBytes = $stmt->fields['dtraff_web'] + $stmt->fields['dtraff_ftp'] + $stmt->fields['dtraff_mail'] +
-			$stmt->fields['dtraff_pop'];
+	if ($stmt->rowCount()) {
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+		$trafficUsageBytes = $row['dtraff_web'] + $row['dtraff_ftp'] + $row['dtraff_mail'] + $row['dtraff_pop'];
 	} else {
 		$trafficUsageBytes = 0;
 	}
@@ -129,51 +131,48 @@ function admin_generatePage($tpl, $domainId)
 
 	# Features
 
-	$tpl->assign(
-		array(
-			'DOMAIN_ID' => $domainId,
-			'VL_DOMAIN_NAME' => tohtml(decode_idna($domainProperties['domain_name'])),
-			'VL_DOMAIN_IP' => tohtml($domainIpAddr),
-			'VL_STATUS' => $domainStatus,
-			'VL_PHP_SUPP' => translate_limit_value($domainProperties['domain_php']),
-			'VL_PHP_EDITOR_SUPP' => translate_limit_value($domainProperties['phpini_perm_system']),
-			'VL_CGI_SUPP' => translate_limit_value($domainProperties['domain_cgi']),
-			'VL_DNS_SUPP' => translate_limit_value($domainProperties['domain_dns']),
-			'APS_STANDARD' => translate_limit_value($domainProperties['aps_standard']),
-			'VL_EXT_MAIL_SUPP' => translate_limit_value($domainProperties['domain_external_mail']),
-			'VL_BACKUP_SUP' => translate_limit_value($domainProperties['allowbackup']),
-			'VL_TRAFFIC_PERCENT' => $trafficUsagePercent,
-			'VL_TRAFFIC_USED' => bytesHuman($trafficUsageBytes),
-			'VL_TRAFFIC_LIMIT' => bytesHuman($trafficLimitBytes),
-			'VL_DISK_PERCENT' => $diskspaceUsagePercent,
-			'VL_DISK_USED' => bytesHuman($domainProperties['domain_disk_usage']),
-			'VL_DISK_LIMIT' => bytesHuman($diskspaceLimitBytes),
-			'VL_MAIL_ACCOUNTS_USED' => get_domain_running_mail_acc_cnt($domainId),
-			'VL_MAIL_ACCOUNTS_LIMIT' => translate_limit_value($domainProperties['domain_mailacc_limit']),
-			'VL_MAIL_QUOTA_USED' => $quota,
-			'VL_MAIL_QUOTA_LIMIT' => ($domainProperties['domain_mailacc_limit'] != '-1') ? $quotaLimit : tr('Disabled'),
-			'VL_FTP_ACCOUNTS_USED' => get_customer_running_ftp_acc_cnt($domainAdminId),
-			'VL_FTP_ACCOUNTS_LIMIT' => translate_limit_value($domainProperties['domain_ftpacc_limit']),
-			'VL_SQL_DB_ACCOUNTS_USED' => get_domain_running_sqld_acc_cnt($domainId),
-			'VL_SQL_DB_ACCOUNTS_LIMIT' => translate_limit_value($domainProperties['domain_sqld_limit']),
-			'VL_SQL_USER_ACCOUNTS_USED' => get_domain_running_sqlu_acc_cnt($domainId),
-			'VL_SQL_USER_ACCOUNTS_LIMIT' => translate_limit_value($domainProperties['domain_sqlu_limit']),
-			'VL_SUBDOM_ACCOUNTS_USED' => get_domain_running_sub_cnt($domainId),
-			'VL_SUBDOM_ACCOUNTS_LIMIT' => translate_limit_value($domainProperties['domain_subd_limit']),
-			'VL_DOMALIAS_ACCOUNTS_USED' => get_domain_running_als_cnt($domainId),
-			'VL_DOMALIAS_ACCOUNTS_LIMIT' => translate_limit_value($domainProperties['domain_alias_limit']),
-		)
-	);
+	$tpl->assign(array(
+		'DOMAIN_ID' => $domainId,
+		'VL_DOMAIN_NAME' => tohtml(decode_idna($domainProperties['domain_name'])),
+		'VL_DOMAIN_IP' => tohtml($domainIpAddr),
+		'VL_STATUS' => $domainStatus,
+		'VL_PHP_SUPP' => translate_limit_value($domainProperties['domain_php']),
+		'VL_PHP_EDITOR_SUPP' => translate_limit_value($domainProperties['phpini_perm_system']),
+		'VL_CGI_SUPP' => translate_limit_value($domainProperties['domain_cgi']),
+		'VL_DNS_SUPP' => translate_limit_value($domainProperties['domain_dns']),
+		'APS_STANDARD' => translate_limit_value($domainProperties['aps_standard']),
+		'VL_EXT_MAIL_SUPP' => translate_limit_value($domainProperties['domain_external_mail']),
+		'VL_BACKUP_SUP' => translate_limit_value($domainProperties['allowbackup']),
+		'VL_TRAFFIC_PERCENT' => $trafficUsagePercent,
+		'VL_TRAFFIC_USED' => bytesHuman($trafficUsageBytes),
+		'VL_TRAFFIC_LIMIT' => bytesHuman($trafficLimitBytes),
+		'VL_DISK_PERCENT' => $diskspaceUsagePercent,
+		'VL_DISK_USED' => bytesHuman($domainProperties['domain_disk_usage']),
+		'VL_DISK_LIMIT' => bytesHuman($diskspaceLimitBytes),
+		'VL_MAIL_ACCOUNTS_USED' => get_domain_running_mail_acc_cnt($domainId),
+		'VL_MAIL_ACCOUNTS_LIMIT' => translate_limit_value($domainProperties['domain_mailacc_limit']),
+		'VL_MAIL_QUOTA_USED' => $quota,
+		'VL_MAIL_QUOTA_LIMIT' => ($domainProperties['domain_mailacc_limit'] != '-1') ? $quotaLimit : tr('Disabled'),
+		'VL_FTP_ACCOUNTS_USED' => get_customer_running_ftp_acc_cnt($domainAdminId),
+		'VL_FTP_ACCOUNTS_LIMIT' => translate_limit_value($domainProperties['domain_ftpacc_limit']),
+		'VL_SQL_DB_ACCOUNTS_USED' => get_domain_running_sqld_acc_cnt($domainId),
+		'VL_SQL_DB_ACCOUNTS_LIMIT' => translate_limit_value($domainProperties['domain_sqld_limit']),
+		'VL_SQL_USER_ACCOUNTS_USED' => get_domain_running_sqlu_acc_cnt($domainId),
+		'VL_SQL_USER_ACCOUNTS_LIMIT' => translate_limit_value($domainProperties['domain_sqlu_limit']),
+		'VL_SUBDOM_ACCOUNTS_USED' => get_domain_running_sub_cnt($domainId),
+		'VL_SUBDOM_ACCOUNTS_LIMIT' => translate_limit_value($domainProperties['domain_subd_limit']),
+		'VL_DOMALIAS_ACCOUNTS_USED' => get_domain_running_als_cnt($domainId),
+		'VL_DOMALIAS_ACCOUNTS_LIMIT' => translate_limit_value($domainProperties['domain_alias_limit']),
+	));
 }
 
 /***********************************************************************************************************************
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
@@ -182,59 +181,52 @@ if (!isset($_GET['domain_id'])) {
 	redirectTo('manage_users.php');
 }
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/domain_details.tpl',
-		'page_messages' => 'layout',
-	)
-);
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic([
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/domain_details.tpl',
+	'page_messages' => 'layout',
+]);
 
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Admin / Users / Overview / Domain Details'),
-		'TR_DOMAIN_DETAILS' => tr('Domain details'),
-		'TR_DOMAIN_NAME' => tr('Domain name'),
-		'TR_DOMAIN_IP' => tr('Domain IP'),
-		'TR_STATUS' => tr('Status'),
-		'TR_PHP_SUPP' => tr('PHP'),
-		'TR_PHP_EDITOR_SUPP' => tr('PHP Editor'),
-		'TR_CGI_SUPP' => tr('CGI'),
-		'TR_DNS_SUPP' => tr('Custom DNS records'),
-		'TR_APS_STANDARD' => tr('APS Standard'),
-		'TR_EXT_MAIL_SUPP' => tr('Ext. mail server'),
-		'TR_BACKUP_SUPP' => tr('Backup'),
-		'TR_TRAFFIC' => tr('Traffic'),
-		'TR_DISK' => tr('Disk'),
-		'TR_FEATURE' => tr('Feature'),
-		'TR_USED' => tr('Used'),
-		'TR_LIMIT' => tr('Limit'),
-		'TR_SUBDOM_ACCOUNTS' => tr('Subdomains'),
-		'TR_DOMALIAS_ACCOUNTS' => tr('Domain aliases'),
-		'TR_MAIL_ACCOUNTS' => tr('Email accounts'),
-		'TR_MAIL_QUOTA' => tr('Email quota'),
-		'TR_FTP_ACCOUNTS' => tr('FTP accounts'),
-		'TR_SQL_DB_ACCOUNTS' => tr('SQL databases'),
-		'TR_SQL_USER_ACCOUNTS' => tr('SQL users'),
-		'TR_UPDATE_DATA' => tr('Submit changes'),
-		'TR_BACK' => tr('Back')
-	)
-);
+$tpl->assign([
+	'TR_PAGE_TITLE' => tr('Admin / Users / Overview / Domain Details'),
+	'TR_DOMAIN_DETAILS' => tr('Domain details'),
+	'TR_DOMAIN_NAME' => tr('Domain name'),
+	'TR_DOMAIN_IP' => tr('Domain IP'),
+	'TR_STATUS' => tr('Status'),
+	'TR_PHP_SUPP' => tr('PHP'),
+	'TR_PHP_EDITOR_SUPP' => tr('PHP Editor'),
+	'TR_CGI_SUPP' => tr('CGI'),
+	'TR_DNS_SUPP' => tr('Custom DNS records'),
+	'TR_APS_STANDARD' => tr('APS Standard'),
+	'TR_EXT_MAIL_SUPP' => tr('Ext. mail server'),
+	'TR_BACKUP_SUPP' => tr('Backup'),
+	'TR_TRAFFIC' => tr('Traffic'),
+	'TR_DISK' => tr('Disk'),
+	'TR_FEATURE' => tr('Feature'),
+	'TR_USED' => tr('Used'),
+	'TR_LIMIT' => tr('Limit'),
+	'TR_SUBDOM_ACCOUNTS' => tr('Subdomains'),
+	'TR_DOMALIAS_ACCOUNTS' => tr('Domain aliases'),
+	'TR_MAIL_ACCOUNTS' => tr('Email accounts'),
+	'TR_MAIL_QUOTA' => tr('Email quota'),
+	'TR_FTP_ACCOUNTS' => tr('FTP accounts'),
+	'TR_SQL_DB_ACCOUNTS' => tr('SQL databases'),
+	'TR_SQL_USER_ACCOUNTS' => tr('SQL users'),
+	'TR_UPDATE_DATA' => tr('Submit changes'),
+	'TR_BACK' => tr('Back')
+]);
 
 generateNavigation($tpl);
 admin_generatePage($tpl, intval($_GET['domain_id']));
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-iMSCP_Events_Aggregator::getInstance()->dispatch(
-	iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl)
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+	\iMSCP\Core\Events::onAdminScriptEnd, ['templateEngine' => $tpl]
 );
-
 $tpl->prnt();
 
 unsetMessages();

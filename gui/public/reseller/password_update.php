@@ -32,7 +32,7 @@ function reseller_updatePassword()
 	if(!empty($_POST)) {
 		$userId = $_SESSION['user_id'];
 
-		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeEditUser, array('userId' => $userId));
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditUser, array('userId' => $userId));
 
 		if (empty($_POST['current_password']) || empty($_POST['password']) || empty($_POST['password_confirmation'])) {
 			set_page_message(tr('All fields are required.'), 'error');
@@ -44,7 +44,7 @@ function reseller_updatePassword()
 			$query = 'UPDATE `admin` SET `admin_pass` = ? WHERE `admin_id` = ?';
 			exec_query($query, array(\iMSCP\Crypt::bcrypt($_POST['password']), $userId));
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditUser, array('userId' => $userId));
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditUser, array('userId' => $userId));
 
 			write_log($_SESSION['user_logged'] . ': updated password.', E_USER_NOTICE);
 			set_page_message(tr('Password successfully updated.'), 'success');
@@ -77,19 +77,17 @@ function _reseller_checkCurrentPassword($password)
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
 reseller_updatePassword();
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -114,7 +112,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

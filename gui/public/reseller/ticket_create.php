@@ -33,14 +33,13 @@
 require_once 'imscp-lib.php';
 require_once LIBRARY_PATH . '/Functions/Tickets.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
 resellerHasFeature('support') or showBadRequestErrorPage();
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $userId = $_SESSION['user_id'];
 
@@ -75,23 +74,23 @@ if (isset($_POST['urgency'])) {
 
 switch ($userdata['URGENCY']) {
     case 1:
-        $userdata['OPT_URGENCY_1'] = $cfg->HTML_SELECTED;
+        $userdata['OPT_URGENCY_1'] = $cfg['HTML_SELECTED'];
         break;
     case 3:
-        $userdata['OPT_URGENCY_3'] = $cfg->HTML_SELECTED;
+        $userdata['OPT_URGENCY_3'] = $cfg['HTML_SELECTED'];
         break;
     case 4:
-        $userdata['OPT_URGENCY_4'] = $cfg->HTML_SELECTED;
+        $userdata['OPT_URGENCY_4'] = $cfg['HTML_SELECTED'];
         break;
     default:
-        $userdata['OPT_URGENCY_2'] = $cfg->HTML_SELECTED;
+        $userdata['OPT_URGENCY_2'] = $cfg['HTML_SELECTED'];
 }
 
 $userdata['SUBJECT'] = isset($_POST['subject']) ? clean_input($_POST['subject'], true) : '';
 $userdata['USER_MESSAGE'] = isset($_POST['user_message'])
     ? clean_input($_POST['user_message'], true) : '';
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -121,7 +120,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 unsetMessages();

@@ -93,13 +93,12 @@ function _client_getDomainsList()
 /**
  * Generate page
  *
- * @param $tpl iMSCP_pTemplate
+ * @param $tpl TemplateEngine
  * @return void
  */
 function client_generatePage($tpl)
 {
-	/** @var iMSCP_Config_Handler_File $cfg */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$checked = $cfg['HTML_CHECKED'];
 	$selected = $cfg['HTML_SELECTED'];
@@ -267,7 +266,7 @@ function client_addSubdomain()
 
 	$db = iMSCP_Database::getInstance();
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeAddSubdomain, array(
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeAddSubdomain, array(
 		'subdomainName' => $subdomainName,
 		'subdomainType' => $domainType,
 		'parentDomainId' => $domainId,
@@ -299,7 +298,7 @@ function client_addSubdomain()
 
 	exec_query($query, array($domainId, $subLabelAscii, $mountPoint, $forwardUrl, $forwardType, 'toadd'));
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterAddSubdomain, array(
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterAddSubdomain, array(
 		'subdomainName' => $subdomainName,
 		'subdomainType' => $domainType,
 		'parentDomainId' => $domainId,
@@ -321,7 +320,7 @@ function client_addSubdomain()
 
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 check_login('user');
 customerHasFeature('subdomains') or showBadRequestErrorPage();
 
@@ -335,7 +334,7 @@ if ($mainDmnProps['domain_subd_limit'] != 0 && $subdomainsCount >= $mainDmnProps
 	set_page_message(tr('Subdomain successfully scheduled for addition.'), 'success');
 	redirectTo('domains_manage.php');
 } else {
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'client/subdomain_add.tpl',
@@ -372,7 +371,7 @@ if ($mainDmnProps['domain_subd_limit'] != 0 && $subdomainsCount >= $mainDmnProps
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 	$tpl->prnt();
 	unsetMessages();
 }

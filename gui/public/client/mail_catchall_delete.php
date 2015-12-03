@@ -32,7 +32,7 @@
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
@@ -50,14 +50,14 @@ if(isset($_GET['id'])) {
 		showBadRequestErrorPage();
 	}
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(
-		iMSCP_Events::onBeforeDeleteMailCatchall, array('mailCatchallId' => $catchallId)
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+		\iMSCP\Core\Events::onBeforeDeleteMailCatchall, array('mailCatchallId' => $catchallId)
 	);
 
 	exec_query('UPDATE mail_users SET status = ? WHERE mail_id = ?', array('todelete', $catchallId));
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(
-		iMSCP_Events::onafterDeleteMailCatchall, array('mailCatchallId' => $catchallId)
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+		\iMSCP\Core\Events::onafterDeleteMailCatchall, array('mailCatchallId' => $catchallId)
 	);
 
 	send_request();

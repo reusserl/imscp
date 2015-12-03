@@ -20,14 +20,13 @@
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 customerHasFeature('php_editor') or showBadRequestErrorPage();
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 /* @var $phpini iMSCP_PHPini */
 $phpini = iMSCP_PHPini::getInstance();
@@ -109,7 +108,7 @@ if (!empty($_POST)) { // Post request
 	redirectTo('domains_manage.php');
 }
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		 'layout' => 'shared/layouts/ui.tpl',
@@ -136,8 +135,8 @@ $tpl->assign(
 
 generateNavigation($tpl);
 
-$htmlSelected = $cfg->HTML_SELECTED;
-$htmlChecked = $cfg->HTML_CHECKED;
+$htmlSelected =$cfg['HTML_SELECTED'];
+$htmlChecked = $cfg['HTML_CHECKED'];
 
 $firstBlock = false;
 $tplVars = array();
@@ -222,6 +221,6 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();

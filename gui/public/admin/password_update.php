@@ -32,7 +32,7 @@ function admin_updatePassword()
 	if (!empty($_POST)) {
 		$userId = $_SESSION['user_id'];
 
-		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeEditUser, array('userId' => $userId));
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditUser, array('userId' => $userId));
 
 		if (empty($_POST['current_password']) || empty($_POST['password']) || empty($_POST['password_confirmation'])) {
 			set_page_message(tr('All fields are required.'), 'error');
@@ -42,9 +42,9 @@ function admin_updatePassword()
 			set_page_message(tr("Passwords do not match."), 'error');
 		} elseif (checkPasswordSyntax($_POST['password'])) {
 			$query = 'UPDATE `admin` SET `admin_pass` = ? WHERE `admin_id` = ?';
-			exec_query($query, array(\iMSCP\Crypt::bcrypt($_POST['password']), $userId));
+			exec_query($query, array(\iMSCP\Core\Utils\Crypt::bcrypt($_POST['password']), $userId));
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditUser, array('userId' => $userId));
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditUser, array('userId' => $userId));
 
 			write_log($_SESSION['user_logged'] . ': updated password.', E_USER_NOTICE);
 			set_page_message(tr('Password successfully updated.'), 'success');
@@ -66,7 +66,7 @@ function _admin_checkCurrentPassword($password)
 	if (!$stmt->rowCount()) {
 		set_page_message(tr('Unable to retrieve your password from the database.'), 'error');
 		return false;
-	} elseif (!\iMSCP\Crypt::verify($password, $stmt->fields['admin_pass'])) {
+	} elseif (!\iMSCP\Core\Utils\Crypt::verify($password, $stmt->fields['admin_pass'])) {
 		return false;
 	}
 
@@ -77,45 +77,39 @@ function _admin_checkCurrentPassword($password)
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
 admin_updatePassword();
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
-$tpl->define_dynamic(
-	array(
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'shared/partials/forms/password_update.tpl',
 		'page_message' => 'layout'
-	)
-);
+));
 
-$tpl->assign(
-	array(
+$tpl->assign(array(
 		'TR_PAGE_TITLE' => tr('Admin / Profile / Password'),
 		'TR_PASSWORD_DATA' => tr('Password data'),
 		'TR_CURRENT_PASSWORD' => tr('Current password'),
 		'TR_PASSWORD' => tr('Password'),
 		'TR_PASSWORD_CONFIRMATION' => tr('Password confirmation'),
 		'TR_UPDATE' => tr('Update')
-	)
-);
+));
 
 generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+	'templateEngine' => $tpl
+));
 $tpl->prnt();
 
 unsetMessages();

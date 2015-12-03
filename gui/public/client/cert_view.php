@@ -85,7 +85,7 @@ function _client_getDomainName($domainId, $domainType)
 		$stmt = exec_query($query, array($domainId, $_SESSION['user_id']));
 
 		if($stmt->rowCount()) {
-			$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+			$row = $stmt->fetch(PDO::FETCH_ASSOC);
 			$domainName = $row['domain_name'];
 		} else {
 			$domainName = false;
@@ -131,9 +131,9 @@ function _client_updateDomainStatus($domainType, $domainId)
  */
 function _client_generateOpenSSLConfFile($data)
 {
-	$config = iMSCP_Registry::get('config');
+	$config = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$sslTpl = new iMSCP_pTemplate();
+	$sslTpl = new \iMSCP\Core\Template\TemplateEngine();
 	$sslTpl->setRootDir(LIBRARY_PATH . '/Resources/ssl');
 	$sslTpl->define('tpl', 'openssl.cnf.tpl');
 	$sslTpl->assign(array(
@@ -171,7 +171,7 @@ function client_generateSelfSignedCert($domainName)
 	);
 
 	if ($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		$row['domain_name'] = $domainName;
 
 		if (!($sslConfigFilePath = _client_generateOpenSSLConfFile($row))) {
@@ -241,8 +241,7 @@ function client_generateSelfSignedCert($domainName)
  */
 function client_addSslCert($domainId, $domainType)
 {
-	/** @var iMSCP_Config_Handler_File $config */
-	$config = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$domainName = _client_getDomainName($domainId, $domainType);
 	$allowHSTS = isset($_POST['allow_hsts']) ? 'on' : 'off';
@@ -482,7 +481,7 @@ function client_deleteSslCert($domainId, $domainType)
  *
  * @throws iMSCP_Exception
  * @throws iMSCP_Exception_Database
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param int $domainId Domain entity unique identifier
  * @param string $domainType Domain entity type
  */
@@ -496,7 +495,7 @@ function client_generatePage($tpl, $domainId, $domainType)
 		);
 
 		if($stmt->rowCount()) {
-			$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+			$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 			$dynTitle = (customerHasFeature('ssl') && $row['status'] == 'ok')
 				? tr('Edit SSL certificate') : tr('Show SSL certificate');
@@ -542,10 +541,9 @@ function client_generatePage($tpl, $domainId, $domainType)
 			$hstsIncludeSubDomains = $allowHSTS && isset($_POST['hsts_include_subdomains']);
 		}
 
-		/** @var iMSCP_Config_Handler_File $cfg */
-		$cfg = iMSCP_Registry::get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-		$checked = $cfg->HTML_CHECKED;
+		$checked = $cfg['HTML_SELECTED'];
 
 		$tpl->assign(array(
 			'TR_DYNAMIC_TITLE' => $dynTitle,
@@ -580,11 +578,11 @@ function client_generatePage($tpl, $domainId, $domainType)
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'client/cert_view.tpl',
@@ -636,7 +634,7 @@ if(
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 	$tpl->prnt();
 } else {
 	showBadRequestErrorPage();

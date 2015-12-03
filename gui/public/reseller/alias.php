@@ -110,7 +110,7 @@ function reseller_getDatatable()
 
 	/* Total records after filtering (without limit) */
 	$stmt = execute_query('SELECT FOUND_ROWS()');
-	$iTotalDisplayRecords = $stmt->fetchRow(PDO::FETCH_NUM);
+	$iTotalDisplayRecords = $stmt->fetch(PDO::FETCH_NUM);
 	$iTotalDisplayRecords = $iTotalDisplayRecords[0];
 
 	/* Total record before any filtering */
@@ -129,7 +129,7 @@ function reseller_getDatatable()
 		",
 		$_SESSION['user_id']
 	);
-	$iTotalRecords = $stmt->fetchRow(PDO::FETCH_NUM);
+	$iTotalRecords = $stmt->fetch(PDO::FETCH_NUM);
 	$iTotalRecords = $iTotalRecords[0];
 
 	/* Output */
@@ -144,7 +144,7 @@ function reseller_getDatatable()
 	$trEdit = tr('Edit');
 	$trActivate = tr('Activate');
 
-	while ($data = $rResult->fetchRow(PDO::FETCH_ASSOC)) {
+	while ($data = $rResult->fetch(PDO::FETCH_ASSOC)) {
 		$row = array();
 
 		$aliasName = decode_idna($data['alias_name']);
@@ -201,10 +201,8 @@ function reseller_getDatatable()
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
-
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+require '../../application.php';
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
@@ -219,8 +217,8 @@ if (is_xhr()) {
 	exit;
 }
 
-/** @var $tpl iMSCP_pTemplate */
-$tpl = new iMSCP_pTemplate();
+/** @var $tpl TemplateEngine */
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
@@ -268,7 +266,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

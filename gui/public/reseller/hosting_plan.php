@@ -32,14 +32,14 @@
 /**
  * Generate page.
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @return void
  */
 function client_generatePage($tpl)
 {
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$hostingPlanLevel = $cfg->HOSTING_PLANS_LEVEL;
+	$hostingPlanLevel = $cfg['HOSTING_PLANS_LEVEL'];
 
 	if ($hostingPlanLevel != 'reseller') {
 		$query = "
@@ -84,7 +84,7 @@ function client_generatePage($tpl)
 
 		$i = 1;
 
-		while ($data = $stmt->fetchRow()) {
+		while ($data = $stmt->fetch()) {
 			$tpl->assign(array(
 				'NUMBER' => $i++,
 				'NAME' => tohtml($data['name']),
@@ -105,17 +105,15 @@ function client_generatePage($tpl)
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -136,7 +134,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

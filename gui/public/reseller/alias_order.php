@@ -29,17 +29,15 @@
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
 resellerHasFeature('domain_aliases') or showBadRequestErrorPage();
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if (isset($_GET['action']) && $_GET['action'] == "delete") {
 
@@ -69,8 +67,8 @@ if (isset($_GET['action']) && $_GET['action'] == "delete") {
 			$db = iMSCP_Database::getInstance();
 
 			try {
-				iMSCP_Events_Aggregator::getInstance()->dispatch(
-					iMSCP_Events::onBeforeAddDomainAlias,
+				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+					\iMSCP\Core\Events::onBeforeAddDomainAlias,
 					array(
 						'domainId' => $mainDmnId,
 						'domainAliasName' => $alsName
@@ -109,8 +107,8 @@ if (isset($_GET['action']) && $_GET['action'] == "delete") {
 
 				$db->commit();
 
-				iMSCP_Events_Aggregator::getInstance()->dispatch(
-					iMSCP_Events::onAfterAddDomainAlias,
+				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+					\iMSCP\Core\Events::onAfterAddDomainAlias,
 					array(
 						'domainId' => $mainDmnId,
 						'domainAliasName' => $alsName,

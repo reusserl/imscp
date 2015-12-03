@@ -29,10 +29,9 @@
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
@@ -42,32 +41,28 @@ if (isset($_GET['delete_id'])) {
 	$query = "SELECT `reseller_ips` FROM `reseller_props`";
 	$stmt = execute_query($query);
 
-	while (!$stmt->EOF) {
-		if (in_array($deleteIpId, explode(';', $stmt->fields['reseller_ips']))) {
+	while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+		if (in_array($deleteIpId, explode(';', $row['reseller_ips']))) {
 			set_page_message(tr("The IP address you're trying to remove is assigned to a reseller."), 'error');
 			redirectTo('ip_manage.php');
-		}
-
-		$stmt->moveNext();
+		};
 	}
 
 	$query = "SELECT count(`ip_id`) `ipsTotalCount` FROM `server_ips`";
 	$stmt = execute_query($query);
-
-	if ($stmt->fields['ipsTotalCount'] < 2) {
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
+	if ($row['ipsTotalCount'] < 2) {
 		set_page_message(tr('You cannot delete the last active IP address.'), 'error');
 		redirectTo('ip_manage.php');
 	}
 
-	write_log("{$_SESSION['user_logged']}: deleted IP address {$stmt->fields['ipNumber']}", E_USER_NOTICE);
+	write_log("{$_SESSION['user_logged']}: deleted IP address {$row['ipNumber']}", E_USER_NOTICE);
 
 	$query = "UPDATE `server_ips` SET `ip_status` = ? WHERE `ip_id` = ?";
 	$stmt = exec_query($query, array('todelete', $deleteIpId));
 
 	send_request();
-
 	set_page_message(tr('IP address successfully scheduled for deletion.'), 'success');
-
 	redirectTo('ip_manage.php');
 }
 

@@ -22,47 +22,43 @@
  */
 
 /**
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  */
 function admin_generatePage($tpl)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
-
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 	$query = "SELECT domain_created from admin where admin_id = ?";
 	$stmt = exec_query($query, (int)$_SESSION['user_id']);
-
-	$tpl->assign(
-		array(
-			'TR_ACCOUNT_SUMMARY' => tr('Account summary'),
-			'TR_USERNAME' => tr('Username'),
-			'USERNAME' => tohtml($_SESSION['user_logged']),
-			'TR_ACCOUNT_TYPE' => tr('Account type'),
-			'ACCOUNT_TYPE' => $_SESSION['user_type'],
-			'TR_REGISTRATION_DATE' => tr('Registration date'),
-			'REGISTRATION_DATE' => ($stmt->fields['domain_created'] != 0) ? date($cfg->DATE_FORMAT, $stmt->fields['domain_created']) : tr('Unknown')));
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
+	$tpl->assign(array(
+		'TR_ACCOUNT_SUMMARY' => tr('Account summary'),
+		'TR_USERNAME' => tr('Username'),
+		'USERNAME' => tohtml($_SESSION['user_logged']),
+		'TR_ACCOUNT_TYPE' => tr('Account type'),
+		'ACCOUNT_TYPE' => $_SESSION['user_type'],
+		'TR_REGISTRATION_DATE' => tr('Registration date'),
+		'REGISTRATION_DATE' => ($row['domain_created'] != 0) ? date($cfg['DATE_FORMAT'], $row['domain_created']) : tr('Unknown')
+	));
 }
 
 /*******************************************************************************
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 check_login('admin');
 
-$tpl = new iMSCP_pTemplate();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/profile.tpl',
-		'page_message' => 'layout'));
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic(array(
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/profile.tpl',
+	'page_message' => 'layout'
+));
 
 $tpl->assign('TR_PAGE_TITLE', tr('Admin / Profile / Account Summary'));
 
@@ -71,9 +67,9 @@ admin_generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+	'templateEngine' => $tpl
+));
 $tpl->prnt();
 
 unsetMessages();

@@ -48,7 +48,7 @@ function reseller_getMailData($domainId, $mailQuota)
 			',
 			$domainId
 		);
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		if ($mailQuota == 0) {
 			$mailData = array(
@@ -91,7 +91,7 @@ function admin_getResellerProps($resellerId)
 		$resellerId
 	);
 
-	return $stmt->fetchRow(PDO::FETCH_ASSOC);
+	return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
 /**
@@ -120,7 +120,7 @@ function admin_getDomainProps($domainId)
 		',
 		$domainId
 	);
-	$data = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$data = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	// domain traffic
 
@@ -143,7 +143,7 @@ function admin_getDomainProps($domainId)
 		',
 		array($domainId, $fdofmnth, $ldofmnth)
 	);
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 	$data['domainTraffic'] = $row['traffic'];
 
@@ -161,8 +161,7 @@ function &admin_getData($domainId, $forUpdate = false)
 {
 	static $data = null;
 
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if(null == $data) {
 		$statusOk = "ok|disabled";
@@ -186,7 +185,7 @@ function &admin_getData($domainId, $forUpdate = false)
 			',
 			array($statusOk, $statusOk, $statusOk, $domainId)
 		);
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		if($row['domain_status'] == '') {
 			set_page_message(tr("The domain you are trying to edit doesn't exist."), 'error');
@@ -194,7 +193,7 @@ function &admin_getData($domainId, $forUpdate = false)
 		} elseif(($row['domain_status'] != 'ok' && $row['domain_status'] != 'disabled') || $row['status_not_ok'] > 0) {
 			set_page_message(tr("The domain or at least one of its entities has a different status than 'ok'."), 'warning');
 			redirectTo('manage_users.php');
-		} elseif($stmt->fields['domain_status'] == 'disabled') {
+		} elseif($row['domain_status'] == 'disabled') {
 			set_page_message(tr('The domain is currently deactivated. The modification of some of its properties will result in a complete or partial reactivation of it.'), 'warning');
 		}
 
@@ -239,7 +238,7 @@ function &admin_getData($domainId, $forUpdate = false)
 
 		// Load reseller and customer permissions if needed
 		if($data['reseller_php_ini_system'] == 'yes') {
-			$phpEditor = iMSCP_PHPini::getInstance();
+			$phpEditor = \iMSCP\Core\Php\PhpEditor::getInstance();
 			$phpEditor->loadRePerm($data['reseller_id']);
 
 			if($data['customer_php_ini_system'] == 'yes') {
@@ -311,7 +310,7 @@ function &admin_getData($domainId, $forUpdate = false)
 /**
  * Generate edit form.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Domain related data
  * @return void
  */
@@ -326,7 +325,7 @@ function admin_generateForm($tpl, &$data)
  *
  * Note: Only shows the limits on which the domain reseller has permissions.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array $data Domain data
  * @return void
  */
@@ -432,14 +431,13 @@ function _admin_generateLimitsForm($tpl, &$data)
  * Note: For now most block for the features are always show. That will change when
  * admin will be able to disable them for a specific reseller.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array $data Domain data
  * @return void
  */
 function _admin_generateFeaturesForm($tpl, &$data)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$htmlChecked = $cfg['HTML_CHECKED'];
 
@@ -456,7 +454,7 @@ function _admin_generateFeaturesForm($tpl, &$data)
 		$tplVars['PHP_EDITOR_JS'] = '';
 		$tplVars['PHP_EDITOR_BLOCK'] = '';
 	} else {
-		$phpEditor = iMSCP_PHPini::getInstance();
+		$phpEditor = \iMSCP\Core\Php\PhpEditor::getInstance();
 
 		$tplVars['TR_SETTINGS'] = tr('Settings');
 		$tplVars['TR_PHP_EDITOR'] = tr('PHP Editor');
@@ -593,17 +591,15 @@ function _admin_generateFeaturesForm($tpl, &$data)
 /**
  * Check and updates domain data.
  *
- * @throws iMSCP_Exception_Database
  * @param int $domainId Domain unique identifier
  * @return bool TRUE on success, FALSE otherwise
  */
 function admin_checkAndUpdateData($domainId)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	/** @var $db iMSCP_Database */
-	$db = iMSCP_Database::getInstance();
+	/** @var $db \Doctrine\DBAL\Connection */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	$errFieldsStack = array();
 
@@ -772,7 +768,7 @@ function admin_checkAndUpdateData($domainId)
 			? $data['domain_php'] : $data['fallback_domain_php'];
 
 		// Check for PHP editor values - Begin
-		$phpEditor = iMSCP_PHPini::getInstance();
+		$phpEditor = \iMSCP\Core\Php\PhpEditor::getInstance();
 
 		// Needed to check if something changed (see below)
 		$phpEditorOld = array_merge($phpEditor->getData(), $phpEditor->getClPerm());
@@ -891,8 +887,8 @@ function admin_checkAndUpdateData($domainId)
 				return true;
 			}
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(
-				iMSCP_Events::onBeforeEditDomain, array('domainId' => $domainId)
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+				\iMSCP\Core\Events::onBeforeEditDomain, array('domainId' => $domainId)
 			);
 
 			// Start transaction
@@ -1003,8 +999,8 @@ function admin_checkAndUpdateData($domainId)
 
 			$db->commit();
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(
-				iMSCP_Events::onAfterEditDomain, array('domainId' => $domainId)
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+				\iMSCP\Core\Events::onAfterEditDomain, array('domainId' => $domainId)
 			);
 
 			if ($daemonRequest) {
@@ -1017,7 +1013,7 @@ function admin_checkAndUpdateData($domainId)
 			write_log("Domain ". decode_idna($data['domain_name']) . " has been updated by {$_SESSION['user_logged']}", E_USER_NOTICE);
 			return true;
 		}
-	} catch (iMSCP_Exception_Database $e) {
+	} catch (PDOException $e) {
 		$db->rollBack();
 		throw $e;
 	}
@@ -1065,15 +1061,13 @@ function _admin_isValidServiceLimit($newCustomerLimit, $customerConsumption,
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] != 'admin') {
 	redirectTo('manage_users.php');
@@ -1093,7 +1087,7 @@ if(!isset($_GET['edit_id'])) {
 // Getting domain data
 $data =& admin_getData($domainId);
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	 'layout' => 'shared/layouts/ui.tpl',
 	 'page' => 'shared/partials/forms/domain_edit.tpl',
@@ -1151,5 +1145,5 @@ admin_generateForm($tpl, $data);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();

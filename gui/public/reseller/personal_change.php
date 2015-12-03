@@ -23,16 +23,15 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -48,11 +47,11 @@ if (isset($_POST['uaction']) && $_POST['uaction'] === 'updt_data') {
 gen_reseller_personal_data($tpl, $_SESSION['user_id']);
 
 /**
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @param $user_id
  */
 function gen_reseller_personal_data($tpl, $user_id) {
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$query = "
 		SELECT
@@ -90,9 +89,9 @@ function gen_reseller_personal_data($tpl, $user_id) {
 			 'EMAIL' => (($rs->fields['email'] == null) ? '' : tohtml($rs->fields['email'])),
 			 'PHONE' => (($rs->fields['phone'] == null) ? '' : tohtml($rs->fields['phone'])),
 			 'FAX' => (($rs->fields['fax'] == null) ? '' : tohtml($rs->fields['fax'])),
-			 'VL_MALE' => (($rs->fields['gender'] == 'M') ? $cfg->HTML_SELECTED : ''),
-			 'VL_FEMALE' => (($rs->fields['gender'] == 'F') ? $cfg->HTML_SELECTED : ''),
-			 'VL_UNKNOWN' => ((($rs->fields['gender'] == 'U') || (empty($rs->fields['gender']))) ? $cfg->HTML_SELECTED : '')));
+			 'VL_MALE' => (($rs->fields['gender'] == 'M') ? $cfg['HTML_SELECTED'] : ''),
+			 'VL_FEMALE' => (($rs->fields['gender'] == 'F') ? $cfg['HTML_SELECTED'] : ''),
+			 'VL_UNKNOWN' => ((($rs->fields['gender'] == 'U') || (empty($rs->fields['gender']))) ? $cfg['HTML_SELECTED'] : '')));
 }
 
 /**
@@ -100,7 +99,7 @@ function gen_reseller_personal_data($tpl, $user_id) {
  */
 function update_reseller_personal_data($user_id) {
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeEditUser, array('userId' => $user_id));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditUser, array('userId' => $user_id));
 
 	$fname = clean_input($_POST['fname']);
 	$lname = clean_input($_POST['lname']);
@@ -145,7 +144,7 @@ function update_reseller_personal_data($user_id) {
 			)
 	);
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditUser, array('userId' => $user_id));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditUser, array('userId' => $user_id));
 
 	set_page_message(tr('Personal data successfully updated.'), 'success');
 	redirectTo('profile.php');
@@ -180,7 +179,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

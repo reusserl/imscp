@@ -32,7 +32,7 @@
 /**
  * Check SQL permissions
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @param int $databaseId Database unique identifier
  */
 function client_checkSqlUserPermissions($tpl, $databaseId)
@@ -70,7 +70,7 @@ function client_checkSqlUserPermissions($tpl, $databaseId)
 /**
  * Get SQL user list
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @param int $customerId Customer id
  * @param int $databaseId Database id
  * @return void
@@ -102,7 +102,7 @@ function client_generateSqlUserList($tpl, $customerId, $databaseId)
 	);
 
 	if($stmt->rowCount()) {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$tpl->assign(
 				array(
 					'SQLUSER_ID' => intval($row['sqlu_id']),
@@ -227,7 +227,7 @@ function client_addSqlUser($customerId, $databaseId)
 				showBadRequestErrorPage();
 			}
 
-			$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+			$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 			$sqlUser = $row['sqlu_name'];
 			$sqlUserHost = $row['sqlu_host'];
@@ -264,7 +264,7 @@ function client_addSqlUser($customerId, $databaseId)
 			$dbName = preg_replace('/([%\?\*])/', '\\\$1', $dbName);
 			$sqlUserCreated = false;
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeAddSqlUser);
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeAddSqlUser);
 
 			try {
 				if (isset($_POST['Add_Exist'])) {
@@ -297,7 +297,7 @@ function client_addSqlUser($customerId, $databaseId)
 				throw $e;
 			}
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterAddSqlUser);
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterAddSqlUser);
 			set_page_message(tr('SQL user successfully added.'), 'success');
 			write_log(sprintf("%s added new SQL user: %s", $_SESSION['user_logged'], tohtml($sqlUser)), E_USER_NOTICE);
 		}
@@ -309,15 +309,13 @@ function client_addSqlUser($customerId, $databaseId)
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @param int $databaseId
  * @return void
  */
 function client_generatePage($tpl, $databaseId)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
-
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 	if ($cfg['MYSQL_PREFIX'] == 'yes') {
 		$tpl->assign('MYSQL_PREFIX_YES', '');
 
@@ -381,7 +379,7 @@ function client_generatePage($tpl, $databaseId)
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
@@ -394,7 +392,7 @@ if (!isset($_REQUEST['id'])) {
 
 $databaseId = intval($_REQUEST['id']);
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -441,7 +439,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

@@ -35,7 +35,7 @@
  * @param int $statusCode
  * @param array $data
  */
-function admin_sendJsonResponse($statusCode = 200, array $data = array())
+function admin_sendJsonResponse($statusCode = 200, array $data = [])
 {
 	header('Cache-Control: no-cache, must-revalidate');
 	header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
@@ -67,7 +67,6 @@ function admin_sendJsonResponse($statusCode = 200, array $data = array())
 /**
  * Clear logs
  *
- * @throws iMSCP_Exception
  * @return void
  */
 function admin_clearLogs()
@@ -99,7 +98,7 @@ function admin_clearLogs()
 			$msg = sprintf('%s deleted the admin log older than one year.', $_SESSION['user_logged']);
 			break;
 		default:
-			admin_sendJsonResponse(400, array('message' => tr('Bad request.')));
+			admin_sendJsonResponse(400, ['message' => tr('Bad request.')]);
 			exit;
 	}
 
@@ -108,25 +107,24 @@ function admin_clearLogs()
 
 		if($stmt->rowCount()) {
 			write_log($msg, E_USER_NOTICE);
-			admin_sendJsonResponse(200, array('message' => tr('Log entries successfully deleted.')));
+			admin_sendJsonResponse(200, ['message' => tr('Log entries successfully deleted.')]);
 		} else {
-			admin_sendJsonResponse(202, array('message' => tr('Nothing has been deleted.')));
+			admin_sendJsonResponse(202, ['message' => tr('Nothing has been deleted.')]);
 		}
-	} catch(iMSCP_Exception_Database $e) {
-		admin_sendJsonResponse(500, array('message' => tr('An unexpected error occurred: %s', $e->getMessage())));
+	} catch(PDOException $e) {
+		admin_sendJsonResponse(500, ['message' => tr('An unexpected error occurred: %s', $e->getMessage())]);
 	}
 }
 
 /**
  * Get logs
  *
- * @throws iMSCP_Exception
  */
 function admin_getLogs()
 {
 	try {
 		// Filterable / orderable columns
-		$columns = array('log_time', 'log_message');
+		$columns = ['log_time', 'log_message'];
 
 		$nbColumns = count($columns);
 
@@ -201,34 +199,33 @@ function admin_getLogs()
 
 		/* Data set length after filtering */
 		$resultFilterTotal = execute_query('SELECT FOUND_ROWS()');
-		$resultFilterTotal = $resultFilterTotal->fetchRow(\PDO::FETCH_NUM);
+		$resultFilterTotal = $resultFilterTotal->fetch(\PDO::FETCH_NUM);
 		$filteredTotal = $resultFilterTotal[0];
 
 		/* Total data set length */
 		$resultTotal = exec_query("SELECT COUNT($indexColumn) FROM $table");
-		$resultTotal = $resultTotal->fetchRow(\PDO::FETCH_NUM);
+		$resultTotal = $resultTotal->fetch(\PDO::FETCH_NUM);
 		$total = $resultTotal[0];
 
 		/* Output */
-		$output = array(
+		$output = [
 			'sEcho' => intval($_GET['sEcho']),
 			'iTotalRecords' => $total,
 			'iTotalDisplayRecords' => $filteredTotal,
-			'aaData' => array()
-		);
+			'aaData' => []
+		];
 
-		/** @var $cfg iMSCP_Config_Handler_File */
-		$cfg = iMSCP_Registry::get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 		$dateFormat = $cfg['DATE_FORMAT'] . ' H:i:s';
 
-		while($data = $rResult->fetchRow(PDO::FETCH_ASSOC)) {
-			$row = array();
+		while($data = $rResult->fetch(PDO::FETCH_ASSOC)) {
+			$row = [];
 
 			for($i = 0; $i < $nbColumns; $i++) {
 				if($columns[$i] == 'log_time') {
 					$row[$columns[$i]] = date($dateFormat, strtotime($data[$columns[$i]]));
 				} else {
-					$replaces = array(
+					$replaces = [
 						'/\b(deactivated|delete[sd]?|deletion|deactivation|failed)\b/i' => '<strong style="color:#FF0000">\\1</strong>',
 						'/\b(remove[sd]?)\b/i' => '<strong style="color:#FF0000">\\1</strong>',
 						'/\b(unable)\b/i' => ' <strong style="color:#FF0000">\\1</strong>',
@@ -239,7 +236,7 @@ function admin_getLogs()
 						'/\b(unknown)\b/i' => '<strong style="color:#CC00FF">\\1</strong>',
 						'/\b(logged)\b/i' => '<strong style="color:#336600">\\1</strong>',
 						'/\b(Warning[\!]?)\b/i' => '<strong style="color:#FF0000">\\1</strong>',
-					);
+					];
 
 					foreach($replaces as $pattern => $replacement) {
 						$data[$columns[$i]] = preg_replace($pattern, $replacement, $data[$columns[$i]]);
@@ -253,32 +250,29 @@ function admin_getLogs()
 		}
 
 		admin_sendJsonResponse(200, $output);
-	} catch(iMSCP_Exception_Database $e) {
+	} catch(PDOException $e) {
 		write_log(sprintf('Unable to get logs: %s', $e->getMessage()), E_USER_ERROR);
-
 		admin_sendJsonResponse(
 			500, array('message' => tr('An unexpected error occurred: %s', $e->getMessage()))
 		);
 	}
 
-	admin_sendJsonResponse(400, array('message' => tr('Bad request.')));
+	admin_sendJsonResponse(400, ['message' => tr('Bad request.')]);
 }
 
 /***********************************************************************************************************************
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
 if(isset($_REQUEST['action'])) {
 	if(is_xhr()) {
 		$action = clean_input($_REQUEST['action']);
-
 		switch($action) {
 			case 'get_logs':
 				admin_getLogs();
@@ -294,17 +288,16 @@ if(isset($_REQUEST['action'])) {
 	showBadRequestErrorPage();
 }
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
-$tpl->define_dynamic(array(
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic([
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/admin_log.tpl',
 	'page_message' => 'layout'
-));
+]);
 
-$tpl->assign(array(
+$tpl->assign([
 	'TR_PAGE_TITLE' => tr('Admin / General / Admin Log'),
 	'TR_CLEAR_LOG' => tr('Clear log'),
 	'ROWS_PER_PAGE' => json_encode($cfg['DOMAIN_ROWS_PER_PAGE']),
@@ -320,10 +313,10 @@ $tpl->assign(array(
 	'TR_LOADING_DATA' => tr('Loading data...'),
 	'TR_TIMEOUT_ERROR' => json_encode(tr('Request Timeout: The server took too long to send the data.')),
 	'TR_UNEXPECTED_ERROR' => json_encode(tr('An unexpected error occurred.'))
-));
+]);
 
-iMSCP_Events_Aggregator::getInstance()->registerListener('onGetJsTranslations', function ($e) {
-	/** @var $e \iMSCP_Events_Event */
+\iMSCP\Core\Application::getInstance()->getEventManager()->attach('onGetJsTranslations', function ($e) {
+	/** @var $e \Zend\EventManager\Event */
 	$e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations(false);
 });
 
@@ -332,7 +325,9 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 
 $tpl->prnt();
 

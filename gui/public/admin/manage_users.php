@@ -29,53 +29,49 @@
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/manage_users.tpl',
-		'page_message' => 'layout',
-		'admin_message' => 'page',
-		'admin_list' => 'page',
-		'admin_item' => 'admin_list',
-		'admin_delete_link' => 'admin_item',
-		'rsl_message' => 'page',
-		'rsl_list' => 'page',
-		'rsl_item' => 'rsl_list',
-		'usr_message' => 'page',
-		'search_form' => 'page',
-		'usr_list' => 'page',
-		'usr_item' => 'usr_list',
-		'domain_status_change' => 'usr_item',
-		'domain_status_nochange' => 'usr_item',
-		'user_details' => 'usr_list',
-		'usr_status_reload_true' => 'usr_item',
-		'usr_status_reload_false' => 'usr_item',
-		'usr_delete_show' => 'usr_item',
-		'usr_delete_link' => 'usr_item',
-		'icon' => 'usr_item',
-		'scroll_prev_gray' => 'page',
-		'scroll_prev' => 'page',
-		'scroll_next_gray' => 'page',
-		'scroll_next' => 'page'));
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic(array(
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/manage_users.tpl',
+	'page_message' => 'layout',
+	'admin_message' => 'page',
+	'admin_list' => 'page',
+	'admin_item' => 'admin_list',
+	'admin_delete_link' => 'admin_item',
+	'rsl_message' => 'page',
+	'rsl_list' => 'page',
+	'rsl_item' => 'rsl_list',
+	'usr_message' => 'page',
+	'search_form' => 'page',
+	'usr_list' => 'page',
+	'usr_item' => 'usr_list',
+	'domain_status_change' => 'usr_item',
+	'domain_status_nochange' => 'usr_item',
+	'user_details' => 'usr_list',
+	'usr_status_reload_true' => 'usr_item',
+	'usr_status_reload_false' => 'usr_item',
+	'usr_delete_show' => 'usr_item',
+	'usr_delete_link' => 'usr_item',
+	'icon' => 'usr_item',
+	'scroll_prev_gray' => 'page',
+	'scroll_prev' => 'page',
+	'scroll_next_gray' => 'page',
+	'scroll_next' => 'page'
+));
 
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Admin / Users / Overview'),
-		'TR_NEXT' => tr('Next'),
-		'TR_PREVIOUS' => tr('Previous')
-	)
-);
+$tpl->assign(array(
+	'TR_PAGE_TITLE' => tr('Admin / Users / Overview'),
+	'TR_NEXT' => tr('Next'),
+	'TR_PREVIOUS' => tr('Previous')
+));
 
 if (isset($_POST['details']) && !empty($_POST['details'])) {
 	$_SESSION['details'] = $_POST['details'];
@@ -105,7 +101,7 @@ if (isset($_SESSION['user_added'])) {
 	set_page_message(tr('The reseller you want to remove has one or more customers accounts.<br>Remove them first.'), 'error');
 }
 
-if (!$cfg->exists('HOSTING_PLANS_LEVEL') || strtolower($cfg->HOSTING_PLANS_LEVEL) !== 'admin') {
+if (!isset($cfg['HOSTING_PLANS_LEVEL']) || strtolower($cfg['HOSTING_PLANS_LEVEL']) !== 'admin') {
 	$tpl->assign('EDIT_OPTION', '');
 }
 
@@ -114,9 +110,9 @@ get_admin_manage_users($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+	'templateEngine' => $tpl
+));
 $tpl->prnt();
 
 unsetMessages();

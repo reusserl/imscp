@@ -50,7 +50,7 @@ function client_deleteExternalMailServers($items, $postRequest)
 					$stmt = exec_query('SELECT external_mail_dns_ids FROM domain WHERE domain_id = ?', $domainId);
 
 					if($stmt->rowCount()) {
-						$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+						$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 						if($row['external_mail_dns_ids'] != '') {
 							exec_query(
@@ -100,7 +100,7 @@ function client_deleteExternalMailServers($items, $postRequest)
 					);
 
 					if($stmt->rowCount()) {
-						$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+						$row = $stmt->fetch(PDO::FETCH_ASSOC);
 
 						if($row['external_mail_dns_ids'] != '') {
 							exec_query(
@@ -164,7 +164,7 @@ function client_deleteExternalMailServers($items, $postRequest)
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 

@@ -33,12 +33,11 @@
 require_once 'imscp-lib.php';
 require_once LIBRARY_PATH . '/Functions/Tickets.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 // If the feature is disabled, redirects in silent way
 if (!customerHasFeature('support')) {
@@ -53,7 +52,7 @@ if (isset($_GET['psi'])) {
     $start = 0;
 }
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic('layout', 'shared/layouts/ui.tpl');
 $tpl->define_dynamic(
 	array(
@@ -88,12 +87,12 @@ $tpl->assign(
 
 
 generateNavigation($tpl);
-generateTicketList($tpl, $_SESSION['user_id'], $start, $cfg->DOMAIN_ROWS_PER_PAGE, 'client', 'open');
+generateTicketList($tpl, $_SESSION['user_id'], $start, $cfg['DOMAIN_ROWS_PER_PAGE'], 'client', 'open');
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

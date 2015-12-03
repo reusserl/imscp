@@ -87,7 +87,7 @@ function reseller_generateEmptyPage()
 /**
  * Generates page
  *
- * @param  iMSCP_pTemplate $tpl Template engine
+ * @param  TemplateEngine $tpl Template engine
  * @return void
  */
 function reseller_generatePage($tpl)
@@ -95,7 +95,7 @@ function reseller_generatePage($tpl)
 	global $hpId, $dmnName, $adminName, $email, $customerId, $firstName, $lastName, $gender, $firm, $zip, $city, $state,
 	       $country, $street1, $street2, $phone, $fax;
 
-	$config = iMSCP_Registry::get('config');
+	$config = \iMSCP\Core\Application::getInstance()->getConfig();
 	$adminName = decode_idna($adminName);
 	$tpl->assign(array(
 		'VL_USERNAME' => tohtml($adminName),
@@ -133,7 +133,7 @@ function reseller_addCustomer()
 	       $gender, $firm, $zip, $city, $state, $country, $phone, $fax, $street1, $street2;
 
 	$resellerId = intval($_SESSION['user_id']);
-	$config = iMSCP_Registry::get('config');
+	$config = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if (isset($_SESSION['ch_hpprops'])) {
 		$props = $_SESSION['ch_hpprops'];
@@ -145,7 +145,7 @@ function reseller_addCustomer()
 			$stmt = exec_query('SELECT props FROM hosting_plans WHERE reseller_id = ? AND id = ?', array($resellerId, $hpId));
 		}
 
-		$data = $stmt->fetchRow();
+		$data = $stmt->fetch();
 		$props = $data['props'];
 	}
 
@@ -168,7 +168,7 @@ function reseller_addCustomer()
 	$db = iMSCP_Database::getInstance();
 
 	try {
-		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeAddDomain, array(
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeAddDomain, array(
 			'domainName' => $dmnName,
 			'createdBy' => $resellerId,
 			'customerId' => $customerId,
@@ -253,7 +253,7 @@ function reseller_addCustomer()
 
 		$db->commit();
 
-		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterAddDomain, array(
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterAddDomain, array(
 			'domainName' => $dmnName,
 			'createdBy' => $resellerId,
 			'customerId' => $recordId,
@@ -275,10 +275,10 @@ function reseller_addCustomer()
  * Main
  */
 
-require 'imscp-lib.php';
+require '../../application.php';
 
 $eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(iMSCP_Events::onResellerScriptStart);
+$eventManager->dispatch(\iMSCP\Core\Events::onResellerScriptStart);
 check_login('reseller');
 
 if (!getPreviousPageData()) {
@@ -296,7 +296,7 @@ if (isset($_POST['uaction']) && ($_POST['uaction'] === 'user_add3_nxt') && !isse
 	reseller_generateEmptyPage();
 }
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'reseller/user_add3.tpl',
@@ -344,5 +344,5 @@ reseller_generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-$eventManager->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+$eventManager->dispatch(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();

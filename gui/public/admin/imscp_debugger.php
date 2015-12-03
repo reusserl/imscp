@@ -32,7 +32,7 @@
 /**
  * Get user errors
  *
- * @param  iMSCP_pTemplate $tpl Template engine instance
+ * @param  \iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
  */
 function debugger_getUserErrors($tpl)
@@ -56,7 +56,7 @@ function debugger_getUserErrors($tpl)
 		$tpl->assign(array('USER_ITEM' => '', 'TR_USER_MESSAGE' => tr('No errors')));
 		$tpl->parse('USER_MESSAGE', 'user_message');
 	} else {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$tpl->assign(
 				array(
 					'USER_MESSAGE' => '',
@@ -75,7 +75,7 @@ function debugger_getUserErrors($tpl)
 /**
  * Get domain errors
  *
- * @param  iMSCP_pTemplate $tpl Template engine instance
+ * @param  \iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
  */
 function debugger_getDmnErrors($tpl)
@@ -96,7 +96,7 @@ function debugger_getDmnErrors($tpl)
 		$tpl->assign(array('DMN_ITEM' => '', 'TR_DMN_MESSAGE' => tr('No errors')));
 		$tpl->parse('DMN_MESSAGE', 'dmn_message');
 	} else {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$tpl->assign(
 				array(
 					'DMN_MESSAGE' => '',
@@ -115,7 +115,7 @@ function debugger_getDmnErrors($tpl)
 /**
  * Get domain aliases errors
  *
- * @param  iMSCP_pTemplate $tpl Template engine instance
+ * @param  \iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
  */
 function debugger_getAlsErrors($tpl)
@@ -136,7 +136,7 @@ function debugger_getAlsErrors($tpl)
 		$tpl->assign(array('ALS_ITEM' => '', 'TR_ALS_MESSAGE' => tr('No errors')));
 		$tpl->parse('ALS_MESSAGE', 'als_message');
 	} else {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$tpl->assign(
 				array(
 					'ALS_MESSAGE' => '',
@@ -155,7 +155,7 @@ function debugger_getAlsErrors($tpl)
 /**
  * Get subdomains errors
  *
- * @param  iMSCP_pTemplate $tpl Template engine instance
+ * @param  \iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
  */
 function debugger_getSubErrors($tpl)
@@ -179,7 +179,7 @@ function debugger_getSubErrors($tpl)
 		$tpl->assign(array('SUB_ITEM' => '', 'TR_SUB_MESSAGE' => tr('No errors')));
 		$tpl->parse('SUB_MESSAGE', 'sub_message');
 	} else {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$tpl->assign(
 				array(
 					'SUB_MESSAGE' => '',
@@ -198,7 +198,7 @@ function debugger_getSubErrors($tpl)
 /**
  * Get subdomain aliases errors
  *
- * @param  iMSCP_pTemplate $tpl Template engine instance
+ * @param  \iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
  */
 function debugger_getAlssubErrors($tpl)
@@ -221,7 +221,7 @@ function debugger_getAlssubErrors($tpl)
 		$tpl->assign(array('ALSSUB_ITEM' => '', 'TR_ALSSUB_MESSAGE' => tr('No errors')));
 		$tpl->parse('ALSSUB_MESSAGE', 'alssub_message');
 	} else {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$tpl->assign(
 				array(
 					'ALSSUB_MESSAGE' => '',
@@ -240,7 +240,7 @@ function debugger_getAlssubErrors($tpl)
 /**
  * Get FTP users errors
  *
- * @param  iMSCP_pTemplate $tpl Template engine instance
+ * @param  \iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
  */
 function debugger_getFtpErrors($tpl)
@@ -253,7 +253,7 @@ function debugger_getFtpErrors($tpl)
 		$tpl->assign(array('FTP_ITEM' => '', 'TR_FTP_MESSAGE' => tr('No errors')));
 		$tpl->parse('FTP_MESSAGE', 'ftp_message');
 	} else {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$tpl->assign(array(
 				'FTP_MESSAGE' => '',
 				'FTP_NAME' => tohtml(decode_idna($row['userid'])),
@@ -270,7 +270,7 @@ function debugger_getFtpErrors($tpl)
 /**
  * Get custom dns errors
  *
- * @param  iMSCP_pTemplate $tpl Template engine instance
+ * @param  \iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
  */
 function debugger_getCustomDNSErrors($tpl)
@@ -291,7 +291,7 @@ function debugger_getCustomDNSErrors($tpl)
 		$tpl->assign(array('CUSTOM_DNS_ITEM' => '', 'TR_CUSTOM_DNS_MESSAGE' => tr('No errors')));
 		$tpl->parse('CUSTOM_DNS_MESSAGE', 'custom_dns_message');
 	} else {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$tpl->assign(
 				array(
 					'CUSTOM_DNS_MESSAGE' => '',
@@ -310,7 +310,7 @@ function debugger_getCustomDNSErrors($tpl)
 /**
  * Gets htaccess errors
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
  */
 function debugger_getHtaccessErrors($tpl)
@@ -355,7 +355,7 @@ function debugger_getHtaccessErrors($tpl)
 		$tpl->assign(array('HTACCESS_ITEM' => '', 'TR_HTACCESS_MESSAGE' => tr('No errors')));
 		$tpl->parse('HTACCESS_MESSAGE', 'htaccess_message');
 	} else {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$tpl->assign(
 				array(
 					'HTACCESS_MESSAGE' => '',
@@ -375,8 +375,7 @@ function debugger_getHtaccessErrors($tpl)
 /**
  * Get mails errors
  *
- * @throws iMSCP_Exception
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
  */
 function debugger_getMailsErrors($tpl)
@@ -397,7 +396,7 @@ function debugger_getMailsErrors($tpl)
 		$tpl->assign(array('MAIL_ITEM' => '', 'TR_MAIL_MESSAGE' => tr('No errors')));
 		$tpl->parse('MAIL_MESSAGE', 'mail_message');
 	} else {
-		while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			$searchedId = $row['domain_id'];
 			$mailAcc = $row['mail_acc'];
 			$mailType = $row['mail_type'];
@@ -460,11 +459,12 @@ function debugger_getMailsErrors($tpl)
 					";
 					break;
 				default:
-					throw new iMSCP_Exception('FIXME: ' . __FILE__ . ':' . __LINE__ . $mailType);
+					throw new Exception('FIXME: ' . __FILE__ . ':' . __LINE__ . $mailType);
 			}
 
 			$stmt2 = exec_query($query, $searchedId);
-			$domainName = $stmt2->fields['domain_name'];
+			$row = $stmt2->fetch(PDO::FETCH_ASSOC);
+			$domainName = $row['domain_name'];
 			$domainName = ltrim($domainName, '@');
 
 			$tpl->assign(
@@ -487,7 +487,7 @@ function debugger_getMailsErrors($tpl)
 /**
  * Get plugin items errors
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @return void
  */
 function debugger_getPluginItemErrors($tpl)
@@ -595,18 +595,16 @@ function debugger_countRequests($statusField = null, $tableName = null)
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
 /** @var iMSCP_Plugin_Manager $plugingManager */
 $plugingManager = iMSCP_Registry::get('pluginManager');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $rqstCount = debugger_countRequests('admin_status', 'admin');
 $rqstCount += debugger_countRequests('domain_status', 'domain');
@@ -633,8 +631,7 @@ if (isset($_GET['action'])) {
 		}
 		redirectTo('imscp_debugger.php');
 	} elseif ($_GET['action'] == 'change' && (isset($_GET['id']) && isset($_GET['type']))) {
-		/** @var iMSCP_Config_Handler_File $cfg */
-		$cfg = iMSCP_Registry::get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 		switch ($_GET['type']) {
 			case 'user':
@@ -688,8 +685,9 @@ if (isset($_GET['action'])) {
 		if ($stmt !== false) {
 			set_page_message(tr('Done'), 'success');
 		} else {
-			/** @var $db iMSCP_Database */
-			$db = iMSCP_Registry::get('db');
+			/** @var \Doctrine\DBAL\Connection $db */
+			$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
+
 			set_page_message(tr('Unknown Error') . '<br />' . $db->errorMsg(), 'error');
 		}
 
@@ -697,36 +695,34 @@ if (isset($_GET['action'])) {
 	}
 }
 
-$tpl = new iMSCP_pTemplate();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/imscp_debugger.tpl',
-		'page_message' => 'layout',
-		'user_message' => 'page',
-		'user_item' => 'page',
-		'dmn_message' => 'page',
-		'dmn_item' => 'page',
-		'als_message' => 'page',
-		'als_item' => 'page',
-		'sub_message' => 'page',
-		'sub_item' => 'page',
-		'alssub_message' => 'page',
-		'alssub_item' => 'page',
-		'ftp_message' => 'page',
-		'ftp_item' => 'page',
-		'custom_dns_message' => 'page',
-		'custom_dns_item' => 'page',
-		'htaccess_message' => 'page',
-		'htaccess_item' => 'page',
-		'mail_message' => 'page',
-		'mail_item' => 'page',
-		'plugin_message' => 'page',
-		'plugin_item' => 'page',
-		'plugin_item_message' => 'page',
-		'plugin_item_item' => 'page'
-	)
-);
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic(array(
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/imscp_debugger.tpl',
+	'page_message' => 'layout',
+	'user_message' => 'page',
+	'user_item' => 'page',
+	'dmn_message' => 'page',
+	'dmn_item' => 'page',
+	'als_message' => 'page',
+	'als_item' => 'page',
+	'sub_message' => 'page',
+	'sub_item' => 'page',
+	'alssub_message' => 'page',
+	'alssub_item' => 'page',
+	'ftp_message' => 'page',
+	'ftp_item' => 'page',
+	'custom_dns_message' => 'page',
+	'custom_dns_item' => 'page',
+	'htaccess_message' => 'page',
+	'htaccess_item' => 'page',
+	'mail_message' => 'page',
+	'mail_item' => 'page',
+	'plugin_message' => 'page',
+	'plugin_item' => 'page',
+	'plugin_item_message' => 'page',
+	'plugin_item_item' => 'page'
+));
 
 debugger_getUserErrors($tpl);
 debugger_getDmnErrors($tpl);
@@ -739,33 +735,31 @@ debugger_getMailsErrors($tpl);
 debugger_getHtaccessErrors($tpl);
 debugger_getPluginItemErrors($tpl);
 
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Admin / System Tools / Debugger'),
-		'TR_USER_ERRORS' => tr('User errors'),
-		'TR_DMN_ERRORS' => tr('Domain errors'),
-		'TR_ALS_ERRORS' => tr('Domain alias errors'),
-		'TR_FTP_ERRORS' => tr('FTP user errors'),
-		'TR_SUB_ERRORS' => tr('Subdomain errors'),
-		'TR_ALSSUB_ERRORS' => tr('Subdomain alias errors'),
-		'TR_CUSTOM_DNS_ERRORS' => tr('Custom DNS errors'),
-		'TR_MAIL_ERRORS' => tr('Email account errors'),
-		'TR_HTACCESS_ERRORS' => tr('Htaccess errors'),
-		'TR_PLUGINS_ERRORS' => tr('Plugin errors'),
-		'TR_PLUGIN_ITEM_ERRORS' => tr('Plugin item errors'),
-		'TR_DAEMON_TOOLS' => tr('i-MSCP Daemon tools'),
-		'TR_EXEC_REQUESTS' => tr('Execute requests'),
-		'TR_CHANGE_STATUS' => tr("Set status to 'tochange'"),
-		'EXEC_COUNT' => $rqstCount
-	)
-);
+$tpl->assign(array(
+	'TR_PAGE_TITLE' => tr('Admin / System Tools / Debugger'),
+	'TR_USER_ERRORS' => tr('User errors'),
+	'TR_DMN_ERRORS' => tr('Domain errors'),
+	'TR_ALS_ERRORS' => tr('Domain alias errors'),
+	'TR_FTP_ERRORS' => tr('FTP user errors'),
+	'TR_SUB_ERRORS' => tr('Subdomain errors'),
+	'TR_ALSSUB_ERRORS' => tr('Subdomain alias errors'),
+	'TR_CUSTOM_DNS_ERRORS' => tr('Custom DNS errors'),
+	'TR_MAIL_ERRORS' => tr('Email account errors'),
+	'TR_HTACCESS_ERRORS' => tr('Htaccess errors'),
+	'TR_PLUGINS_ERRORS' => tr('Plugin errors'),
+	'TR_PLUGIN_ITEM_ERRORS' => tr('Plugin item errors'),
+	'TR_DAEMON_TOOLS' => tr('i-MSCP Daemon tools'),
+	'TR_EXEC_REQUESTS' => tr('Execute requests'),
+	'TR_CHANGE_STATUS' => tr("Set status to 'tochange'"),
+	'EXEC_COUNT' => $rqstCount
+));
 
 generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

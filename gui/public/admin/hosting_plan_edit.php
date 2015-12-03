@@ -32,16 +32,15 @@
 /**
  * Generate PHP editor block
  *
- * @param iMSCP_pTemplate $tpl
- * @param iMSCP_PHPini $phpini
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
+ * @param \iMSCP\Core\Php\PhpEditor $phpini
  * @return void
  */
 function _admin_generatePhpBlock($tpl, $phpini)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$checked = $cfg->HTML_CHECKED;
+	$checked = $cfg['HTML_CHECKED'];
 
 	$tplVars = array();
 
@@ -102,15 +101,14 @@ function _admin_generatePhpBlock($tpl, $phpini)
 /**
  * Generate page
  *
- * @param $tpl iMSCP_pTemplate
+ * @param $tpl \iMSCP\Core\Template\TemplateEngine
  * @param int $id Hosting plan unique identifier
- * @param $phpini iMSCP_PHPini
+ * @param $phpini \iMSCP\Core\Php\PhpEditor
  * @return void
  */
 function admin_generatePage($tpl, $id, $phpini)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$query = "
 		SELECT
@@ -128,7 +126,7 @@ function admin_generatePage($tpl, $id, $phpini)
 		showBadRequestErrorPage();
 	}
 
-	$data = $stmt->fetchRow();
+	$data = $stmt->fetch();
 
 	$description = $data['description'];
 	$status = $data['status'];
@@ -155,7 +153,7 @@ function admin_generatePage($tpl, $id, $phpini)
 	$phpini->setData('phpiniMaxInputTime', $phpMaxInputTimeValue, false);
 	$phpini->setData('phpiniMemoryLimit', $phpMemoryLimitValue, false);
 
-	$checked = $cfg->HTML_CHECKED;
+	$checked = $cfg['HTML_CHECKED'];
 
 	$tpl->assign(
 		array(
@@ -192,7 +190,7 @@ function admin_generatePage($tpl, $id, $phpini)
 		$tpl->assign('CUSTOM_DNS_RECORDS_FEATURE', '');
 	}
 
-	if ($cfg->BACKUP_DOMAINS != 'no') {
+	if ($cfg['BACKUP_DOMAINS'] != 'no') {
 		$tpl->assign(
 			array(
 				'BACKUPD' => in_array('_dmn_', $backup) ? $checked : '',
@@ -210,8 +208,8 @@ function admin_generatePage($tpl, $id, $phpini)
 /**
  * Generate error page
  *
- * @param iMSCP_pTemplate $tpl
- * @param iMSCP_PHPini $phpini
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
+ * @param \iMSCP\Core\Php\PhpEditor $phpini
  * @return void
  */
 function admin_generateErrorPage($tpl, $phpini)
@@ -219,9 +217,8 @@ function admin_generateErrorPage($tpl, $phpini)
 	global $id, $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $monthlyTraffic, $diskspace,
 		   $php, $cgi, $backup, $dns, $apsStandard, $hpExtMail, $hpProtectedWebFolders, $status;
 
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
-	$checked = $cfg->HTML_CHECKED;
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+	$checked = $cfg['HTML_CHECKED'];
 
 	$tpl->assign(
 		array(
@@ -238,7 +235,7 @@ function admin_generateErrorPage($tpl, $phpini)
 			'MONTHLY_TRAFFIC' => tohtml($monthlyTraffic),
 			'MAX_DISKSPACE' => tohtml($diskspace),
 			'PHP_YES' => ($php == '_yes_') ? $checked : '',
-			'PHP_NO' => ($php == '_no_') ? $cfg->HTML_CHECKED : '',
+			'PHP_NO' => ($php == '_no_') ? $cfg['HTML_CHECKED'] : '',
 			'CGI_YES' => ($cgi == '_yes_') ? $checked : '',
 			'CGI_NO' => ($cgi == '_no_') ? $checked : '',
 			'DNS_YES' => ($dns == '_yes_') ? $checked : '',
@@ -258,7 +255,7 @@ function admin_generateErrorPage($tpl, $phpini)
 		$tpl->assign('CUSTOM_DNS_RECORDS_FEATURE', '');
 	}
 
-	if ($cfg->BACKUP_DOMAINS != 'no') {
+	if ($cfg['BACKUP_DOMAINS'] != 'no') {
 		$tpl->assign(
 			array(
 				'BACKUPD' => in_array('_dmn_', $backup) ? $checked : '',
@@ -276,7 +273,7 @@ function admin_generateErrorPage($tpl, $phpini)
 /**
  * Check input data
  *
- * @param iMSCP_PHPini $phpini
+ * @param \iMSCP\Core\Php\PhpEditor $phpini
  * @return bool TRUE if data are valid, FALSE otherwise
  */
 function admin_checkData($phpini)
@@ -284,8 +281,7 @@ function admin_checkData($phpini)
 	global $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $monthlyTraffic, $diskspace, $php,
 		   $cgi, $dns, $apsStandard, $backup, $hpExtMail, $hpProtectedWebFolders, $status;
 
-	/** @var iMSCP_Config_Handler_File $cfg */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$name = isset($_POST['hp_name']) ? clean_input($_POST['hp_name']) : '';
 	$description = isset($_POST['hp_description']) ? clean_input($_POST['hp_description']) : '';
@@ -316,7 +312,7 @@ function admin_checkData($phpini)
 	$cgi = ($cgi == '_yes_') ? '_yes_' : '_no_';
 	$dns = ($dns == '_yes_') ? '_yes_' : '_no_';
 	$apsStandard = ($apsStandard == '_yes_') ? '_yes_' : '_no_';
-	$backup = ($cfg->BACKUP_DOMAINS != 'no') ? array_intersect($backup, array('_dmn_', '_sql_', '_mail_')) : array();
+	$backup = ($cfg['BACKUP_DOMAINS'] != 'no') ? array_intersect($backup, array('_dmn_', '_sql_', '_mail_')) : array();
 	$hpExtMail = ($hpExtMail == '_yes_') ? '_yes_' : '_no_';
 	$hpProtectedWebFolders = ($hpProtectedWebFolders == '_yes_') ? '_yes_' : '_no_';
 
@@ -435,7 +431,7 @@ function admin_checkData($phpini)
 /**
  * Update hosting plan
  *
- * @param iMSCP_PHPini $phpini
+ * @param \iMSCP\Core\Php\PhpEditor $phpini
  * @return bool TRUE on success, FALSE otherwise
  */
 function admin_UpdateHostingPlan($phpini)
@@ -482,20 +478,16 @@ function admin_UpdateHostingPlan($phpini)
  * Functions
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('admin');
 
-/**
- * @var $cfg iMSCP_Config_Handler_File
- */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-if (isset($cfg->HOSTING_PLANS_LEVEL) && $cfg->HOSTING_PLANS_LEVEL == 'admin') {
-	$tpl = new iMSCP_pTemplate();
+if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(
 		array(
 			'layout' => 'shared/layouts/ui.tpl',
@@ -511,8 +503,7 @@ if (isset($cfg->HOSTING_PLANS_LEVEL) && $cfg->HOSTING_PLANS_LEVEL == 'admin') {
 		global $id;
 		$id = clean_input($_GET['id']);
 
-		/* @var $phpini iMSCP_PHPini */
-		$phpini = iMSCP_PHPini::getInstance();
+		$phpini = \iMSCP\Core\Php\PhpEditor::getInstance();
 
 		if (!empty($_POST)) {
 			if (admin_checkData($phpini) && admin_UpdateHostingPlan($phpini)) {
@@ -575,7 +566,7 @@ if (isset($cfg->HOSTING_PLANS_LEVEL) && $cfg->HOSTING_PLANS_LEVEL == 'admin') {
 
 		$tpl->parse('LAYOUT_CONTENT', 'page');
 
-		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 		$tpl->prnt();
 	} else {

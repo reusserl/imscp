@@ -182,14 +182,13 @@ function protect_area($domainId)
 /**
  * Generates page.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param int $domainId Domain unique identifier
  * @return void
  */
 function gen_protect_it($tpl, $domainId)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if (!isset($_GET['id'])) {
 		$edit = 'no';
@@ -250,7 +249,7 @@ function gen_protect_it($tpl, $domainId)
 	if ($edit == 'no' || $rs->rowCount() == 0 || $type == 'user') {
 		$tpl->assign(
 			array(
-				'USER_CHECKED' => $cfg->HTML_CHECKED,
+				'USER_CHECKED' => $cfg['HTML_CHECKED'],
 				'GROUP_CHECKED' => "",
 				'USER_FORM_ELEMENS' => "false",
 				'GROUP_FORM_ELEMENS' => "true"));
@@ -260,7 +259,7 @@ function gen_protect_it($tpl, $domainId)
 		$tpl->assign(
 			array(
 				'USER_CHECKED' => "",
-				'GROUP_CHECKED' => $cfg->HTML_CHECKED,
+				'GROUP_CHECKED' => $cfg['HTML_CHECKED'],
 				'USER_FORM_ELEMENS' => "true",
 				'GROUP_FORM_ELEMENS' => "false"));
 	}
@@ -282,7 +281,7 @@ function gen_protect_it($tpl, $domainId)
 			for ($i = 0, $cnt_usr_id = count($usr_id); $i < $cnt_usr_id; $i++) {
 				if ($edit == 'yes' && $usr_id[$i] == $rs->fields['id']) {
 					$i = $cnt_usr_id + 1;
-					$usr_selected = $cfg->HTML_SELECTED;
+					$usr_selected = $cfg['HTML_SELECTED'];
 				} else {
 					$usr_selected = '';
 				}
@@ -317,7 +316,7 @@ function gen_protect_it($tpl, $domainId)
 			for ($i = 0, $cnt_grp_id = count($grp_id); $i < $cnt_grp_id; $i++) {
 				if ($edit == 'yes' && $grp_id[$i] == $rs->fields['id']) {
 					$i = $cnt_grp_id + 1;
-					$grp_selected = $cfg->HTML_SELECTED;
+					$grp_selected = $cfg['HTML_SELECTED'];
 				} else {
 					$grp_selected = '';
 				}
@@ -342,16 +341,15 @@ function gen_protect_it($tpl, $domainId)
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 customerHasFeature('protected_areas') or showBadRequestErrorPage();
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -388,7 +386,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

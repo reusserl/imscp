@@ -23,10 +23,10 @@ namespace iMSCP\ApsStandard;
 use iMSCP\ApsStandard\Controller\ApsPackageController;
 use iMSCP_Events_Aggregator as EventManager;
 use iMSCP_Events as Events;
-use iMSCP_pTemplate as TemplateEngine;
+use TemplateEngine as TemplateEngine;
 use iMSCP_Registry as Registry;
 
-require 'imscp-lib.php';
+require '../../application.php';
 
 $eventManager = EventManager::getInstance();
 $eventManager->dispatch(Events::onClientScriptStart);
@@ -45,21 +45,21 @@ if (customerHasFeature('aps_standard')) {
 	}
 
 	$tpl = new TemplateEngine();
-	$tpl->define_dynamic(array(
+	$tpl->define_dynamic([
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'assets/angular/aps-standard/aps-package/aps-packages.tpl',
 		'page_message' => 'layout',
-	));
+	]);
 
-	$tpl->assign(array(
+	$tpl->assign([
 		'TR_PAGE_TITLE' => tohtml(tr('Client / APS Standard / Packages'), 'htmlAttr'),
 		'PAGE_MESSAGE' => ''
-	));
+	]);
 
 	generateNavigation($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	$eventManager->dispatch(Events::onClientScriptEnd, array('templateEngine' => $tpl));
+	$eventManager->dispatch(Events::onClientScriptEnd, ['templateEngine' => $tpl]);
 	$tpl->prnt();
 } else {
 	showBadRequestErrorPage();

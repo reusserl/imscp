@@ -91,7 +91,7 @@ function ftp_getDomainList($mainDmnName, $mainDmnId, $dmnType = 'dmn')
 		if (!$stmt->rowCount()) {
 			showBadRequestErrorPage();
 		} else {
-			while ($row = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+			while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 				$dmnList[] = array(
 					'domain_name_val' => $row['name'],
 					'domain_name' => decode_idna($row['name'])
@@ -108,7 +108,7 @@ function ftp_getDomainList($mainDmnName, $mainDmnId, $dmnType = 'dmn')
  *
  * @throws iMSCP_Exception
  * @param int $mainDmnId Customer main domain id
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @return void
  */
 function ftp_generateDomainTypeList($mainDmnId, $tpl)
@@ -130,9 +130,8 @@ function ftp_generateDomainTypeList($mainDmnId, $tpl)
 	";
 	$stmt = exec_query($query, $mainDmnId);
 
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
-	$selected = $cfg->HTML_SELECTED;
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+	$selected = $cfg['HTML_SELECTED'];
 	$dmns = array(
 		array('count' => '1', 'type' => 'dmn', 'tr' => tr('Domain')),
 		array('count' => $stmt->fields['sub_count'], 'type' => 'sub', 'tr' => tr('Subdomain')),
@@ -161,7 +160,7 @@ function ftp_generateDomainTypeList($mainDmnId, $tpl)
  *
  * @param string $mainDmn Customer main domain name
  * @param string $mainDmnId Customer main domain id
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @return void
  */
 function ftp_generatePageData($mainDmn, $mainDmnId, $tpl)
@@ -177,8 +176,7 @@ function ftp_generatePageData($mainDmn, $mainDmnId, $tpl)
 
 	ftp_generateDomainTypeList($mainDmnId, $tpl);
 
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$dmnList = ftp_getDomainList(
 		$mainDmn, $mainDmnId, isset($_POST['domain_type']) ? clean_input($_POST['domain_type']) : 'dmn'
@@ -190,7 +188,7 @@ function ftp_generatePageData($mainDmn, $mainDmnId, $tpl)
 				'DOMAIN_NAME_VAL' => tohtml($dmn['domain_name']),
 				'DOMAIN_NAME' => tohtml(decode_idna($dmn['domain_name'])),
 				'DOMAIN_NAME_SELECTED' => (isset($_POST['domain_name']) && $_POST['domain_name'] == $dmn['domain_name'])
-					? $cfg->HTML_SELECTED : ''
+					? $$cfg['HTML_SELECTED'] : ''
 			)
 		);
 
@@ -259,13 +257,12 @@ function ftp_addAccount($mainDmnName)
 				showBadRequestErrorPage();
 			}
 
-			/** @var $cfg iMSCP_Config_Handler_File */
-			$cfg = iMSCP_Registry::get('config');
+			$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 			$userid = $username . '@' . decode_idna($dmnName);
-			$encryptedPassword = \iMSCP\Crypt::sha512($passwd);
+			$encryptedPassword = \iMSCP\Core\Utils\Crypt::sha512($passwd);
 			$shell = '/bin/sh';
-			$homeDir = rtrim(str_replace('//', '/', $cfg->USER_WEB_DIR . '/' . $mainDmnName . '/' . $homeDir), '/');
+			$homeDir = rtrim(str_replace('//', '/', $cfg['USER_WEB_DIR'] . '/' . $mainDmnName . '/' . $homeDir), '/');
 
 			// Retrieve customer uid/gid
 			$query = '
@@ -289,8 +286,8 @@ function ftp_addAccount($mainDmnName)
 			$diskspaceLimit = $stmt->fields['domain_disk_limit'];
 			$quotaEntriesExist = ($stmt->fields['quota_entry']) ? true : false;
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(
-				iMSCP_Events::onBeforeAddFtp,
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+				\iMSCP\Core\Events::onBeforeAddFtp,
 				array(
 					'ftpUserId' => $userid,
 					'ftpPassword' => $passwd,
@@ -361,8 +358,8 @@ function ftp_addAccount($mainDmnName)
 			}
 
 			if($ret) {
-				iMSCP_Events_Aggregator::getInstance()->dispatch(
-					iMSCP_Events::onAfterAddFtp,
+				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+					\iMSCP\Core\Events::onAfterAddFtp,
 					array(
 						'ftpUserId' => $userid,
 						'ftpPassword' => $passwd,
@@ -395,7 +392,7 @@ function ftp_addAccount($mainDmnName)
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
@@ -424,10 +421,9 @@ if (is_xhr() && isset($_POST['domain_type'])) {
 	}
 }
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -461,7 +457,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

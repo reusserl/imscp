@@ -48,7 +48,7 @@ function _getUserTraffic($domainId, $beginTime, $endTime)
 	);
 
 	if ($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		return array($row['web_traffic'], $row['ftp_traffic'], $row['mail_traffic'], $row['pop_traffic']);
 	}
 
@@ -58,7 +58,7 @@ function _getUserTraffic($domainId, $beginTime, $endTime)
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param int $userId User unique identifier
  * @return void
  */
@@ -82,7 +82,7 @@ function generatePage($tpl, $userId)
 		showBadRequestErrorPage();
 	}
 
-	$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
 	$domainId = $row['domain_id'];
 	$adminName = decode_idna($row['admin_name']);
 
@@ -99,7 +99,7 @@ function generatePage($tpl, $userId)
 	);
 
 	if ($stmt->rowCount()) {
-		$row = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
 		$numberYears = date('y') - date('y', $row['dtraff_time']);
 		$numberYears = $numberYears ? $numberYears + 1 : 1;
 	} else {
@@ -118,7 +118,7 @@ function generatePage($tpl, $userId)
 		$toDay = ($requestedPeriod < time()) ? date('j', $requestedPeriod) : date('j');
 		$all = array_fill(0, 8, 0);
 
-		$dateFormat = iMSCP_Registry::get('config')->DATE_FORMAT;
+		$dateFormat = \iMSCP\Core\Application::getInstance()->getConfig()->DATE_FORMAT;
 
 		for ($fromDay = 1; $fromDay <= $toDay; $fromDay++) {
 			$beginTime = mktime(0, 0, 0, $month, $fromDay, $year);
@@ -168,10 +168,10 @@ function generatePage($tpl, $userId)
  * Main
  */
 
-require 'imscp-lib.php';
+require '../../application.php';
 
 $eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(iMSCP_Events::onAdminScriptStart);
+$eventManager->dispatch(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
@@ -188,7 +188,7 @@ if(systemHasCustomers()) {
 		exit;
 	}
 
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'admin/reseller_user_statistics_details.tpl',
@@ -218,7 +218,7 @@ if(systemHasCustomers()) {
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	$eventManager->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+	$eventManager->dispatch(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 	$tpl->prnt();
 
 	unsetMessages();

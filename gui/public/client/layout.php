@@ -33,13 +33,12 @@
  * Generate layout color form.
  *
  * @author Laurent Declercq <l.declerq@nuxwin.com>
- * @param $tpl iMSCP_pTemplate Template engine instance
+ * @param $tpl TemplateEngine Template engine instance
  * @return void
  */
 function client_generateLayoutColorForm($tpl)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$colors = layout_getAvailableColorSet();
 
@@ -53,7 +52,7 @@ function client_generateLayoutColorForm($tpl)
 		foreach ($colors as $color) {
 			$tpl->assign(array(
 				'COLOR' => $color,
-				'SELECTED_COLOR' => ($color == $selectedColor) ? $cfg->HTML_SELECTED : ''));
+				'SELECTED_COLOR' => ($color == $selectedColor) ? $cfg['HTML_SELECTED'] : ''));
 			$tpl->parse('LAYOUT_COLOR_BLOCK', '.layout_color_block');
 		}
 	} else {
@@ -66,16 +65,15 @@ function client_generateLayoutColorForm($tpl)
  */
 
 // Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -109,7 +107,7 @@ if (isset($_POST['uaction'])) {
 	}
 }
 
-$html_selected = $cfg->HTML_SELECTED;
+$html_selected = $cfg['HTML_SELECTED'];
 $userId = $_SESSION['user_id'];
 
 if (layout_isMainMenuLabelsVisible($userId)) {
@@ -141,7 +139,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

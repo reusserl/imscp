@@ -55,7 +55,7 @@ function _client_getAliasData($domainAliasId)
 			return false;
 		}
 
-		$domainAliasData = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$domainAliasData = $stmt->fetch(PDO::FETCH_ASSOC);
 		$domainAliasData['alias_name_utf8'] = decode_idna($domainAliasData['alias_name']);
 	}
 
@@ -65,7 +65,7 @@ function _client_getAliasData($domainAliasId)
 /**
  * Generate page
  *
- * @param $tpl iMSCP_pTemplate
+ * @param $tpl iMSCP\Core\Template\TemplateEngine
  * @return void
  */
 function client_generatePage($tpl)
@@ -98,8 +98,7 @@ function client_generatePage($tpl)
 				? $_POST['forward_type'] : '302';
 		}
 
-		/** @var iMSCP_Config_Handler_File $cfg */
-		$cfg = iMSCP_Registry::get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 		$checked = $cfg['HTML_CHECKED'];
 		$selected = $cfg['HTML_SELECTED'];
 
@@ -173,7 +172,7 @@ function client_editDomainAlias()
 				}
 			}
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeEditDomainAlias, array(
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditDomainAlias, array(
 				'domainAliasId' => $domainAliasId,
 				'domainAliasName' => $domainAliasData['alias_name']
 			));
@@ -183,7 +182,7 @@ function client_editDomainAlias()
 				array($forwardUrl, $forwardType, 'tochange', $domainAliasId)
 			);
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditDomainAlias, array(
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditDomainAlias, array(
 				'domainAliasId' => $domainAliasId,
 				'domainAliasName' => $domainAliasData['alias_name']
 			));
@@ -207,7 +206,7 @@ function client_editDomainAlias()
 
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 check_login('user');
 customerHasFeature('domain_aliases') or showBadRequestErrorPage();
 
@@ -215,7 +214,7 @@ if (!empty($_POST) && client_editDomainAlias()) {
 	set_page_message(tr('Domain alias successfully scheduled for update.'), 'success');
 	redirectTo('domains_manage.php');
 } else {
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'client/alias_edit.tpl',
@@ -248,7 +247,7 @@ if (!empty($_POST) && client_editDomainAlias()) {
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 	$tpl->prnt();
 	unsetMessages();
 }

@@ -82,19 +82,18 @@ function admin_updateServerTrafficSettings($trafficLimit, $trafficWarning)
 /**
  * Generates page.
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param int $trafficLimit Monthly traffic limit
  * @param int $trafficWarning Traffic warning
  * @return void
  */
 function admin_generatePage($tpl, $trafficLimit, $trafficWarning)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if (empty($_POST)) {
-		$trafficLimit = $cfg->SERVER_TRAFFIC_LIMIT;
-		$trafficWarning = $cfg->SERVER_TRAFFIC_WARN;
+		$trafficLimit = $cfg['SERVER_TRAFFIC_LIMIT'];
+		$trafficWarning = $cfg['SERVER_TRAFFIC_WARN'];
 	}
 
 	$tpl->assign(
@@ -109,10 +108,9 @@ function admin_generatePage($tpl, $trafficLimit, $trafficWarning)
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
@@ -126,10 +124,9 @@ if (!empty($_POST)) {
 	admin_updateServerTrafficSettings($trafficLimit, $trafficWarning);
 }
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -156,7 +153,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
 

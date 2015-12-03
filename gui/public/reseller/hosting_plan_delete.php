@@ -29,17 +29,15 @@
  * Main
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-if (isset($_GET['id']) && $cfg->HOSTING_PLANS_LEVEL == 'reseller') {
+if (isset($_GET['id']) && $cfg['HOSTING_PLANS_LEVEL'] == 'reseller') {
 
 	$hostingPlanId = clean_input($_GET['id']);
 

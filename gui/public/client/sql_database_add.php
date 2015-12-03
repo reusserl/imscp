@@ -32,13 +32,12 @@
 /**
  * Generate page
  *
- * @param iMSCP_pTemplate $tpl
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
  * @return void
  */
 function client_generatePage($tpl)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if ($cfg['MYSQL_PREFIX'] === 'yes') {
 		$tpl->assign('MYSQL_PREFIX_YES', '');
@@ -63,9 +62,9 @@ function client_generatePage($tpl)
 		$tpl->assign(
 			array(
 				'DB_NAME' => clean_input($_POST['db_name'], true),
-				'USE_DMN_ID' => (isset($_POST['use_dmn_id']) && $_POST['use_dmn_id'] == 'on') ? $cfg->HTML_CHECKED : '',
-				'START_ID_POS_SELECTED' => (isset($_POST['id_pos']) && $_POST['id_pos'] != 'end') ? $cfg->HTML_SELECTED : '',
-				'END_ID_POS_SELECTED' => (isset($_POST['id_pos']) && $_POST['id_pos'] == 'end') ? $cfg->HTML_SELECTED : ''
+				'USE_DMN_ID' => (isset($_POST['use_dmn_id']) && $_POST['use_dmn_id'] == 'on') ? $cfg['HTML_CHECKED'] : '',
+				'START_ID_POS_SELECTED' => (isset($_POST['id_pos']) && $_POST['id_pos'] != 'end') ? $cfg['HTML_SELECTED'] : '',
+				'END_ID_POS_SELECTED' => (isset($_POST['id_pos']) && $_POST['id_pos'] == 'end') ? $cfg['HTML_SELECTED'] : ''
 			)
 		);
 	} else {
@@ -73,7 +72,7 @@ function client_generatePage($tpl)
 			array(
 				'DB_NAME' => '',
 				'USE_DMN_ID' => '',
-				'START_ID_POS_SELECTED' => $cfg->HTML_SELECTED,
+				'START_ID_POS_SELECTED' => $cfg['HTML_SELECTED'],
 				'END_ID_POS_SELECTED' => ''
 			)
 		);
@@ -141,11 +140,11 @@ function client_addSqlDb($userId)
 		return;
 	}
 
-	$responses = iMSCP_Events_Aggregator::getInstance()->dispatch(
-		iMSCP_Events::onBeforeAddSqlDb, array('dbName' => $dbName)
+	$responses = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+		\iMSCP\Core\Events::onBeforeAddSqlDb, array('dbName' => $dbName)
 	);
 
-	if (!$responses->isStopped()) {
+	if (!$responses->stopped()) {
 		// Here we cannot start transaction before the CREATE DATABABSE statement because its cause an implicit commit
 		$dbCreated = false;
 
@@ -158,7 +157,7 @@ function client_addSqlDb($userId)
 
 			set_page_message(tr('SQL database successfully added.'), 'success');
 			write_log($_SESSION['user_logged'] . ": added new SQL database: " . tohtml($dbName), E_USER_NOTICE);
-		} catch (iMSCP_Exception_Database $e) {
+		} catch (PDOException $e) {
 			if ($dbCreated) {
 				execute_query('DROP DATABASE IF EXISTS ' . quoteIdentifier($dbName));
 			}
@@ -166,7 +165,7 @@ function client_addSqlDb($userId)
 			throw $e;
 		}
 
-		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterAddSqlDb, array('dbName' => $dbName));
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterAddSqlDb, array('dbName' => $dbName));
 	}
 
 	redirectTo('sql_manage.php');
@@ -198,7 +197,7 @@ function client_checkSqlDbLimit()
 // Include core library
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
@@ -207,10 +206,9 @@ client_checkSqlDbLimit();
 
 client_addSqlDb($_SESSION['user_id']);
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -243,6 +241,6 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();

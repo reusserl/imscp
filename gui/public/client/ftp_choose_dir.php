@@ -84,7 +84,7 @@ function isAllowedDir($domainId, $directory)
 /**
  * Generates directories list
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
  */
 function client_generateDirectoriesList($tpl)
@@ -143,7 +143,7 @@ function client_generateDirectoriesList($tpl)
 
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
@@ -151,7 +151,7 @@ if (!customerHasFeature('ftp') && !customerHasFeature('protected_areas')) {
 	showBadRequestErrorPage();
 }
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(array(
 	'partial' => 'client/ftp_choose_dir.tpl',
 	'page_message' => 'partial',
@@ -171,7 +171,7 @@ client_generateDirectoriesList($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('PARTIAL', 'partial');
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 $tpl->prnt();
 
 unsetMessages();

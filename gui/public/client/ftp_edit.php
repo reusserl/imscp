@@ -28,21 +28,20 @@ require_once 'imscp-lib.php';
 /**
  * Generate page data
  *
- * @param iMSCP_pTemplate $tpl Template engine instance
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param string $ftpUserId FTP userid
  * @param string $mainDomainName Main domain name
  * @return void
  */
 function generatePageData($tpl, $ftpUserId, $mainDomainName)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	$query = "SELECT `homedir` FROM `ftp_users` WHERE `userid` = ?";
 	$stmt = exec_query($query, $ftpUserId);
 
 	$ftpHomeDir = $stmt->fields['homedir'];
-	$customerHomeDir = $cfg->USER_WEB_DIR . '/' . $mainDomainName;
+	$customerHomeDir = $cfg['USER_WEB_DIR'] . '/' . $mainDomainName;
 
 	if ($ftpHomeDir == $customerHomeDir) {
 		$customFtpHomeDir = '/';
@@ -116,14 +115,13 @@ function updateFtpAccount($userid, $mainDomainName)
 	}
 
 	if($ret) {
-		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeEditFtp, array(
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditFtp, array(
 			'ftpUserId' => $userid,
 			'ftpPassword' => $passwd
 		));
 
-		/** @var $cfg iMSCP_Config_Handler_File */
-		$cfg = iMSCP_Registry::get('config');
-		$homeDir = rtrim(str_replace('//', '/', $cfg->USER_WEB_DIR . '/' . $mainDomainName . '/' . $homeDir), '/');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+		$homeDir = rtrim(str_replace('//', '/', $cfg['USER_WEB_DIR'] . '/' . $mainDomainName . '/' . $homeDir), '/');
 
 		if($cfg['FTPD_SERVER'] == 'vsftpd') {
 			if (isset($encPasswd) && isset($homeDir)) {
@@ -143,7 +141,7 @@ function updateFtpAccount($userid, $mainDomainName)
 			}
 		}
 
-		iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditFtp, array(
+		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditFtp, array(
 			'ftpUserId' => $userid,
 			'ftpPassword' => $passwd
 		));
@@ -162,7 +160,7 @@ function updateFtpAccount($userid, $mainDomainName)
 /***********************************************************************************************************************
  * Main
  */
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
@@ -184,7 +182,7 @@ if (isset($_GET['id'])) {
 		}
 	}
 
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(
 		array(
 			'layout' => 'shared/layouts/ui.tpl',
@@ -215,7 +213,7 @@ if (isset($_GET['id'])) {
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 	$tpl->prnt();
 

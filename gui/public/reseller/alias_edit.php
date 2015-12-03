@@ -56,7 +56,7 @@ function _reseller_getAliasData($domainAliasId)
 			return false;
 		}
 
-		$domainAliasData = $stmt->fetchRow(PDO::FETCH_ASSOC);
+		$domainAliasData = $stmt->fetch(PDO::FETCH_ASSOC);
 		$domainAliasData['alias_name_utf8'] = decode_idna($domainAliasData['alias_name']);
 	}
 
@@ -66,7 +66,7 @@ function _reseller_getAliasData($domainAliasId)
 /**
  * Generate page
  *
- * @param $tpl iMSCP_pTemplate
+ * @param $tpl TemplateEngine
  * @return void
  */
 function reseller_generatePage($tpl)
@@ -99,7 +99,7 @@ function reseller_generatePage($tpl)
 				? $_POST['forward_type'] : '302';
 		}
 
-		$cfg = iMSCP_Registry::get('config');
+		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 		$checked = $cfg['HTML_CHECKED'];
 		$selected = $cfg['HTML_SELECTED'];
 
@@ -173,7 +173,7 @@ function reseller_editDomainAlias()
 				}
 			}
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onBeforeEditDomainAlias, array(
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditDomainAlias, array(
 				'domainAliasId' => $domainAliasId,
 				'domainAliasName' => $domainAliasData['alias_name']
 			));
@@ -183,7 +183,7 @@ function reseller_editDomainAlias()
 				array($forwardUrl, $forwardType, 'tochange', $domainAliasId)
 			);
 
-			iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onAfterEditDomainAlias, array(
+			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditDomainAlias, array(
 				'domainAliasId' => $domainAliasId,
 				'domainAliasName' => $domainAliasData['alias_name']
 			));
@@ -206,7 +206,7 @@ function reseller_editDomainAlias()
 
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 check_login('reseller');
 (resellerHasFeature('domain_aliases') && resellerHasCustomers()) or showBadRequestErrorPage();
 
@@ -214,7 +214,7 @@ if (!empty($_POST) && reseller_editDomainAlias()) {
 	set_page_message(tr('Domain alias successfully scheduled for update.'), 'success');
 	redirectTo('alias.php');
 } else {
-	$tpl = new iMSCP_pTemplate();
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 	$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'reseller/alias_edit.tpl',
@@ -247,7 +247,7 @@ if (!empty($_POST) && reseller_editDomainAlias()) {
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 	$tpl->prnt();
 	unsetMessages();
 }

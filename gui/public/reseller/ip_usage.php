@@ -24,7 +24,7 @@
 /**
  * Generate List of Domains assigned to IPs
  *
- * @param  iMSCP_pTemplate $tpl Template engine
+ * @param  TemplateEngine $tpl Template engine
  * @return void
  */
 function listIPDomains($tpl)
@@ -32,12 +32,12 @@ function listIPDomains($tpl)
 	$resellerId = $_SESSION['user_id'];
 
 	$stmt = exec_query('SELECT reseller_ips FROM reseller_props WHERE reseller_id = ?', $resellerId);
-	$data = $stmt->fetchRow();
+	$data = $stmt->fetch();
 	$resellerIps = explode(';', substr($data['reseller_ips'], 0, -1));
 
 	$stmt = execute_query('SELECT ip_id, ip_number FROM server_ips WHERE ip_id IN (' . implode(',', $resellerIps) . ')');
 
-	while ($ip = $stmt->fetchRow(PDO::FETCH_ASSOC)) {
+	while ($ip = $stmt->fetch(PDO::FETCH_ASSOC)) {
 		$stmt2 = exec_query(
 			'
 				SELECT
@@ -77,7 +77,7 @@ function listIPDomains($tpl)
 		);
 
 		if ($domainsCount) {
-			while ($data = $stmt2->fetchRow(PDO::FETCH_ASSOC)) {
+			while ($data = $stmt2->fetch(PDO::FETCH_ASSOC)) {
 				$tpl->assign('DOMAIN_NAME', tohtml(idn_to_utf8($data['domain_name'])));
 				$tpl->parse('DOMAIN_ROW', '.domain_row');
 			}
@@ -95,19 +95,17 @@ function listIPDomains($tpl)
  * Main script
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../../application.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
 if (resellerHasCustomers()) {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	/** @var $tpl iMSCP_pTemplate */
-	$tpl = new iMSCP_pTemplate();
+	/** @var $tpl TemplateEngine */
+	$tpl = new \iMSCP\Core\Template\TemplateEngine();
 
 	$tpl->define_dynamic(array(
 		'layout' => 'shared/layouts/ui.tpl',
@@ -132,7 +130,7 @@ if (resellerHasCustomers()) {
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
 
-	iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
 
 	$tpl->prnt();
 

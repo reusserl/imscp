@@ -101,7 +101,7 @@ function client_generateSupportSystemNotices()
 /**
  * Generates traffic usage bar.
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param $usage
  * @param $maxUsage
  * @param $barMax
@@ -134,7 +134,7 @@ function client_generateTrafficUsageBar($tpl, $usage, $maxUsage, $barMax)
 /**
  * Generates disk usage bar.
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @param $usage
  * @param $maxUsage
  * @param $barMax
@@ -168,7 +168,7 @@ function client_generateDiskUsageBar($tpl, $usage, $maxUsage, $barMax)
 /**
  * Generates feature status.
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @return void
  * @todo hide features that are not available for reseller
  */
@@ -295,18 +295,17 @@ function _client_getDomainRemainingTime($domainExpireDate)
 /**
  * Generates domain expires information.
  *
- * @param iMSCP_pTemplate $tpl Template engine
+ * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @return void
  */
 function client_generateDomainExpiresInformation($tpl)
 {
-	/** @var $cfg iMSCP_Config_Handler_File */
-	$cfg = iMSCP_Registry::get('config');
+	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 	$domainProperties = get_domain_default_props($_SESSION['user_id']);
 
 	if ($domainProperties['domain_expires'] != 0) {
 		$domainRemainingTime = '';
-		$domainExpiresDate = date($cfg->DATE_FORMAT, $domainProperties['domain_expires']);
+		$domainExpiresDate = date($cfg['DATE_FORMAT'], $domainProperties['domain_expires']);
 
 		if (time() < $domainProperties['domain_expires']) {
 			list($years, $month, $days) = _client_getDomainRemainingTime($domainProperties['domain_expires']);
@@ -340,14 +339,13 @@ function client_generateDomainExpiresInformation($tpl)
 // Include core libraries
 require_once 'imscp-lib.php';
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-check_login('user', $cfg->PREVENT_EXTERNAL_LOGIN_CLIENT);
+check_login('user', $cfg['PREVENT_EXTERNAL_LOGIN_CLIENT']);
 
-$tpl = new iMSCP_pTemplate();
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic(
 	array(
 		 'layout' => 'shared/layouts/ui.tpl',
@@ -383,7 +381,7 @@ client_generateDiskUsageBar(
 
 if ($domainProperties['domain_status'] == 'ok') {
 	$tpl->assign(
-		'HREF_DOMAIN_ALTERNATIVE_URL', "http://{$cfg->SYSTEM_USER_PREFIX}" . ($cfg->SYSTEM_USER_MIN_UID + $_SESSION['user_id']) . ".{$cfg->BASE_SERVER_VHOST}");
+		'HREF_DOMAIN_ALTERNATIVE_URL', "http://{$cfg['SYSTEM_USER_PREFIX']}" . ($cfg['SYSTEM_USER_MIN_UID'] + $_SESSION['user_id']) . ".{$cfg['BASE_SERVER_VHOST']}");
 } else {
 	$tpl->assign('DOMAIN_ALTERNATIVE_URL', '');
 }
@@ -442,6 +440,6 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-iMSCP_Events_Aggregator::getInstance()->dispatch(iMSCP_Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
 
 $tpl->prnt();
