@@ -41,7 +41,7 @@ function admin_sendJsonResponse($statusCode = 200, array $data = [])
 	header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
 	header('Content-type: application/json');
 
-	switch($statusCode) {
+	switch ($statusCode) {
 		case 202:
 			header('Status: 202 Accepted');
 			break;
@@ -71,7 +71,7 @@ function admin_sendJsonResponse($statusCode = 200, array $data = [])
  */
 function admin_clearLogs()
 {
-	switch($_POST['uaction_clear']) {
+	switch ($_POST['uaction_clear']) {
 		case 0:
 			$query = 'DELETE FROM log';
 			$msg = sprintf('%s deleted the full admin log.', $_SESSION['user_logged']);
@@ -104,14 +104,13 @@ function admin_clearLogs()
 
 	try {
 		$stmt = execute_query($query);
-
-		if($stmt->rowCount()) {
+		if ($stmt->rowCount()) {
 			write_log($msg, E_USER_NOTICE);
 			admin_sendJsonResponse(200, ['message' => tr('Log entries successfully deleted.')]);
 		} else {
 			admin_sendJsonResponse(202, ['message' => tr('Nothing has been deleted.')]);
 		}
-	} catch(PDOException $e) {
+	} catch (PDOException $e) {
 		admin_sendJsonResponse(500, ['message' => tr('An unexpected error occurred: %s', $e->getMessage())]);
 	}
 }
@@ -125,9 +124,7 @@ function admin_getLogs()
 	try {
 		// Filterable / orderable columns
 		$columns = ['log_time', 'log_message'];
-
 		$nbColumns = count($columns);
-
 		$indexColumn = 'log_id';
 
 		/* DB table to use */
@@ -136,18 +133,18 @@ function admin_getLogs()
 		/* Paging */
 		$limit = '';
 
-		if(isset($_GET['iDisplayStart']) && isset($_GET['iDisplayLength']) && $_GET['iDisplayLength'] !== '-1') {
+		if (isset($_GET['iDisplayStart']) && isset($_GET['iDisplayLength']) && $_GET['iDisplayLength'] !== '-1') {
 			$limit = 'LIMIT ' . intval($_GET['iDisplayStart']) . ', ' . intval($_GET['iDisplayLength']);
 		}
 
 		/* Ordering */
 		$order = '';
 
-		if(isset($_GET['iSortCol_0']) && isset($_GET['iSortingCols'])) {
+		if (isset($_GET['iSortCol_0']) && isset($_GET['iSortingCols'])) {
 			$order = 'ORDER BY ';
 
-			for($i = 0; $i < intval($_GET['iSortingCols']); $i++) {
-				if($_GET['bSortable_' . intval($_GET['iSortCol_' . $i])] === 'true') {
+			for ($i = 0; $i < intval($_GET['iSortingCols']); $i++) {
+				if ($_GET['bSortable_' . intval($_GET['iSortCol_' . $i])] === 'true') {
 					$sortDir = (
 						isset($_GET['sSortDir_' . $i]) && in_array($_GET['sSortDir_' . $i], array('asc', 'desc'))
 					) ? $_GET['sSortDir_' . $i] : 'asc';
@@ -158,7 +155,7 @@ function admin_getLogs()
 
 			$order = substr_replace($order, '', -2);
 
-			if($order == 'ORDER BY ') {
+			if ($order == 'ORDER BY ') {
 				$order = '';
 			}
 		}
@@ -166,10 +163,10 @@ function admin_getLogs()
 		/* Filtering */
 		$where = '';
 
-		if(isset($_GET['sSearch']) && $_GET['sSearch'] != '') {
+		if (isset($_GET['sSearch']) && $_GET['sSearch'] != '') {
 			$where .= 'WHERE (';
 
-			for($i = 0; $i < $nbColumns; $i++) {
+			for ($i = 0; $i < $nbColumns; $i++) {
 				$where .= $columns[$i] . ' LIKE ' . quoteValue('%' . $_GET['sSearch'] . '%') . ' OR ';
 			}
 
@@ -178,8 +175,8 @@ function admin_getLogs()
 		}
 
 		/* Individual column filtering */
-		for($i = 0; $i < $nbColumns; $i++) {
-			if(isset($_GET['bSearchable_' . $i]) && $_GET['bSearchable_' . $i] === 'true' && $_GET['sSearch_' . $i] !== '') {
+		for ($i = 0; $i < $nbColumns; $i++) {
+			if (isset($_GET['bSearchable_' . $i]) && $_GET['bSearchable_' . $i] === 'true' && $_GET['sSearch_' . $i] !== '') {
 				$where .= "AND {$columns[$i]} LIKE " . quoteValue('%' . $_GET['sSearch_' . $i] . '%');
 			}
 		}
@@ -218,11 +215,11 @@ function admin_getLogs()
 		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 		$dateFormat = $cfg['DATE_FORMAT'] . ' H:i:s';
 
-		while($data = $rResult->fetch(PDO::FETCH_ASSOC)) {
+		while ($data = $rResult->fetch(PDO::FETCH_ASSOC)) {
 			$row = [];
 
-			for($i = 0; $i < $nbColumns; $i++) {
-				if($columns[$i] == 'log_time') {
+			for ($i = 0; $i < $nbColumns; $i++) {
+				if ($columns[$i] == 'log_time') {
 					$row[$columns[$i]] = date($dateFormat, strtotime($data[$columns[$i]]));
 				} else {
 					$replaces = [
@@ -238,7 +235,7 @@ function admin_getLogs()
 						'/\b(Warning[\!]?)\b/i' => '<strong style="color:#FF0000">\\1</strong>',
 					];
 
-					foreach($replaces as $pattern => $replacement) {
+					foreach ($replaces as $pattern => $replacement) {
 						$data[$columns[$i]] = preg_replace($pattern, $replacement, $data[$columns[$i]]);
 					}
 
@@ -250,7 +247,7 @@ function admin_getLogs()
 		}
 
 		admin_sendJsonResponse(200, $output);
-	} catch(PDOException $e) {
+	} catch (PDOException $e) {
 		write_log(sprintf('Unable to get logs: %s', $e->getMessage()), E_USER_ERROR);
 		admin_sendJsonResponse(
 			500, array('message' => tr('An unexpected error occurred: %s', $e->getMessage()))
@@ -270,10 +267,10 @@ require '../../application.php';
 
 check_login('admin');
 
-if(isset($_REQUEST['action'])) {
-	if(is_xhr()) {
+if (isset($_REQUEST['action'])) {
+	if (is_xhr()) {
 		$action = clean_input($_REQUEST['action']);
-		switch($action) {
+		switch ($action) {
 			case 'get_logs':
 				admin_getLogs();
 				break;
@@ -324,11 +321,9 @@ generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
 	'templateEngine' => $tpl
 ]);
-
 $tpl->prnt();
 
 unsetMessages();

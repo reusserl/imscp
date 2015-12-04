@@ -26,7 +26,7 @@
  */
 
 /***********************************************************************************************************************
- * Main script
+ * Main
  */
 
 require '../../application.php';
@@ -36,9 +36,8 @@ require '../../application.php';
 check_login('admin');
 
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(array(
+$tpl->define_dynamic([
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/manage_users.tpl',
 	'page_message' => 'layout',
@@ -65,13 +64,12 @@ $tpl->define_dynamic(array(
 	'scroll_prev' => 'page',
 	'scroll_next_gray' => 'page',
 	'scroll_next' => 'page'
-));
-
-$tpl->assign(array(
+]);
+$tpl->assign([
 	'TR_PAGE_TITLE' => tr('Admin / Users / Overview'),
 	'TR_NEXT' => tr('Next'),
 	'TR_PREVIOUS' => tr('Previous')
-));
+]);
 
 if (isset($_POST['details']) && !empty($_POST['details'])) {
 	$_SESSION['details'] = $_POST['details'];
@@ -110,9 +108,9 @@ get_admin_manage_users($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
 	'templateEngine' => $tpl
-));
+]);
 $tpl->prnt();
 
 unsetMessages();

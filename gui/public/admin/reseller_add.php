@@ -25,12 +25,12 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-/*******************************************************************************
- * Script functions
+/***********************************************************************************************************************
+ * Functions
  */
 
 /**
- * Returns reseller data.
+ * Returns reseller data
  *
  * @return array Reference to array of data
  */
@@ -53,7 +53,7 @@ function &admin_getData()
 		$phpEditor = \iMSCP\Core\Php\PhpEditor::getInstance();
 
 		foreach (
-			array(
+			[
 				'admin_name' => '',
 				'password' => '',
 				'password_confirmation' => '',
@@ -91,7 +91,7 @@ function &admin_getData()
 				'php_ini_max_max_execution_time' => $phpEditor->getRePermVal('phpiniMaxExecutionTime'),
 				'php_ini_max_max_input_time' => $phpEditor->getRePermVal('phpiniMaxInputTime'),
 				'php_ini_max_memory_limit' => $phpEditor->getRePermVal('phpiniMemoryLimit')
-			) as $key => $value
+			] as $key => $value
 		) {
 			if (isset($_POST[$key])) {
 				$data[$key] = clean_input($_POST[$key]);
@@ -107,7 +107,7 @@ function &admin_getData()
 
 			$data['reseller_ips'] = $_POST['reseller_ips'];
 		} else { // We are safe here
-			$data['reseller_ips'] = array();
+			$data['reseller_ips'] = [];
 		}
 	}
 
@@ -115,7 +115,7 @@ function &admin_getData()
 }
 
 /**
- * Generates account form.
+ * Generates account form
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
@@ -123,7 +123,7 @@ function &admin_getData()
  */
 function _admin_generateAccountForm($tpl, &$data)
 {
-	$tpl->assign(array(
+	$tpl->assign([
 		'TR_ACCOUNT_DATA' => tr('Account data'),
 		'TR_RESELLER_NAME' => tr('Name'),
 		'RESELLER_NAME' => tohtml($data['admin_name']),
@@ -132,11 +132,11 @@ function _admin_generateAccountForm($tpl, &$data)
 		'PASSWORD_CONFIRMATION' => tohtml($data['password_confirmation']),
 		'TR_EMAIL' => tr('Email'),
 		'EMAIL' => tohtml($data['email'])
-	));
+	]);
 }
 
 /**
- * Generates IP list form.
+ * Generates IP list form
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
@@ -148,11 +148,11 @@ function _admin_generateIpListForm($tpl, &$data)
 
 	$htmlChecked = $cfg['HTML_CHECKED'];
 
-	$tpl->assign(array(
+	$tpl->assign([
 		'TR_IP_ADDRESS' => tr('IP address'),
 		'TR_IP_LABEL' => tr('Label'),
 		'TR_ASSIGN' => tr('Assign')
-	));
+	]);
 
 	\iMSCP\Core\Application::getInstance()->getEventManager()->attach('onGetJsTranslations', function ($e) {
 		/** @var $e \Zend\EventManager\Event */
@@ -160,18 +160,18 @@ function _admin_generateIpListForm($tpl, &$data)
 	});
 
 	foreach ($data['server_ips'] as $ipData) {
-		$tpl->assign(array(
+		$tpl->assign([
 			'IP_ID' => tohtml($ipData['ip_id']),
 			'IP_NUMBER' => tohtml($ipData['ip_number']),
 			'IP_ASSIGNED' => in_array($ipData['ip_id'], $data['reseller_ips']) ? $htmlChecked : ''
-		));
+		]);
 
 		$tpl->parse('IP_BLOCK', '.ip_block');
 	}
 }
 
 /**
- * Generates features form.
+ * Generates features form
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
@@ -179,7 +179,7 @@ function _admin_generateIpListForm($tpl, &$data)
  */
 function _admin_generateLimitsForm($tpl, &$data)
 {
-	$tpl->assign(array(
+	$tpl->assign([
 		'TR_ACCOUNT_LIMITS' => tr('Account limits'),
 		'TR_MAX_DMN_CNT' => tr('Domain limit') . '<br/><i>(0 ' . tr('unlimited') . ')</i>',
 		'MAX_DMN_CNT' => tohtml($data['max_dmn_cnt']),
@@ -199,11 +199,11 @@ function _admin_generateLimitsForm($tpl, &$data)
 		'MAX_TRAFF_AMNT' => tohtml($data['max_traff_amnt']),
 		'TR_MAX_DISK_AMNT' => tr('Disk space limit [MiB]') . '<br/><i>(0 ' . tr('unlimited') . ')</i>',
 		'MAX_DISK_AMNT' => tohtml($data['max_disk_amnt'])
-	));
+	]);
 }
 
 /**
- * Generates features form.
+ * Generates features form
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
@@ -212,10 +212,8 @@ function _admin_generateLimitsForm($tpl, &$data)
 function _admin_generateFeaturesForm($tpl, &$data)
 {
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 	$htmlChecked = $cfg['HTML_CHECKED'];
-
-	$tpl->assign(array(
+	$tpl->assign([
 		'TR_FEATURES' => tr('Features'),
 
 		'TR_SETTINGS' => tr('Settings'),
@@ -266,21 +264,21 @@ function _admin_generateFeaturesForm($tpl, &$data)
 		'TR_NO' => tr('No'),
 		'TR_MIB' => tr('MiB'),
 		'TR_SEC' => tr('Sec.')
-	));
+	]);
 
 	if ($cfg['HTTPD_SERVER'] != 'apache_itk') {
-		$tpl->assign(array(
+		$tpl->assign([
 			'TR_PHP_INI_AL_DISABLE_FUNCTIONS' => tr('Can edit the PHP %s directive', '<b>disable_functions</b>'),
 			'PHP_INI_AL_DISABLE_FUNCTIONS_YES' => ($data['php_ini_al_disable_functions'] == 'yes') ? $htmlChecked : '',
 			'PHP_INI_AL_DISABLE_FUNCTIONS_NO' => ($data['php_ini_al_disable_functions'] != 'yes') ? $htmlChecked : ''
-		));
+		]);
 	} else {
 		$tpl->assign('PHP_EDITOR_DISABLE_FUNCTIONS_BLOCK', '');
 	}
 }
 
 /**
- * Generates features form.
+ * Generates features form
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array $data Domain data
@@ -289,47 +287,45 @@ function _admin_generateFeaturesForm($tpl, &$data)
 function  _admin_generatePersonalDataFrom($tpl, &$data)
 {
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 	$htmlSelected = $cfg['HTML_SELECTED'];
-
-	$tpl->assign(array(
-			'TR_PERSONAL_DATA' => tr('Personal data'),
-			'TR_CUSTOMER_ID' => tr('Customer ID'),
-			'CUSTOMER_ID' => tohtml($data['customer_id']),
-			'TR_FNAME' => tr('First name'),
-			'FNAME' => tohtml($data['fname']),
-			'TR_LNAME' => tr('Last name'),
-			'LNAME' => tohtml($data['lname']),
-			'TR_GENDER' => tr('Gender'),
-			'TR_MALE' => tr('Male'),
-			'MALE' => ($data['gender'] == 'M') ? $htmlSelected : '',
-			'TR_FEMALE' => tr('Female'),
-			'FEMALE' => ($data['gender'] == 'F') ? $htmlSelected : '',
-			'TR_UNKNOWN' => tr('Unknown'),
-			'UNKNOWN' => ($data['gender'] != 'M' && $data['gender'] != 'F') ? $htmlSelected : '',
-			'TR_FIRM' => tr('Company'),
-			'FIRM' => tohtml($data['firm']),
-			'TR_STREET1' => tr('Street 1'),
-			'STREET1' => tohtml($data['street1']),
-			'TR_STREET2' => tr('Street 2'),
-			'STREET2' => tohtml($data['street2']),
-			'TR_ZIP' => tr('Zip code'),
-			'ZIP' => tohtml($data['zip']),
-			'TR_CITY' => tr('City'),
-			'CITY' => tohtml($data['city']),
-			'TR_STATE' => tr('State'),
-			'STATE' => tohtml($data['state']),
-			'TR_COUNTRY' => tr('Country'),
-			'COUNTRY' => tohtml($data['country']),
-			'TR_PHONE' => tr('Phone'),
-			'PHONE' => tohtml($data['phone']),
-			'TR_FAX' => tr('Fax'),
-			'FAX' => tohtml($data['fax'])
-	));
+	$tpl->assign([
+		'TR_PERSONAL_DATA' => tr('Personal data'),
+		'TR_CUSTOMER_ID' => tr('Customer ID'),
+		'CUSTOMER_ID' => tohtml($data['customer_id']),
+		'TR_FNAME' => tr('First name'),
+		'FNAME' => tohtml($data['fname']),
+		'TR_LNAME' => tr('Last name'),
+		'LNAME' => tohtml($data['lname']),
+		'TR_GENDER' => tr('Gender'),
+		'TR_MALE' => tr('Male'),
+		'MALE' => ($data['gender'] == 'M') ? $htmlSelected : '',
+		'TR_FEMALE' => tr('Female'),
+		'FEMALE' => ($data['gender'] == 'F') ? $htmlSelected : '',
+		'TR_UNKNOWN' => tr('Unknown'),
+		'UNKNOWN' => ($data['gender'] != 'M' && $data['gender'] != 'F') ? $htmlSelected : '',
+		'TR_FIRM' => tr('Company'),
+		'FIRM' => tohtml($data['firm']),
+		'TR_STREET1' => tr('Street 1'),
+		'STREET1' => tohtml($data['street1']),
+		'TR_STREET2' => tr('Street 2'),
+		'STREET2' => tohtml($data['street2']),
+		'TR_ZIP' => tr('Zip code'),
+		'ZIP' => tohtml($data['zip']),
+		'TR_CITY' => tr('City'),
+		'CITY' => tohtml($data['city']),
+		'TR_STATE' => tr('State'),
+		'STATE' => tohtml($data['state']),
+		'TR_COUNTRY' => tr('Country'),
+		'COUNTRY' => tohtml($data['country']),
+		'TR_PHONE' => tr('Phone'),
+		'PHONE' => tohtml($data['phone']),
+		'TR_FAX' => tr('Fax'),
+		'FAX' => tohtml($data['fax'])
+	]);
 }
 
 /**
- * Generate edit form.
+ * Generate edit form
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param array &$data Reseller data
@@ -352,11 +348,12 @@ function admin_generateForm($tpl, &$data)
  */
 function admin_checkAndCreateResellerAccount()
 {
+	global $errFieldsStack;
+
 	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeAddUser);
 
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
-	$errFieldsStack = array();
+	$errFieldsStack = [];
 
 	// Get needed data
 	$data =& admin_getData();
@@ -404,9 +401,7 @@ function admin_checkAndCreateResellerAccount()
 		}
 
 		// Check for ip addresses - We are safe here
-
-		$resellerIps = array();
-
+		$resellerIps = [];
 		foreach ($data['server_ips'] as $serverIpData) {
 			if (in_array($serverIpData['ip_id'], $data['reseller_ips'])) {
 				$resellerIps[] = $serverIpData['ip_id'];
@@ -420,42 +415,36 @@ function admin_checkAndCreateResellerAccount()
 		}
 
 		// Check for max domains limit
-
 		if (!imscp_limit_check($data['max_dmn_cnt'], null)) {
 			set_page_message(tr('Incorrect limit for %s.', tr('domain')), 'error');
 			$errFieldsStack[] = 'max_dmn_cnt';
 		}
 
 		// Check for max subdomains limit
-
 		if (!imscp_limit_check($data['max_sub_cnt'])) {
 			set_page_message(tr('Incorrect limit for %s.', tr('subdomains')), 'error');
 			$errFieldsStack[] = 'max_sub_cnt';
 		}
 
 		// check for max domain aliases limit
-
 		if (!imscp_limit_check($data['max_als_cnt'])) {
 			set_page_message(tr('Incorrect limit for %s.', tr('domain aliases')), 'error');
 			$errFieldsStack[] = 'max_als_cnt';
 		}
 
 		// Check for max mail accounts limit
-
 		if (!imscp_limit_check($data['max_mail_cnt'])) {
 			set_page_message(tr('Incorrect limit for %s.', tr('email accounts')), 'error');
 			$errFieldsStack[] = 'max_mail_cnt';
 		}
 
 		// Check for max ftp accounts limit
-
 		if (!imscp_limit_check($data['max_ftp_cnt'])) {
 			set_page_message(tr('Incorrect limit for %s.', tr('FTP accounts')), 'error');
 			$errFieldsStack[] = 'max_ftp_cnt';
 		}
 
 		// Check for max Sql databases limit
-
 		if (!imscp_limit_check($data['max_sql_db_cnt'])) {
 			set_page_message(tr('Incorrect limit for %s.', tr('SQL databases')), 'error');
 			$errFieldsStack[] = 'max_sql_db_cnt';
@@ -465,7 +454,6 @@ function admin_checkAndCreateResellerAccount()
 		}
 
 		// Check for max Sql users limit
-
 		if (!imscp_limit_check($data['max_sql_user_cnt'])) {
 			set_page_message(tr('Incorrect limit for %s.', tr('SQL users')), 'error');
 			$errFieldsStack[] = 'max_sql_user_cnt';
@@ -475,7 +463,6 @@ function admin_checkAndCreateResellerAccount()
 		}
 
 		// Check for max monthly traffic limit
-
 		if (!imscp_limit_check($data['max_traff_amnt'], null)) {
 			set_page_message(tr('Incorrect limit for %s.', tr('traffic')), 'error');
 			$errFieldsStack[] = 'max_traff_amnt';
@@ -488,13 +475,10 @@ function admin_checkAndCreateResellerAccount()
 		}
 
 		// Check for PHP editor settings
-
 		$phpEditor = \iMSCP\Core\Php\PhpEditor::getInstance();
 
 		if ($data['php_ini_system'] == 'yes') {
-
 			// Check for permissions - We are safe here (If a permissions is wrong, default value is used)
-
 			$phpEditor->setRePerm('phpiniSystem', 'yes');
 
 			if ($cfg['HTTPD_SERVER'] != 'apache_itk') {
@@ -519,7 +503,7 @@ function admin_checkAndCreateResellerAccount()
 			$phpEditor->loadReDefaultPerm();
 		}
 
-		if (empty($errFieldsStack) && !Zend_Session::namespaceIsset('pageMessages')) { // Update process begin here
+		if (empty($errFieldsStack) && !isset($_SESSION['pageMessages'])) { // Update process begin here
 			// Insert reseller personal data into database
 
 			$query = "
@@ -531,12 +515,12 @@ function admin_checkAndCreateResellerAccount()
 					?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 				)
 			";
-			exec_query($query, array(
-				$data['admin_name'], \iMSCP\Core\Utils\Crypt::bcrypt($data['password']), 'reseller', time(), $_SESSION['user_id'],
-				$data['fname'], $data['lname'], $data['firm'], $data['zip'], $data['city'], $data['state'],
-				$data['country'], $data['email'], $data['phone'], $data['fax'], $data['street1'], $data['street2'],
-				$data['gender']
-			));
+			exec_query($query, [
+				$data['admin_name'], \iMSCP\Core\Utils\Crypt::bcrypt($data['password']), 'reseller', time(),
+				$_SESSION['user_id'], $data['fname'], $data['lname'], $data['firm'], $data['zip'], $data['city'],
+				$data['state'], $data['country'], $data['email'], $data['phone'], $data['fax'], $data['street1'],
+				$data['street2'], $data['gender']
+			]);
 
 			// Get new reseller unique identifier
 			$resellerId = $db->lastInsertId();
@@ -544,11 +528,9 @@ function admin_checkAndCreateResellerAccount()
 			// Insert reseller GUI properties into database
 
 			$query = 'REPLACE INTO `user_gui_props` (`user_id`, `lang`, `layout`) VALUES (?, ?, ?)';
-			exec_query($query, array($resellerId, $cfg['USER_INITIAL_LANG'}, $cfg['USER_INITIAL_THEME']));
-
+			exec_query($query, [$resellerId, $cfg['USER_INITIAL_LANG'], $cfg['USER_INITIAL_THEME']]);
 
 			// Insert reseller properties into database
-
 			$query = "
 				INSERT INTO `reseller_props` (
 					`reseller_id`, `reseller_ips`, `max_dmn_cnt`, `current_dmn_cnt`,
@@ -565,7 +547,7 @@ function admin_checkAndCreateResellerAccount()
 					?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 				)
 			";
-			exec_query($query, array(
+			exec_query($query, [
 				$resellerId, implode(';', $resellerIps) . ';', $data['max_dmn_cnt'], '0',
 				$data['max_sub_cnt'], '0', $data['max_als_cnt'], '0', $data['max_mail_cnt'], '0',
 				$data['max_ftp_cnt'], '0', $data['max_sql_db_cnt'], '0', $data['max_sql_user_cnt'], '0',
@@ -576,7 +558,7 @@ function admin_checkAndCreateResellerAccount()
 				$phpEditor->getRePermVal('phpiniUploadMaxFileSize'), $phpEditor->getRePermVal('phpiniMaxExecutionTime'),
 				$phpEditor->getRePermVal('phpiniMaxInputTime'), $phpEditor->getRePermVal('phpiniMemoryLimit'),
 				$data['aps_standard']
-			));
+			]);
 
 			$db->commit();
 
@@ -584,30 +566,23 @@ function admin_checkAndCreateResellerAccount()
 
 			// Send welcome mail to the new reseller
 			send_add_user_auto_msg(
-				$_SESSION['user_id'], $data['admin_name'], $data['password'],
-				$data['email'], $data['fname'], $data['lname'], tr('Reseller')
+				$_SESSION['user_id'], $data['admin_name'], $data['password'], $data['email'], $data['fname'],
+				$data['lname'], tr('Reseller')
 			);
-
 			write_log("A new reseller account (<b>{$data['admin_name']}</b>) has been created by {$_SESSION['user_logged']}", E_USER_NOTICE);
-
 			set_page_message(tr('Reseller account successfully created.'), 'success');
-
 			return true;
-	} catch(Exception $e) {
+		}
+	} catch (PDOException $e) {
 		$db->rollBack();
 		throw $e;
-	}
-
-
-	if (!empty($errFieldsStack)) {
-		iMSCP_Registry::set('errFieldsStack', $errFieldsStack);
 	}
 
 	return false;
 }
 
-/*******************************************************************************
- * Main script
+/***********************************************************************************************************************
+ * Main
  */
 
 require '../../application.php';
@@ -622,37 +597,39 @@ if (!empty($_POST) && admin_checkAndCreateResellerAccount()) {
 	redirectTo('manage_users.php');
 }
 
+// Initialize field error stack
+$errFieldsStack = [];
+
 // Getting domain data
 $data =& admin_getData();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/reseller_add.tpl',
-		'page_message' => 'layout',
-		'ips_block' => 'page',
-		'ip_block' => 'ips_block',
-		'php_editor_disable_functions_block' => 'page'
-));
-
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Admin / Users / Add Reseller'),
-		'TR_ADD_RESELLER' => tr('Add reseller'),
-		'TR_NOTICE' => tr('i-MSCP Notice'),
-		'TR_EVENT_NOTICE' => tojs(tr('The `Enter` key is disabled for performance reasons.')),
-		'TR_CREATE' => tr('Create'),
-		'TR_CANCEL' => tr('Cancel'),
-		'ERR_FIELDS_STACK' => (iMSCP_Registry::isRegistered('errFieldsStack')) ? json_encode(iMSCP_Registry::get('errFieldsStack')) : '[]'));
+$tpl->define_dynamic([
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/reseller_add.tpl',
+	'page_message' => 'layout',
+	'ips_block' => 'page',
+	'ip_block' => 'ips_block',
+	'php_editor_disable_functions_block' => 'page'
+]);
+$tpl->assign([
+	'TR_PAGE_TITLE' => tr('Admin / Users / Add Reseller'),
+	'TR_ADD_RESELLER' => tr('Add reseller'),
+	'TR_NOTICE' => tr('i-MSCP Notice'),
+	'TR_EVENT_NOTICE' => tojs(tr('The `Enter` key is disabled for performance reasons.')),
+	'TR_CREATE' => tr('Create'),
+	'TR_CANCEL' => tr('Cancel'),
+	'ERR_FIELDS_STACK' => json_encode($errFieldsStack)
+]);
 
 generateNavigation($tpl);
 admin_generateForm($tpl, $data);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
 	'templateEngine' => $tpl
-));
+]);
 $tpl->prnt();
 
 unsetMessages();

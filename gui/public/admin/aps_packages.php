@@ -18,11 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+/***********************************************************************************************************************
+ * Main
+ */
 
 require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->attach(\iMSCP\Core\Events::onAdminScriptStart);
-
 check_login('admin');
 
 if (is_xhr()) {
@@ -37,18 +39,13 @@ $tpl->define_dynamic([
 	'page' => 'assets/angular/aps-standard/aps-package/aps-packages.tpl',
 	'page_message' => 'layout'
 ]);
-
-$tpl->assign([
-	'TR_PAGE_TITLE' => tohtml(tr('Admin / APS Standard / Packages'), 'htmlAttr'),
-]);
+$tpl->assign(['TR_PAGE_TITLE' => tohtml(tr('Admin / APS Standard / Packages'), 'htmlAttr')]);
 
 generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-	\iMSCP\Core\Events::onAdminScriptEnd, ['templateEngine' => $tpl]
-);
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();

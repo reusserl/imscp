@@ -25,6 +25,10 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
+/***********************************************************************************************************************
+ * Main
+ */
+
 require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
@@ -33,56 +37,47 @@ check_login('admin');
 
 systemHasAntiRootkits() or showBadRequestErrorPage();
 
-$config = \iMSCP\Core\Application::getInstance()->getConfig();
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/rootkit_log.tpl',
-		'page_message' => 'layout',
-		'antirootkits_log' => 'page'
-	)
-);
-
+$tpl->define_dynamic(array(
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/rootkit_log.tpl',
+	'page_message' => 'layout',
+	'antirootkits_log' => 'page'
+));
 $tpl->assign('TR_PAGE_TITLE', tr('Admin / System Tools / Anti-Rootkits Logs'));
+$antiRootkits = [];
 
-$antiRootkits = array();
-
-if (isset($config['ANTI_ROOTKITS_PACKAGES'])) {
-	$antiRootkits = explode(',', $config['ANTI_ROOTKITS_PACKAGES']);
+if (isset($cfg['ANTI_ROOTKITS_PACKAGES'])) {
+	$antiRootkits = explode(',', $cfg['ANTI_ROOTKITS_PACKAGES']);
 }
 
 $antiRootkits[] = 'Other';
-
-$antiRootkitLogFiles = array(
+$antiRootkitLogFiles = [
 	'Chkrootkit' => 'CHKROOTKIT_LOG',
 	'Rkhunter' => 'RKHUNTER_LOG',
 	'Other' => 'OTHER_ROOTKIT_LOG'
-);
+];
 
 foreach ($antiRootkitLogFiles as $antiRootkit => $logVar) {
-	if (!in_array($antiRootkit, $antiRootkits) || !isset($config[$logVar]) || $config[$logVar] == '') {
+	if (!in_array($antiRootkit, $antiRootkits) || !isset($cfg[$logVar]) || $cfg[$logVar] == '') {
 		unset($antiRootkitLogFiles[$antiRootkit]);
 	}
 }
 
 if (!empty($antiRootkitLogFiles)) {
 	foreach ($antiRootkitLogFiles AS $antiRootkit => $logVar) {
-		$logFile = $config[$logVar];
+		$logFile = $cfg[$logVar];
 
 		if (@is_readable($logFile) && @filesize($logFile) > 0) {
 			$handle = fopen($logFile, 'r');
-
 			$log = fread($handle, filesize($logFile));
-
 			fclose($handle);
-
 			$content = nl2br(tohtml($log));
 			$content = '<div>' . $content . '</div>';
-
-			$search = array();
-			$replace = array();
+			$search = [];
+			$replace = [];
 
 			// rkhunter-like log colouring
 			if ($antiRootkit == 'Rkhunter') {
@@ -133,12 +128,10 @@ if (!empty($antiRootkitLogFiles)) {
 			$content = '<strong style="color:red">' . tr("%s doesn't exist or is empty.", $logFile) . '</strong>';
 		}
 
-		$tpl->assign(
-			array(
-				'LOG' => $content,
-				'FILENAME' => $logFile
-			)
-		);
+		$tpl->assign([
+			'LOG' => $content,
+			'FILENAME' => $logFile
+		]);
 
 		$tpl->parse('ANTIROOTKITS_LOG', '.antirootkits_log');
 	}
@@ -153,9 +146,9 @@ generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

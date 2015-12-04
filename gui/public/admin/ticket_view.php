@@ -29,17 +29,13 @@
  * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
-require_once LIBRARY_PATH . '/Functions/Tickets.php';
+require '../../application.php';
+require 'module/Core/src/Functions/Tickets.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
-// Checks if support ticket system is activated
 if (!hasTicketSystem()) {
 	redirectTo('index.php');
 }
@@ -47,7 +43,6 @@ if (!hasTicketSystem()) {
 if (isset($_GET['ticket_id']) && !empty($_GET['ticket_id'])) {
 	$userId = $_SESSION['user_id'];
 	$ticketId = (int)$_GET['ticket_id'];
-
 	$status = getTicketStatus($ticketId);
 
 	if ($status == 1 || $status == 4) {
@@ -76,40 +71,36 @@ if (isset($_GET['ticket_id']) && !empty($_GET['ticket_id'])) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/ticket_view.tpl',
-		'page_message' => 'layout',
-		'tickets_list' => 'page',
-		'tickets_item' => 'tickets_list'
-	)
-);
-
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Admin / Support / View Ticket'),
-		'TR_VIEW_SUPPORT_TICKET' => tr('View Support Ticket'),
-		'TR_TICKET_INFO' => tr('Ticket Information'),
-		'TR_TICKET_URGENCY' => tr('Priority'),
-		'TR_TICKET_SUBJECT' => tr('Subject'),
-		'TR_TICKET_MESSAGES' => tr('Messages'),
-		'TR_TICKET_FROM' => tr('From'),
-		'TR_TICKET_DATE' => tr('Date'),
-		'TR_TICKET_CONTENT' => tr('Message'),
-		'TR_REPLY' => tr('Reply'),
-		'TR_TICKET_NEW_REPLY' => tr('Send new reply'),
-		'TR_TICKET_REPLY' => tr('Send reply')
-	)
-);
+$tpl->define_dynamic([
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/ticket_view.tpl',
+	'page_message' => 'layout',
+	'tickets_list' => 'page',
+	'tickets_item' => 'tickets_list'
+]);
+$tpl->assign([
+	'TR_PAGE_TITLE' => tr('Admin / Support / View Ticket'),
+	'TR_VIEW_SUPPORT_TICKET' => tr('View Support Ticket'),
+	'TR_TICKET_INFO' => tr('Ticket Information'),
+	'TR_TICKET_URGENCY' => tr('Priority'),
+	'TR_TICKET_SUBJECT' => tr('Subject'),
+	'TR_TICKET_MESSAGES' => tr('Messages'),
+	'TR_TICKET_FROM' => tr('From'),
+	'TR_TICKET_DATE' => tr('Date'),
+	'TR_TICKET_CONTENT' => tr('Message'),
+	'TR_REPLY' => tr('Reply'),
+	'TR_TICKET_NEW_REPLY' => tr('Send new reply'),
+	'TR_TICKET_REPLY' => tr('Send reply')
+]);
 
 generateNavigation($tpl);
 showTicketContent($tpl, $ticketId, $userId);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();
+
 unsetMessages();

@@ -37,7 +37,6 @@ check_login('admin');
 
 if (isset($_GET['delete_id'])) {
 	$deleteIpId = clean_input($_GET['delete_id']);
-
 	$query = "SELECT `reseller_ips` FROM `reseller_props`";
 	$stmt = execute_query($query);
 
@@ -51,6 +50,7 @@ if (isset($_GET['delete_id'])) {
 	$query = "SELECT count(`ip_id`) `ipsTotalCount` FROM `server_ips`";
 	$stmt = execute_query($query);
 	$row = $stmt->fetch(PDO::FETCH_ASSOC);
+
 	if ($row['ipsTotalCount'] < 2) {
 		set_page_message(tr('You cannot delete the last active IP address.'), 'error');
 		redirectTo('ip_manage.php');
@@ -59,7 +59,7 @@ if (isset($_GET['delete_id'])) {
 	write_log("{$_SESSION['user_logged']}: deleted IP address {$row['ipNumber']}", E_USER_NOTICE);
 
 	$query = "UPDATE `server_ips` SET `ip_status` = ? WHERE `ip_id` = ?";
-	$stmt = exec_query($query, array('todelete', $deleteIpId));
+	$stmt = exec_query($query, ['todelete', $deleteIpId]);
 
 	send_request();
 	set_page_message(tr('IP address successfully scheduled for deletion.'), 'success');

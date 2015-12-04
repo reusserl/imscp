@@ -25,10 +25,13 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
+/***********************************************************************************************************************
+ * Main
+ */
+
 require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
-
 check_login('admin');
 
 if (isset($_SESSION['user_id']) && isset($_GET['to_id'])) {

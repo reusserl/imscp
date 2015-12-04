@@ -30,7 +30,7 @@
  */
 
 /**
- * Generates user table.
+ * Generates user table
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  */
@@ -46,17 +46,17 @@ function admin_generateCustomersTable($tpl)
 		redirectTo('manage_users.php');
 	}
 
-	$resellerId = $stmt->fields['admin_id'];
-	$allResellers = array();
+	$resellerId = 0;
+	$allResellers = [];
 
-	while (!$stmt->EOF) {
+	while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 		if ((isset($_POST['uaction']) && $_POST['uaction'] == 'change_src') && (isset($_POST['src_reseller']) &&
-			$_POST['src_reseller'] == $stmt->fields['admin_id'])
+				$_POST['src_reseller'] == $row['admin_id'])
 		) {
 			$selected = $cfg['HTML_SELECTED'];
 			$resellerId = $_POST['src_reseller'];
 		} elseif ((isset($_POST['uaction']) && $_POST['uaction'] == 'move_user') && (isset($_POST['dst_reseller']) &&
-			$_POST['dst_reseller'] == $stmt->fields['admin_id'])
+				$_POST['dst_reseller'] == $row['admin_id'])
 		) {
 			$selected = $cfg['HTML_SELECTED'];
 			$resellerId = $_POST['dst_reseller'];
@@ -64,24 +64,20 @@ function admin_generateCustomersTable($tpl)
 			$selected = '';
 		}
 
-		$allResellers[] = $stmt->fields['admin_id'];
+		$allResellers[] = $row['admin_id'];
 
-		$tpl->assign(
-			array(
-				'SRC_RSL_OPTION' => tohtml($stmt->fields['admin_name']),
-				'SRC_RSL_VALUE' => $stmt->fields['admin_id'],
-				'SRC_RSL_SELECTED' => $selected));
-
+		$tpl->assign([
+			'SRC_RSL_OPTION' => tohtml($row['admin_name']),
+			'SRC_RSL_VALUE' => $row['admin_id'],
+			'SRC_RSL_SELECTED' => $selected
+		]);
 		$tpl->parse('SRC_RESELLER_OPTION', '.src_reseller_option');
-
-		$tpl->assign(
-			array(
-				'DST_RSL_OPTION' => tohtml($stmt->fields['admin_name']),
-				'DST_RSL_VALUE' => $stmt->fields['admin_id'],
-				'DST_RSL_SELECTED' => ''));
-
+		$tpl->assign([
+			'DST_RSL_OPTION' => tohtml($row['admin_name']),
+			'DST_RSL_VALUE' => $row['admin_id'],
+			'DST_RSL_SELECTED' => ''
+		]);
 		$tpl->parse('DST_RESELLER_OPTION', '.dst_reseller_option');
-		$stmt->moveNext();
 	}
 
 	if (isset($_POST['src_reseller']) && $_POST['src_reseller'] == 0) {
@@ -91,12 +87,11 @@ function admin_generateCustomersTable($tpl)
 		$selected = '';
 	}
 
-	$tpl->assign(
-		array(
-			'SRC_RSL_OPTION' => tr('N/A'),
-			'SRC_RSL_VALUE' => 0,
-			'SRC_RSL_SELECTED' => $selected));
-
+	$tpl->assign([
+		'SRC_RSL_OPTION' => tr('N/A'),
+		'SRC_RSL_VALUE' => 0,
+		'SRC_RSL_SELECTED' => $selected
+	]);
 	$tpl->parse('SRC_RESELLER_OPTION', '.src_reseller_option');
 
 	// Must never occur in normal usage. Any user returned here are not assigned to a reseller
@@ -112,14 +107,14 @@ function admin_generateCustomersTable($tpl)
 			WHERE
 				`admin_type` = ?
 			AND
-				`created_by` NOT IN (' . implode(',', array_map(array($db, 'quote'), $allResellers)) . ')
+				`created_by` NOT IN (' . implode(',', array_map([$db, 'quote'], $allResellers)) . ')
 			ORDER BY
 				`admin_name`
 		';
 		$stmt = exec_query($query, 'user');
 	} else {
 		$query = 'SELECT `admin_id`, `admin_name` FROM `admin` WHERE `admin_type` = ? AND `created_by` = ? ORDER BY `admin_name`';
-		$stmt = exec_query($query, array('user', $resellerId));
+		$stmt = exec_query($query, ['user', $resellerId]);
 	}
 
 	if (!$stmt->rowCount()) {
@@ -128,22 +123,19 @@ function admin_generateCustomersTable($tpl)
 		} else {
 			set_page_message(tr('No unassigned users were found in the database.'), 'static_info');
 		}
-		
+
 		$tpl->assign('RESELLER_ITEM', '');
 	} else {
-		while (!$stmt->EOF) {
-			$adminId = $stmt->fields['admin_id'];
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+			$adminId = $row['admin_id'];
 			$adminIdVarname = 'admin_id_' . $adminId;
-			$humanAdminName = decode_idna($stmt->fields['admin_name']);
-
-			$tpl->assign(
-				array(
-					'CUSTOMER_ID' => $stmt->fields['admin_id'],
-					'USER_NAME' => tohtml($humanAdminName),
-					'CKB_NAME' => $adminIdVarname));
-
+			$humanAdminName = decode_idna($row['admin_name']);
+			$tpl->assign([
+				'CUSTOMER_ID' => $row['admin_id'],
+				'USER_NAME' => tohtml($humanAdminName),
+				'CKB_NAME' => $adminIdVarname
+			]);
 			$tpl->parse('RESELLER_ITEM', '.reseller_item');
-			$stmt->moveNext();
 		}
 
 		$tpl->parse('RESELLER_LIST', 'reseller_list');
@@ -158,7 +150,6 @@ function admin_generateCustomersTable($tpl)
 function check_user_data()
 {
 	$stmt = exec_query('SELECT admin_id FROM admin WHERE admin_type = ? ORDER BY admin_name', 'user');
-
 	$selectedUsers = '';
 
 	while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -181,10 +172,9 @@ function check_user_data()
 	$toReseller = intval($_POST['dst_reseller']);
 
 	$stmt = exec_query('SELECT reseller_ips FROM reseller_props WHERE reseller_id = ?', $toReseller);
-
 	$errorsStack = '_off_';
-
-	$toResellerIpAddr = $stmt->fields['reseller_ips'];
+	$row = $stmt->fetch(PDO::FETCH_ASSOC);
+	$toResellerIpAddr = $row['reseller_ips'];
 
 	check_ip_sets($toResellerIpAddr, $selectedUsers, $errorsStack);
 
@@ -203,7 +193,6 @@ function check_user_data()
 /**
  * Update resellers limit
  *
- * @throws iMSCP_Exception_Database
  * @param int $toReseller Reseller for which the givens customer are moved to
  * @param int $fromReseller Reseller for wich the givens customers are moved from
  * @param array $users List of user to move
@@ -214,19 +203,19 @@ function admin_updateResellerLimits($toReseller, $fromReseller, $users, &$errors
 {
 	$toResellerProperties = imscp_getResellerProperties($toReseller);
 	$fromResellerProperties = imscp_getResellerProperties($fromReseller, true);
-
 	$usersList = explode(';', $users);
 
 	for ($i = 0, $countUsersList = count($usersList) - 1; $i < $countUsersList; $i++) {
 		$stmt = exec_query('SELECT domain_name FROM domain WHERE domain_admin_id = ?', $usersList[$i]);
 
-		if($stmt->rowCount()) {
-			$domainName = $stmt->fields['domain_name'];
+		if ($stmt->rowCount()) {
+			$row = $stmt->fetch(PDO::FETCH_ASSOC);
+			$domainName = $row['domain_name'];
 
 			list(
 				$subdomainsLimit, , $domainAliasesLimit, , $mailAccountsLimit, , $ftpAccountsLimit, , $sqlDatabasesLimit, ,
 				$sqlUsersLimit, , $trafficLimit, $diskspaceLimit
-			) = shared_getCustomerProps($usersList[$i]);
+				) = shared_getCustomerProps($usersList[$i]);
 
 			calculate_reseller_dvals(
 				$toResellerProperties['current_dmn_cnt'], $toResellerProperties['max_dmn_cnt'], $src_dmn_current,
@@ -291,8 +280,8 @@ function admin_updateResellerLimits($toReseller, $fromReseller, $users, &$errors
 	}
 
 	// Update reseller properties
-	/** @var $db iMSCP_Database */
-	$db = iMSCP_Database::getInstance();
+	/** @var \Doctrine\DBAL\Connection $db */
+	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
 	try {
 		$db->beginTransaction();
@@ -323,11 +312,11 @@ function admin_updateResellerLimits($toReseller, $fromReseller, $users, &$errors
 
 		for ($i = 0, $countUsersList = count($usersList) - 1; $i < $countUsersList; $i++) {
 			$query = 'UPDATE `admin` SET `created_by` = ? WHERE `admin_id` = ?';
-			exec_query($query, array($toReseller, $usersList[$i]));
+			exec_query($query, [$toReseller, $usersList[$i]]);
 		}
 
 		$db->commit();
-	} catch (iMSCP_Exception_Database $e) {
+	} catch (PDOException $e) {
 		$db->rollBack();
 		throw $e;
 	}
@@ -425,9 +414,9 @@ function check_ip_sets($to, $customersList, &$errorsStack)
 	for ($i = 0, $countCustomersList = count($customersList); $i < $countCustomersList; $i++) {
 		$query = 'SELECT `domain_name`, `domain_ip_id` FROM `domain` WHERE `domain_admin_id` = ?';
 		$stmt = exec_query($query, $customersList[$i]);
-
-		$domainIpAddrId = $stmt->fields['domain_ip_id'];
-		$domainName = $stmt->fields['domain_name'];
+		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+		$domainIpAddrId = $row['domain_ip_id'];
+		$domainName = $row['domain_name'];
 
 		if (!preg_match("/$domainIpAddrId;/", $to)) {
 			if ($errorsStack == '_off_') {
@@ -453,7 +442,7 @@ require '../../application.php';
 
 check_login('admin');
 
-if(!systemHasResellers(2)) {
+if (!systemHasResellers(2)) {
 	showBadRequestErrorPage();
 }
 
@@ -465,7 +454,7 @@ if (isset($_POST['uaction']) && $_POST['uaction'] == 'move_user' && check_user_d
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(array(
+$tpl->define_dynamic([
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/manage_reseller_users.tpl',
 	'page_message' => 'layout',
@@ -475,9 +464,9 @@ $tpl->define_dynamic(array(
 	'src_reseller_option' => 'src_reseller',
 	'dst_reseller' => 'page',
 	'dst_reseller_option' => 'dst_reseller'
-));
+]);
 
-$tpl->assign(array(
+$tpl->assign([
 	'TR_PAGE_TITLE' => tr('Admin / Users / Customers Assignment'),
 	'TR_USER_ASSIGNMENT' => tr('User assignment'),
 	'TR_RESELLER_USERS' => tr('Users'),
@@ -487,10 +476,10 @@ $tpl->assign(array(
 	'TR_FROM_RESELLER' => tr('From reseller'),
 	'TR_TO_RESELLER' => tr('To reseller'),
 	'TR_MOVE' => tr('Move')
-));
+]);
 
-iMSCP_Events_Aggregator::getInstance()->registerListener('onGetJsTranslations', function ($e) {
-	/** @var $e \iMSCP_Events_Event */
+\iMSCP\Core\Application::getInstance()->getEventManager()->attach('onGetJsTranslations', function ($e) {
+	/** @var $e \Zend\EventManager\Event */
 	$e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations(false);
 });
 
@@ -499,9 +488,9 @@ admin_generateCustomersTable($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

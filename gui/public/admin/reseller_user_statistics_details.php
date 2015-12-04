@@ -52,7 +52,7 @@ function _getUserTraffic($domainId, $beginTime, $endTime)
 		return array($row['web_traffic'], $row['ftp_traffic'], $row['mail_traffic'], $row['pop_traffic']);
 	}
 
-	return array(0, 0, 0, 0);
+	return [0, 0, 0, 0];
 }
 
 /**
@@ -128,14 +128,14 @@ function generatePage($tpl, $userId)
 				$domainId, $beginTime, $endTime
 			);
 
-			$tpl->assign(array(
+			$tpl->assign([
 				'DATE' => date($dateFormat, strtotime($year . '-' . $month . '-' . $fromDay)),
 				'WEB_TRAFFIC' => tohtml(bytesHuman($webTraffic)),
 				'FTP_TRAFFIC' => tohtml(bytesHuman($ftpTraffic)),
 				'SMTP_TRAFFIC' => tohtml(bytesHuman($smtpTraffic)),
 				'POP3_TRAFFIC' => tohtml(bytesHuman($popTraffic)),
 				'ALL_TRAFFIC' => tohtml(bytesHuman($webTraffic + $ftpTraffic + $smtpTraffic + $popTraffic))
-			));
+			]);
 
 			$all[0] += $webTraffic;
 			$all[1] += $ftpTraffic;
@@ -145,7 +145,7 @@ function generatePage($tpl, $userId)
 			$tpl->parse('TRAFFIC_TABLE_ITEM', '.traffic_table_item');
 		}
 
-		$tpl->assign(array(
+		$tpl->assign([
 			'USER_ID' => tohtml($userId),
 			'USERNAME' => tohtml($adminName),
 			'ALL_WEB_TRAFFIC' => tohtml(bytesHuman($all[0])),
@@ -153,14 +153,14 @@ function generatePage($tpl, $userId)
 			'ALL_SMTP_TRAFFIC' => tohtml(bytesHuman($all[2])),
 			'ALL_POP3_TRAFFIC' => tohtml(bytesHuman($all[3])),
 			'ALL_ALL_TRAFFIC' => tohtml(bytesHuman(array_sum($all)))
-		));
+		]);
 	} else {
 		set_page_message(tr('No statistics found for the given period. Try another period.'), 'static_info');
-		$tpl->assign(array(
+		$tpl->assign([
 			'USERNAME' => tohtml($adminName),
 			'USER_ID' => tohtml($userId),
 			'RESELLER_USER_STATISTICS_DETAIL_BLOCK' => ''
-		));
+		]);
 	}
 }
 
@@ -174,8 +174,7 @@ require '../../application.php';
 
 check_login('admin');
 
-
-if(systemHasCustomers()) {
+if (systemHasCustomers()) {
 	if (isset($_GET['user_id'])) {
 		$userId = intval($_GET['user_id']);
 		$_SESSION['stats_user_id'] = $userId;
@@ -188,7 +187,7 @@ if(systemHasCustomers()) {
 	}
 
 	$tpl = new \iMSCP\Core\Template\TemplateEngine();
-	$tpl->define_dynamic(array(
+	$tpl->define_dynamic([
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'admin/reseller_user_statistics_details.tpl',
 		'page_message' => 'layout',
@@ -196,9 +195,8 @@ if(systemHasCustomers()) {
 		'year_list' => 'page',
 		'reseller_user_statistics_detail_block' => 'page',
 		'traffic_table_item' => 'reseller_user_statistics_detail_block'
-	));
-
-	$tpl->assign(array(
+	]);
+	$tpl->assign([
 		'TR_PAGE_TITLE' => tohtml(tr("Admin / Statistics / Reseller Statistics / User Statistics / {USERNAME} user statistics")),
 		'TR_MONTH' => tohtml(tr('Month')),
 		'TR_YEAR' => tohtml(tr('Year')),
@@ -210,14 +208,16 @@ if(systemHasCustomers()) {
 		'TR_ALL_TRAFFIC' => tohtml(tr('All traffic')),
 		'TR_ALL' => tohtml(tr('All')),
 		'TR_DAY' => tohtml(tr('Day'))
-	));
+	]);
 
 	generateNavigation($tpl);
 	generatePage($tpl, $userId);
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+		'templateEngine' => $tpl
+	]);
 	$tpl->prnt();
 
 	unsetMessages();

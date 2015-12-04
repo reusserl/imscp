@@ -84,7 +84,6 @@ function admin_generatePage($tpl, $domainId)
 	$domainStatus = $domainProperties['domain_status'];
 
 	// Domain status
-
 	if (
 		$domainStatus == 'ok' || $domainStatus == 'disabled' ||
 		$domainStatus == 'todelete' || $domainStatus == 'toadd' ||
@@ -97,7 +96,6 @@ function admin_generatePage($tpl, $domainId)
 	}
 
 	// Get total domain traffic usage in bytes
-
 	$query = "
 		SELECT
 			IFNULL(SUM(dtraff_web), 0) AS dtraff_web, IFNULL(SUM(dtraff_ftp), 0) AS dtraff_ftp,
@@ -131,7 +129,7 @@ function admin_generatePage($tpl, $domainId)
 
 	# Features
 
-	$tpl->assign(array(
+	$tpl->assign([
 		'DOMAIN_ID' => $domainId,
 		'VL_DOMAIN_NAME' => tohtml(decode_idna($domainProperties['domain_name'])),
 		'VL_DOMAIN_IP' => tohtml($domainIpAddr),
@@ -163,7 +161,7 @@ function admin_generatePage($tpl, $domainId)
 		'VL_SUBDOM_ACCOUNTS_LIMIT' => translate_limit_value($domainProperties['domain_subd_limit']),
 		'VL_DOMALIAS_ACCOUNTS_USED' => get_domain_running_als_cnt($domainId),
 		'VL_DOMALIAS_ACCOUNTS_LIMIT' => translate_limit_value($domainProperties['domain_alias_limit']),
-	));
+	]);
 }
 
 /***********************************************************************************************************************
@@ -176,7 +174,6 @@ require '../../application.php';
 
 check_login('admin');
 
-// Get user id that comes for manage domain
 if (!isset($_GET['domain_id'])) {
 	redirectTo('manage_users.php');
 }
@@ -224,9 +221,9 @@ admin_generatePage($tpl, intval($_GET['domain_id']));
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-	\iMSCP\Core\Events::onAdminScriptEnd, ['templateEngine' => $tpl]
-);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

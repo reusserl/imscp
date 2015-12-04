@@ -26,11 +26,11 @@
  */
 
 /***********************************************************************************************************************
- * Script functions
+ * Functions
  */
 
 /**
- * Update server traffic settings.
+ * Update server traffic settings
  *
  * @param int $trafficLimit Monthly traffic limit
  * @param int $trafficWarning Traffic warning
@@ -56,13 +56,10 @@ function admin_updateServerTrafficSettings($trafficLimit, $trafficWarning)
 	}
 
 	if ($retVal) {
-		/** @var $db_cfg iMSCP_Config_Handler_Db */
-		$dbConfig = iMSCP_Registry::get('dbConfig');
-
-		$dbConfig->SERVER_TRAFFIC_LIMIT = $trafficLimit;
-		$dbConfig->SERVER_TRAFFIC_WARN = $trafficWarning;
-
-		// gets the number of queries that were been executed
+		/** @var \iMSCP\Core\Config\DbConfigHandler $dbConfig */
+		$dbConfig = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('DbConfig');
+		$dbConfig['SERVER_TRAFFIC_LIMIT'] = $trafficLimit;
+		$dbConfig['SERVER_TRAFFIC_WARN'] = $trafficWarning;
 		$updtCount = $dbConfig->countQueries('update');
 		$newCount = $dbConfig->countQueries('insert');
 
@@ -80,7 +77,7 @@ function admin_updateServerTrafficSettings($trafficLimit, $trafficWarning)
 }
 
 /**
- * Generates page.
+ * Generates page
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @param int $trafficLimit Monthly traffic limit
@@ -96,16 +93,14 @@ function admin_generatePage($tpl, $trafficLimit, $trafficWarning)
 		$trafficWarning = $cfg['SERVER_TRAFFIC_WARN'];
 	}
 
-	$tpl->assign(
-		array(
-			'MAX_TRAFFIC' => tohtml($trafficLimit),
-			'TRAFFIC_WARNING' => tohtml($trafficWarning)
-		)
-	);
+	$tpl->assign([
+		'MAX_TRAFFIC' => tohtml($trafficLimit),
+		'TRAFFIC_WARNING' => tohtml($trafficWarning)
+	]);
 }
 
 /***********************************************************************************************************************
- * Main script
+ * Main
  */
 
 require '../../application.php';
@@ -117,43 +112,37 @@ check_login('admin');
 $trafficLimit = $trafficWarning = 0;
 
 if (!empty($_POST)) {
-	$trafficLimit = !isset($_POST['max_traffic']) ? : clean_input($_POST['max_traffic']);
-	$trafficWarning = !isset($_POST['traffic_warning']) ? : clean_input($_POST['traffic_warning']);
+	$trafficLimit = !isset($_POST['max_traffic']) ?: clean_input($_POST['max_traffic']);
+	$trafficWarning = !isset($_POST['traffic_warning']) ?: clean_input($_POST['traffic_warning']);
 
 	admin_updateServerTrafficSettings($trafficLimit, $trafficWarning);
 }
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/settings_server_traffic.tpl',
-		'page_message' => 'layout',
-		'hosting_plans' => 'page'
-	)
-);
+$tpl->define_dynamic([
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/settings_server_traffic.tpl',
+	'page_message' => 'layout',
+	'hosting_plans' => 'page'
+]);
 
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Admin / Settings / Server Traffic'),
-		'TR_SET_SERVER_TRAFFIC_SETTINGS' => tr('Server traffic settings'),
-		'TR_MAX_TRAFFIC' => tr('Max traffic'),
-		'TR_WARNING' => tr('Warning traffic'),
-		'TR_MIB' => tr('MiB'),
-		'TR_UPDATE' => tr('Update'),
-	)
-);
+$tpl->assign([
+	'TR_PAGE_TITLE' => tr('Admin / Settings / Server Traffic'),
+	'TR_SET_SERVER_TRAFFIC_SETTINGS' => tr('Server traffic settings'),
+	'TR_MAX_TRAFFIC' => tr('Max traffic'),
+	'TR_WARNING' => tr('Warning traffic'),
+	'TR_MIB' => tr('MiB'),
+	'TR_UPDATE' => tr('Update'),
+]);
 
 generateNavigation($tpl);
 admin_generatePage($tpl, $trafficLimit, $trafficWarning);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

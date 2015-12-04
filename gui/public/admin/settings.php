@@ -26,7 +26,7 @@
  */
 
 /***********************************************************************************************************************
- * Main script
+ * Main
  */
 
 require '../../application.php';
@@ -104,14 +104,9 @@ if (isset($_POST['uaction']) && $_POST['uaction'] == 'apply') {
 	if (!is_scalar($phpini_open_basedir)) { // No more check here - Admin must know what he do...
 		set_page_message(tr('Wrong value for the PHP open_basedir directive.'), 'error');
 	} elseif (
-		!is_number($lostPasswdTimeout) ||
-		!is_number($passwdChars) ||
-		!is_number($bruteforce_max_login) ||
-		!is_number($bruteforce_block_time) ||
-		!is_number($bruteforce_between_time) ||
-		!is_number($bruteforce_max_capcha) ||
-		!is_number($bruteforce_max_attempts_before_wait) ||
-		!is_number($domainRowsPerPage)
+		!is_number($lostPasswdTimeout) || !is_number($passwdChars) || !is_number($bruteforce_max_login) ||
+		!is_number($bruteforce_block_time) || !is_number($bruteforce_between_time) || !is_number($bruteforce_max_capcha) ||
+		!is_number($bruteforce_max_attempts_before_wait) || !is_number($domainRowsPerPage)
 	) {
 		set_page_message(tr('Only positive numbers are allowed.'), 'error');
 	} elseif ($domainRowsPerPage < 1) {
@@ -187,202 +182,202 @@ if (isset($_POST['uaction']) && $_POST['uaction'] == 'apply') {
 $coid = '';
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(array(
+$tpl->define_dynamic([
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/settings.tpl',
 	'page_message' => 'layout',
 	'def_language' => 'page',
 	'php_editor_disable_functions_block' => 'page'
-));
+]);
 
 // Grab the value only once to improve performances
 $htmlSelected = $cfg['HTML_SELECTED'];
 
 if ($cfg['LOSTPASSWORD']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'LOSTPASSWORD_SELECTED_ON' => $htmlSelected,
 		'LOSTPASSWORD_SELECTED_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'LOSTPASSWORD_SELECTED_ON' => '',
 		'LOSTPASSWORD_SELECTED_OFF', $htmlSelected
-	));
+	]);
 }
 
 if ($cfg['PASSWD_STRONG']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'PASSWD_STRONG_ON' => $htmlSelected,
 		'PASSWD_STRONG_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'PASSWD_STRONG_ON' => '',
 		'PASSWD_STRONG_OFF' => $htmlSelected
-	));
+	]);
 }
 
 if ($cfg['BRUTEFORCE']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'BRUTEFORCE_SELECTED_ON' => $htmlSelected,
 		'BRUTEFORCE_SELECTED_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'BRUTEFORCE_SELECTED_ON' => '',
 		'BRUTEFORCE_SELECTED_OFF' => $htmlSelected
-	));
+	]);
 }
 
 if ($cfg['BRUTEFORCE_BETWEEN']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'BRUTEFORCE_BETWEEN_SELECTED_ON' => $htmlSelected,
 		'BRUTEFORCE_BETWEEN_SELECTED_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'BRUTEFORCE_BETWEEN_SELECTED_ON' => '',
 		'BRUTEFORCE_BETWEEN_SELECTED_OFF' => $htmlSelected
-	));
+	]);
 }
 
 if ($cfg['IMSCP_SUPPORT_SYSTEM']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'SUPPORT_SYSTEM_SELECTED_ON' => $htmlSelected,
 		'SUPPORT_SYSTEM_SELECTED_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'SUPPORT_SYSTEM_SELECTED_ON' => '',
 		'SUPPORT_SYSTEM_SELECTED_OFF' => $htmlSelected
-	));
+	]);
 }
 
 if ($cfg['CREATE_DEFAULT_EMAIL_ADDRESSES']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'CREATE_DEFAULT_EMAIL_ADDRESSES_ON' => $htmlSelected,
 		'CREATE_DEFAULT_EMAIL_ADDRESSES_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'CREATE_DEFAULT_EMAIL_ADDRESSES_ON' => '',
 		'CREATE_DEFAULT_EMAIL_ADDRESSES_OFF' => $htmlSelected
-	));
+	]);
 }
 
 if ($cfg['COUNT_DEFAULT_EMAIL_ADDRESSES']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'COUNT_DEFAULT_EMAIL_ADDRESSES_ON' => $htmlSelected,
 		'COUNT_DEFAULT_EMAIL_ADDRESSES_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'COUNT_DEFAULT_EMAIL_ADDRESSES_ON' => '',
 		'COUNT_DEFAULT_EMAIL_ADDRESSES_OFF' => $htmlSelected
-	));
+	]);
 }
 
 if ($cfg['HARD_MAIL_SUSPENSION']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'HARD_MAIL_SUSPENSION_ON' => $htmlSelected,
 		'HARD_MAIL_SUSPENSION_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'HARD_MAIL_SUSPENSION_ON' => '',
 		'HARD_MAIL_SUSPENSION_OFF' => $htmlSelected
-	));
+	]);
 }
 
 if (isset($cfg['EMAIL_QUOTA_SYNC_MODE']) && $cfg['EMAIL_QUOTA_SYNC_MODE']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'REDISTRIBUTE_EMAIl_QUOTA_YES' => $htmlSelected,
 		'REDISTRIBUTE_EMAIl_QUOTA_NO' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'REDISTRIBUTE_EMAIl_QUOTA_YES' => '',
 		'REDISTRIBUTE_EMAIl_QUOTA_NO' => $htmlSelected
-	));
+	]);
 }
 
 if ($cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
-	$tpl->assign(array(
+	$tpl->assign([
 		'HOSTING_PLANS_LEVEL_ADMIN' => $htmlSelected,
 		'HOSTING_PLANS_LEVEL_RESELLER' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'HOSTING_PLANS_LEVEL_ADMIN' => '',
 		'HOSTING_PLANS_LEVEL_RESELLER' => $htmlSelected
-	));
+	]);
 }
 
 if ($cfg['CHECK_FOR_UPDATES']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'CHECK_FOR_UPDATES_SELECTED_ON' => $htmlSelected,
 		'CHECK_FOR_UPDATES_SELECTED_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'CHECK_FOR_UPDATES_SELECTED_ON' => '',
 		'CHECK_FOR_UPDATES_SELECTED_OFF' => $htmlSelected
-	));
+	]);
 }
 
 if ($cfg['ENABLE_SSL']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'ENABLE_SSL_ON' => $htmlSelected,
 		'ENABLE_SSL_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'ENABLE_SSL_ON' => '',
 		'ENABLE_SSL_OFF' => $htmlSelected
-	));
+	]);
 }
 
 if ($cfg['PREVENT_EXTERNAL_LOGIN_ADMIN']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'PREVENT_EXTERNAL_LOGIN_ADMIN_SELECTED_ON' => $htmlSelected,
 		'PREVENT_EXTERNAL_LOGIN_ADMIN_SELECTED_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'PREVENT_EXTERNAL_LOGIN_ADMIN_SELECTED_ON' => '',
 		'PREVENT_EXTERNAL_LOGIN_ADMIN_SELECTED_OFF' => $htmlSelected
-	));
+	]);
 }
 
 if ($cfg['PREVENT_EXTERNAL_LOGIN_RESELLER']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'PREVENT_EXTERNAL_LOGIN_RESELLER_SELECTED_ON' => $htmlSelected,
 		'PREVENT_EXTERNAL_LOGIN_RESELLER_SELECTED_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'PREVENT_EXTERNAL_LOGIN_RESELLER_SELECTED_ON' => '',
 		'PREVENT_EXTERNAL_LOGIN_RESELLER_SELECTED_OFF' => $htmlSelected
-	));
+	]);
 }
 
 if ($cfg['PREVENT_EXTERNAL_LOGIN_CLIENT']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'PREVENT_EXTERNAL_LOGIN_CLIENT_SELECTED_ON' => $htmlSelected,
 		'PREVENT_EXTERNAL_LOGIN_CLIENT_SELECTED_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'PREVENT_EXTERNAL_LOGIN_CLIENT_SELECTED_ON' => '',
 		'PREVENT_EXTERNAL_LOGIN_CLIENT_SELECTED_OFF' => $htmlSelected
-	));
+	]);
 }
 
 if ($phpini->getDataVal('phpiniAllowUrlFopen') == 'on') {
-	$tpl->assign(array(
+	$tpl->assign([
 		'PHPINI_ALLOW_URL_FOPEN_ON' => $htmlSelected,
 		'PHPINI_ALLOW_URL_FOPEN_OFF' => ''
-	));
+	]);
 } else {
 	$tpl->assign(array(
 		'PHPINI_ALLOW_URL_FOPEN_ON' => '',
@@ -391,60 +386,60 @@ if ($phpini->getDataVal('phpiniAllowUrlFopen') == 'on') {
 }
 
 if ($phpini->getDataVal('phpiniDisplayErrors') == 'on') {
-	$tpl->assign(array(
+	$tpl->assign([
 		'PHPINI_DISPLAY_ERRORS_ON' => $htmlSelected,
 		'PHPINI_DISPLAY_ERRORS_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'PHPINI_DISPLAY_ERRORS_ON' => '',
 		'PHPINI_DISPLAY_ERRORS_OFF' => $htmlSelected
-	));
+	]);
 }
 
 $errorReportingValue = (string)$phpini->errorReportingToLitteral($phpini->getDataVal('phpiniErrorReporting'));
 
 switch ($errorReportingValue) {
 	case 'E_ALL & ~E_NOTICE':
-		$tpl->assign(array(
+		$tpl->assign([
 			'PHPINI_ERROR_REPORTING_0' => $htmlSelected,
 			'PHPINI_ERROR_REPORTING_1' => '',
 			'PHPINI_ERROR_REPORTING_2' => '',
 			'PHPINI_ERROR_REPORTING_3' => ''
-		));
+		]);
 		break;
 	case 'E_ALL | E_STRICT':
-		$tpl->assign(array(
+		$tpl->assign([
 			'PHPINI_ERROR_REPORTING_0' => '',
 			'PHPINI_ERROR_REPORTING_1' => $htmlSelected,
 			'PHPINI_ERROR_REPORTING_2' => '',
 			'PHPINI_ERROR_REPORTING_3' => ''
-		));
+		]);
 		break;
 	case 'E_ALL & ~E_DEPRECATED':
-		$tpl->assign(array(
+		$tpl->assign([
 			'PHPINI_ERROR_REPORTING_0' => '',
 			'PHPINI_ERROR_REPORTING_1' => '',
 			'PHPINI_ERROR_REPORTING_2' => $htmlSelected,
 			'PHPINI_ERROR_REPORTING_3' => ''
-		));
+		]);
 		break;
 	default:
-		$tpl->assign(array(
+		$tpl->assign([
 			'PHPINI_ERROR_REPORTING_0' => '',
 			'PHPINI_ERROR_REPORTING_1' => '',
 			'PHPINI_ERROR_REPORTING_2' => '',
 			'PHPINI_ERROR_REPORTING_3' => $htmlSelected
-		));
+		]);
 }
 
 $htmlChecked = $cfg['HTML_CHECKED'];
 
 if (PHP_SAPI != 'apache2handler') {
 	$disabledFunctions = explode(',', $phpini->getDataVal('phpiniDisableFunctions'));
-	$disabledFunctionsAll = array(
+	$disabledFunctionsAll = [
 		'SHOW_SOURCE', 'SYSTEM', 'SHELL_EXEC', 'PASSTHRU', 'EXEC', 'PHPINFO', 'SHELL', 'SYMLINK', 'PROC_OPEN', 'POPEN',
-	);
+	];
 
 	foreach ($disabledFunctionsAll as $function) {
 		$tpl->assign($function, in_array(strtolower($function), $disabledFunctions) ? $htmlChecked : '');
@@ -455,39 +450,39 @@ if (PHP_SAPI != 'apache2handler') {
 
 switch ($cfg['LOG_LEVEL']) {
 	case false:
-		$tpl->assign(array(
+		$tpl->assign([
 			'LOG_LEVEL_SELECTED_OFF' => $htmlSelected,
 			'LOG_LEVEL_SELECTED_NOTICE' => '',
 			'LOG_LEVEL_SELECTED_WARNING' => '',
 			'LOG_LEVEL_SELECTED_ERROR' => ''
-		));
+		]);
 		break;
 	case E_USER_NOTICE:
-		$tpl->assign(array(
+		$tpl->assign([
 			'LOG_LEVEL_SELECTED_OFF' => '',
 			'LOG_LEVEL_SELECTED_NOTICE' => $htmlSelected,
 			'LOG_LEVEL_SELECTED_WARNING' => '',
 			'LOG_LEVEL_SELECTED_ERROR' => ''
-		));
+		]);
 		break;
 	case E_USER_WARNING:
-		$tpl->assign(array(
+		$tpl->assign([
 			'LOG_LEVEL_SELECTED_OFF' => '',
 			'LOG_LEVEL_SELECTED_NOTICE' => '',
 			'LOG_LEVEL_SELECTED_WARNING' => $htmlSelected,
 			'LOG_LEVEL_SELECTED_ERROR' => ''
-		));
+		]);
 		break;
 	default:
-		$tpl->assign(array(
+		$tpl->assign([
 			'LOG_LEVEL_SELECTED_OFF' => '',
 			'LOG_LEVEL_SELECTED_NOTICE' => '',
 			'LOG_LEVEL_SELECTED_WARNING' => '',
 			'LOG_LEVEL_SELECTED_ERROR' => $htmlSelected
-		));
+		]);
 }
 
-$tpl->assign(array(
+$tpl->assign([
 	'TR_PAGE_TITLE' => tr('Admin / Settings'),
 	'TR_UPDATES' => tr('Updates'),
 	'LOSTPASSWORD_TIMEOUT_VALUE' => $cfg['LOSTPASSWORD_TIMEOUT'],
@@ -565,13 +560,16 @@ $tpl->assign(array(
 	'TR_PHPINI_DISABLE_FUNCTIONS' => tr('Value for the %s directive', '<b>disable_functions</b>'),
 	'TR_MIB' => tr('MiB'),
 	'TR_SEC' => tr('Sec.')
-));
+]);
 
 generateNavigation($tpl);
 gen_def_language($tpl, $cfg['USER_INITIAL_LANG']);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();
+
 unsetMessages();

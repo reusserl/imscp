@@ -39,10 +39,8 @@
 function _admin_generatePhpBlock($tpl, $phpini)
 {
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 	$checked = $cfg['HTML_CHECKED'];
-
-	$tplVars = array();
+	$tplVars = [];
 
 	$tplVars['PHP_EDITOR_YES'] = ($phpini->getClPermVal('phpiniSystem') == 'yes') ? $checked : '';
 	$tplVars['PHP_EDITOR_NO'] = ($phpini->getClPermVal('phpiniSystem') != 'yes') ? $checked : '';
@@ -85,15 +83,13 @@ function _admin_generatePhpBlock($tpl, $phpini)
 	$tplVars['MAX_INPUT_TIME'] = $phpini->getDataVal('phpiniMaxInputTime');
 	$tplVars['MEMORY_LIMIT'] = $phpini->getDataVal('phpiniMemoryLimit');
 
-	$tplVars['PHP_DIRECTIVES_MAX_VALUES'] = json_encode(
-		array(
-			'post_max_size' => 10000,
-			'upload_max_filesize' => 10000,
-			'max_execution_time' => 10000,
-			'max_input_time' => 10000,
-			'memory_limit' => 10000
-		)
-	);
+	$tplVars['PHP_DIRECTIVES_MAX_VALUES'] = json_encode([
+		'post_max_size' => 10000,
+		'upload_max_filesize' => 10000,
+		'max_execution_time' => 10000,
+		'max_input_time' => 10000,
+		'memory_limit' => 10000
+	]);
 
 	$tpl->assign($tplVars);
 }
@@ -110,51 +106,47 @@ function admin_generatePage($tpl, $phpini)
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 	$checked = $cfg['HTML_CHECKED'];
 
-	$tpl->assign(
-		array(
-			'HP_NAME_VALUE' => '',
-			'HP_DESCRIPTION_VALUE' => '',
+	$tpl->assign([
+		'HP_NAME_VALUE' => '',
+		'HP_DESCRIPTION_VALUE' => '',
 
-			'HP_MAX_SUB_LIMITS' => '0',
-			'HP_MAX_ALS_VALUES' => '0',
-			'HP_MAIL_VALUE' => '0',
-			'HP_MAIL_QUOTA_VALUE' => '0',
-			'HP_FTP_VALUE' => '0',
-			'HP_SQL_DB_VALUE' => '0',
-			'HP_SQL_USER_VALUE' => '0',
-			'HP_TRAFF_VALUE' => '0',
-			'HP_DISK_VALUE' => '0',
+		'HP_MAX_SUB_LIMITS' => '0',
+		'HP_MAX_ALS_VALUES' => '0',
+		'HP_MAIL_VALUE' => '0',
+		'HP_MAIL_QUOTA_VALUE' => '0',
+		'HP_FTP_VALUE' => '0',
+		'HP_SQL_DB_VALUE' => '0',
+		'HP_SQL_USER_VALUE' => '0',
+		'HP_TRAFF_VALUE' => '0',
+		'HP_DISK_VALUE' => '0',
 
-			'TR_PHP_YES' => '',
-			'TR_PHP_NO' => $checked,
-			'TR_CGI_YES' => '',
-			'TR_CGI_NO' => $checked,
-			'TR_DNS_YES' => '',
-			'TR_DNS_NO' => $checked,
-			'TR_APS_STANDARD_YES' => '',
-			'TR_APS_STANDARD_NO' => $checked,
-			'TR_EXTMAIL_YES' => '',
-			'TR_EXTMAIL_NO' => $checked,
-			'TR_PROTECT_WEB_FOLDERS_YES' => $checked,
-			'TR_PROTECT_WEB_FOLDERS_NO' => '',
+		'TR_PHP_YES' => '',
+		'TR_PHP_NO' => $checked,
+		'TR_CGI_YES' => '',
+		'TR_CGI_NO' => $checked,
+		'TR_DNS_YES' => '',
+		'TR_DNS_NO' => $checked,
+		'TR_APS_STANDARD_YES' => '',
+		'TR_APS_STANDARD_NO' => $checked,
+		'TR_EXTMAIL_YES' => '',
+		'TR_EXTMAIL_NO' => $checked,
+		'TR_PROTECT_WEB_FOLDERS_YES' => $checked,
+		'TR_PROTECT_WEB_FOLDERS_NO' => '',
 
-			'TR_STATUS_YES' => $checked,
-			'TR_STATUS_NO' => '',
-		)
-	);
+		'TR_STATUS_YES' => $checked,
+		'TR_STATUS_NO' => '',
+	]);
 
-	if($cfg['NAMED_SERVER'] == 'external_server') {
+	if ($cfg['NAMED_SERVER'] == 'external_server') {
 		$tpl->assign('CUSTOM_DNS_RECORDS_FEATURE', '');
 	}
 
 	if ($cfg['BACKUP_DOMAINS'] != 'no') {
-		$tpl->assign(
-			array(
-				'VL_BACKUPD' => '',
-				'VL_BACKUPS' => '',
-				'VL_BACKUPM' => ''
-			)
-		);
+		$tpl->assign([
+			'VL_BACKUPD' => '',
+			'VL_BACKUPS' => '',
+			'VL_BACKUPM' => ''
+		]);
 	} else {
 		$tpl->assign('BACKUP_FEATURE', '');
 	}
@@ -172,56 +164,52 @@ function admin_generatePage($tpl, $phpini)
 function admin_generateErrorPage($tpl, $phpini)
 {
 	global $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $traffic, $diskSpace, $php, $cgi,
-		   $backup, $dns, $apsStandard, $extMail, $webFolderProtection, $status;
+	       $backup, $dns, $apsStandard, $extMail, $webFolderProtection, $status;
 
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 	$checked = $cfg['HTML_CHECKED'];
 
-	$tpl->assign(
-		array(
-			'HP_NAME_VALUE' => tohtml($name),
-			'HP_DESCRIPTION_VALUE' => tohtml($description),
+	$tpl->assign([
+		'HP_NAME_VALUE' => tohtml($name),
+		'HP_DESCRIPTION_VALUE' => tohtml($description),
 
-			'HP_MAX_SUB_LIMITS' => tohtml($sub),
-			'HP_MAX_ALS_VALUES' => tohtml($als),
-			'HP_MAIL_VALUE' => tohtml($mail),
-			'HP_MAIL_QUOTA_VALUE' => tohtml($mailQuota),
-			'HP_FTP_VALUE' => tohtml($ftp),
-			'HP_SQL_DB_VALUE' => tohtml($sqld),
-			'HP_SQL_USER_VALUE' => tohtml($sqlu),
-			'HP_TRAFF_VALUE' => tohtml($traffic),
-			'HP_DISK_VALUE' => tohtml($diskSpace),
+		'HP_MAX_SUB_LIMITS' => tohtml($sub),
+		'HP_MAX_ALS_VALUES' => tohtml($als),
+		'HP_MAIL_VALUE' => tohtml($mail),
+		'HP_MAIL_QUOTA_VALUE' => tohtml($mailQuota),
+		'HP_FTP_VALUE' => tohtml($ftp),
+		'HP_SQL_DB_VALUE' => tohtml($sqld),
+		'HP_SQL_USER_VALUE' => tohtml($sqlu),
+		'HP_TRAFF_VALUE' => tohtml($traffic),
+		'HP_DISK_VALUE' => tohtml($diskSpace),
 
-			'TR_PHP_YES' => ($php == '_yes_') ? $checked : '',
-			'TR_PHP_NO' => ($php == '_no_') ? $cfg['HTML_CHECKED'] : '',
-			'TR_CGI_YES' => ($cgi == '_yes_') ? $checked : '',
-			'TR_CGI_NO' => ($cgi == '_no_') ? $checked : '',
-			'TR_DNS_YES' => ($dns == '_yes_') ? $checked : '',
-			'TR_DNS_NO' => ($dns == '_no_') ? $checked : '',
-			'TR_APS_STANDARD_YES' => ($apsStandard == '_yes_') ? $checked : '',
-			'TR_APS_STANDARD_NO' => ($apsStandard == '_no_') ? $checked : '',
-			'TR_EXTMAIL_YES' => ($extMail == '_yes_') ? $checked : '',
-			'TR_EXTMAIL_NO' => ($extMail == '_no_') ? $checked : '',
-			'TR_PROTECT_WEB_FOLDERS_YES' => ($webFolderProtection == '_yes_') ? $checked : '',
-			'TR_PROTECT_WEB_FOLDERS_NO' => ($webFolderProtection == '_no_') ? $checked : '',
+		'TR_PHP_YES' => ($php == '_yes_') ? $checked : '',
+		'TR_PHP_NO' => ($php == '_no_') ? $cfg['HTML_CHECKED'] : '',
+		'TR_CGI_YES' => ($cgi == '_yes_') ? $checked : '',
+		'TR_CGI_NO' => ($cgi == '_no_') ? $checked : '',
+		'TR_DNS_YES' => ($dns == '_yes_') ? $checked : '',
+		'TR_DNS_NO' => ($dns == '_no_') ? $checked : '',
+		'TR_APS_STANDARD_YES' => ($apsStandard == '_yes_') ? $checked : '',
+		'TR_APS_STANDARD_NO' => ($apsStandard == '_no_') ? $checked : '',
+		'TR_EXTMAIL_YES' => ($extMail == '_yes_') ? $checked : '',
+		'TR_EXTMAIL_NO' => ($extMail == '_no_') ? $checked : '',
+		'TR_PROTECT_WEB_FOLDERS_YES' => ($webFolderProtection == '_yes_') ? $checked : '',
+		'TR_PROTECT_WEB_FOLDERS_NO' => ($webFolderProtection == '_no_') ? $checked : '',
 
-			'TR_STATUS_YES' => ($status) ? $checked : '',
-			'TR_STATUS_NO' => (!$status) ? $checked : ''
-		)
-	);
+		'TR_STATUS_YES' => ($status) ? $checked : '',
+		'TR_STATUS_NO' => (!$status) ? $checked : ''
+	]);
 
-	if($cfg['NAMED_SERVER'] == 'external_server') {
+	if ($cfg['NAMED_SERVER'] == 'external_server') {
 		$tpl->assign('CUSTOM_DNS_RECORDS_FEATURE', '');
 	}
 
 	if ($cfg['BACKUP_DOMAINS'] != 'no') {
-		$tpl->assign(
-			array(
-				'VL_BACKUPD' => in_array('_dmn_', $backup) ? $checked : '',
-				'VL_BACKUPS' => in_array('_sql_', $backup) ? $checked : '',
-				'VL_BACKUPM' => in_array('_mail_', $backup) ? $checked : ''
-			)
-		);
+		$tpl->assign([
+			'VL_BACKUPD' => in_array('_dmn_', $backup) ? $checked : '',
+			'VL_BACKUPS' => in_array('_sql_', $backup) ? $checked : '',
+			'VL_BACKUPM' => in_array('_mail_', $backup) ? $checked : ''
+		]);
 	} else {
 		$tpl->assign('BACKUP_FEATURE', '');
 	}
@@ -238,7 +226,7 @@ function admin_generateErrorPage($tpl, $phpini)
 function admin_checkData($phpini)
 {
 	global $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $traffic, $diskSpace, $php, $cgi,
-		   $dns, $apsStandard, $backup, $extMail, $webFolderProtection, $status;
+	       $dns, $apsStandard, $backup, $extMail, $webFolderProtection, $status;
 
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
@@ -258,7 +246,7 @@ function admin_checkData($phpini)
 	$php = isset($_POST['hp_php']) ? clean_input($_POST['hp_php']) : '_no_';
 	$cgi = isset($_POST['hp_cgi']) ? clean_input($_POST['hp_cgi']) : '_no_';
 	$dns = isset($_POST['hp_dns']) ? clean_input($_POST['hp_dns']) : '_no_';
-	$backup = isset($_POST['hp_backup']) && is_array($_POST['hp_backup']) ? $_POST['hp_backup'] : array();
+	$backup = isset($_POST['hp_backup']) && is_array($_POST['hp_backup']) ? $_POST['hp_backup'] : [];
 	$apsStandard = isset($_POST['hp_aps_standard']) ? clean_input($_POST['hp_aps_standard']) : '_no_';
 	$extMail = isset($_POST['hp_external_mail']) ? clean_input($_POST['hp_external_mail']) : '_no_';
 
@@ -270,7 +258,7 @@ function admin_checkData($phpini)
 	$php = ($php == '_yes_') ? '_yes_' : '_no_';
 	$cgi = ($cgi == '_yes_') ? '_yes_' : '_no_';
 	$dns = ($dns == '_yes_') ? '_yes_' : '_no_';
-	$backup = ($cfg['BACKUP_DOMAINS'] != 'no') ? array_intersect($backup, array('_dmn_', '_sql_', '_mail_')) : array();
+	$backup = ($cfg['BACKUP_DOMAINS'] != 'no') ? array_intersect($backup, ['_dmn_', '_sql_', '_mail_']) : [];
 	$apsStandard = ($apsStandard == '_yes_') ? '_yes_' : '_no_';
 	$extMail = ($extMail == '_yes_') ? '_yes_' : '_no_';
 	$webFolderProtection = ($webFolderProtection == '_yes_') ? '_yes_' : '_no_';
@@ -319,7 +307,7 @@ function admin_checkData($phpini)
 		set_page_message(tr('Wrong syntax for the mail quota value.'), 'error');
 	} elseif ($diskSpace != 0 && $mailQuota > $diskSpace) {
 		set_page_message(tr('Email quota cannot be bigger than disk space limit.'), 'error');
-	} elseif($diskSpace != 0 && $mailQuota == 0) {
+	} elseif ($diskSpace != 0 && $mailQuota == 0) {
 		set_page_message(
 			tr('Email quota cannot be unlimited. Max value is %d MiB.', $diskSpace), 'error'
 		);
@@ -380,11 +368,11 @@ function admin_checkData($phpini)
 		set_page_message(tr('APS standard feature require PHP support.'), 'error');
 	}
 
-	if (!Zend_Session::namespaceIsset('pageMessages')) {
-		return true;
-	} else {
+	if (isset($_SESSION['pageMessages'])) {
 		return false;
 	}
+
+	return true;
 }
 
 /**
@@ -397,7 +385,7 @@ function admin_checkData($phpini)
 function admin_addHostingPlan($adminId, $phpini)
 {
 	global $name, $description, $sub, $als, $mail, $mailQuota, $ftp, $sqld, $sqlu, $traffic, $diskSpace, $php, $cgi,
-		   $dns, $apsStandard, $backup, $extMail, $webFolderProtection, $status;
+	       $dns, $apsStandard, $backup, $extMail, $webFolderProtection, $status;
 
 	$query = "
 		SELECT
@@ -426,18 +414,14 @@ function admin_addHostingPlan($adminId, $phpini)
 	$hpProps .= ';' . $mailQuota * 1048576;
 	$hpProps .= ';' . $apsStandard;
 
-	$query = "
-		INSERT INTO `hosting_plans`(
-			`reseller_id`, `name`, `description`, `props`, `status`
-		) VALUES (?, ?, ?, ?, ?)
-	";
-	exec_query($query, array($adminId, $name, $description, $hpProps, $status));
+	$query = "INSERT INTO `hosting_plans`(`reseller_id`, `name`, `description`, `props`, `status`) VALUES (?, ?, ?, ?, ?)";
+	exec_query($query, [$adminId, $name, $description, $hpProps, $status]);
 
 	return true;
 }
 
 /***********************************************************************************************************************
- * Functions
+ * Main
  */
 
 require '../../application.php';
@@ -451,15 +435,13 @@ $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
 
 	$tpl = new \iMSCP\Core\Template\TemplateEngine();
-	$tpl->define_dynamic(
-		array(
-			'layout' => 'shared/layouts/ui.tpl',
-			'page' => 'shared/partials/forms/hosting_plan_add.tpl',
-			'page_message' => 'layout',
-			'php_editor_disable_functions_block' => 'page',
-			'custom_dns_records_feature' => 'page'
-		)
-	);
+	$tpl->define_dynamic([
+		'layout' => 'shared/layouts/ui.tpl',
+		'page' => 'shared/partials/forms/hosting_plan_add.tpl',
+		'page_message' => 'layout',
+		'php_editor_disable_functions_block' => 'page',
+		'custom_dns_records_feature' => 'page'
+	]);
 
 	$phpini = \iMSCP\Core\Php\PhpEditor::getInstance();
 
@@ -476,53 +458,46 @@ if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] == 'admin'
 
 	generateNavigation($tpl);
 
-	$tpl->assign(
-		array(
-			'TR_PAGE_TITLE' => tr('Admin / Hosting Plans / Add Hosting Plan'),
-
-			'TR_HOSTING_PLAN' => tr('Hosting plan'),
-			'TR_NAME' => tr('Name'),
-			'TR_DESCRIPTON' => tr('Description'),
-
-			'TR_HOSTING_PLAN_LIMITS' => tr('Limits'),
-			'TR_MAX_SUBDOMAINS' => tr('Subdomain limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
-			'TR_MAX_ALIASES' => tr('Domain alias limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
-			'TR_MAX_MAILACCOUNTS' => tr('Email account limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
-			'TR_MAIL_QUOTA' => tr('Email quota [MiB]') . '<br/><i>(0 ' . tr('unlimited') . ')</i>',
-			'TR_MAX_FTP' => tr('FTP account limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
-			'TR_MAX_SQL' => tr('SQL database limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
-			'TR_MAX_SQL_USERS' => tr('SQL user limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
-			'TR_MAX_TRAFFIC' => tr('Monthly traffic limit [MiB]') . '<br/><i>(0 ' . tr('unlimited') . ')</i>',
-			'TR_DISK_LIMIT' => tr('Disk space limit [MiB]') . '<br/><i>(0 ' . tr('unlimited') . ')</i>',
-
-			'TR_HOSTING_PLAN_FEATURES' => tr('Features'),
-			'TR_PHP' => tr('PHP'),
-			'TR_CGI' => tr('CGI'),
-			'TR_DNS' => tr('Custom DNS records'),
-			'TR_BACKUP' => tr('Backup'),
-			'TR_BACKUP_DOMAIN' => tr('Domain'),
-			'TR_BACKUP_SQL' => tr('SQL'),
-			'TR_BACKUP_MAIL' => tr('Mail'),
-			'TR_APS_STANDARD' => tr('APS Standard'),
-			'TR_EXTMAIL' => tr('External mail server'),
-			'TR_WEB_FOLDER_PROTECTION' => tr('Web folder protection'),
-			'TR_WEB_FOLDER_PROTECTION_HELP' => tr("If set to 'yes', Web folders as provisioned by i-MSCP will be protected against deletion using the immutable flag (only if supported by the file system)."),
-
-			'TR_HP_AVAILABILITY' => tr('Hosting plan availability'),
-			'TR_STATUS' => tr('Available'),
-
-			'TR_YES' => tr('yes'),
-			'TR_NO' => tr('no'),
-			'TR_ADD' => tr('Add')
-		)
-	);
+	$tpl->assign([
+		'TR_PAGE_TITLE' => tr('Admin / Hosting Plans / Add Hosting Plan'),
+		'TR_HOSTING_PLAN' => tr('Hosting plan'),
+		'TR_NAME' => tr('Name'),
+		'TR_DESCRIPTON' => tr('Description'),
+		'TR_HOSTING_PLAN_LIMITS' => tr('Limits'),
+		'TR_MAX_SUBDOMAINS' => tr('Subdomain limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
+		'TR_MAX_ALIASES' => tr('Domain alias limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
+		'TR_MAX_MAILACCOUNTS' => tr('Email account limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
+		'TR_MAIL_QUOTA' => tr('Email quota [MiB]') . '<br/><i>(0 ' . tr('unlimited') . ')</i>',
+		'TR_MAX_FTP' => tr('FTP account limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
+		'TR_MAX_SQL' => tr('SQL database limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
+		'TR_MAX_SQL_USERS' => tr('SQL user limit') . '<br/><i>(-1 ' . tr('disabled') . ', 0 ' . tr('unlimited') . ')</i>',
+		'TR_MAX_TRAFFIC' => tr('Monthly traffic limit [MiB]') . '<br/><i>(0 ' . tr('unlimited') . ')</i>',
+		'TR_DISK_LIMIT' => tr('Disk space limit [MiB]') . '<br/><i>(0 ' . tr('unlimited') . ')</i>',
+		'TR_HOSTING_PLAN_FEATURES' => tr('Features'),
+		'TR_PHP' => tr('PHP'),
+		'TR_CGI' => tr('CGI'),
+		'TR_DNS' => tr('Custom DNS records'),
+		'TR_BACKUP' => tr('Backup'),
+		'TR_BACKUP_DOMAIN' => tr('Domain'),
+		'TR_BACKUP_SQL' => tr('SQL'),
+		'TR_BACKUP_MAIL' => tr('Mail'),
+		'TR_APS_STANDARD' => tr('APS Standard'),
+		'TR_EXTMAIL' => tr('External mail server'),
+		'TR_WEB_FOLDER_PROTECTION' => tr('Web folder protection'),
+		'TR_WEB_FOLDER_PROTECTION_HELP' => tr("If set to 'yes', Web folders as provisioned by i-MSCP will be protected against deletion using the immutable flag (only if supported by the file system)."),
+		'TR_HP_AVAILABILITY' => tr('Hosting plan availability'),
+		'TR_STATUS' => tr('Available'),
+		'TR_YES' => tr('yes'),
+		'TR_NO' => tr('no'),
+		'TR_ADD' => tr('Add')
+	]);
 
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+		'templateEngine' => $tpl
+	]);
 	$tpl->prnt();
 } else {
 	showBadRequestErrorPage();

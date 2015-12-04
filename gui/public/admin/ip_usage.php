@@ -58,26 +58,22 @@ function listIPDomains($tpl)
 				WHERE
 					alias_ip_id = :ip_id
 			',
-			array('ip_id' => $ip['ip_id'])
+			['ip_id' => $ip['ip_id']]
 		);
 
 		$domainsCount = $stmt2->rowCount();
 
-		$tpl->assign(
-			array(
-				'IP' => tohtml($ip['ip_number']),
-				'RECORD_COUNT' => tr('Total Domains') . ': ' . ($domainsCount)
-			)
-		);
+		$tpl->assign([
+			'IP' => tohtml($ip['ip_number']),
+			'RECORD_COUNT' => tr('Total Domains') . ': ' . ($domainsCount)
+		]);
 
 		if ($domainsCount) {
 			while ($data = $stmt2->fetch(PDO::FETCH_ASSOC)) {
-				$tpl->assign(
-					array(
-						'DOMAIN_NAME' => tohtml(idn_to_utf8($data['domain_name'])),
-						'RESELLER_NAME' => tohtml($data['admin_name'])
-					)
-				);
+				$tpl->assign([
+					'DOMAIN_NAME' => tohtml(idn_to_utf8($data['domain_name'])),
+					'RESELLER_NAME' => tohtml($data['admin_name'])
+				]);
 				$tpl->parse('DOMAIN_ROW', '.domain_row');
 			}
 		} else {
@@ -102,30 +98,28 @@ check_login('admin');
 
 if (systemHasCustomers()) {
 	$tpl = new \iMSCP\Core\Template\TemplateEngine();
-
-	$tpl->define_dynamic(array(
+	$tpl->define_dynamic([
 		'layout' => 'shared/layouts/ui.tpl',
 		'page' => 'admin/ip_usage.tpl',
 		'ip_row' => 'page',
 		'domain_row' => 'ip_row'
-	));
-
-	$tpl->assign(array(
+	]);
+	$tpl->assign([
 		'TR_PAGE_TITLE' => tr('Admin / Statistics / IP Usage'),
 		'TR_SERVER_STATISTICS' => tr('Server statistics'),
 		'TR_IP_ADMIN_USAGE_STATISTICS' => tr('Admin/IP usage statistics'),
 		'TR_DOMAIN_NAME' => tr('Domain Name'),
 		'TR_RESELLER_NAME' => tr('Reseller Name')
-	));
+	]);
 
 	generateNavigation($tpl);
 	listIPDomains($tpl);
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
 		'templateEngine' => $tpl
-	));
+	]);
 	$tpl->prnt();
 
 	unsetMessages();

@@ -47,8 +47,7 @@ function admin_generatePage($tpl)
 		if ($updateVersion->isAvailableUpdate()) {
 			if (($updateInfo = $updateVersion->getUpdateInfo())) {
 				$date = new DateTime($updateInfo['published_at']);
-
-				$tpl->assign(array(
+				$tpl->assign([
 					'TR_UPDATE_INFO' => tr('Update info'),
 					'TR_RELEASE_VERSION' => tr('Release version'),
 					'RELEASE_VERSION' => tohtml($updateInfo['tag_name']),
@@ -61,11 +60,11 @@ function admin_generatePage($tpl)
 					'TR_DOWNLOAD_TAR' => tr('Download TAR'),
 					'TARBALL_URL' => tohtml($updateInfo['tarball_url']),
 					'ZIPBALL_URL' => tohtml($updateInfo['zipball_url'])
-				));
+				]);
 				return;
-			} else {
-				set_page_message($updateVersion->getError(), 'error');
 			}
+
+			set_page_message($updateVersion->getError(), 'error');
 		} elseif ($updateVersion->getError()) {
 			set_page_message($updateVersion, 'error');
 		} else {
@@ -89,12 +88,12 @@ check_login('admin');
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(array(
+$tpl->define_dynamic([
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/imscp_updates.tpl',
 	'page_message' => 'layout',
 	'update_info' => 'page'
-));
+]);
 
 $tpl->assign('TR_PAGE_TITLE', tr('Admin / System Tools / i-MSCP Updates'));
 
@@ -103,9 +102,9 @@ admin_generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
 	'templateEngine' => $tpl
-));
+]);
 $tpl->prnt();
 
 unsetMessages();

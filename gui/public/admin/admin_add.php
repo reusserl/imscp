@@ -25,24 +25,13 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-require '../application.php';
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
-
-check_login('admin');
-
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
-$tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
-	'layout' => 'shared/layouts/ui.tpl',
-	'page' => 'admin/admin_add.tpl',
-	'page_message' => 'layout'
-]);
-
-$tpl->assign('TR_PAGE_TITLE', tr('Admin / Users / Add Admin'));
+/***********************************************************************************************************************
+ * Functions
+ */
 
 /**
+ * Add user
+ *
  * @param  $tpl iMSCP\Core\Template\TemplateEngine
  * @return void
  */
@@ -99,14 +88,7 @@ function add_user($tpl)
 			$user_def_lang = $cfg['USER_INITIAL_LANG'];
 			$user_theme_color = $cfg['USER_INITIAL_THEME'];
 
-			$query = "
-				REPLACE INTO `user_gui_props` (
-					`user_id`, `lang`, `layout`
-				) VALUES (
-					?, ?, ?
-				)
-			";
-
+			$query = "REPLACE INTO `user_gui_props` (`user_id`, `lang`, `layout`) VALUES (?, ?, ?)";
 			exec_query($query, [$new_admin_id, $user_def_lang, $user_theme_color]);
 
 			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterAddUser);
@@ -168,6 +150,8 @@ function add_user($tpl)
 }
 
 /**
+ * Check user data
+ *
  * @return bool
  */
 function check_user_data()
@@ -204,10 +188,25 @@ function check_user_data()
 	return true;
 }
 
-generateNavigation($tpl);
-add_user($tpl);
+/***********************************************************************************************************************
+ * Main
+ */
+
+require '../../application.php';
+
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
+
+check_login('admin');
+
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic([
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/admin_add.tpl',
+	'page_message' => 'layout'
+]);
 
 $tpl->assign([
+	'TR_PAGE_TITLE', tr('Admin / Users / Add Admin'),
 	'TR_EMPTY_OR_WORNG_DATA' => tr('Empty data or wrong field.'),
 	'TR_PASSWORD_NOT_MATCH' => tr("Passwords do not match."),
 	'TR_ADD_ADMIN' => tr('Add admin'),
@@ -235,14 +234,15 @@ $tpl->assign([
 	'TR_ADD' => tr('Add')
 ]);
 
+
+generateNavigation($tpl);
+add_user($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-	\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl)
-);
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

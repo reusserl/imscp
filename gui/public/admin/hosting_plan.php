@@ -30,7 +30,7 @@
  */
 
 /**
- * Generates page.
+ * Generates page
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  * @return void
@@ -52,36 +52,32 @@ function admin_generatePage($tpl)
 	$stmt = exec_query($query, 'admin');
 
 	if (!$stmt->rowCount()) {
-		$tpl->assign(array(
+		$tpl->assign([
 			'HOSTING_PLANS_JS' => '',
 			'HOSTING_PLANS' => ''
-		));
+		]);
 
 		set_page_message(tr("No hosting plan available."), 'static_info');
 	} else {
-		$tpl->assign(
-			array(
-				'TR_NUMBER' => tr('No.'),
-				'TR_NAME' => tr('Name'),
-				'TR_STATUS' => tr('Status'),
-				'TR_ACTIONS' => tr('Actions'),
-				'TR_EDIT' => tr('Edit'),
-				'TR_DELETE' => tr('Delete'),
-				'TR_MESSAGE_DELETE' => tr('Are you sure you want to delete the %s hosting plan?', '%s')
-			)
-		);
+		$tpl->assign([
+			'TR_NUMBER' => tr('No.'),
+			'TR_NAME' => tr('Name'),
+			'TR_STATUS' => tr('Status'),
+			'TR_ACTIONS' => tr('Actions'),
+			'TR_EDIT' => tr('Edit'),
+			'TR_DELETE' => tr('Delete'),
+			'TR_MESSAGE_DELETE' => tr('Are you sure you want to delete the %s hosting plan?', '%s')
+		]);
 
 		$i = 1;
 
 		while ($data = $stmt->fetch()) {
-			$tpl->assign(
-				array(
-					'NUMBER' => $i++,
-					'NAME' => tohtml($data['name']),
-					'STATUS' => ($data['status']) ? tr('Available') : tr('Unavailable'),
-					'ID' => $data['id'],
-				)
-			);
+			$tpl->assign([
+				'NUMBER' => $i++,
+				'NAME' => tohtml($data['name']),
+				'STATUS' => ($data['status']) ? tr('Available') : tr('Unavailable'),
+				'ID' => $data['id'],
+			]);
 
 			$tpl->parse('HOSTING_PLAN', '.hosting_plan');
 		}
@@ -102,15 +98,13 @@ $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if ($cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
 	$tpl = new \iMSCP\Core\Template\TemplateEngine();
-	$tpl->define_dynamic(
-		array(
-			'layout' => 'shared/layouts/ui.tpl',
-			'page' => 'admin/hosting_plan.tpl',
-			'page_message' => 'layout',
-			'hosting_plans' => 'page',
-			'hosting_plan' => 'hosting_plans'
-		)
-	);
+	$tpl->define_dynamic([
+		'layout' => 'shared/layouts/ui.tpl',
+		'page' => 'admin/hosting_plan.tpl',
+		'page_message' => 'layout',
+		'hosting_plans' => 'page',
+		'hosting_plan' => 'hosting_plans'
+	]);
 
 	$tpl->assign('TR_PAGE_TITLE', tr('Admin / Hosting Plans / Overview'));
 
@@ -119,9 +113,9 @@ if ($cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
 	generatePageMessage($tpl);
 
 	$tpl->parse('LAYOUT_CONTENT', 'page');
-
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+		'templateEngine' => $tpl
+	]);
 	$tpl->prnt();
 
 	unsetMessages();

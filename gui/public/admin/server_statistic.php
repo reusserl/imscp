@@ -48,19 +48,11 @@ function _getServerTraffic($beginDate, $endDate)
 
 	if ($stmt->rowCount()) {
 		$row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-		return array(
-			$row['swbin'],
-			$row['swbout'],
-			$row['smbin'],
-			$row['smbout'],
-			$row['spbin'],
-			$row['spbout'],
+		return [
+			$row['swbin'], $row['swbout'], $row['smbin'], $row['smbout'], $row['spbin'], $row['spbout'],
 			$row['sbin'] - ($row['swbin'] + $row['smbin'] + $row['spbin']),
-			$row['sbout'] - ($row['swbout'] + $row['smbout'] + $row['spbout']),
-			$row['sbin'],
-			$row['sbout']
-		);
+			$row['sbout'] - ($row['swbout'] + $row['smbout'] + $row['spbout']), $row['sbin'], $row['sbout']
+		];
 	}
 
 	return array_fill(0, 10, 0);
@@ -117,9 +109,9 @@ function generatePage($tpl)
 
 			list(
 				$webIn, $webOut, $smtpIn, $smtpOut, $popIn, $popOut, $otherIn, $otherOut, $allIn, $allOut
-			) = _getServerTraffic($beginDate, $endDate);
+				) = _getServerTraffic($beginDate, $endDate);
 
-			$tpl->assign(array(
+			$tpl->assign([
 				'DAY' => tohtml($day),
 				'YEAR' => tohtml($year),
 				'MONTH' => tohtml($month),
@@ -135,7 +127,7 @@ function generatePage($tpl)
 				'ALL_OUT' => tohtml(bytesHuman($allOut)),
 				'ALL' => tohtml(bytesHuman($allIn + $allOut)),
 				'DAY_STATS_QSTRING' => tohtml("year=$year&month=$month&day=$day", 'htmlAttr')
-			));
+			]);
 
 			$all[0] += $webIn;
 			$all[1] += $webOut;
@@ -152,7 +144,7 @@ function generatePage($tpl)
 		$allOtherIn = $all[6] - ($all[0] + $all[2] + $all[4]);
 		$allOtherOut = $all[7] - ($all[1] + $all[3] + $all[5]);
 
-		$tpl->assign(array(
+		$tpl->assign([
 			'WEB_IN_ALL' => tohtml(bytesHuman($all[0])),
 			'WEB_OUT_ALL' => tohtml(bytesHuman($all[1])),
 			'SMTP_IN_ALL' => tohtml(bytesHuman($all[2])),
@@ -164,7 +156,7 @@ function generatePage($tpl)
 			'ALL_IN_ALL' => tohtml(bytesHuman($all[6])),
 			'ALL_OUT_ALL' => tohtml(bytesHuman($all[7])),
 			'ALL_ALL' => tohtml(bytesHuman($all[6] + $all[7]))
-		));
+		]);
 	} else {
 		set_page_message(tr('No statistics found for the given period. Try another period.'), 'static_info');
 		$tpl->assign('SERVER_STATISTICS_BLOCK', '');
@@ -177,13 +169,12 @@ function generatePage($tpl)
 
 require '../../application.php';
 
-
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(array(
+$tpl->define_dynamic([
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/server_statistic.tpl',
 	'page_message' => 'layout',
@@ -191,9 +182,9 @@ $tpl->define_dynamic(array(
 	'year_list' => 'page',
 	'server_statistics_block' => 'page',
 	'day_server_statistics_block' => 'server_statistics_block'
-));
+]);
 
-$tpl->assign(array(
+$tpl->assign([
 	'TR_PAGE_TITLE' => tohtml(tr('Admin / Statistics / Server Statistics')),
 	'TR_MONTH' => tohtml(tr('Month')),
 	'TR_YEAR' => tohtml(tr('Year')),
@@ -210,14 +201,16 @@ $tpl->assign(array(
 	'TR_ALL_IN' => tohtml(tr('All in')),
 	'TR_ALL_OUT' => tohtml(tr('All out')),
 	'TR_ALL' => tohtml(tr('All'))
-));
+]);
 
 generateNavigation($tpl);
 generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

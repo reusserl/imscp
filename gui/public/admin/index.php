@@ -30,7 +30,7 @@
  */
 
 /**
- * Generates support questions notice for administrator.
+ * Generates support questions notice for administrator
  *
  * Notice administrator about any new support questions and answers.
  *
@@ -56,14 +56,12 @@ function admin_generateSupportQuestionsMessage()
 	$nbQuestions = $row['nbQuestions'];
 
 	if ($nbQuestions) {
-		set_page_message(
-			tr('You have received %s new support ticket(s).', '<strong>' . $nbQuestions . '</strong>'), 'static_info'
-		);
+		set_page_message(tr('You have received %s new support ticket(s).', '<strong>' . $nbQuestions . '</strong>'), 'static_info');
 	}
 }
 
 /**
- * Generates update messages.
+ * Generates update messages
  *
  * Generates update messages for both database updates and i-MSCP updates.
  *
@@ -74,18 +72,14 @@ function admin_generateUpdateMessages()
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 	if (\iMSCP\Core\Updater\DatabaseUpdater::getInstance()->isAvailableUpdate()) {
-		set_page_message(
-			'<a href="database_update.php" class="link">' . tr('A database update is available') . '</a>', 'static_info'
-		);
+		set_page_message('<a href="database_update.php" class="link">' . tr('A database update is available') . '</a>', 'static_info');
 	}
 
 	if (isset($cfg['CHECK_FOR_UPDATES']) && $cfg['CHECK_FOR_UPDATES']) {
 		$updateVersion = \iMSCP\Core\Updater\VersionUpdater::getInstance();
 
 		if ($updateVersion->isAvailableUpdate()) {
-			set_page_message(
-				'<a href="imscp_updates.php" class="link">' . tr('A new i-MSCP version is available') . '</a>', 'static_info'
-			);
+			set_page_message('<a href="imscp_updates.php" class="link">' . tr('A new i-MSCP version is available') . '</a>', 'static_info');
 		} elseif (($error = $updateVersion->getError())) {
 			set_page_message($error, 'error');
 		}
@@ -93,7 +87,7 @@ function admin_generateUpdateMessages()
 }
 
 /**
- * Generates admin general informations.
+ * Generates admin general informations
  *
  * @param  \iMSCP\Core\Template\TemplateEngine $tpl TemplateEngine instance
  * @return void
@@ -102,8 +96,7 @@ function admin_getAdminGeneralInfo($tpl)
 {
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	// If COUNT_DEFAULT_EMAIL_ADDRESSES == false, admin total emails show
-	// [total - default_emails]/[total_emails]
+	// If COUNT_DEFAULT_EMAIL_ADDRESSES == false, admin total emails show [total - default_emails]/[total_emails]
 	$totalMails = records_count('mail_users', 'mail_type NOT RLIKE \'_catchall\'', '');
 
 	if ($cfg['COUNT_DEFAULT_EMAIL_ADDRESSES']) {
@@ -115,7 +108,7 @@ function admin_getAdminGeneralInfo($tpl)
 		$showTotalMails = ($totalMails - $totalDefaultMails) . '/' . $totalMails;
 	}
 
-	$tpl->assign(array(
+	$tpl->assign([
 		'ACCOUNT_NAME' => tohtml($_SESSION['user_logged']),
 		'ADMIN_USERS' => records_count('admin', 'admin_type', 'admin'),
 		'RESELLER_USERS' => records_count('admin', 'admin_type', 'reseller'),
@@ -127,11 +120,11 @@ function admin_getAdminGeneralInfo($tpl)
 		'FTP_ACCOUNTS' => records_count('ftp_users', '', ''),
 		'SQL_DATABASES' => records_count('sql_database', '', ''),
 		'SQL_USERS' => get_sql_user_count()
-	));
+	]);
 }
 
 /**
- * Generates server traffic bar.
+ * Generates server traffic bar
  *
  * @param  \iMSCP\Core\Template\TemplateEngine $tpl TemplateEngine instance
  * @return void
@@ -156,7 +149,7 @@ function admin_generateServerTrafficInfo($tpl)
 		WHERE
 			traff_time BETWEEN ? AND ?
     ";
-	$stmt = exec_query($query, array(getFirstDayOfMonth(), getLastDayOfMonth()));
+	$stmt = exec_query($query, [getFirstDayOfMonth(), getLastDayOfMonth()]);
 
 	if ($stmt->rowCount()) {
 		$row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -186,10 +179,10 @@ function admin_generateServerTrafficInfo($tpl)
 		}
 	}
 
-	$tpl->assign(array(
+	$tpl->assign([
 		'TRAFFIC_WARNING' => $trafficMessage,
 		'TRAFFIC_PERCENT' => $trafficUsagePercent
-	));
+	]);
 }
 
 /***********************************************************************************************************************
@@ -205,14 +198,14 @@ $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 check_login('admin', $cfg['PREVENT_EXTERNAL_LOGIN_ADMIN']);
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(array(
+$tpl->define_dynamic([
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/index.tpl',
 	'page_message' => 'layout',
 	'traffic_warning_message' => 'page'
-));
+]);
 
-$tpl->assign(array(
+$tpl->assign([
 	'TR_PAGE_TITLE' => tr('Admin / General / Overview'),
 	'TR_PROPERTIES' => tr('Properties'),
 	'TR_VALUES' => tr('Values'),
@@ -228,7 +221,7 @@ $tpl->assign(array(
 	'TR_SQL_DATABASES' => tr('SQL databases'),
 	'TR_SQL_USERS' => tr('SQL users'),
 	'TR_SERVER_TRAFFIC' => tr('Server traffic')
-));
+]);
 
 generateNavigation($tpl);
 admin_generateSupportQuestionsMessage();
@@ -238,9 +231,9 @@ admin_generateServerTrafficInfo($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
 	'templateEngine' => $tpl
-));
+]);
 $tpl->prnt();
 
 unsetMessages();

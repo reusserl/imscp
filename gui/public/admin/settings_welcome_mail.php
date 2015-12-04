@@ -25,29 +25,29 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
+/***********************************************************************************************************************
+ * Main
+ */
+
 require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/settings_welcome_mail.tpl',
-		'page_message' => 'layout'));
+$tpl->define_dynamic([
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/settings_welcome_mail.tpl',
+	'page_message' => 'layout'
+]);
 
 $user_id = $_SESSION['user_id'];
-
 $data = get_welcome_email($user_id, 'reseller');
 
 if (isset($_POST['uaction']) && $_POST['uaction'] == 'email_setup') {
 	$data['subject'] = clean_input($_POST['auto_subject'], false);
 	$data['message'] = clean_input($_POST['auto_message'], false);
-
 	$message = '';
 
 	if (empty($data['subject'])) {
@@ -67,39 +67,35 @@ if (isset($_POST['uaction']) && $_POST['uaction'] == 'email_setup') {
 }
 
 $tpl->assign('TR_PAGE_TITLE', tr('Admin / Settings / Welcome Email'));
+$tpl->assign([
+	'TR_EMAIL_SETUP' => tr('Email setup'),
+	'TR_MESSAGE_TEMPLATE_INFO' => tr('Message template info'),
+	'TR_USER_LOGIN_NAME' => tr('User login (system) name'),
+	'TR_USER_PASSWORD' => tr('User password'),
+	'TR_USER_REAL_NAME' => tr('User real (first and last) name'),
+	'TR_MESSAGE_TEMPLATE' => tr('Message template'),
+	'TR_SUBJECT' => tr('Subject'),
+	'TR_MESSAGE' => tr('Message'),
+	'TR_SENDER_EMAIL' => tr('Sender email'),
+	'TR_SENDER_NAME' => tr('Sender name'),
+	'TR_UPDATE' => tr('Update'),
+	'TR_USERTYPE' => tr('User type (admin, reseller, user)'),
+	'TR_BASE_SERVER_VHOST_PREFIX' => tr('URL protocol'),
+	'TR_BASE_SERVER_VHOST' => tr('URL to this admin panel'),
+	'TR_BASE_SERVER_VHOST_PORT' => tr('URL port'),
+	'SUBJECT_VALUE' => tohtml($data['subject']),
+	'MESSAGE_VALUE' => tohtml($data['message']),
+	'SENDER_EMAIL_VALUE' => tohtml($data['sender_email']),
+	'SENDER_NAME_VALUE' => tohtml($data['sender_name'])
+]);
 
 generateNavigation($tpl);
-
-$tpl->assign(
-	array(
-		'TR_EMAIL_SETUP' => tr('Email setup'),
-		'TR_MESSAGE_TEMPLATE_INFO' => tr('Message template info'),
-		'TR_USER_LOGIN_NAME' => tr('User login (system) name'),
-		'TR_USER_PASSWORD' => tr('User password'),
-		'TR_USER_REAL_NAME' => tr('User real (first and last) name'),
-		'TR_MESSAGE_TEMPLATE' => tr('Message template'),
-		'TR_SUBJECT' => tr('Subject'),
-		'TR_MESSAGE' => tr('Message'),
-		'TR_SENDER_EMAIL' => tr('Sender email'),
-		'TR_SENDER_NAME' => tr('Sender name'),
-		'TR_UPDATE' => tr('Update'),
-		'TR_USERTYPE' => tr('User type (admin, reseller, user)'),
-		'TR_BASE_SERVER_VHOST_PREFIX' => tr('URL protocol'),
-		'TR_BASE_SERVER_VHOST' => tr('URL to this admin panel'),
-		'TR_BASE_SERVER_VHOST_PORT' => tr('URL port'),
-		'SUBJECT_VALUE' => tohtml($data['subject']),
-		'MESSAGE_VALUE' => tohtml($data['message']),
-		'SENDER_EMAIL_VALUE' => tohtml($data['sender_email']),
-		'SENDER_NAME_VALUE' => tohtml($data['sender_name'])
-	)
-);
-
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

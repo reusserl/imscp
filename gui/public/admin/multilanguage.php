@@ -35,13 +35,13 @@ function admin_generateLanguagesList($tpl)
 
 	if (!empty($availableLanguages)) {
 		foreach ($availableLanguages as $languageDefinition) {
-			$tpl->assign(array(
+			$tpl->assign([
 				'LANGUAGE_NAME' => tohtml($languageDefinition['language']),
 				'NUMBER_TRANSLATED_STRINGS' => tohtml(tr('%d strings translated', $languageDefinition['translatedStrings'])),
 				'LANGUAGE_REVISION' => tohtml($languageDefinition['revision']),
 				'LOCALE_CHECKED' => ($languageDefinition['locale'] == $defaultLanguage) ? 'checked' : '',
 				'LOCALE' => tohtml($languageDefinition['locale'], 'htmlAttr')
-			));
+			]);
 
 			$tpl->parse('LANGUAGE_BLOCK', '.language_block');
 		}
@@ -56,10 +56,8 @@ function admin_generateLanguagesList($tpl)
 
 require '../../application.php';
 
-$eventManager = \iMSCP\Core\Application::getInstance()->getEventManager();
-$eventManager->trigger(\iMSCP\Core\Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
-// Check for login
 check_login('admin');
 
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
@@ -84,15 +82,14 @@ if (isset($_POST['uaction'])) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(array(
+$tpl->define_dynamic([
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/multilanguage.tpl',
 	'page_message' => 'layout',
 	'languages_block' => 'page',
 	'language_block' => 'languages_block'
-));
-
-$tpl->assign(array(
+]);
+$tpl->assign([
 	'TR_PAGE_TITLE' => tohtml(tr('Admin / Settings / Languages')),
 	'TR_MULTILANGUAGE' => tohtml(tr('Internationalization')),
 	'TR_LANGUAGE_NAME' => tohtml(tr('Language')),
@@ -105,9 +102,9 @@ $tpl->assign(array(
 	'TR_REBUILD_INDEX' => tohtml(tr('Rebuild languages index'), 'htmlAttr'),
 	'TR_UPLOAD_HELP' => tohtml(tr('Only gettext Machine Object files (MO files) are accepted.'), 'htmlAttr'),
 	'TR_IMPORT' => tohtml(tr('Import'), 'htmlAttr')
-));
+]);
 
-$eventManager->attach('onGetJsTranslations', function($e) {
+$eventManager->attach('onGetJsTranslations', function ($e) {
 	/* @var $e \Zend\EventManager\Event */
 	$e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations();
 });
@@ -117,5 +114,7 @@ admin_generateLanguagesList($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-$eventManager->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();

@@ -25,6 +25,10 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
+/***********************************************************************************************************************
+ * Main
+ */
+
 require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
@@ -34,91 +38,82 @@ check_login('admin');
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/system_info.tpl',
-		'page_message' => 'layout',
-		'device_block' => 'page'
-	)
-);
+$tpl->define_dynamic([
+	'layout' => 'shared/layouts/ui.tpl',
+	'page' => 'admin/system_info.tpl',
+	'page_message' => 'layout',
+	'device_block' => 'page'
+]);
 
-$sysinfo = new iMSCP_SystemInfo();
+$sysinfo = new \iMSCP\Core\SystemInfo();
 
-$tpl->assign(
-	array(
-		'CPU_MODEL' => tohtml($sysinfo->cpu['model']),
-		'CPU_CORES' => tohtml($sysinfo->cpu['cpus']),
-		'CPU_CLOCK_SPEED' => tohtml($sysinfo->cpu['cpuspeed']),
-		'CPU_CACHE' => tohtml($sysinfo->cpu['cache']),
-		'CPU_BOGOMIPS' => tohtml($sysinfo->cpu['bogomips']),
-		'UPTIME' => tohtml($sysinfo->uptime),
-		'KERNEL' => tohtml($sysinfo->kernel),
-		'LOAD' => sprintf('%s %s %s',$sysinfo->load[0], $sysinfo->load[1], $sysinfo->load[2]),
-		'RAM_TOTAL' => bytesHuman($sysinfo->ram['total'] * 1024),
-		'RAM_USED' => bytesHuman($sysinfo->ram['used'] * 1024),
-		'RAM_FREE' => bytesHuman($sysinfo->ram['free'] * 1024),
-		'SWAP_TOTAL' => bytesHuman($sysinfo->swap['total'] * 1024),
-		'SWAP_USED' => bytesHuman($sysinfo->swap['used'] * 1024),
-		'SWAP_FREE' => bytesHuman($sysinfo->swap['free'] * 1024)
-	)
-);
+$tpl->assign([
+	'CPU_MODEL' => tohtml($sysinfo->cpu['model']),
+	'CPU_CORES' => tohtml($sysinfo->cpu['cpus']),
+	'CPU_CLOCK_SPEED' => tohtml($sysinfo->cpu['cpuspeed']),
+	'CPU_CACHE' => tohtml($sysinfo->cpu['cache']),
+	'CPU_BOGOMIPS' => tohtml($sysinfo->cpu['bogomips']),
+	'UPTIME' => tohtml($sysinfo->uptime),
+	'KERNEL' => tohtml($sysinfo->kernel),
+	'LOAD' => sprintf('%s %s %s', $sysinfo->load[0], $sysinfo->load[1], $sysinfo->load[2]),
+	'RAM_TOTAL' => bytesHuman($sysinfo->ram['total'] * 1024),
+	'RAM_USED' => bytesHuman($sysinfo->ram['used'] * 1024),
+	'RAM_FREE' => bytesHuman($sysinfo->ram['free'] * 1024),
+	'SWAP_TOTAL' => bytesHuman($sysinfo->swap['total'] * 1024),
+	'SWAP_USED' => bytesHuman($sysinfo->swap['used'] * 1024),
+	'SWAP_FREE' => bytesHuman($sysinfo->swap['free'] * 1024)
+]);
 
 $devices = $sysinfo->filesystem;
 
 foreach ($devices as $device) {
-	$tpl->assign(
-		array(
-			'MOUNT' => tohtml($device['mount']),
-			'TYPE' => tohtml($device['fstype']),
-			'PARTITION' => tohtml($device['disk']),
-			'PERCENT' => $device['percent'],
-			'FREE' => bytesHuman($device['free'] * 1024),
-			'USED' => bytesHuman($device['used'] * 1024),
-			'SIZE' => bytesHuman($device['size'] * 1024
-			)
-		)
-	);
+	$tpl->assign([
+		'MOUNT' => tohtml($device['mount']),
+		'TYPE' => tohtml($device['fstype']),
+		'PARTITION' => tohtml($device['disk']),
+		'PERCENT' => $device['percent'],
+		'FREE' => bytesHuman($device['free'] * 1024),
+		'USED' => bytesHuman($device['used'] * 1024),
+		'SIZE' => bytesHuman($device['size'] * 1024)
+	]);
 
 	$tpl->parse('DEVICE_BLOCK', '.device_block');
 }
 
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Admin / System Tools / System Information'),
-		'TR_SYSTEM_INFO' => tr('System data'),
-		'TR_KERNEL' => tr('Kernel Version'),
-		'TR_UPTIME' => tr('Uptime'),
-		'TR_LOAD' => tr('Load (1 Min, 5 Min, 15 Min)'),
-		'TR_CPU_INFO' => tr('CPU Information'),
-		'TR_CPU' => tr('Processor data'),
-		'TR_CPU_MODEL' => tr('Model'),
-		'TR_CPU_CORES' => tr('Cores'),
-		'TR_CPU_CLOCK_SPEED' => tr('Clock speed (MHz)'),
-		'TR_CPU_CACHE' => tr('Cache'),
-		'TR_CPU_BOGOMIPS' => tr('Bogomips'),
-		'TR_MEMORY_INFO' => tr('Memory information'),
-		'TR_RAM' => tr('RAM'),
-		'TR_TOTAL' => tr('Total'),
-		'TR_USED' => tr('Used'),
-		'TR_FREE' => tr('Free'),
-		'TR_SWAP' => tr('Swap'),
-		'TR_FILE_SYSTEM_INFO' => tr('Filesystem system Info'),
-		'TR_MOUNT' => tr('Mount'),
-		'TR_TYPE' => tr('Type'),
-		'TR_PARTITION' => tr('Partition'),
-		'TR_PERCENT' => tr('Percent'),
-		'TR_SIZE' => tr('Size')
-	)
-);
+$tpl->assign([
+	'TR_PAGE_TITLE' => tr('Admin / System Tools / System Information'),
+	'TR_SYSTEM_INFO' => tr('System data'),
+	'TR_KERNEL' => tr('Kernel Version'),
+	'TR_UPTIME' => tr('Uptime'),
+	'TR_LOAD' => tr('Load (1 Min, 5 Min, 15 Min)'),
+	'TR_CPU_INFO' => tr('CPU Information'),
+	'TR_CPU' => tr('Processor data'),
+	'TR_CPU_MODEL' => tr('Model'),
+	'TR_CPU_CORES' => tr('Cores'),
+	'TR_CPU_CLOCK_SPEED' => tr('Clock speed (MHz)'),
+	'TR_CPU_CACHE' => tr('Cache'),
+	'TR_CPU_BOGOMIPS' => tr('Bogomips'),
+	'TR_MEMORY_INFO' => tr('Memory information'),
+	'TR_RAM' => tr('RAM'),
+	'TR_TOTAL' => tr('Total'),
+	'TR_USED' => tr('Used'),
+	'TR_FREE' => tr('Free'),
+	'TR_SWAP' => tr('Swap'),
+	'TR_FILE_SYSTEM_INFO' => tr('Filesystem system Info'),
+	'TR_MOUNT' => tr('Mount'),
+	'TR_TYPE' => tr('Type'),
+	'TR_PARTITION' => tr('Partition'),
+	'TR_PERCENT' => tr('Percent'),
+	'TR_SIZE' => tr('Size')
+]);
 
 generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

@@ -53,20 +53,20 @@ function debugger_getUserErrors($tpl)
 	);
 
 	if (!$stmt->rowCount()) {
-		$tpl->assign(array('USER_ITEM' => '', 'TR_USER_MESSAGE' => tr('No errors')));
+		$tpl->assign([
+			'USER_ITEM' => '',
+			'TR_USER_MESSAGE' => tr('No errors')
+		]);
 		$tpl->parse('USER_MESSAGE', 'user_message');
 	} else {
 		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$tpl->assign(
-				array(
-					'USER_MESSAGE' => '',
-					'USER_NAME' => tohtml(decode_idna($row['admin_name'])),
-					'USER_ERROR' => tohtml($row['admin_status']),
-					'CHANGE_ID' => tohtml($row['admin_id']),
-					'CHANGE_TYPE' => 'user'
-				)
-			);
-
+			$tpl->assign([
+				'USER_MESSAGE' => '',
+				'USER_NAME' => tohtml(decode_idna($row['admin_name'])),
+				'USER_ERROR' => tohtml($row['admin_status']),
+				'CHANGE_ID' => tohtml($row['admin_id']),
+				'CHANGE_TYPE' => 'user'
+			]);
 			$tpl->parse('USER_ITEM', '.user_item');
 		}
 	}
@@ -88,25 +88,25 @@ function debugger_getDmnErrors($tpl)
 		WHERE
 			`domain_status` NOT IN (?, ?, ?, ?, ?, ?, ?, ?)
 	";
-	$stmt = exec_query(
-		$query, array('ok', 'disabled', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable', 'todelete')
-	);
+	$stmt = exec_query($query, [
+		'ok', 'disabled', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable', 'todelete'
+	]);
 
 	if (!$stmt->rowCount()) {
-		$tpl->assign(array('DMN_ITEM' => '', 'TR_DMN_MESSAGE' => tr('No errors')));
+		$tpl->assign([
+			'DMN_ITEM' => '',
+			'TR_DMN_MESSAGE' => tr('No errors')
+		]);
 		$tpl->parse('DMN_MESSAGE', 'dmn_message');
 	} else {
 		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$tpl->assign(
-				array(
-					'DMN_MESSAGE' => '',
-					'DMN_NAME' => tohtml(decode_idna($row['domain_name'])),
-					'DMN_ERROR' => tohtml($row['domain_status']),
-					'CHANGE_ID' => tohtml($row['domain_id']),
-					'CHANGE_TYPE' => 'domain'
-				)
-			);
-
+			$tpl->assign([
+				'DMN_MESSAGE' => '',
+				'DMN_NAME' => tohtml(decode_idna($row['domain_name'])),
+				'DMN_ERROR' => tohtml($row['domain_status']),
+				'CHANGE_ID' => tohtml($row['domain_id']),
+				'CHANGE_TYPE' => 'domain'
+			]);
 			$tpl->parse('DMN_ITEM', '.dmn_item');
 		}
 	}
@@ -128,25 +128,25 @@ function debugger_getAlsErrors($tpl)
 		WHERE
 			`alias_status` NOT IN (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	";
-	$stmt = exec_query(
-		$query, array('ok', 'disabled', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable', 'todelete', 'ordered')
-	);
+	$stmt = exec_query($query, [
+		'ok', 'disabled', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable', 'todelete', 'ordered'
+	]);
 
 	if (!$stmt->rowCount()) {
-		$tpl->assign(array('ALS_ITEM' => '', 'TR_ALS_MESSAGE' => tr('No errors')));
+		$tpl->assign([
+			'ALS_ITEM' => '',
+			'TR_ALS_MESSAGE' => tr('No errors')
+		]);
 		$tpl->parse('ALS_MESSAGE', 'als_message');
 	} else {
 		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$tpl->assign(
-				array(
-					'ALS_MESSAGE' => '',
-					'ALS_NAME' => tohtml(decode_idna($row['alias_name'])),
-					'ALS_ERROR' => tohtml($row['alias_status']),
-					'CHANGE_ID' => $row['alias_id'],
-					'CHANGE_TYPE' => 'alias',
-				)
-			);
-
+			$tpl->assign([
+				'ALS_MESSAGE' => '',
+				'ALS_NAME' => tohtml(decode_idna($row['alias_name'])),
+				'ALS_ERROR' => tohtml($row['alias_status']),
+				'CHANGE_ID' => $row['alias_id'],
+				'CHANGE_TYPE' => 'alias',
+			]);
 			$tpl->parse('ALS_ITEM', '.als_item');
 		}
 	}
@@ -171,25 +171,25 @@ function debugger_getSubErrors($tpl)
 		NOT IN
 			(?, ?, ?, ?, ?, ?, ?, ?)
 	";
-	$stmt = exec_query(
-		$query, array('ok', 'disabled', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable', 'todelete')
-	);
+	$stmt = exec_query($query, [
+		'ok', 'disabled', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable', 'todelete'
+	]);
 
 	if (!$stmt->rowCount()) {
-		$tpl->assign(array('SUB_ITEM' => '', 'TR_SUB_MESSAGE' => tr('No errors')));
+		$tpl->assign([
+			'SUB_ITEM' => '',
+			'TR_SUB_MESSAGE' => tr('No errors')
+		]);
 		$tpl->parse('SUB_MESSAGE', 'sub_message');
 	} else {
 		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$tpl->assign(
-				array(
-					'SUB_MESSAGE' => '',
-					'SUB_NAME' => tohtml(decode_idna($row['subdomain_name'] . '.' . $row['domain_name'])),
-					'SUB_ERROR' => tohtml($row['subdomain_status']),
-					'CHANGE_ID' => $row['subdomain_id'],
-					'CHANGE_TYPE' => 'subdomain'
-				)
-			);
-
+			$tpl->assign([
+				'SUB_MESSAGE' => '',
+				'SUB_NAME' => tohtml(decode_idna($row['subdomain_name'] . '.' . $row['domain_name'])),
+				'SUB_ERROR' => tohtml($row['subdomain_status']),
+				'CHANGE_ID' => $row['subdomain_id'],
+				'CHANGE_TYPE' => 'subdomain'
+			]);
 			$tpl->parse('SUB_ITEM', '.sub_item');
 		}
 	}
@@ -213,25 +213,25 @@ function debugger_getAlssubErrors($tpl)
 		WHERE
 			`subdomain_alias_status` NOT IN (?, ?, ?, ?, ?, ?, ?, ?)
 	";
-	$stmt = exec_query(
-		$query, array('ok', 'disabled', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable', 'todelete')
-	);
+	$stmt = exec_query($query, [
+		'ok', 'disabled', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable', 'todelete'
+	]);
 
 	if (!$stmt->rowCount()) {
-		$tpl->assign(array('ALSSUB_ITEM' => '', 'TR_ALSSUB_MESSAGE' => tr('No errors')));
+		$tpl->assign([
+			'ALSSUB_ITEM' => '',
+			'TR_ALSSUB_MESSAGE' => tr('No errors')
+		]);
 		$tpl->parse('ALSSUB_MESSAGE', 'alssub_message');
 	} else {
 		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$tpl->assign(
-				array(
-					'ALSSUB_MESSAGE' => '',
-					'ALSSUB_NAME' => tohtml(decode_idna($row['subdomain_alias_name'] . '.' . $row['alias_name'])),
-					'ALSSUB_ERROR' => tohtml($row['subdomain_alias_status']),
-					'CHANGE_ID' => $row['subdomain_alias_id'],
-					'CHANGE_TYPE' => 'subdomain_alias'
-				)
-			);
-
+			$tpl->assign([
+				'ALSSUB_MESSAGE' => '',
+				'ALSSUB_NAME' => tohtml(decode_idna($row['subdomain_alias_name'] . '.' . $row['alias_name'])),
+				'ALSSUB_ERROR' => tohtml($row['subdomain_alias_status']),
+				'CHANGE_ID' => $row['subdomain_alias_id'],
+				'CHANGE_TYPE' => 'subdomain_alias'
+			]);
 			$tpl->parse('ALSSUB_ITEM', '.alssub_item');
 		}
 	}
@@ -245,23 +245,24 @@ function debugger_getAlssubErrors($tpl)
  */
 function debugger_getFtpErrors($tpl)
 {
-	$stmt = exec_query('SELECT userid, status FROM ftp_users WHERE status NOT IN (?, ?, ?, ?, ?, ?, ?, ?)', array(
+	$stmt = exec_query('SELECT userid, status FROM ftp_users WHERE status NOT IN (?, ?, ?, ?, ?, ?, ?, ?)', [
 		'ok', 'disabled', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable', 'todelete'
-	));
+	]);
 
 	if (!$stmt->rowCount()) {
-		$tpl->assign(array('FTP_ITEM' => '', 'TR_FTP_MESSAGE' => tr('No errors')));
+		$tpl->assign([
+			'FTP_ITEM' => '', 'TR_FTP_MESSAGE' => tr('No errors')
+		]);
 		$tpl->parse('FTP_MESSAGE', 'ftp_message');
 	} else {
 		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$tpl->assign(array(
+			$tpl->assign([
 				'FTP_MESSAGE' => '',
 				'FTP_NAME' => tohtml(decode_idna($row['userid'])),
 				'FTP_ERROR' => tohtml($row['status']),
 				'CHANGE_ID' => $row['userid'],
 				'CHANGE_TYPE' => 'ftp_user'
-			));
-
+			]);
 			$tpl->parse('FTP_ITEM', '.ftp_item');
 		}
 	}
@@ -283,25 +284,23 @@ function debugger_getCustomDNSErrors($tpl)
 		WHERE
 			`domain_dns_status` NOT IN (?, ?, ?, ?, ?, ?, ?, ?)
 	";
-	$stmt = exec_query(
-		$query, array('ok', 'disabled', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable', 'todelete')
-	);
+	$stmt = exec_query($query, ['ok', 'disabled', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable', 'todelete']);
 
 	if (!$stmt->rowCount()) {
-		$tpl->assign(array('CUSTOM_DNS_ITEM' => '', 'TR_CUSTOM_DNS_MESSAGE' => tr('No errors')));
+		$tpl->assign([
+			'CUSTOM_DNS_ITEM' => '',
+			'TR_CUSTOM_DNS_MESSAGE' => tr('No errors')
+		]);
 		$tpl->parse('CUSTOM_DNS_MESSAGE', 'custom_dns_message');
 	} else {
 		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$tpl->assign(
-				array(
-					'CUSTOM_DNS_MESSAGE' => '',
-					'CUSTOM_DNS_NAME' => tohtml(decode_idna($row['domain_dns'])),
-					'CUSTOM_DNS_ERROR' => tohtml($row['domain_dns_status']),
-					'CHANGE_ID' => tohtml($row['domain_dns_id']),
-					'CHANGE_TYPE' => 'custom_dns'
-				)
-			);
-
+			$tpl->assign([
+				'CUSTOM_DNS_MESSAGE' => '',
+				'CUSTOM_DNS_NAME' => tohtml(decode_idna($row['domain_dns'])),
+				'CUSTOM_DNS_ERROR' => tohtml($row['domain_dns_status']),
+				'CHANGE_ID' => tohtml($row['domain_dns_id']),
+				'CHANGE_TYPE' => 'custom_dns'
+			]);
 			$tpl->parse('CUSTOM_DNS_ITEM', '.custom_dns_item');
 		}
 	}
@@ -343,29 +342,25 @@ function debugger_getHtaccessErrors($tpl)
 		WHERE
 			`status` NOT IN (:ok, :toadd, :tochange, :todelete)
 	";
-	$stmt = exec_query(
-		$dmn_query,
-		array(
-			'ok' => 'ok', 'toadd' => 'toadd', 'tochange' => 'tochange',
-			'todelete' => 'todelete'
-		)
-	);
+	$stmt = exec_query($dmn_query, [
+		'ok' => 'ok', 'toadd' => 'toadd', 'tochange' => 'tochange', 'todelete' => 'todelete'
+	]);
 
 	if (!$stmt->rowCount()) {
-		$tpl->assign(array('HTACCESS_ITEM' => '', 'TR_HTACCESS_MESSAGE' => tr('No errors')));
+		$tpl->assign([
+			'HTACCESS_ITEM' => '',
+			'TR_HTACCESS_MESSAGE' => tr('No errors')
+		]);
 		$tpl->parse('HTACCESS_MESSAGE', 'htaccess_message');
 	} else {
 		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$tpl->assign(
-				array(
-					'HTACCESS_MESSAGE' => '',
-					'HTACCESS_NAME' => ($row['domain_name'] == null)
-						? tr('Missing domain') : tohtml($row['domain_name']),
-					'HTACCESS_ERROR' => tohtml($row['status']),
-					'CHANGE_ID' => $row['id'],
-					'CHANGE_TYPE' => $row['type']
-				)
-			);
+			$tpl->assign([
+				'HTACCESS_MESSAGE' => '',
+				'HTACCESS_NAME' => ($row['domain_name'] == null) ? tr('Missing domain') : tohtml($row['domain_name']),
+				'HTACCESS_ERROR' => tohtml($row['status']),
+				'CHANGE_ID' => $row['id'],
+				'CHANGE_TYPE' => $row['type']
+			]);
 
 			$tpl->parse('HTACCESS_ITEM', '.htaccess_item');
 		}
@@ -376,7 +371,7 @@ function debugger_getHtaccessErrors($tpl)
  * Get mails errors
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
- * @return void
+ * @throws Exception
  */
 function debugger_getMailsErrors($tpl)
 {
@@ -388,12 +383,15 @@ function debugger_getMailsErrors($tpl)
 		WHERE
 			`status` NOT IN (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	";
-	$stmt = exec_query(
-		$query, array('ok', 'disabled', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable', 'todelete', 'ordered')
-	);
+	$stmt = exec_query($query, [
+		'ok', 'disabled', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable', 'todelete', 'ordered'
+	]);
 
 	if (!$stmt->rowCount()) {
-		$tpl->assign(array('MAIL_ITEM' => '', 'TR_MAIL_MESSAGE' => tr('No errors')));
+		$tpl->assign([
+			'MAIL_ITEM' => '',
+			'TR_MAIL_MESSAGE' => tr('No errors')
+		]);
 		$tpl->parse('MAIL_MESSAGE', 'mail_message');
 	} else {
 		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -467,17 +465,13 @@ function debugger_getMailsErrors($tpl)
 			$domainName = $row['domain_name'];
 			$domainName = ltrim($domainName, '@');
 
-			$tpl->assign(
-				array(
-					'MAIL_MESSAGE' => '',
-					'MAIL_NAME' => tohtml(
-						$mailAcc . '@' . ($domainName == '' ? ' ' . tr('orphan entry') : decode_idna($domainName))
-					),
-					'MAIL_ERROR' => tohtml($mailStatus),
-					'CHANGE_ID' => $mailId,
-					'CHANGE_TYPE' => 'mail'
-				)
-			);
+			$tpl->assign([
+				'MAIL_MESSAGE' => '',
+				'MAIL_NAME' => tohtml($mailAcc . '@' . ($domainName == '' ? ' ' . tr('orphan entry') : decode_idna($domainName))),
+				'MAIL_ERROR' => tohtml($mailStatus),
+				'CHANGE_ID' => $mailId,
+				'CHANGE_TYPE' => 'mail'
+			]);
 
 			$tpl->parse('MAIL_ITEM', '.mail_item');
 		}
@@ -492,10 +486,10 @@ function debugger_getMailsErrors($tpl)
  */
 function debugger_getPluginItemErrors($tpl)
 {
-	/** @var iMSCP_Plugin_Manager $pluginManager */
-	$pluginManager = iMSCP_Registry::get('pluginManager');
+	/** @var \iMSCP\Core\Plugin\PluginManager $plugingManager */
+	$pluginManager = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('PluginManager');
 
-	/** @var iMSCP_Plugin[] $plugins */
+	/** @var \iMSCP\Core\Plugin\AbstractPlugin[] $plugins */
 	$plugins = $pluginManager->pluginGetLoaded();
 
 	$itemFound = false;
@@ -505,17 +499,15 @@ function debugger_getPluginItemErrors($tpl)
 		if (!empty($items)) {
 			$itemFound = true;
 			foreach ($items as $item) {
-				$tpl->assign(
-					array(
-						'PLUGIN_ITEM_MESSAGE' => '',
-						'PLUGIN_NAME' => tohtml($plugin->getName()) . ' (' . tohtml($item['item_name']) . ')',
-						'PLUGIN_ITEM_ERROR' => tohtml($item['status']),
-						'CHANGE_ID' => $item['item_id'],
-						'CHANGE_TYPE' => tohtml($plugin->getName()),
-						'TABLE' => tohtml($item['table']),
-						'FIELD' => tohtml($item['field'])
-					)
-				);
+				$tpl->assign([
+					'PLUGIN_ITEM_MESSAGE' => '',
+					'PLUGIN_NAME' => tohtml($plugin->getName()) . ' (' . tohtml($item['item_name']) . ')',
+					'PLUGIN_ITEM_ERROR' => tohtml($item['status']),
+					'CHANGE_ID' => $item['item_id'],
+					'CHANGE_TYPE' => tohtml($plugin->getName()),
+					'TABLE' => tohtml($item['table']),
+					'FIELD' => tohtml($item['field'])
+				]);
 
 				$tpl->parse('PLUGIN_ITEM_ITEM', '.plugin_item_item');
 			}
@@ -523,7 +515,10 @@ function debugger_getPluginItemErrors($tpl)
 	}
 
 	if (!$itemFound) {
-		$tpl->assign(array('PLUGIN_ITEM_ITEM' => '', 'TR_PLUGIN_ITEM_MESSAGE' => tr('No errors')));
+		$tpl->assign([
+			'PLUGIN_ITEM_ITEM' => '',
+			'TR_PLUGIN_ITEM_MESSAGE' => tr('No errors')
+		]);
 		$tpl->parse('PLUGIN_ITEM_MESSAGE', 'plugin_item_message');
 	}
 }
@@ -539,12 +534,11 @@ function debugger_getPluginItemErrors($tpl)
  */
 function debugger_setPluginItemToChange($pluginName, $table, $field, $itemId)
 {
-	/** @var iMSCP_Plugin_Manager $pluginManager */
-	$pluginManager = iMSCP_Registry::get('pluginManager');
+	/** @var \iMSCP\Core\Plugin\PluginManager $plugingManager */
+	$pluginManager = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('PluginManager');
 
 	if ($pluginManager->pluginIsLoaded($pluginName)) {
 		$pluginManager->pluginGet($pluginName)->changeItemStatus($table, $field, $itemId);
-
 		return true;
 	}
 
@@ -564,20 +558,17 @@ function debugger_countRequests($statusField = null, $tableName = null)
 {
 	if ($statusField && $tableName) {
 		$query = "SELECT `$statusField` FROM `$tableName` WHERE `$statusField` IN (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-		$stmt = exec_query(
-			$query,
-			array(
-				'toinstall', 'toupdate', 'touninstall', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable',
-				'todelete',
-			)
-		);
+		$stmt = exec_query($query, [
+			'toinstall', 'toupdate', 'touninstall', 'toadd', 'tochange', 'torestore', 'toenable', 'todisable',
+			'todelete',
+		]);
 
 		return $stmt->rowCount();
 	} else {
-		/** @var iMSCP_Plugin_Manager $pluginManager */
-		$pluginManager = iMSCP_Registry::get('pluginManager');
+		/** @var \iMSCP\Core\Plugin\PluginManager $plugingManager */
+		$pluginManager = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('PluginManager');
 
-		/** @var iMSCP_Plugin[] $plugins */
+		/** @var \iMSCP\Core\Plugin\AbstractPlugin[] $plugins */
 		$plugins = $pluginManager->pluginGetLoaded();
 		$nbRequests = 0;
 
@@ -600,11 +591,6 @@ require '../../application.php';
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
-
-/** @var iMSCP_Plugin_Manager $plugingManager */
-$plugingManager = iMSCP_Registry::get('pluginManager');
-
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $rqstCount = debugger_countRequests('admin_status', 'admin');
 $rqstCount += debugger_countRequests('domain_status', 'domain');
@@ -667,7 +653,7 @@ if (isset($_GET['action'])) {
 				$query = "UPDATE `plugin` SET `plugin_status` = ? WHERE `plugin_id` = ?";
 				break;
 			default:
-				if(isset($_GET['table']) && isset($_GET['field'])) {
+				if (isset($_GET['table']) && isset($_GET['field'])) {
 					if (!debugger_setPluginItemToChange($_GET['type'], $_GET['table'], $_GET['field'], $_GET['id'])) {
 						set_page_message(tr('Unknown type.'), 'error');
 					} else {
@@ -680,15 +666,12 @@ if (isset($_GET['action'])) {
 				redirectTo('imscp_debugger.php');
 		}
 
-		$stmt = exec_query($query, array('tochange', $_GET['id']));
+		$stmt = exec_query($query, ['tochange', $_GET['id']]);
 
 		if ($stmt !== false) {
 			set_page_message(tr('Done'), 'success');
 		} else {
-			/** @var \Doctrine\DBAL\Connection $db */
-			$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
-
-			set_page_message(tr('Unknown Error') . '<br />' . $db->errorMsg(), 'error');
+			set_page_message(tr('Unknown Error'), 'error');
 		}
 
 		redirectTo('imscp_debugger.php');
@@ -696,7 +679,7 @@ if (isset($_GET['action'])) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(array(
+$tpl->define_dynamic([
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/imscp_debugger.tpl',
 	'page_message' => 'layout',
@@ -722,7 +705,7 @@ $tpl->define_dynamic(array(
 	'plugin_item' => 'page',
 	'plugin_item_message' => 'page',
 	'plugin_item_item' => 'page'
-));
+]);
 
 debugger_getUserErrors($tpl);
 debugger_getDmnErrors($tpl);
@@ -735,7 +718,7 @@ debugger_getMailsErrors($tpl);
 debugger_getHtaccessErrors($tpl);
 debugger_getPluginItemErrors($tpl);
 
-$tpl->assign(array(
+$tpl->assign([
 	'TR_PAGE_TITLE' => tr('Admin / System Tools / Debugger'),
 	'TR_USER_ERRORS' => tr('User errors'),
 	'TR_DMN_ERRORS' => tr('Domain errors'),
@@ -752,15 +735,15 @@ $tpl->assign(array(
 	'TR_EXEC_REQUESTS' => tr('Execute requests'),
 	'TR_CHANGE_STATUS' => tr("Set status to 'tochange'"),
 	'EXEC_COUNT' => $rqstCount
-));
+]);
 
 generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

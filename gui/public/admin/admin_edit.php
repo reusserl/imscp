@@ -26,7 +26,7 @@
  */
 
 /***********************************************************************************************************************
- * Script functions
+ * Functions
  */
 
 /**
@@ -139,7 +139,7 @@ function admin_isValidData()
 
 	}
 
-	if (Zend_Session::namespaceIsset('pageMessages')) {
+	if (isset($_SESSION['pageMessages'])) {
 		return false;
 	}
 
@@ -147,10 +147,10 @@ function admin_isValidData()
 }
 
 /***********************************************************************************************************************
- * Main script
+ * Main
  */
 
-require '../application.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
@@ -199,9 +199,9 @@ if (!$stmt->rowCount()) {
 }
 
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
 /** @var $db \Doctrine\DBAL\Connection */
 $db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
-generateNavigation($tpl);
 
 $tpl->assign([
 	'TR_PAGE_TITLE' => tr('Admin / Users / Overview / Edit Admin'),
@@ -250,14 +250,13 @@ $tpl->assign([
 	'EDIT_ID' => $userId
 ]);
 
+generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-	\iMSCP\Core\Events::onAdminScriptEnd, ['templateEngine' => $tpl]
-);
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+	'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

@@ -25,8 +25,8 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-/************************************************************************************
- * Script functions
+/***********************************************************************************************************************
+ * Functions
  */
 
 /**
@@ -38,7 +38,6 @@
 function admin_generateLayoutColorForm($tpl)
 {
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 	$colors = layout_getAvailableColorSet();
 
 	if(!empty($POST) && isset($_POST['layoutColor']) && in_array($_POST['layoutColor'], $colors)) {
@@ -49,11 +48,10 @@ function admin_generateLayoutColorForm($tpl)
 
 	if (!empty($colors)) {
 		foreach ($colors as $color) {
-			$tpl->assign(array(
+			$tpl->assign([
 				'COLOR' => $color,
 				'SELECTED_COLOR' => ($color == $selectedColor) ? $cfg['HTML_SELECTED'] : ''
-			));
-
+			]);
 			$tpl->parse('LAYOUT_COLOR_BLOCK', '.layout_color_block');
 		}
 	} else {
@@ -61,8 +59,8 @@ function admin_generateLayoutColorForm($tpl)
 	}
 }
 
-/************************************************************************************
- * Main script
+/***********************************************************************************************************************
+ * Main
  */
 
 require '../../application.php';
@@ -74,14 +72,14 @@ check_login('admin');
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(array(
+$tpl->define_dynamic([
 	'layout' => 'shared/layouts/ui.tpl',
 	'page' => 'admin/layout.tpl',
 	'page_message' => 'layout',
 	'logo_remove_button' => 'page',
 	'layout_colors_block' => 'page',
 	'layout_color_block' => 'layout_colors_block'
-));
+]);
 
 if (isset($_POST['uaction'])) {
 	if ($_POST['uaction'] == 'updateIspLogo') {
@@ -114,15 +112,15 @@ $html_selected = $cfg['HTML_SELECTED'];
 $userId = $_SESSION['user_id'];
 
 if ($_SESSION['show_main_menu_labels']) {
-	$tpl->assign(array(
+	$tpl->assign([
 		'MAIN_MENU_SHOW_LABELS_ON' => $html_selected,
 		'MAIN_MENU_SHOW_LABELS_OFF' => ''
-	));
+	]);
 } else {
-	$tpl->assign(array(
+	$tpl->assign([
 		'MAIN_MENU_SHOW_LABELS_ON' => '',
 		'MAIN_MENU_SHOW_LABELS_OFF' => $html_selected
-	));
+	]);
 }
 
 $ispLogo = layout_getUserLogo();
@@ -133,7 +131,7 @@ if (layout_isUserLogo($ispLogo)) {
 	$tpl->assign('LOGO_REMOVE_BUTTON', '');
 }
 
-$tpl->assign(array(
+$tpl->assign([
 	'TR_PAGE_TITLE' => tr('Admin / Profile / Layout'),
 	'ISP_LOGO' => $ispLogo,
 	'OWN_LOGO' => $ispLogo,
@@ -148,16 +146,16 @@ $tpl->assign(array(
 	'TR_CHANGE' => tr('Change'),
 	'TR_OTHER_SETTINGS' => tr('Other settings'),
 	'TR_MAIN_MENU_SHOW_LABELS' => tr('Show labels for main menu links')
-));
+]);
 
 generateNavigation($tpl);
 admin_generateLayoutColorForm($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, array(
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
 	'templateEngine' => $tpl
-));
+]);
 $tpl->prnt();
 
 unsetMessages();

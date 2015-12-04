@@ -26,7 +26,7 @@
  */
 
 /***********************************************************************************************************************
- * Script functions
+ * Functions
  */
 
 /**
@@ -37,8 +37,7 @@
  */
 function admin_generateMenusList($tpl)
 {
-	$query = "SELECT * FROM `custom_menus`";
-	$stmt = execute_query($query);
+	$stmt = execute_query('SELECT * FROM `custom_menus`');
 
 	if (!$stmt->rowCount()) {
 		$tpl->assign('MENUS_LIST_BLOCK', '');
@@ -82,7 +81,7 @@ function admin_generateMenusList($tpl)
 }
 
 /**
- * Generate form.
+ * Generate form
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  */
@@ -90,7 +89,6 @@ function admin_generateForm($tpl)
 {
 	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 	$selected = $cfg['HTML_SELECTED'];
-
 	$customMenu = [
 		'menu_id' => '', 'menu_name' => '', 'menu_link' => '', 'menu_target' => '_self', 'menu_level' => 'a',
 		'menu_order' => ''
@@ -159,7 +157,7 @@ function admin_generateForm($tpl)
 }
 
 /**
- * Check if menu is valid.
+ * Check if menu is valid
  *
  * @param string $menuName Menu name
  * @param string $menuLink Menu link
@@ -170,7 +168,7 @@ function admin_generateForm($tpl)
  */
 function admin_isValidMenu($menuName, $menuLink, $menuTarget, $menuLevel, $menuOrder)
 {
-	$errorFieldsStack = [];
+	global $errorFieldsStack;
 
 	if (empty($menuName)) {
 		set_page_message(tr('Invalid name.'), 'error');
@@ -198,8 +196,7 @@ function admin_isValidMenu($menuName, $menuLink, $menuTarget, $menuLevel, $menuO
 		$errorFieldsStack[] = 'menu_order';
 	}
 
-	if (Zend_Session::namespaceIsset('pageMessages')) {
-		iMSCP_Registry::set('errorFieldsStack', $errorFieldsStack);
+	if (isset($_SESSION['pageMessages'])) {
 		return false;
 	}
 
@@ -229,9 +226,7 @@ function admin_addMenu()
 				)
 		";
 		exec_query($query, [$visibilityLevel, $menuOrder, $menuName, $menuLink, $menuTarget]);
-
 		set_page_message(tr('Custom menu successfully added.'), 'success');
-
 		return true;
 	}
 
@@ -262,9 +257,7 @@ function admin_updateMenu($menuId)
 				`menu_id` = ?
 		";
 		exec_query($query, array($menuLevel, $menuOrder, $menuName, $menuLink, $menuTarget, (int)$menuId));
-
 		set_page_message(tr('Custom menu successfully updated.'), 'success');
-
 		return true;
 	}
 
@@ -288,7 +281,7 @@ function admin_deleteMenu($menuId)
 }
 
 /***********************************************************************************************************************
- * Main script
+ * Main
  */
 
 require '../../application.php';
@@ -296,6 +289,9 @@ require '../../application.php';
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
+
+// Initialize field error stack
+$errorFieldsStack = [];
 
 if (isset($_POST['uaction'])) {
 	if ($_POST['uaction'] == 'menu_add') {
@@ -329,7 +325,7 @@ $tpl->define_dynamic([
 	'edit_menu' => 'page'
 ]);
 
-$tpl->assign(array(
+$tpl->assign([
 	'TR_PAGE_TITLE' => tr('Admin / Settings / {TR_DYNAMIC_TITLE}'),
 	'TR_CUSTOM_MENU_PROPERTIES' => tr('Custom menu properties'),
 	'TR_MENU_NAME' => tr('Name'),
@@ -346,9 +342,8 @@ $tpl->assign(array(
 	'TR_TH_ORDER' => tr('Order'),
 	'TR_CANCEL' => tr('Cancel'),
 	'TR_MESSAGE_DELETE' => json_encode(tr('Are you sure you want to delete the %s menu?', '%s')),
-	'ERR_FIELDS_STACK' => iMSCP_Registry::isRegistered('errorFieldsStack')
-		? json_encode(iMSCP_Registry::get('errorFieldsStack')) : '[]'
-));
+	'ERR_FIELDS_STACK' => json_encode($errorFieldsStack)
+]);
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->attach('onGetJsTranslations', function ($e) {
 	/** @var $e \Zend\EventManager\Event */

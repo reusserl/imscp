@@ -46,7 +46,7 @@ function admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData
 			$to = $rcptToData['admin_name'];
 		}
 
-		$from = encode_mime_header($senderName) .  " <$senderEmail>";
+		$from = encode_mime_header($senderName) . " <$senderEmail>";
 		$to = encode_mime_header($to) . " <{$rcptToData['email']}>";
 
 		$headers = "From: $from\r\n";
@@ -70,10 +70,7 @@ function admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData
 function admin_sendToAdministrators($senderName, $senderEmail, $subject, $body)
 {
 	if (systemHasManyAdmins()) {
-		$stmt = exec_query(
-			'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'admin'
-		);
-
+		$stmt = exec_query('SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'admin');
 		while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
 		}
@@ -91,10 +88,7 @@ function admin_sendToAdministrators($senderName, $senderEmail, $subject, $body)
 function admin_sendToResellers($senderName, $senderEmail, $subject, $body)
 {
 	if (systemHasResellers()) {
-		$stmt = exec_query(
-			'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'reseller'
-		);
-
+		$stmt = exec_query('SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'reseller');
 		while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
 		}
@@ -112,10 +106,7 @@ function admin_sendToResellers($senderName, $senderEmail, $subject, $body)
 function admin_sendToCustomers($senderName, $senderEmail, $subject, $body)
 {
 	if (systemHasCustomers()) {
-		$stmt = exec_query(
-			'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'user'
-		);
-
+		$stmt = exec_query('SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'user');
 		while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
 			admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
 		}
@@ -180,12 +171,10 @@ function admin_sendCircular()
 
 		if (admin_isValidCircular($senderName, $senderEmail, $subject, $body)) {
 			$responses = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-				\iMSCP\Core\Events::onBeforeSendCircular,
-				array(
-					'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => $rcptTo,
-					'subject' => $subject, 'body' => $body
-				)
-			);
+				\iMSCP\Core\Events::onBeforeSendCircular, [
+				'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => $rcptTo, 'subject' => $subject,
+				'body' => $body
+			]);
 
 			if (!$responses->stopped()) {
 				if (
@@ -210,12 +199,10 @@ function admin_sendCircular()
 				}
 
 				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-					\iMSCP\Core\Events::onAfterSendCircular,
-					array(
-						'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => $rcptTo,
-						'subject' => $subject, 'body' => $body
-					)
-				);
+					\iMSCP\Core\Events::onAfterSendCircular, [
+					'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => $rcptTo,
+					'subject' => $subject, 'body' => $body
+				]);
 
 				set_page_message(tr('Circular successfully sent.'), 'success');
 				write_log('A circular has been sent by admin: ' . tohtml("$senderName <$senderEmail>"), E_USER_NOTICE);
@@ -272,49 +259,47 @@ function admin_generatePageData($tpl)
 		}
 	}
 
-	$tpl->assign(
-		array(
-			'SENDER_NAME' => tohtml($senderName),
-			'SENDER_EMAIL' => tohtml($senderEmail),
-			'SUBJECT' => tohtml($subject),
-			'BODY' => tohtml($body)
-		)
-	);
+	$tpl->assign([
+		'SENDER_NAME' => tohtml($senderName),
+		'SENDER_EMAIL' => tohtml($senderEmail),
+		'SUBJECT' => tohtml($subject),
+		'BODY' => tohtml($body)
+	]);
 
-	$rcptToOptions = array(
-		array('all_users', tr('All users'))
-	);
+	$rcptToOptions = [
+		['all_users', tr('All users')]
+	];
 
 	if (systemHasManyAdmins() && systemHasResellers()) {
-		$rcptToOptions[] = array('administrators_resellers', tr('Administrators and resellers'));
+		$rcptToOptions[] = ['administrators_resellers', tr('Administrators and resellers')];
 	}
 
 	if (systemHasManyAdmins() && systemHasCustomers()) {
-		$rcptToOptions[] = array('administrators_customers', tr('Administrators and customers'));
+		$rcptToOptions[] = ['administrators_customers', tr('Administrators and customers')];
 	}
 
 	if (systemHasResellers() && systemHasCustomers()) {
-		$rcptToOptions[] = array('resellers_customers', tr('Resellers and customers'));
+		$rcptToOptions[] = ['resellers_customers', tr('Resellers and customers')];
 	}
 
 	if (systemHasManyAdmins()) {
-		$rcptToOptions[] = array('administrators', tr('Administrators'));
+		$rcptToOptions[] = ['administrators', tr('Administrators')];
 	}
 
 	if (systemHasResellers()) {
-		$rcptToOptions[] = array('resellers', tr('Resellers'));
+		$rcptToOptions[] = ['resellers', tr('Resellers')];
 	}
 
 	if (systemHasCustomers()) {
-		$rcptToOptions[] = array('customers', tr('Customers'));
+		$rcptToOptions[] = ['customers', tr('Customers')];
 	}
 
 	foreach ($rcptToOptions as $option) {
-		$tpl->assign(array(
+		$tpl->assign([
 			'RCPT_TO' => $option[0],
 			'TR_RCPT_TO' => $option[1],
 			'SELECTED' => ($rcptTo == $option[0]) ? ' selected="selected"' : ''
-		));
+		]);
 
 		$tpl->parse('RCPT_TO_OPTION', '.rcpt_to_option');
 	}
