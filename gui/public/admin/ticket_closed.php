@@ -39,47 +39,47 @@ check_login('admin');
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if (!hasTicketSystem()) {
-	redirectTo('index.php');
+    redirectTo('index.php');
 } elseif (isset($_GET['ticket_id']) && !empty($_GET['ticket_id'])) {
-	reopenTicket((int)$_GET['ticket_id']);
+    reopenTicket((int)$_GET['ticket_id']);
 }
 
 if (isset($_GET['psi'])) {
-	$start = $_GET['psi'];
+    $start = $_GET['psi'];
 } else {
-	$start = 0;
+    $start = 0;
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
-	'layout' => 'shared/layouts/ui.tpl',
-	'page' => 'admin/ticket_closed.tpl',
-	'page_message' => 'layout',
-	'tickets_list' => 'page',
-	'tickets_item' => 'tickets_list',
-	'scroll_prev_gray' => 'page',
-	'scroll_prev' => 'page',
-	'scroll_next_gray' => 'page',
-	'scroll_next' => 'page'
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'admin/ticket_closed.tpl',
+    'page_message' => 'layout',
+    'tickets_list' => 'page',
+    'tickets_item' => 'tickets_list',
+    'scroll_prev_gray' => 'page',
+    'scroll_prev' => 'page',
+    'scroll_next_gray' => 'page',
+    'scroll_next' => 'page'
 ]);
 $tpl->assign([
-	'TR_PAGE_TITLE' => tr('Admin / Support / Closed Tickets'),
-	'TR_TICKET_STATUS' => tr('Status'),
-	'TR_TICKET_FROM' => tr('From'),
-	'TR_TICKET_SUBJECT' => tr('Subject'),
-	'TR_TICKET_URGENCY' => tr('Priority'),
-	'TR_TICKET_LAST_ANSWER_DATE' => tr('Last reply date'),
-	'TR_TICKET_ACTION' => tr('Actions'),
-	'TR_TICKET_DELETE' => tr('Delete'),
-	'TR_TICKET_READ_LINK' => tr('Read ticket'),
-	'TR_TICKET_DELETE_LINK' => tr('Delete ticket'),
-	'TR_TICKET_REOPEN' => tr('Reopen'),
-	'TR_TICKET_REOPEN_LINK' => tr('Reopen ticket'),
-	'TR_TICKET_DELETE_ALL' => tr('Delete all tickets'),
-	'TR_TICKETS_DELETE_MESSAGE' => tr("Are you sure you want to delete the '%s' ticket?", '%s'),
-	'TR_TICKETS_DELETE_ALL_MESSAGE' => tr('Are you sure you want to delete all tickets?'),
-	'TR_PREVIOUS' => tr('Previous'),
-	'TR_NEXT' => tr('Next')
+    'TR_PAGE_TITLE' => tr('Admin / Support / Closed Tickets'),
+    'TR_TICKET_STATUS' => tr('Status'),
+    'TR_TICKET_FROM' => tr('From'),
+    'TR_TICKET_SUBJECT' => tr('Subject'),
+    'TR_TICKET_URGENCY' => tr('Priority'),
+    'TR_TICKET_LAST_ANSWER_DATE' => tr('Last reply date'),
+    'TR_TICKET_ACTION' => tr('Actions'),
+    'TR_TICKET_DELETE' => tr('Delete'),
+    'TR_TICKET_READ_LINK' => tr('Read ticket'),
+    'TR_TICKET_DELETE_LINK' => tr('Delete ticket'),
+    'TR_TICKET_REOPEN' => tr('Reopen'),
+    'TR_TICKET_REOPEN_LINK' => tr('Reopen ticket'),
+    'TR_TICKET_DELETE_ALL' => tr('Delete all tickets'),
+    'TR_TICKETS_DELETE_MESSAGE' => tr("Are you sure you want to delete the '%s' ticket?", '%s'),
+    'TR_TICKETS_DELETE_ALL_MESSAGE' => tr('Are you sure you want to delete all tickets?'),
+    'TR_PREVIOUS' => tr('Previous'),
+    'TR_NEXT' => tr('Next')
 ]);
 
 generateNavigation($tpl);
@@ -88,7 +88,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
-	'templateEngine' => $tpl
+    'templateEngine' => $tpl
 ]);
 $tpl->prnt();
 

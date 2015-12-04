@@ -37,53 +37,53 @@ require 'module/Core/src/Functions/Tickets.php';
 check_login('admin');
 
 if (!hasTicketSystem()) {
-	redirectTo('index.php');
+    redirectTo('index.php');
 }
 
 $userId = $_SESSION['user_id'];
 $previousPage = 'ticket_system';
 
 if (isset($_GET['ticket_id']) && !empty($_GET['ticket_id'])) {
-	$ticketId = (int)$_GET['ticket_id'];
+    $ticketId = (int)$_GET['ticket_id'];
 
-	$query = "
-		SELECT
-			`ticket_status`
-		FROM
-			`tickets`
-		WHERE
-			`ticket_id` = ?
-		AND
-			(`ticket_from` = ? OR `ticket_to` = ?)
-	";
-	$stmt = exec_query($query, [$ticketId, $userId, $userId]);
+    $query = "
+        SELECT
+            `ticket_status`
+        FROM
+            `tickets`
+        WHERE
+            `ticket_id` = ?
+        AND
+            (`ticket_from` = ? OR `ticket_to` = ?)
+    ";
+    $stmt = exec_query($query, [$ticketId, $userId, $userId]);
 
-	if (!$stmt->rowCount()) {
-		set_page_message(tr("Ticket with Id '%d' was not found.", $ticketId), 'error');
-		redirectTo($previousPage . '.php');
-	}
+    if (!$stmt->rowCount()) {
+        set_page_message(tr("Ticket with Id '%d' was not found.", $ticketId), 'error');
+        redirectTo($previousPage . '.php');
+    }
 
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-	// The ticket status was 0 so we come from ticket_closed.php
-	if ($row['ticket_status'] == 0) {
-		$previousPage = 'ticket_closed';
-	}
+    // The ticket status was 0 so we come from ticket_closed.php
+    if ($row['ticket_status'] == 0) {
+        $previousPage = 'ticket_closed';
+    }
 
-	deleteTicket($ticketId);
-	set_page_message(tr('Ticket successfully deleted.'), 'success');
-	write_log(sprintf("%s: deleted ticket %d", $_SESSION['user_logged'], $ticketId), E_USER_NOTICE);
+    deleteTicket($ticketId);
+    set_page_message(tr('Ticket successfully deleted.'), 'success');
+    write_log(sprintf("%s: deleted ticket %d", $_SESSION['user_logged'], $ticketId), E_USER_NOTICE);
 } elseif (isset($_GET['delete']) && $_GET['delete'] == 'open') {
-	deleteTickets('open', $userId);
-	set_page_message(tr('All open tickets were successfully deleted.'), 'success');
-	write_log(sprintf("%s: deleted all open tickets.", $_SESSION['user_logged']), E_USER_NOTICE);
+    deleteTickets('open', $userId);
+    set_page_message(tr('All open tickets were successfully deleted.'), 'success');
+    write_log(sprintf("%s: deleted all open tickets.", $_SESSION['user_logged']), E_USER_NOTICE);
 } elseif (isset($_GET['delete']) && $_GET['delete'] == 'closed') {
-	deleteTickets('closed', $userId);
-	set_page_message(tr('All closed tickets were successfully deleted.'), 'success');
-	write_log(sprintf("%s: deleted all closed tickets.", $_SESSION['user_logged']), E_USER_NOTICE);
-	$previousPage = 'ticket_closed';
+    deleteTickets('closed', $userId);
+    set_page_message(tr('All closed tickets were successfully deleted.'), 'success');
+    write_log(sprintf("%s: deleted all closed tickets.", $_SESSION['user_logged']), E_USER_NOTICE);
+    $previousPage = 'ticket_closed';
 } else {
-	set_page_message(tr('Unknown action requested.'), 'error');
+    set_page_message(tr('Unknown action requested.'), 'error');
 }
 
 redirectTo($previousPage . '.php');

@@ -37,15 +37,15 @@
  */
 function admin_generateDatabaseUpdateDetail($tpl)
 {
-	$dbUpdatesDetail = \iMSCP\Core\Updater\DatabaseUpdater::getInstance()->getDatabaseUpdatesDetails();
+    $dbUpdatesDetail = \iMSCP\Core\Updater\DatabaseUpdater::getInstance()->getDatabaseUpdatesDetails();
 
-	foreach ($dbUpdatesDetail as $revision => $detail) {
-		$tpl->assign([
-			'DB_UPDATE_REVISION' => (int)$revision,
-			'DB_UPDATE_DETAIL' => _admin_generateIssueTrackerLink($detail)
-		]);
-		$tpl->parse('DATABASE_UPDATE', '.database_update');
-	}
+    foreach ($dbUpdatesDetail as $revision => $detail) {
+        $tpl->assign([
+            'DB_UPDATE_REVISION' => (int)$revision,
+            'DB_UPDATE_DETAIL' => _admin_generateIssueTrackerLink($detail)
+        ]);
+        $tpl->parse('DATABASE_UPDATE', '.database_update');
+    }
 }
 
 /**
@@ -57,11 +57,11 @@ function admin_generateDatabaseUpdateDetail($tpl)
  */
 function _admin_generateIssueTrackerLink($detail)
 {
-	return preg_replace(
-		'/#(IP-[0-9]+)/',
-		'<a href="https://youtrack.i-mscp.net/issue/\1" target="_blank" title="' . tr('More Details') . '">\1</a>',
-		$detail
-	);
+    return preg_replace(
+        '/#(IP-[0-9]+)/',
+        '<a href="https://youtrack.i-mscp.net/issue/\1" target="_blank" title="' . tr('More Details') . '">\1</a>',
+        $detail
+    );
 }
 
 /***********************************************************************************************************************
@@ -79,23 +79,21 @@ $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 $dbUpdate = \iMSCP\Core\Updater\DatabaseUpdater::getInstance();
 
 if (isset($_POST['uaction']) && $_POST['uaction'] == 'update') {
-	// Execute all available db updates
-	if (!$dbUpdate->applyUpdates()) {
-		throw new Exception($dbUpdate->getError());
-	}
+    if (!$dbUpdate->applyUpdates()) {
+        throw new Exception($dbUpdate->getError());
+    }
 
-	// Set success page message
-	set_page_message('Database update successfully applied.', 'success');
-	redirectTo('system_info.php');
+    set_page_message('Database update successfully applied.', 'success');
+    redirectTo('system_info.php');
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
-	'layout' => 'shared/layouts/ui.tpl',
-	'page' => 'admin/database_update.tpl',
-	'page_message' => 'layout',
-	'database_updates' => 'page',
-	'database_update' => 'database_updates'
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'admin/database_update.tpl',
+    'page_message' => 'layout',
+    'database_updates' => 'page',
+    'database_update' => 'database_updates'
 ]);
 
 $tpl->assign('TR_PAGE_TITLE', tr('Admin / System Tools / Database Update'));
@@ -103,24 +101,24 @@ $tpl->assign('TR_PAGE_TITLE', tr('Admin / System Tools / Database Update'));
 generateNavigation($tpl);
 
 if ($dbUpdate->isAvailableUpdate()) {
-	set_page_message(tr('One or more database updates are now available. See the details below.'), 'static_info');
-	admin_generateDatabaseUpdateDetail($tpl);
+    set_page_message(tr('One or more database updates are now available. See the details below.'), 'static_info');
+    admin_generateDatabaseUpdateDetail($tpl);
 
-	$tpl->assign([
-		'TR_DATABASE_UPDATES' => tr('Database Update Revision'),
-		'TR_DATABASE_UPDATE_DETAIL' => tr('Database Update details'),
-		'TR_PROCESS_UPDATES' => tr('Process update')
-	]);
+    $tpl->assign([
+        'TR_DATABASE_UPDATES' => tr('Database Update Revision'),
+        'TR_DATABASE_UPDATE_DETAIL' => tr('Database Update details'),
+        'TR_PROCESS_UPDATES' => tr('Process update')
+    ]);
 } else {
-	$tpl->assign('DATABASE_UPDATES', '');
-	set_page_message(tr('No database update available.'), 'static_info');
+    $tpl->assign('DATABASE_UPDATES', '');
+    set_page_message(tr('No database update available.'), 'static_info');
 }
 
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
-	'templateEngine' => $tpl
+    'templateEngine' => $tpl
 ]);
 $tpl->prnt();
 

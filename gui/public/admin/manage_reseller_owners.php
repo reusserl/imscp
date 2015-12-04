@@ -36,79 +36,79 @@
  */
 function gen_reseller_table($tpl)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-	$query = "
-		SELECT
-			t1.`admin_id`, t1.`admin_name`, t2.`admin_name` AS created_by
-		FROM
-			`admin` AS t1, `admin` AS t2
-		WHERE
-			t1.`admin_type` = 'reseller'
-		AND
-			t1.`created_by` = t2.`admin_id`
-		ORDER BY
-			`created_by`, `admin_id`
-	";
-	$rs = execute_query($query);
-	$i = 0;
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $query = "
+        SELECT
+            t1.`admin_id`, t1.`admin_name`, t2.`admin_name` AS created_by
+        FROM
+            `admin` AS t1, `admin` AS t2
+        WHERE
+            t1.`admin_type` = 'reseller'
+        AND
+            t1.`created_by` = t2.`admin_id`
+        ORDER BY
+            `created_by`, `admin_id`
+    ";
+    $rs = execute_query($query);
+    $i = 0;
 
-	if (!$rs->rowCount()) {
-		$tpl->assign([
-			'MESSAGE' => tr('Reseller list is empty.'),
-			'RESELLER_LIST' => '',
-		]);
+    if (!$rs->rowCount()) {
+        $tpl->assign([
+            'MESSAGE' => tr('Reseller list is empty.'),
+            'RESELLER_LIST' => '',
+        ]);
 
-		$tpl->parse('PAGE_MESSAGE', 'page_message');
-	} else {
-		while ($row = $rs->fetch(PDO::FETCH_ASSOC)) {
-			$admin_id = $row['admin_id'];
-			$admin_id_var_name = "admin_id_" . $admin_id;
-			$tpl->assign([
-				'NUMBER' => $i + 1,
-				'RESELLER_NAME' => tohtml($row['admin_name']),
-				'OWNER' => tohtml($row['created_by']),
-				'CKB_NAME' => $admin_id_var_name,
-			]);
-			$tpl->parse('RESELLER_ITEM', '.reseller_item');
-			$i++;
-		}
+        $tpl->parse('PAGE_MESSAGE', 'page_message');
+    } else {
+        while ($row = $rs->fetch(PDO::FETCH_ASSOC)) {
+            $admin_id = $row['admin_id'];
+            $admin_id_var_name = "admin_id_" . $admin_id;
+            $tpl->assign([
+                'NUMBER' => $i + 1,
+                'RESELLER_NAME' => tohtml($row['admin_name']),
+                'OWNER' => tohtml($row['created_by']),
+                'CKB_NAME' => $admin_id_var_name,
+            ]);
+            $tpl->parse('RESELLER_ITEM', '.reseller_item');
+            $i++;
+        }
 
-		$tpl->parse('RESELLER_LIST', 'reseller_list');
-		$tpl->assign('PAGE_MESSAGE', '');
-	}
+        $tpl->parse('RESELLER_LIST', 'reseller_list');
+        $tpl->assign('PAGE_MESSAGE', '');
+    }
 
-	$query = "
-		SELECT
-			`admin_id`, `admin_name`
-		FROM
-			`admin`
-		WHERE
-			`admin_type` = 'admin'
-		ORDER BY
-			`admin_name`
-	";
-	$rs = execute_query($query);
+    $query = "
+        SELECT
+            `admin_id`, `admin_name`
+        FROM
+            `admin`
+        WHERE
+            `admin_type` = 'admin'
+        ORDER BY
+            `admin_name`
+    ";
+    $rs = execute_query($query);
 
-	while ($row = $rs->fetch(PDO::FETCH_ASSOC)) {
-		if ((isset($_POST['uaction']) && $_POST['uaction'] === 'reseller_owner') && (isset($_POST['dest_admin']) &&
-				$_POST['dest_admin'] == $row['admin_id'])
-		) {
-			$selected = $cfg['HTML_SELECTED'];
-		} else {
-			$selected = '';
-		}
+    while ($row = $rs->fetch(PDO::FETCH_ASSOC)) {
+        if ((isset($_POST['uaction']) && $_POST['uaction'] === 'reseller_owner') && (isset($_POST['dest_admin']) &&
+                $_POST['dest_admin'] == $row['admin_id'])
+        ) {
+            $selected = $cfg['HTML_SELECTED'];
+        } else {
+            $selected = '';
+        }
 
-		$tpl->assign([
-			'OPTION' => tohtml($row['admin_name']),
-			'VALUE' => $row['admin_id'],
-			'SELECTED' => $selected
-		]);
-		$tpl->parse('SELECT_ADMIN_OPTION', '.select_admin_option');
-		$i++;
-	}
+        $tpl->assign([
+            'OPTION' => tohtml($row['admin_name']),
+            'VALUE' => $row['admin_id'],
+            'SELECTED' => $selected
+        ]);
+        $tpl->parse('SELECT_ADMIN_OPTION', '.select_admin_option');
+        $i++;
+    }
 
-	$tpl->parse('SELECT_ADMIN', 'select_admin');
-	$tpl->assign('PAGE_MESSAGE', '');
+    $tpl->parse('SELECT_ADMIN', 'select_admin');
+    $tpl->assign('PAGE_MESSAGE', '');
 }
 
 /**
@@ -118,30 +118,30 @@ function gen_reseller_table($tpl)
  */
 function update_reseller_owner()
 {
-	if (isset($_POST['uaction']) && $_POST['uaction'] === 'reseller_owner') {
-		$query = "
-			SELECT
-				`admin_id`
-			FROM
-				`admin`
-			WHERE
-				`admin_type` = 'reseller'
-			ORDER BY
-				`admin_name`
-		";
-		$rs = execute_query($query);
+    if (isset($_POST['uaction']) && $_POST['uaction'] === 'reseller_owner') {
+        $query = "
+            SELECT
+                `admin_id`
+            FROM
+                `admin`
+            WHERE
+                `admin_type` = 'reseller'
+            ORDER BY
+                `admin_name`
+        ";
+        $rs = execute_query($query);
 
-		while ($row = $rs->fetch(PDO::FETCH_ASSOC)) {
-			$admin_id = $row['admin_id'];
-			$admin_id_var_name = "admin_id_$admin_id";
+        while ($row = $rs->fetch(PDO::FETCH_ASSOC)) {
+            $admin_id = $row['admin_id'];
+            $admin_id_var_name = "admin_id_$admin_id";
 
-			if (isset($_POST[$admin_id_var_name]) && $_POST[$admin_id_var_name] === 'on') {
-				$dest_admin = $_POST['dest_admin'];
-				$query = "UPDATE `admin` SET `created_by` = ? WHERE `admin_id` = ?";
-				exec_query($query, [$dest_admin, $admin_id]);
-			}
-		}
-	}
+            if (isset($_POST[$admin_id_var_name]) && $_POST[$admin_id_var_name] === 'on') {
+                $dest_admin = $_POST['dest_admin'];
+                $query = "UPDATE `admin` SET `created_by` = ? WHERE `admin_id` = ?";
+                exec_query($query, [$dest_admin, $admin_id]);
+            }
+        }
+    }
 }
 
 /***********************************************************************************************************************
@@ -156,25 +156,25 @@ check_login('admin');
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
-	'layout' => 'shared/layouts/ui.tpl',
-	'page' => 'admin/manage_reseller_owners.tpl',
-	'page_message' => 'layout',
-	'hosting_plans' => 'page',
-	'reseller_list' => 'page',
-	'reseller_item' => 'reseller_list',
-	'select_admin' => 'page',
-	'select_admin_option' => 'select_admin'
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'admin/manage_reseller_owners.tpl',
+    'page_message' => 'layout',
+    'hosting_plans' => 'page',
+    'reseller_list' => 'page',
+    'reseller_item' => 'reseller_list',
+    'select_admin' => 'page',
+    'select_admin_option' => 'select_admin'
 ]);
 $tpl->assign([
-	'TR_PAGE_TITLE', tr('Admin / Users / Resellers Assignment'),
-	'TR_RESELLER_ASSIGNMENT' => tr('Reseller assignment'),
-	'TR_RESELLER_USERS' => tr('Reseller users'),
-	'TR_NUMBER' => tr('No.'),
-	'TR_MARK' => tr('Mark'),
-	'TR_RESELLER_NAME' => tr('Reseller name'),
-	'TR_OWNER' => tr('Owner'),
-	'TR_TO_ADMIN' => tr('To Admin'),
-	'TR_MOVE' => tr('Move')
+    'TR_PAGE_TITLE', tr('Admin / Users / Resellers Assignment'),
+    'TR_RESELLER_ASSIGNMENT' => tr('Reseller assignment'),
+    'TR_RESELLER_USERS' => tr('Reseller users'),
+    'TR_NUMBER' => tr('No.'),
+    'TR_MARK' => tr('Mark'),
+    'TR_RESELLER_NAME' => tr('Reseller name'),
+    'TR_OWNER' => tr('Owner'),
+    'TR_TO_ADMIN' => tr('To Admin'),
+    'TR_MOVE' => tr('Move')
 ]);
 
 generateNavigation($tpl);
@@ -183,7 +183,7 @@ gen_reseller_table($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
-	'templateEngine' => $tpl
+    'templateEngine' => $tpl
 ]);
 $tpl->prnt();
 

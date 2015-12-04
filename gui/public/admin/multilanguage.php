@@ -29,25 +29,25 @@
  */
 function admin_generateLanguagesList($tpl)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-	$defaultLanguage = $cfg['USER_INITIAL_LANG'];
-	$availableLanguages = i18n_getAvailableLanguages();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $defaultLanguage = $cfg['USER_INITIAL_LANG'];
+    $availableLanguages = i18n_getAvailableLanguages();
 
-	if (!empty($availableLanguages)) {
-		foreach ($availableLanguages as $languageDefinition) {
-			$tpl->assign([
-				'LANGUAGE_NAME' => tohtml($languageDefinition['language']),
-				'NUMBER_TRANSLATED_STRINGS' => tohtml(tr('%d strings translated', $languageDefinition['translatedStrings'])),
-				'LANGUAGE_REVISION' => tohtml($languageDefinition['revision']),
-				'LOCALE_CHECKED' => ($languageDefinition['locale'] == $defaultLanguage) ? 'checked' : '',
-				'LOCALE' => tohtml($languageDefinition['locale'], 'htmlAttr')
-			]);
+    if (!empty($availableLanguages)) {
+        foreach ($availableLanguages as $languageDefinition) {
+            $tpl->assign([
+                'LANGUAGE_NAME' => tohtml($languageDefinition['language']),
+                'NUMBER_TRANSLATED_STRINGS' => tohtml(tr('%d strings translated', $languageDefinition['translatedStrings'])),
+                'LANGUAGE_REVISION' => tohtml($languageDefinition['revision']),
+                'LOCALE_CHECKED' => ($languageDefinition['locale'] == $defaultLanguage) ? 'checked' : '',
+                'LOCALE' => tohtml($languageDefinition['locale'], 'htmlAttr')
+            ]);
 
-			$tpl->parse('LANGUAGE_BLOCK', '.language_block');
-		}
-	} else {
-		$tpl->assign('LANGUAGES_BLOCK', '');
-	}
+            $tpl->parse('LANGUAGE_BLOCK', '.language_block');
+        }
+    } else {
+        $tpl->assign('LANGUAGES_BLOCK', '');
+    }
 }
 
 /***********************************************************************************************************************
@@ -63,50 +63,50 @@ check_login('admin');
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if (isset($_POST['uaction'])) {
-	if ($_POST['uaction'] == 'uploadLanguage') {
-		if (i18n_importMachineObjectFile()) {
-			set_page_message(tr('Language file successfully installed.'), 'success');
-		}
-	} elseif ($_POST['uaction'] == 'changeLanguage') {
-		if (i18n_changeDefaultLanguage()) {
-			set_page_message(tr('Default language successfully updated.'), 'success');
-			// Force change on next load
-			redirectTo('multilanguage.php');
-		} else {
-			set_page_message(tr('Unknown language name.'), 'error');
-		}
-	} elseif ($_POST['uaction'] == 'rebuildIndex') {
-		i18n_buildLanguageIndex();
-		set_page_message(tr('Languages index was successfully re-built.'), 'success');
-	}
+    if ($_POST['uaction'] == 'uploadLanguage') {
+        if (i18n_importMachineObjectFile()) {
+            set_page_message(tr('Language file successfully installed.'), 'success');
+        }
+    } elseif ($_POST['uaction'] == 'changeLanguage') {
+        if (i18n_changeDefaultLanguage()) {
+            set_page_message(tr('Default language successfully updated.'), 'success');
+            // Force change on next load
+            redirectTo('multilanguage.php');
+        } else {
+            set_page_message(tr('Unknown language name.'), 'error');
+        }
+    } elseif ($_POST['uaction'] == 'rebuildIndex') {
+        i18n_buildLanguageIndex();
+        set_page_message(tr('Languages index was successfully re-built.'), 'success');
+    }
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
-	'layout' => 'shared/layouts/ui.tpl',
-	'page' => 'admin/multilanguage.tpl',
-	'page_message' => 'layout',
-	'languages_block' => 'page',
-	'language_block' => 'languages_block'
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'admin/multilanguage.tpl',
+    'page_message' => 'layout',
+    'languages_block' => 'page',
+    'language_block' => 'languages_block'
 ]);
 $tpl->assign([
-	'TR_PAGE_TITLE' => tohtml(tr('Admin / Settings / Languages')),
-	'TR_MULTILANGUAGE' => tohtml(tr('Internationalization')),
-	'TR_LANGUAGE_NAME' => tohtml(tr('Language')),
-	'TR_NUMBER_TRANSLATED_STRINGS' => tohtml(tr('Translated strings')),
-	'TR_LANGUAGE_REVISION' => tohtml(tr('Revision date')),
-	'TR_DEFAULT_LANGUAGE' => tohtml(tr('Default language')),
-	'TR_SAVE' => tohtml(tr('Save'), 'htmlAttr'),
-	'TR_IMPORT_NEW_LANGUAGE' => tohtml(tr('Import new language file')),
-	'TR_LANGUAGE_FILE' => tohtml(tr('Language file')),
-	'TR_REBUILD_INDEX' => tohtml(tr('Rebuild languages index'), 'htmlAttr'),
-	'TR_UPLOAD_HELP' => tohtml(tr('Only gettext Machine Object files (MO files) are accepted.'), 'htmlAttr'),
-	'TR_IMPORT' => tohtml(tr('Import'), 'htmlAttr')
+    'TR_PAGE_TITLE' => tohtml(tr('Admin / Settings / Languages')),
+    'TR_MULTILANGUAGE' => tohtml(tr('Internationalization')),
+    'TR_LANGUAGE_NAME' => tohtml(tr('Language')),
+    'TR_NUMBER_TRANSLATED_STRINGS' => tohtml(tr('Translated strings')),
+    'TR_LANGUAGE_REVISION' => tohtml(tr('Revision date')),
+    'TR_DEFAULT_LANGUAGE' => tohtml(tr('Default language')),
+    'TR_SAVE' => tohtml(tr('Save'), 'htmlAttr'),
+    'TR_IMPORT_NEW_LANGUAGE' => tohtml(tr('Import new language file')),
+    'TR_LANGUAGE_FILE' => tohtml(tr('Language file')),
+    'TR_REBUILD_INDEX' => tohtml(tr('Rebuild languages index'), 'htmlAttr'),
+    'TR_UPLOAD_HELP' => tohtml(tr('Only gettext Machine Object files (MO files) are accepted.'), 'htmlAttr'),
+    'TR_IMPORT' => tohtml(tr('Import'), 'htmlAttr')
 ]);
 
 $eventManager->attach('onGetJsTranslations', function ($e) {
-	/* @var $e \Zend\EventManager\Event */
-	$e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations();
+    /* @var $e \Zend\EventManager\Event */
+    $e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations();
 });
 
 generateNavigation($tpl);
@@ -115,6 +115,6 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
-	'templateEngine' => $tpl
+    'templateEngine' => $tpl
 ]);
 $tpl->prnt();

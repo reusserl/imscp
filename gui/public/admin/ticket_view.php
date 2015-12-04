@@ -37,60 +37,60 @@ require 'module/Core/src/Functions/Tickets.php';
 check_login('admin');
 
 if (!hasTicketSystem()) {
-	redirectTo('index.php');
+    redirectTo('index.php');
 }
 
 if (isset($_GET['ticket_id']) && !empty($_GET['ticket_id'])) {
-	$userId = $_SESSION['user_id'];
-	$ticketId = (int)$_GET['ticket_id'];
-	$status = getTicketStatus($ticketId);
+    $userId = $_SESSION['user_id'];
+    $ticketId = (int)$_GET['ticket_id'];
+    $status = getTicketStatus($ticketId);
 
-	if ($status == 1 || $status == 4) {
-		if (!changeTicketStatus($ticketId, 3)) {
-			redirectTo('ticket_system.php');
-		}
-	}
+    if ($status == 1 || $status == 4) {
+        if (!changeTicketStatus($ticketId, 3)) {
+            redirectTo('ticket_system.php');
+        }
+    }
 
-	if (isset($_POST['uaction'])) {
-		if ($_POST['uaction'] == 'close') {
-			closeTicket($ticketId);
-		} elseif (isset($_POST['user_message'])) {
-			if (empty($_POST['user_message'])) {
-				set_page_message(tr('Please type your message.'), 'error');
-			} else {
-				updateTicket($ticketId, $userId, $_POST['urgency'], $_POST['subject'], $_POST['user_message'], 2, 3);
-			}
-		}
+    if (isset($_POST['uaction'])) {
+        if ($_POST['uaction'] == 'close') {
+            closeTicket($ticketId);
+        } elseif (isset($_POST['user_message'])) {
+            if (empty($_POST['user_message'])) {
+                set_page_message(tr('Please type your message.'), 'error');
+            } else {
+                updateTicket($ticketId, $userId, $_POST['urgency'], $_POST['subject'], $_POST['user_message'], 2, 3);
+            }
+        }
 
-		redirectTo('ticket_system.php');
-	}
+        redirectTo('ticket_system.php');
+    }
 } else {
-	set_page_message(tr('Ticket not found.'), 'error');
-	redirectTo('ticket_system.php');
-	exit;
+    set_page_message(tr('Ticket not found.'), 'error');
+    redirectTo('ticket_system.php');
+    exit;
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
-	'layout' => 'shared/layouts/ui.tpl',
-	'page' => 'admin/ticket_view.tpl',
-	'page_message' => 'layout',
-	'tickets_list' => 'page',
-	'tickets_item' => 'tickets_list'
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'admin/ticket_view.tpl',
+    'page_message' => 'layout',
+    'tickets_list' => 'page',
+    'tickets_item' => 'tickets_list'
 ]);
 $tpl->assign([
-	'TR_PAGE_TITLE' => tr('Admin / Support / View Ticket'),
-	'TR_VIEW_SUPPORT_TICKET' => tr('View Support Ticket'),
-	'TR_TICKET_INFO' => tr('Ticket Information'),
-	'TR_TICKET_URGENCY' => tr('Priority'),
-	'TR_TICKET_SUBJECT' => tr('Subject'),
-	'TR_TICKET_MESSAGES' => tr('Messages'),
-	'TR_TICKET_FROM' => tr('From'),
-	'TR_TICKET_DATE' => tr('Date'),
-	'TR_TICKET_CONTENT' => tr('Message'),
-	'TR_REPLY' => tr('Reply'),
-	'TR_TICKET_NEW_REPLY' => tr('Send new reply'),
-	'TR_TICKET_REPLY' => tr('Send reply')
+    'TR_PAGE_TITLE' => tr('Admin / Support / View Ticket'),
+    'TR_VIEW_SUPPORT_TICKET' => tr('View Support Ticket'),
+    'TR_TICKET_INFO' => tr('Ticket Information'),
+    'TR_TICKET_URGENCY' => tr('Priority'),
+    'TR_TICKET_SUBJECT' => tr('Subject'),
+    'TR_TICKET_MESSAGES' => tr('Messages'),
+    'TR_TICKET_FROM' => tr('From'),
+    'TR_TICKET_DATE' => tr('Date'),
+    'TR_TICKET_CONTENT' => tr('Message'),
+    'TR_REPLY' => tr('Reply'),
+    'TR_TICKET_NEW_REPLY' => tr('Send new reply'),
+    'TR_TICKET_REPLY' => tr('Send reply')
 ]);
 
 generateNavigation($tpl);
@@ -99,7 +99,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
-	'templateEngine' => $tpl
+    'templateEngine' => $tpl
 ]);
 $tpl->prnt();
 

@@ -37,35 +37,35 @@ check_login('admin');
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
-	'layout' => 'shared/layouts/ui.tpl',
-	'page' => 'admin/language.tpl',
-	'page_message' => 'layout',
-	'languages_available' => 'page',
-	'def_language' => 'languages_available'
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'admin/language.tpl',
+    'page_message' => 'layout',
+    'languages_available' => 'page',
+    'def_language' => 'languages_available'
 ]);
 
 $adminCurrentLanguage = $_SESSION['user_def_lang'];
 
 if (!empty($_POST)) {
-	$adminNewLanguage = clean_input($_POST['def_language']);
+    $adminNewLanguage = clean_input($_POST['def_language']);
 
-	if ($adminCurrentLanguage != $adminNewLanguage) {
-		$query = "UPDATE `user_gui_props` SET `lang` = ? WHERE `user_id` = ?";
-		exec_query($query, [$adminNewLanguage, $_SESSION['user_id']]);
-		$_SESSION['user_def_lang'] = $adminNewLanguage;
-		set_page_message(tr('Language successfully updated.'), 'success');
-	} else {
-		set_page_message(tr("Nothing has been changed."), 'info');
-	}
+    if ($adminCurrentLanguage != $adminNewLanguage) {
+        $query = "UPDATE `user_gui_props` SET `lang` = ? WHERE `user_id` = ?";
+        exec_query($query, [$adminNewLanguage, $_SESSION['user_id']]);
+        $_SESSION['user_def_lang'] = $adminNewLanguage;
+        set_page_message(tr('Language successfully updated.'), 'success');
+    } else {
+        set_page_message(tr("Nothing has been changed."), 'info');
+    }
 
-	redirectTo('profile.php');
+    redirectTo('profile.php');
 }
 
 $tpl->assign([
-	'TR_PAGE_TITLE' => tr('Admin / Profile / Language'),
-	'TR_LANGUAGE' => tr('Language'),
-	'TR_CHOOSE_LANGUAGE' => tr('Choose your language'),
-	'TR_UPDATE' => tr('Update')
+    'TR_PAGE_TITLE' => tr('Admin / Profile / Language'),
+    'TR_LANGUAGE' => tr('Language'),
+    'TR_CHOOSE_LANGUAGE' => tr('Choose your language'),
+    'TR_UPDATE' => tr('Update')
 ]);
 
 generateNavigation($tpl);
@@ -75,7 +75,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
-	'templateEngine' => $tpl
+    'templateEngine' => $tpl
 ]);
 $tpl->prnt();
 

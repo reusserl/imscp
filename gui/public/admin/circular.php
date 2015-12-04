@@ -33,30 +33,30 @@
  */
 function admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData)
 {
-	if ($rcptToData['email'] != '') {
-		$senderEmail = encode_idna($senderEmail);
+    if ($rcptToData['email'] != '') {
+        $senderEmail = encode_idna($senderEmail);
 
-		if (!empty($rcptToData['fname']) && !empty($rcptToData['lname'])) {
-			$to = $rcptToData['fname'] . ' ' . $rcptToData['lname'];
-		} elseif (!empty($rcptToData['fname'])) {
-			$to = $rcptToData['fname'];
-		} elseif (!empty($rcptToData['lname'])) {
-			$to = $rcptToData['lname'];
-		} else {
-			$to = $rcptToData['admin_name'];
-		}
+        if (!empty($rcptToData['fname']) && !empty($rcptToData['lname'])) {
+            $to = $rcptToData['fname'] . ' ' . $rcptToData['lname'];
+        } elseif (!empty($rcptToData['fname'])) {
+            $to = $rcptToData['fname'];
+        } elseif (!empty($rcptToData['lname'])) {
+            $to = $rcptToData['lname'];
+        } else {
+            $to = $rcptToData['admin_name'];
+        }
 
-		$from = encode_mime_header($senderName) . " <$senderEmail>";
-		$to = encode_mime_header($to) . " <{$rcptToData['email']}>";
+        $from = encode_mime_header($senderName) . " <$senderEmail>";
+        $to = encode_mime_header($to) . " <{$rcptToData['email']}>";
 
-		$headers = "From: $from\r\n";
-		$headers .= "MIME-Version: 1.0\r\n";
-		$headers .= "Content-Type: text/plain; charset=utf-8\r\n";
-		$headers .= "Content-Transfer-Encoding: 8bit\r\n";
-		$headers .= "X-Mailer: i-MSCP Mailer";
+        $headers = "From: $from\r\n";
+        $headers .= "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/plain; charset=utf-8\r\n";
+        $headers .= "Content-Transfer-Encoding: 8bit\r\n";
+        $headers .= "X-Mailer: i-MSCP Mailer";
 
-		mail($to, encode_mime_header($subject), $body, $headers, "-f $senderEmail");
-	}
+        mail($to, encode_mime_header($subject), $body, $headers, "-f $senderEmail");
+    }
 }
 
 /**
@@ -69,12 +69,12 @@ function admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData
  */
 function admin_sendToAdministrators($senderName, $senderEmail, $subject, $body)
 {
-	if (systemHasManyAdmins()) {
-		$stmt = exec_query('SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'admin');
-		while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
-		}
-	}
+    if (systemHasManyAdmins()) {
+        $stmt = exec_query('SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'admin');
+        while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
+        }
+    }
 }
 
 /**
@@ -87,12 +87,12 @@ function admin_sendToAdministrators($senderName, $senderEmail, $subject, $body)
  */
 function admin_sendToResellers($senderName, $senderEmail, $subject, $body)
 {
-	if (systemHasResellers()) {
-		$stmt = exec_query('SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'reseller');
-		while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
-		}
-	}
+    if (systemHasResellers()) {
+        $stmt = exec_query('SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'reseller');
+        while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
+        }
+    }
 }
 
 /**
@@ -105,12 +105,12 @@ function admin_sendToResellers($senderName, $senderEmail, $subject, $body)
  */
 function admin_sendToCustomers($senderName, $senderEmail, $subject, $body)
 {
-	if (systemHasCustomers()) {
-		$stmt = exec_query('SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'user');
-		while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
-		}
-	}
+    if (systemHasCustomers()) {
+        $stmt = exec_query('SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_type` = ?', 'user');
+        while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            admin_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
+        }
+    }
 }
 
 /**
@@ -124,32 +124,32 @@ function admin_sendToCustomers($senderName, $senderEmail, $subject, $body)
  */
 function admin_isValidCircular($senderName, $senderEmail, $subject, $body)
 {
-	$ret = true;
+    $ret = true;
 
-	if ($senderName == '') {
-		set_page_message(tr('Sender name is missing.'), 'error');
-		$ret = false;
-	}
+    if ($senderName == '') {
+        set_page_message(tr('Sender name is missing.'), 'error');
+        $ret = false;
+    }
 
-	if ($senderEmail == '') {
-		set_page_message(tr('Sender email is missing.'), 'error');
-		$ret = false;
-	} elseif (!chk_email($senderEmail)) {
-		set_page_message(tr("Incorrect email length or syntax."), 'error');
-		$ret = false;
-	}
+    if ($senderEmail == '') {
+        set_page_message(tr('Sender email is missing.'), 'error');
+        $ret = false;
+    } elseif (!chk_email($senderEmail)) {
+        set_page_message(tr("Incorrect email length or syntax."), 'error');
+        $ret = false;
+    }
 
-	if ($subject == '') {
-		set_page_message(tr('Subject is missing.'), 'error');
-		$ret = false;
-	}
+    if ($subject == '') {
+        set_page_message(tr('Subject is missing.'), 'error');
+        $ret = false;
+    }
 
-	if ($body == '') {
-		set_page_message(tr('Body is missing.'), 'error');
-		$ret = false;
-	}
+    if ($body == '') {
+        set_page_message(tr('Body is missing.'), 'error');
+        $ret = false;
+    }
 
-	return $ret;
+    return $ret;
 }
 
 /**
@@ -159,62 +159,62 @@ function admin_isValidCircular($senderName, $senderEmail, $subject, $body)
  */
 function admin_sendCircular()
 {
-	if (
-		isset($_POST['sender_name']) && isset($_POST['sender_email']) && isset($_POST['rcpt_to']) &&
-		isset($_POST['subject']) && isset($_POST['body'])
-	) {
-		$senderName = clean_input($_POST['sender_name']);
-		$senderEmail = clean_input($_POST['sender_email']);
-		$rcptTo = clean_input($_POST['rcpt_to']);
-		$subject = clean_input($_POST['subject'], false);
-		$body = clean_input($_POST['body'], false);
+    if (
+        isset($_POST['sender_name']) && isset($_POST['sender_email']) && isset($_POST['rcpt_to']) &&
+        isset($_POST['subject']) && isset($_POST['body'])
+    ) {
+        $senderName = clean_input($_POST['sender_name']);
+        $senderEmail = clean_input($_POST['sender_email']);
+        $rcptTo = clean_input($_POST['rcpt_to']);
+        $subject = clean_input($_POST['subject'], false);
+        $body = clean_input($_POST['body'], false);
 
-		if (admin_isValidCircular($senderName, $senderEmail, $subject, $body)) {
-			$responses = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-				\iMSCP\Core\Events::onBeforeSendCircular, [
-				'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => $rcptTo, 'subject' => $subject,
-				'body' => $body
-			]);
+        if (admin_isValidCircular($senderName, $senderEmail, $subject, $body)) {
+            $responses = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                \iMSCP\Core\Events::onBeforeSendCircular, [
+                'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => $rcptTo, 'subject' => $subject,
+                'body' => $body
+            ]);
 
-			if (!$responses->stopped()) {
-				if (
-					$rcptTo == 'all_users' || $rcptTo == 'administrators_resellers' ||
-					$rcptTo == 'administrators_customers' || $rcptTo == 'administrators'
-				) {
-					admin_sendToAdministrators($senderName, $senderEmail, $subject, $body);
-				}
+            if (!$responses->stopped()) {
+                if (
+                    $rcptTo == 'all_users' || $rcptTo == 'administrators_resellers' ||
+                    $rcptTo == 'administrators_customers' || $rcptTo == 'administrators'
+                ) {
+                    admin_sendToAdministrators($senderName, $senderEmail, $subject, $body);
+                }
 
-				if (
-					$rcptTo == 'all_users' || $rcptTo == 'administrators_resellers' || $rcptTo == 'resellers_customers'
-					|| $rcptTo == 'resellers'
-				) {
-					admin_sendToResellers($senderName, $senderEmail, $subject, $body);
-				}
+                if (
+                    $rcptTo == 'all_users' || $rcptTo == 'administrators_resellers' || $rcptTo == 'resellers_customers'
+                    || $rcptTo == 'resellers'
+                ) {
+                    admin_sendToResellers($senderName, $senderEmail, $subject, $body);
+                }
 
-				if (
-					$rcptTo == 'all_users' || $rcptTo == 'administrators_customers' || $rcptTo == 'resellers_customers'
-					|| $rcptTo == 'customers'
-				) {
-					admin_sendToCustomers($senderName, $senderEmail, $subject, $body);
-				}
+                if (
+                    $rcptTo == 'all_users' || $rcptTo == 'administrators_customers' || $rcptTo == 'resellers_customers'
+                    || $rcptTo == 'customers'
+                ) {
+                    admin_sendToCustomers($senderName, $senderEmail, $subject, $body);
+                }
 
-				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-					\iMSCP\Core\Events::onAfterSendCircular, [
-					'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => $rcptTo,
-					'subject' => $subject, 'body' => $body
-				]);
+                \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                    \iMSCP\Core\Events::onAfterSendCircular, [
+                    'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => $rcptTo,
+                    'subject' => $subject, 'body' => $body
+                ]);
 
-				set_page_message(tr('Circular successfully sent.'), 'success');
-				write_log('A circular has been sent by admin: ' . tohtml("$senderName <$senderEmail>"), E_USER_NOTICE);
-			}
-		} else {
-			return false;
-		}
-	} else {
-		showBadRequestErrorPage();
-	}
+                set_page_message(tr('Circular successfully sent.'), 'success');
+                write_log('A circular has been sent by admin: ' . tohtml("$senderName <$senderEmail>"), E_USER_NOTICE);
+            }
+        } else {
+            return false;
+        }
+    } else {
+        showBadRequestErrorPage();
+    }
 
-	return true;
+    return true;
 }
 
 /**
@@ -225,84 +225,84 @@ function admin_sendCircular()
  */
 function admin_generatePageData($tpl)
 {
-	$senderName = isset($_POST['sender_name']) ? $_POST['sender_name'] : '';
-	$senderEmail = isset($_POST['sender_email']) ? $_POST['sender_email'] : '';
-	$rcptTo = isset($_POST['rcpt_to']) ? $_POST['rcpt_to'] : '';
-	$subject = isset($_POST['subject']) ? $_POST['subject'] : '';
-	$body = isset($_POST['body']) ? $_POST['body'] : '';
+    $senderName = isset($_POST['sender_name']) ? $_POST['sender_name'] : '';
+    $senderEmail = isset($_POST['sender_email']) ? $_POST['sender_email'] : '';
+    $rcptTo = isset($_POST['rcpt_to']) ? $_POST['rcpt_to'] : '';
+    $subject = isset($_POST['subject']) ? $_POST['subject'] : '';
+    $body = isset($_POST['body']) ? $_POST['body'] : '';
 
-	if ($senderName == '' && $senderEmail == '') {
-		$query = 'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_id` = ?';
-		$stmt = exec_query($query, $_SESSION['user_id']);
-		$data = $stmt->fetch();
+    if ($senderName == '' && $senderEmail == '') {
+        $query = 'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_id` = ?';
+        $stmt = exec_query($query, $_SESSION['user_id']);
+        $data = $stmt->fetch();
 
-		if (!empty($data['fname']) && !empty($data['lname'])) {
-			$senderName = $data['fname'] . ' ' . $data['lname'];
-		} elseif (!empty($data['fname'])) {
-			$senderName = $data['fname'];
-		} elseif (!empty($data['lname'])) {
-			$senderName = $data['lname'];
-		} else {
-			$senderName = $data['admin_name'];
-		}
+        if (!empty($data['fname']) && !empty($data['lname'])) {
+            $senderName = $data['fname'] . ' ' . $data['lname'];
+        } elseif (!empty($data['fname'])) {
+            $senderName = $data['fname'];
+        } elseif (!empty($data['lname'])) {
+            $senderName = $data['lname'];
+        } else {
+            $senderName = $data['admin_name'];
+        }
 
-		if ($data['email'] != '') {
-			$senderEmail = $data['email'];
-		} else {
-			$config = \iMSCP\Core\Application::getInstance()->getConfig();
+        if ($data['email'] != '') {
+            $senderEmail = $data['email'];
+        } else {
+            $config = \iMSCP\Core\Application::getInstance()->getConfig();
 
-			if (isset($config['DEFAULT_ADMIN_ADDRESS']) && $config['DEFAULT_ADMIN_ADDRESS'] != '') {
-				$senderEmail = $config['DEFAULT_ADMIN_ADDRESS'];
-			} else {
-				$senderEmail = 'webmaster@' . $config['BASE_SERVER_VHOST'];
-			}
-		}
-	}
+            if (isset($config['DEFAULT_ADMIN_ADDRESS']) && $config['DEFAULT_ADMIN_ADDRESS'] != '') {
+                $senderEmail = $config['DEFAULT_ADMIN_ADDRESS'];
+            } else {
+                $senderEmail = 'webmaster@' . $config['BASE_SERVER_VHOST'];
+            }
+        }
+    }
 
-	$tpl->assign([
-		'SENDER_NAME' => tohtml($senderName),
-		'SENDER_EMAIL' => tohtml($senderEmail),
-		'SUBJECT' => tohtml($subject),
-		'BODY' => tohtml($body)
-	]);
+    $tpl->assign([
+        'SENDER_NAME' => tohtml($senderName),
+        'SENDER_EMAIL' => tohtml($senderEmail),
+        'SUBJECT' => tohtml($subject),
+        'BODY' => tohtml($body)
+    ]);
 
-	$rcptToOptions = [
-		['all_users', tr('All users')]
-	];
+    $rcptToOptions = [
+        ['all_users', tr('All users')]
+    ];
 
-	if (systemHasManyAdmins() && systemHasResellers()) {
-		$rcptToOptions[] = ['administrators_resellers', tr('Administrators and resellers')];
-	}
+    if (systemHasManyAdmins() && systemHasResellers()) {
+        $rcptToOptions[] = ['administrators_resellers', tr('Administrators and resellers')];
+    }
 
-	if (systemHasManyAdmins() && systemHasCustomers()) {
-		$rcptToOptions[] = ['administrators_customers', tr('Administrators and customers')];
-	}
+    if (systemHasManyAdmins() && systemHasCustomers()) {
+        $rcptToOptions[] = ['administrators_customers', tr('Administrators and customers')];
+    }
 
-	if (systemHasResellers() && systemHasCustomers()) {
-		$rcptToOptions[] = ['resellers_customers', tr('Resellers and customers')];
-	}
+    if (systemHasResellers() && systemHasCustomers()) {
+        $rcptToOptions[] = ['resellers_customers', tr('Resellers and customers')];
+    }
 
-	if (systemHasManyAdmins()) {
-		$rcptToOptions[] = ['administrators', tr('Administrators')];
-	}
+    if (systemHasManyAdmins()) {
+        $rcptToOptions[] = ['administrators', tr('Administrators')];
+    }
 
-	if (systemHasResellers()) {
-		$rcptToOptions[] = ['resellers', tr('Resellers')];
-	}
+    if (systemHasResellers()) {
+        $rcptToOptions[] = ['resellers', tr('Resellers')];
+    }
 
-	if (systemHasCustomers()) {
-		$rcptToOptions[] = ['customers', tr('Customers')];
-	}
+    if (systemHasCustomers()) {
+        $rcptToOptions[] = ['customers', tr('Customers')];
+    }
 
-	foreach ($rcptToOptions as $option) {
-		$tpl->assign([
-			'RCPT_TO' => $option[0],
-			'TR_RCPT_TO' => $option[1],
-			'SELECTED' => ($rcptTo == $option[0]) ? ' selected="selected"' : ''
-		]);
+    foreach ($rcptToOptions as $option) {
+        $tpl->assign([
+            'RCPT_TO' => $option[0],
+            'TR_RCPT_TO' => $option[1],
+            'SELECTED' => ($rcptTo == $option[0]) ? ' selected="selected"' : ''
+        ]);
 
-		$tpl->parse('RCPT_TO_OPTION', '.rcpt_to_option');
-	}
+        $tpl->parse('RCPT_TO_OPTION', '.rcpt_to_option');
+    }
 }
 
 /***********************************************************************************************************************
@@ -316,41 +316,41 @@ require '../../application.php';
 check_login('admin');
 
 if (!systemHasAdminsOrResellersOrCustomers()) {
-	showBadRequestErrorPage();
+    showBadRequestErrorPage();
 }
 
 if (!(!empty($_POST) && admin_sendCircular())) {
-	$tpl = new \iMSCP\Core\Template\TemplateEngine();
-	$tpl->define_dynamic([
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/circular.tpl',
-		'page_message' => 'layout',
-		'rcpt_to_option' => 'page'
-	]);
+    $tpl = new \iMSCP\Core\Template\TemplateEngine();
+    $tpl->define_dynamic([
+        'layout' => 'shared/layouts/ui.tpl',
+        'page' => 'admin/circular.tpl',
+        'page_message' => 'layout',
+        'rcpt_to_option' => 'page'
+    ]);
 
-	$tpl->assign([
-		'TR_PAGE_TITLE' => tr('Admin / Users / Circular'),
-		'TR_CIRCULAR' => tr('Circular'),
-		'TR_SEND_TO' => tr('Send to'),
-		'TR_SUBJECT' => tr('Subject'),
-		'TR_BODY' => tr('Body'),
-		'TR_SENDER_EMAIL' => tr('Sender email'),
-		'TR_SENDER_NAME' => tr('Sender name'),
-		'TR_SEND_CIRCULAR' => tr('Send circular'),
-		'TR_CANCEL' => tr('Cancel')
-	]);
+    $tpl->assign([
+        'TR_PAGE_TITLE' => tr('Admin / Users / Circular'),
+        'TR_CIRCULAR' => tr('Circular'),
+        'TR_SEND_TO' => tr('Send to'),
+        'TR_SUBJECT' => tr('Subject'),
+        'TR_BODY' => tr('Body'),
+        'TR_SENDER_EMAIL' => tr('Sender email'),
+        'TR_SENDER_NAME' => tr('Sender name'),
+        'TR_SEND_CIRCULAR' => tr('Send circular'),
+        'TR_CANCEL' => tr('Cancel')
+    ]);
 
-	generateNavigation($tpl);
-	generatePageMessage($tpl);
-	admin_generatePageData($tpl);
+    generateNavigation($tpl);
+    generatePageMessage($tpl);
+    admin_generatePageData($tpl);
 
-	$tpl->parse('LAYOUT_CONTENT', 'page');
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
-		'templateEngine' => $tpl
-	]);
-	$tpl->prnt();
+    $tpl->parse('LAYOUT_CONTENT', 'page');
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+        'templateEngine' => $tpl
+    ]);
+    $tpl->prnt();
 
-	unsetMessages();
+    unsetMessages();
 } else {
-	redirectTo('manage_users.php');
+    redirectTo('manage_users.php');
 }

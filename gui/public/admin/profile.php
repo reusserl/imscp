@@ -26,19 +26,19 @@
  */
 function admin_generatePage($tpl)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-	$query = "SELECT domain_created from admin where admin_id = ?";
-	$stmt = exec_query($query, (int)$_SESSION['user_id']);
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
-	$tpl->assign([
-		'TR_ACCOUNT_SUMMARY' => tr('Account summary'),
-		'TR_USERNAME' => tr('Username'),
-		'USERNAME' => tohtml($_SESSION['user_logged']),
-		'TR_ACCOUNT_TYPE' => tr('Account type'),
-		'ACCOUNT_TYPE' => $_SESSION['user_type'],
-		'TR_REGISTRATION_DATE' => tr('Registration date'),
-		'REGISTRATION_DATE' => ($row['domain_created'] != 0) ? date($cfg['DATE_FORMAT'], $row['domain_created']) : tr('Unknown')
-	]);
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $query = "SELECT domain_created from admin where admin_id = ?";
+    $stmt = exec_query($query, (int)$_SESSION['user_id']);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $tpl->assign([
+        'TR_ACCOUNT_SUMMARY' => tr('Account summary'),
+        'TR_USERNAME' => tr('Username'),
+        'USERNAME' => tohtml($_SESSION['user_logged']),
+        'TR_ACCOUNT_TYPE' => tr('Account type'),
+        'ACCOUNT_TYPE' => $_SESSION['user_type'],
+        'TR_REGISTRATION_DATE' => tr('Registration date'),
+        'REGISTRATION_DATE' => ($row['domain_created'] != 0) ? date($cfg['DATE_FORMAT'], $row['domain_created']) : tr('Unknown')
+    ]);
 }
 
 /***********************************************************************************************************************
@@ -53,9 +53,9 @@ check_login('admin');
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
-	'layout' => 'shared/layouts/ui.tpl',
-	'page' => 'admin/profile.tpl',
-	'page_message' => 'layout'
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'admin/profile.tpl',
+    'page_message' => 'layout'
 ]);
 
 $tpl->assign('TR_PAGE_TITLE', tr('Admin / Profile / Account Summary'));
@@ -66,7 +66,7 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
-	'templateEngine' => $tpl
+    'templateEngine' => $tpl
 ]);
 $tpl->prnt();
 

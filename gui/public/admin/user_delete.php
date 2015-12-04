@@ -36,103 +36,103 @@
  */
 function admin_deleteUser($userId)
 {
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeDeleteUser, [
-		'userId' => $userId
-	]);
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeDeleteUser, [
+        'userId' => $userId
+    ]);
 
-	$userId = (int)$userId;
+    $userId = (int)$userId;
 
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	/** @var \Doctrine\DBAL\Connection $db */
-	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
+    /** @var \Doctrine\DBAL\Connection $db */
+    $db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
-	$stmt = exec_query(
-		'
-			SELECT
-				a.admin_type, b.logo
-			FROM
-		        admin a
-			LEFT JOIN
-				user_gui_props b ON (b.user_id = a.admin_id)
-			WHERE
-				admin_id = ?
-		',
-		$userId
-	);
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
-	$userType = $row['admin_type'];
+    $stmt = exec_query(
+        '
+            SELECT
+                a.admin_type, b.logo
+            FROM
+                admin a
+            LEFT JOIN
+                user_gui_props b ON (b.user_id = a.admin_id)
+            WHERE
+                admin_id = ?
+        ',
+        $userId
+    );
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $userType = $row['admin_type'];
 
-	if (empty($userType) || $userType == 'user') {
-		showBadRequestErrorPage();
-	}
+    if (empty($userType) || $userType == 'user') {
+        showBadRequestErrorPage();
+    }
 
-	// Users (admins/resellers) common items to delete
-	$itemsToDelete = [
-		'admin' => 'admin_id = ?',
-		'email_tpls' => 'owner_id = ?',
-		'tickets' => 'ticket_from = ? OR ticket_to = ?',
-		'user_gui_props' => 'user_id = ?'
-	];
+    // Users (admins/resellers) common items to delete
+    $itemsToDelete = [
+        'admin' => 'admin_id = ?',
+        'email_tpls' => 'owner_id = ?',
+        'tickets' => 'ticket_from = ? OR ticket_to = ?',
+        'user_gui_props' => 'user_id = ?'
+    ];
 
-	// Note: Admin can also have they own hosting_plans bug must not be considerated
-	// as common item since first admin must be never removed
-	if ($userType == 'reseller') {
-		// Getting custom reseller isp logo if set
-		$resellerLogo = $row['logo'];
+    // Note: Admin can also have they own hosting_plans bug must not be considerated
+    // as common item since first admin must be never removed
+    if ($userType == 'reseller') {
+        // Getting custom reseller isp logo if set
+        $resellerLogo = $row['logo'];
 
-		// Add specific reseller items to remove
-		$itemsToDelete = array_merge(
-			[
-				'hosting_plans' => 'reseller_id = ?',
-				'reseller_props' => 'reseller_id = ?'
-			],
-			$itemsToDelete
-		);
-	}
+        // Add specific reseller items to remove
+        $itemsToDelete = array_merge(
+            [
+                'hosting_plans' => 'reseller_id = ?',
+                'reseller_props' => 'reseller_id = ?'
+            ],
+            $itemsToDelete
+        );
+    }
 
-	// We are using transaction to ensure data consistency and prevent any garbage in
-	// the database. If one query fail, the whole process is reverted.
+    // We are using transaction to ensure data consistency and prevent any garbage in
+    // the database. If one query fail, the whole process is reverted.
 
-	try {
-		// Cleanup database
-		$db->beginTransaction();
+    try {
+        // Cleanup database
+        $db->beginTransaction();
 
-		foreach ($itemsToDelete as $table => $where) {
-			// Build the DELETE statement
-			$query = "DELETE FROM " . quoteIdentifier($table) . (($where) ? " WHERE $where" : '');
-			exec_query($query, array_fill(0, substr_count($where, '?'), $userId));
-		}
+        foreach ($itemsToDelete as $table => $where) {
+            // Build the DELETE statement
+            $query = "DELETE FROM " . quoteIdentifier($table) . (($where) ? " WHERE $where" : '');
+            exec_query($query, array_fill(0, substr_count($where, '?'), $userId));
+        }
 
-		$db->commit();
+        $db->commit();
 
-		// Cleanup files system
+        // Cleanup files system
 
-		// We are safe here. We don't stop the process even if files cannot be removed. That can result in garbages but
-		// the sysadmin can easily delete them through ssh.
+        // We are safe here. We don't stop the process even if files cannot be removed. That can result in garbages but
+        // the sysadmin can easily delete them through ssh.
 
-		// Deleting user logo
-		if (isset($resellerLogo) && !empty($resellerLogo)) {
-			$logoPath = $cfg['GUI_ROOT_DIR'] . '/data/persistent/ispLogos/' . $resellerLogo;
+        // Deleting user logo
+        if (isset($resellerLogo) && !empty($resellerLogo)) {
+            $logoPath = $cfg['GUI_ROOT_DIR'] . '/data/persistent/ispLogos/' . $resellerLogo;
 
-			if (file_exists($logoPath) && @unlink($logoPath) == false) {
-				write_log('Unable to remove user logo ' . $logoPath, E_USER_ERROR);
-			}
-		}
+            if (file_exists($logoPath) && @unlink($logoPath) == false) {
+                write_log('Unable to remove user logo ' . $logoPath, E_USER_ERROR);
+            }
+        }
 
-		$userTr = ($userType == 'reseller') ? tr('Reseller') : tr('Admin');
-		set_page_message(tr('%s account successfully deleted.', $userTr), 'success');
-		write_log($_SESSION['user_logged'] . ": deletes user " . $userId, E_USER_NOTICE);
-	} catch (PDOException $e) {
-		$db->rollBack();
-		throw $e;
-	}
+        $userTr = ($userType == 'reseller') ? tr('Reseller') : tr('Admin');
+        set_page_message(tr('%s account successfully deleted.', $userTr), 'success');
+        write_log($_SESSION['user_logged'] . ": deletes user " . $userId, E_USER_NOTICE);
+    } catch (PDOException $e) {
+        $db->rollBack();
+        throw $e;
+    }
 
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterDeleteUser, [
-		'userId' => $userId
-	]);
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterDeleteUser, [
+        'userId' => $userId
+    ]);
 
-	redirectTo('manage_users.php');
+    redirectTo('manage_users.php');
 }
 
 /**
@@ -143,43 +143,43 @@ function admin_deleteUser($userId)
  */
 function admin_validateUserDeletion($userId)
 {
-	$userId = (int)$userId;
+    $userId = (int)$userId;
 
-	// User is super admin
-	if ($userId == 1) {
-		showBadRequestErrorPage();
-	} else {
-		$stmt = exec_query(
-			"
-				SELECT
-					t1.admin_type, t1.admin_id, COUNT(t2.admin_id) AS customers_count
-				FROM
-					admin AS t1
-				LEFT JOIN
-					admin AS t2 ON (t1.admin_id <> t2.admin_id AND t1.admin_id = t2.created_by AND t2.admin_type <> 'reseller')
-				WHERE
-					t1.admin_id = ?
-			",
-			$userId
-		);
+    // User is super admin
+    if ($userId == 1) {
+        showBadRequestErrorPage();
+    } else {
+        $stmt = exec_query(
+            "
+                SELECT
+                    t1.admin_type, t1.admin_id, COUNT(t2.admin_id) AS customers_count
+                FROM
+                    admin AS t1
+                LEFT JOIN
+                    admin AS t2 ON (t1.admin_id <> t2.admin_id AND t1.admin_id = t2.created_by AND t2.admin_type <> 'reseller')
+                WHERE
+                    t1.admin_id = ?
+            ",
+            $userId
+        );
 
-		// User has not been found or it's a customer
-		if ($stmt->rowCount()) {
-			$row = $stmt->fetch(PDO::FETCH_ASSOC);
+        // User has not been found or it's a customer
+        if ($stmt->rowCount()) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-			if ($row['admin_type'] == 'user') {
-				showBadRequestErrorPage();
-			} elseif ($row['customers_count'] > 0) {
-				set_page_message(tr("You cannot delete a reseller that has customer accounts."), 'error');
-				return false;
-			}
-		} else {
-			showBadRequestErrorPage();
-		}
+            if ($row['admin_type'] == 'user') {
+                showBadRequestErrorPage();
+            } elseif ($row['customers_count'] > 0) {
+                set_page_message(tr("You cannot delete a reseller that has customer accounts."), 'error');
+                return false;
+            }
+        } else {
+            showBadRequestErrorPage();
+        }
 
-	}
+    }
 
-	return true;
+    return true;
 }
 
 /**
@@ -190,198 +190,198 @@ function admin_validateUserDeletion($userId)
  */
 function admin_generateCustomerAcountDeletionValidationPage($userId)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$stmt = exec_query('SELECT admin_name FROM admin WHERE admin_id = ?', $userId);
+    $stmt = exec_query('SELECT admin_name FROM admin WHERE admin_id = ?', $userId);
 
-	if (!$stmt->rowCount()) {
-		showBadRequestErrorPage();
-	}
+    if (!$stmt->rowCount()) {
+        showBadRequestErrorPage();
+    }
 
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
-	$adminName = decode_idna($row['admin_name']);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $adminName = decode_idna($row['admin_name']);
 
-	$tpl = new \iMSCP\Core\Template\TemplateEngine();
-	$tpl->define_dynamic([
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/user_delete.tpl',
-		'page_message' => 'layout',
-		'mail_list' => 'page',
-		'mail_item' => 'mail_list',
-		'ftp_list' => 'page',
-		'ftp_item' => 'ftp_list',
-		'dmn_list' => 'page',
-		'dmn_item' => 'dmn_list',
-		'als_list' => 'page',
-		'als_item' => 'als_list',
-		'sub_list' => 'page',
-		'sub_item' => 'sub_list',
-		'db_list' => 'page',
-		'db_item' => 'db_list'
-	]);
-	$tpl->assign([
-		'TR_PAGE_TITLE' => tr('Admin / Users / Overview / Delete Customer'),
-		'TR_ACCOUNT_SUMMARY' => tr('Customer account summary'),
-		'TR_EMAILS' => tr('Emails'),
-		'TR_FTP_ACCOUNTS' => tr('FTP accounts'),
-		'TR_DOMAINS' => tr('Domains'),
-		'TR_DOMAIN_ALIASES' => tr('Domain aliases'),
-		'TR_SUBDOMAINS' => tr('Subdomains'),
-		'TR_DATABASES' => tr('SQL databases'),
-		'TR_REALLY_WANT_TO_DELETE_CUSTOMER_ACCOUNT' => tr(
-			"Do you really want to delete the entire %s customer account? This operation cannot be undone.",
-			"<strong>$adminName</strong>"
-		),
-		'USER_ID' => $userId,
-		'TR_YES_DELETE_ACCOUNT' => tr('Yes, delete this account.'),
-		'TR_DELETE' => tr('Delete'),
-		'TR_CANCEL' => tr('Cancel')
-	]);
+    $tpl = new \iMSCP\Core\Template\TemplateEngine();
+    $tpl->define_dynamic([
+        'layout' => 'shared/layouts/ui.tpl',
+        'page' => 'admin/user_delete.tpl',
+        'page_message' => 'layout',
+        'mail_list' => 'page',
+        'mail_item' => 'mail_list',
+        'ftp_list' => 'page',
+        'ftp_item' => 'ftp_list',
+        'dmn_list' => 'page',
+        'dmn_item' => 'dmn_list',
+        'als_list' => 'page',
+        'als_item' => 'als_list',
+        'sub_list' => 'page',
+        'sub_item' => 'sub_list',
+        'db_list' => 'page',
+        'db_item' => 'db_list'
+    ]);
+    $tpl->assign([
+        'TR_PAGE_TITLE' => tr('Admin / Users / Overview / Delete Customer'),
+        'TR_ACCOUNT_SUMMARY' => tr('Customer account summary'),
+        'TR_EMAILS' => tr('Emails'),
+        'TR_FTP_ACCOUNTS' => tr('FTP accounts'),
+        'TR_DOMAINS' => tr('Domains'),
+        'TR_DOMAIN_ALIASES' => tr('Domain aliases'),
+        'TR_SUBDOMAINS' => tr('Subdomains'),
+        'TR_DATABASES' => tr('SQL databases'),
+        'TR_REALLY_WANT_TO_DELETE_CUSTOMER_ACCOUNT' => tr(
+            "Do you really want to delete the entire %s customer account? This operation cannot be undone.",
+            "<strong>$adminName</strong>"
+        ),
+        'USER_ID' => $userId,
+        'TR_YES_DELETE_ACCOUNT' => tr('Yes, delete this account.'),
+        'TR_DELETE' => tr('Delete'),
+        'TR_CANCEL' => tr('Cancel')
+    ]);
 
-	generateNavigation($tpl);
+    generateNavigation($tpl);
 
-	// Checks for mail accounts
-	$stmt = exec_query(
-		'
-			SELECT
-				mail_type, mail_addr
-			FROM
-				mail_users
-			WHERE
-				domain_id IN (SELECT domain_id FROM domain WHERE domain_admin_id = ?)
-		',
-		$userId
-	);
+    // Checks for mail accounts
+    $stmt = exec_query(
+        '
+            SELECT
+                mail_type, mail_addr
+            FROM
+                mail_users
+            WHERE
+                domain_id IN (SELECT domain_id FROM domain WHERE domain_admin_id = ?)
+        ',
+        $userId
+    );
 
-	if ($stmt->rowCount()) {
-		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$mailTypes = explode(',', $row['mail_type']);
-			$mailTypesdisplayArray = [];
+    if ($stmt->rowCount()) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $mailTypes = explode(',', $row['mail_type']);
+            $mailTypesdisplayArray = [];
 
-			foreach ($mailTypes as $mtype) {
-				$mailTypesdisplayArray[] = user_trans_mail_type($mtype);
-			}
+            foreach ($mailTypes as $mtype) {
+                $mailTypesdisplayArray[] = user_trans_mail_type($mtype);
+            }
 
-			$mailTypesdisplayTxt = implode(', ', $mailTypesdisplayArray);
-			$addr = explode('@', $row['mail_addr']);
+            $mailTypesdisplayTxt = implode(', ', $mailTypesdisplayArray);
+            $addr = explode('@', $row['mail_addr']);
 
-			$tpl->assign([
-				'MAIL_ADDR' => tohtml($addr[0] . '@' . decode_idna($addr[1])),
-				'MAIL_TYPE' => $mailTypesdisplayTxt
-			]);
+            $tpl->assign([
+                'MAIL_ADDR' => tohtml($addr[0] . '@' . decode_idna($addr[1])),
+                'MAIL_TYPE' => $mailTypesdisplayTxt
+            ]);
 
-			$tpl->parse('MAIL_ITEM', '.mail_item');
-		}
-	} else {
-		$tpl->assign('MAIL_LIST', '');
-	}
+            $tpl->parse('MAIL_ITEM', '.mail_item');
+        }
+    } else {
+        $tpl->assign('MAIL_LIST', '');
+    }
 
-	// Checks for FTP accounts
+    // Checks for FTP accounts
 
-	$stmt = exec_query('SELECT userid, homedir FROM ftp_users WHERE admin_id = ?', $userId);
+    $stmt = exec_query('SELECT userid, homedir FROM ftp_users WHERE admin_id = ?', $userId);
 
-	if ($stmt->rowCount()) {
-		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$username = explode('@', $row['userid']);
-			$tpl->assign([
-				'FTP_USER' => tohtml($username[0] . '@' . decode_idna($username[1])),
-				'FTP_HOME' => tohtml(substr($row['homedir'], strlen($cfg['USER_WEB_DIR'])))
-			]);
-			$tpl->parse('FTP_ITEM', '.ftp_item');
-		}
-	} else {
-		$tpl->assign('FTP_LIST', '');
-	}
+    if ($stmt->rowCount()) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $username = explode('@', $row['userid']);
+            $tpl->assign([
+                'FTP_USER' => tohtml($username[0] . '@' . decode_idna($username[1])),
+                'FTP_HOME' => tohtml(substr($row['homedir'], strlen($cfg['USER_WEB_DIR'])))
+            ]);
+            $tpl->parse('FTP_ITEM', '.ftp_item');
+        }
+    } else {
+        $tpl->assign('FTP_LIST', '');
+    }
 
-	// Check for domains
-	// NOTE: Currently, each customer has only one domain but that will change in near future
+    // Check for domains
+    // NOTE: Currently, each customer has only one domain but that will change in near future
 
-	$stmt = exec_query('SELECT domain_id, domain_name FROM domain WHERE domain_admin_id = ?', $userId);
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = exec_query('SELECT domain_id, domain_name FROM domain WHERE domain_admin_id = ?', $userId);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-	$domainId = $row['domain_id'];
-	$domainName = tohtml(decode_idna($row['domain_name']));
+    $domainId = $row['domain_id'];
+    $domainName = tohtml(decode_idna($row['domain_name']));
 
-	$tpl->assign('DOMAIN_NAME', $domainName);
-	$tpl->parse('DMN_ITEM', '.dmn_item');
+    $tpl->assign('DOMAIN_NAME', $domainName);
+    $tpl->parse('DMN_ITEM', '.dmn_item');
 
-	// Checks for domain's aliases
-	$aliasIds = [];
-	$stmt = exec_query('SELECT alias_id, alias_name, alias_mount FROM domain_aliasses WHERE domain_id = ?', $domainId);
+    // Checks for domain's aliases
+    $aliasIds = [];
+    $stmt = exec_query('SELECT alias_id, alias_name, alias_mount FROM domain_aliasses WHERE domain_id = ?', $domainId);
 
-	if ($stmt->rowCount()) {
-		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$aliasIds[] = $row['alias_id'];
-			$tpl->assign([
-				'ALS_NAME' => tohtml(decode_idna($row['alias_name'])),
-				'ALS_MNT' => tohtml($row['alias_mount'])
-			]);
-			$tpl->parse('ALS_ITEM', '.als_item');
-		}
-	} else {
-		$tpl->assign('ALS_LIST', '');
-	}
+    if ($stmt->rowCount()) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $aliasIds[] = $row['alias_id'];
+            $tpl->assign([
+                'ALS_NAME' => tohtml(decode_idna($row['alias_name'])),
+                'ALS_MNT' => tohtml($row['alias_mount'])
+            ]);
+            $tpl->parse('ALS_ITEM', '.als_item');
+        }
+    } else {
+        $tpl->assign('ALS_LIST', '');
+    }
 
-	// Checks for subdomains
+    // Checks for subdomains
 
-	$stmt = exec_query('SELECT subdomain_name, subdomain_mount FROM subdomain WHERE domain_id = ?', $domainId);
+    $stmt = exec_query('SELECT subdomain_name, subdomain_mount FROM subdomain WHERE domain_id = ?', $domainId);
 
-	if ($stmt->rowCount()) {
-		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$tpl->assign([
-				'SUB_NAME' => tohtml(decode_idna($row['subdomain_name'])),
-				'SUB_MNT' => tohtml($row['subdomain_mount'])
-			]);
-			$tpl->parse('SUB_ITEM', '.sub_item');
-		}
-	} else {
-		$tpl->assign('SUB_LIST', '');
-	}
+    if ($stmt->rowCount()) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $tpl->assign([
+                'SUB_NAME' => tohtml(decode_idna($row['subdomain_name'])),
+                'SUB_MNT' => tohtml($row['subdomain_mount'])
+            ]);
+            $tpl->parse('SUB_ITEM', '.sub_item');
+        }
+    } else {
+        $tpl->assign('SUB_LIST', '');
+    }
 
-	// Checks subdomain_alias
-	if (count($aliasIds)) {
-		$aliasIds = implode(',', $aliasIds);
-		$stmt = execute_query(
-			"SELECT subdomain_alias_name, subdomain_alias_mount FROM subdomain_alias WHERE alias_id IN ($aliasIds)"
-		);
+    // Checks subdomain_alias
+    if (count($aliasIds)) {
+        $aliasIds = implode(',', $aliasIds);
+        $stmt = execute_query(
+            "SELECT subdomain_alias_name, subdomain_alias_mount FROM subdomain_alias WHERE alias_id IN ($aliasIds)"
+        );
 
-		if ($stmt->rowCount()) {
-			while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-				$tpl->assign([
-					'SUB_NAME' => tohtml(decode_idna($row['subdomain_alias_name'])),
-					'SUB_MNT' => tohtml($row['subdomain_alias_mount'])
-				]);
-				$tpl->parse('SUB_ITEM', '.sub_item');
-			}
-		}
-	}
+        if ($stmt->rowCount()) {
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $tpl->assign([
+                    'SUB_NAME' => tohtml(decode_idna($row['subdomain_alias_name'])),
+                    'SUB_MNT' => tohtml($row['subdomain_alias_mount'])
+                ]);
+                $tpl->parse('SUB_ITEM', '.sub_item');
+            }
+        }
+    }
 
-	// Checks for databases and SQL users
+    // Checks for databases and SQL users
 
-	$stmt = exec_query('SELECT sqld_id, sqld_name FROM sql_database WHERE domain_id = ?', $domainId);
+    $stmt = exec_query('SELECT sqld_id, sqld_name FROM sql_database WHERE domain_id = ?', $domainId);
 
-	if ($stmt->rowCount()) {
-		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$stmt2 = exec_query('SELECT sqlu_name FROM sql_user WHERE sqld_id = ?', $row['sqld_id']);
-			$sqlUsersList = [];
+    if ($stmt->rowCount()) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $stmt2 = exec_query('SELECT sqlu_name FROM sql_user WHERE sqld_id = ?', $row['sqld_id']);
+            $sqlUsersList = [];
 
-			if ($stmt2->rowCount()) {
-				while ($row2 = $stmt2->fetch(PDO::FETCH_ASSOC)) {
-					$sqlUsersList[] = $row2['sqlu_name'];
-				}
-			}
+            if ($stmt2->rowCount()) {
+                while ($row2 = $stmt2->fetch(PDO::FETCH_ASSOC)) {
+                    $sqlUsersList[] = $row2['sqlu_name'];
+                }
+            }
 
-			$tpl->assign([
-				'DB_NAME' => tohtml($row['sqld_name']),
-				'DB_USERS' => tohtml(implode(', ', $sqlUsersList))
-			]);
-			$tpl->parse('DB_ITEM', '.db_item');
-		}
-	} else {
-		$tpl->assign('DB_LIST', '');
-	}
+            $tpl->assign([
+                'DB_NAME' => tohtml($row['sqld_name']),
+                'DB_USERS' => tohtml(implode(', ', $sqlUsersList))
+            ]);
+            $tpl->parse('DB_ITEM', '.db_item');
+        }
+    } else {
+        $tpl->assign('DB_LIST', '');
+    }
 
-	return $tpl;
+    return $tpl;
 }
 
 /***********************************************************************************************************************
@@ -395,46 +395,46 @@ require '../../application.php';
 check_login('admin');
 
 if (isset($_GET['delete_id']) && !empty($_GET['delete_id'])) { # admin/reseller deletion
-	if (admin_validateUserDeletion($_GET['delete_id'])) {
-		admin_deleteUser($_GET['delete_id']);
-	}
+    if (admin_validateUserDeletion($_GET['delete_id'])) {
+        admin_deleteUser($_GET['delete_id']);
+    }
 
-	redirectTo('manage_users.php');
+    redirectTo('manage_users.php');
 
 } elseif (isset($_GET['user_id'])) { # customer deletion validation page
-	$tpl = admin_generateCustomerAcountDeletionValidationPage($_GET['user_id']);
+    $tpl = admin_generateCustomerAcountDeletionValidationPage($_GET['user_id']);
 } elseif (isset($_POST['user_id']) && isset($_POST['delete']) && $_POST['delete'] == 1) { # Customer deletion
-	$userId = clean_input($_POST['user_id']);
+    $userId = clean_input($_POST['user_id']);
 
-	try {
-		if (!deleteCustomer($userId)) {
-			showBadRequestErrorPage();
-		}
+    try {
+        if (!deleteCustomer($userId)) {
+            showBadRequestErrorPage();
+        }
 
-		set_page_message(tr('Customer account successfully scheduled for deletion.'), 'success');
-		write_log(sprintf('%s scheduled deletion of the customer account with ID %d', $_SESSION['user_logged'], $userId), E_USER_NOTICE);
-	} catch (Exception $e) {
-		set_page_message(tr('Unable to schedule deletion of the customer account. Please consult admin logs or your mail for more information.'), 'error');
-		write_log(sprintf("System was unable to schedule deletion of customer account with ID %s. Message was: %s.", $userId, $e->getMessage()), E_USER_ERROR);
-	}
+        set_page_message(tr('Customer account successfully scheduled for deletion.'), 'success');
+        write_log(sprintf('%s scheduled deletion of the customer account with ID %d', $_SESSION['user_logged'], $userId), E_USER_NOTICE);
+    } catch (Exception $e) {
+        set_page_message(tr('Unable to schedule deletion of the customer account. Please consult admin logs or your mail for more information.'), 'error');
+        write_log(sprintf("System was unable to schedule deletion of customer account with ID %s. Message was: %s.", $userId, $e->getMessage()), E_USER_ERROR);
+    }
 
-	redirectTo('manage_users.php');
+    redirectTo('manage_users.php');
 } else {
-	if (isset($_GET['delete'])) {
-		showBadRequestErrorPage();
-	} else {
-		set_page_message(tr('You must confirm customer account deletion.'), 'error');
-		redirectTo('user_delete.php?user_id=' . intval($_POST['user_id']));
-	}
+    if (isset($_GET['delete'])) {
+        showBadRequestErrorPage();
+    } else {
+        set_page_message(tr('You must confirm customer account deletion.'), 'error');
+        redirectTo('user_delete.php?user_id=' . intval($_POST['user_id']));
+    }
 
-	redirectTo('manage_users.php');
+    redirectTo('manage_users.php');
 }
 
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
-	'templateEngine' => $tpl
+    'templateEngine' => $tpl
 ]);
 $tpl->prnt();
 

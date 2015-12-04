@@ -37,51 +37,51 @@
  */
 function admin_generatePage($tpl)
 {
-	$query = "
-			SELECT
-				`t1`.`id`, `t1`.`name`, `t1`.`props`, `t1`.`status`
-			FROM
-				`hosting_plans` AS `t1`
-			LEFT JOIN
-				`admin` AS `t2` ON(`t2`.`admin_id` = `t1`.`reseller_id`)
-			WHERE
-				`t2`.`admin_type` = ?
-			ORDER BY
-				`t1`.`id`
-		";
-	$stmt = exec_query($query, 'admin');
+    $query = "
+            SELECT
+                `t1`.`id`, `t1`.`name`, `t1`.`props`, `t1`.`status`
+            FROM
+                `hosting_plans` AS `t1`
+            LEFT JOIN
+                `admin` AS `t2` ON(`t2`.`admin_id` = `t1`.`reseller_id`)
+            WHERE
+                `t2`.`admin_type` = ?
+            ORDER BY
+                `t1`.`id`
+        ";
+    $stmt = exec_query($query, 'admin');
 
-	if (!$stmt->rowCount()) {
-		$tpl->assign([
-			'HOSTING_PLANS_JS' => '',
-			'HOSTING_PLANS' => ''
-		]);
+    if (!$stmt->rowCount()) {
+        $tpl->assign([
+            'HOSTING_PLANS_JS' => '',
+            'HOSTING_PLANS' => ''
+        ]);
 
-		set_page_message(tr("No hosting plan available."), 'static_info');
-	} else {
-		$tpl->assign([
-			'TR_NUMBER' => tr('No.'),
-			'TR_NAME' => tr('Name'),
-			'TR_STATUS' => tr('Status'),
-			'TR_ACTIONS' => tr('Actions'),
-			'TR_EDIT' => tr('Edit'),
-			'TR_DELETE' => tr('Delete'),
-			'TR_MESSAGE_DELETE' => tr('Are you sure you want to delete the %s hosting plan?', '%s')
-		]);
+        set_page_message(tr("No hosting plan available."), 'static_info');
+    } else {
+        $tpl->assign([
+            'TR_NUMBER' => tr('No.'),
+            'TR_NAME' => tr('Name'),
+            'TR_STATUS' => tr('Status'),
+            'TR_ACTIONS' => tr('Actions'),
+            'TR_EDIT' => tr('Edit'),
+            'TR_DELETE' => tr('Delete'),
+            'TR_MESSAGE_DELETE' => tr('Are you sure you want to delete the %s hosting plan?', '%s')
+        ]);
 
-		$i = 1;
+        $i = 1;
 
-		while ($data = $stmt->fetch()) {
-			$tpl->assign([
-				'NUMBER' => $i++,
-				'NAME' => tohtml($data['name']),
-				'STATUS' => ($data['status']) ? tr('Available') : tr('Unavailable'),
-				'ID' => $data['id'],
-			]);
+        while ($data = $stmt->fetch()) {
+            $tpl->assign([
+                'NUMBER' => $i++,
+                'NAME' => tohtml($data['name']),
+                'STATUS' => ($data['status']) ? tr('Available') : tr('Unavailable'),
+                'ID' => $data['id'],
+            ]);
 
-			$tpl->parse('HOSTING_PLAN', '.hosting_plan');
-		}
-	}
+            $tpl->parse('HOSTING_PLAN', '.hosting_plan');
+        }
+    }
 }
 
 /***********************************************************************************************************************
@@ -97,28 +97,28 @@ check_login('admin');
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if ($cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
-	$tpl = new \iMSCP\Core\Template\TemplateEngine();
-	$tpl->define_dynamic([
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'admin/hosting_plan.tpl',
-		'page_message' => 'layout',
-		'hosting_plans' => 'page',
-		'hosting_plan' => 'hosting_plans'
-	]);
+    $tpl = new \iMSCP\Core\Template\TemplateEngine();
+    $tpl->define_dynamic([
+        'layout' => 'shared/layouts/ui.tpl',
+        'page' => 'admin/hosting_plan.tpl',
+        'page_message' => 'layout',
+        'hosting_plans' => 'page',
+        'hosting_plan' => 'hosting_plans'
+    ]);
 
-	$tpl->assign('TR_PAGE_TITLE', tr('Admin / Hosting Plans / Overview'));
+    $tpl->assign('TR_PAGE_TITLE', tr('Admin / Hosting Plans / Overview'));
 
-	generateNavigation($tpl);
-	admin_generatePage($tpl);
-	generatePageMessage($tpl);
+    generateNavigation($tpl);
+    admin_generatePage($tpl);
+    generatePageMessage($tpl);
 
-	$tpl->parse('LAYOUT_CONTENT', 'page');
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
-		'templateEngine' => $tpl
-	]);
-	$tpl->prnt();
+    $tpl->parse('LAYOUT_CONTENT', 'page');
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+        'templateEngine' => $tpl
+    ]);
+    $tpl->prnt();
 
-	unsetMessages();
+    unsetMessages();
 } else {
-	showBadRequestErrorPage();
+    showBadRequestErrorPage();
 }

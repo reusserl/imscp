@@ -28,16 +28,16 @@ require '../../application.php';
 check_login('admin');
 
 if (is_xhr()) {
-	/** @var \iMSCP\ApsStandard\Controller\ApsPackageController $controller */
-	$controller = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('ApsPackageController');
-	$controller->handleRequest();
+    /** @var \iMSCP\ApsStandard\Controller\ApsPackageController $controller */
+    $controller = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('ApsPackageController');
+    $controller->handleRequest();
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
-	'layout' => 'shared/layouts/ui.tpl',
-	'page' => 'assets/angular/aps-standard/aps-package/aps-packages.tpl',
-	'page_message' => 'layout'
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'assets/angular/aps-standard/aps-package/aps-packages.tpl',
+    'page_message' => 'layout'
 ]);
 $tpl->assign(['TR_PAGE_TITLE' => tohtml(tr('Admin / APS Standard / Packages'), 'htmlAttr')]);
 
@@ -46,6 +46,6 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
-	'templateEngine' => $tpl
+    'templateEngine' => $tpl
 ]);
 $tpl->prnt();

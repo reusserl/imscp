@@ -37,24 +37,24 @@ check_login('admin');
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
-	'layout' => 'shared/layouts/ui.tpl',
-	'page' => 'admin/server_status.tpl',
-	'page_message' => 'layout',
-	'service_status' => 'page'
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'admin/server_status.tpl',
+    'page_message' => 'layout',
+    'service_status' => 'page'
 ]);
 
 $tpl->assign([
-	'TR_PAGE_TITLE' => tr('Admin / General / Services Status'),
-	'TR_SERVICE' => tr('Service Name'),
-	'TR_IP' => tr('IP Address'),
-	'TR_PORT' => tr('Port'),
-	'TR_STATUS' => tr('Status'),
-	'TR_SERVER_STATUS' => tr('Server status')
+    'TR_PAGE_TITLE' => tr('Admin / General / Services Status'),
+    'TR_SERVICE' => tr('Service Name'),
+    'TR_IP' => tr('IP Address'),
+    'TR_PORT' => tr('Port'),
+    'TR_STATUS' => tr('Status'),
+    'TR_SERVER_STATUS' => tr('Server status')
 ]);
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->attach('onGetJsTranslations', function ($e) {
-	/** @var $e \Zend\EventManager\Event */
-	$e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations(false);
+    /** @var $e \Zend\EventManager\Event */
+    $e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations(false);
 });
 
 generateNavigation($tpl);
@@ -65,22 +65,22 @@ $down = tr('DOWN');
 $services = new \iMSCP\Core\SystemServices();
 
 foreach ($services as $service) {
-	if ($services->isVisible()) {
-		$serviceState = $services->isRunning();
-		$ip = $services->getIp();
-		$tpl->assign([
-			'SERVICE' => tohtml($services->getName()),
-			'IP' => ($ip === '0.0.0.0') ? tr('Any') : tohtml($ip),
-			'PORT' => tohtml($services->getPort()),
-			'STATUS' => $serviceState ? "<b>$running</b>" : $down,
-			'CLASS' => $serviceState ? 'up' : 'down'
-		]);
-		$tpl->parse('SERVICE_STATUS', '.service_status');
-	}
+    if ($services->isVisible()) {
+        $serviceState = $services->isRunning();
+        $ip = $services->getIp();
+        $tpl->assign([
+            'SERVICE' => tohtml($services->getName()),
+            'IP' => ($ip === '0.0.0.0') ? tr('Any') : tohtml($ip),
+            'PORT' => tohtml($services->getPort()),
+            'STATUS' => $serviceState ? "<b>$running</b>" : $down,
+            'CLASS' => $serviceState ? 'up' : 'down'
+        ]);
+        $tpl->parse('SERVICE_STATUS', '.service_status');
+    }
 }
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
-	'templateEngine' => $tpl
+    'templateEngine' => $tpl
 ]);
 $tpl->prnt();
