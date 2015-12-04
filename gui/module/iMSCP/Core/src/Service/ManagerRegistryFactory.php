@@ -30,15 +30,15 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class ManagerRegistryFactory implements FactoryInterface
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
-	{
-		// Hard coded for now. Will be configurable using configuration service when ready.
-		return new ManagerRegistry(
-			'doctrine', ['default' => 'default_connection'], ['default' => 'default_manager'], 'default', 'default',
-			'Doctrine\Common\Persistence\Proxy'
-		);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        // Hard coded for now. Will be configurable using configuration service when ready.
+        return new ManagerRegistry(
+            'doctrine', ['default' => 'default_connection'], ['default' => 'default_manager'], 'default', 'default',
+            'Doctrine\Common\Persistence\Proxy'
+        );
+    }
 }

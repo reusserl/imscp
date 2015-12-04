@@ -36,23 +36,23 @@
  */
 function get_domain_running_sub_cnt($domain_id)
 {
-	$stmt1 = exec_query('SELECT COUNT(*) AS cnt FROM subdomain WHERE domain_id = ?', $domain_id);
-	$row1 = $stmt1->fetch(PDO::FETCH_ASSOC);
+    $stmt1 = exec_query('SELECT COUNT(*) AS cnt FROM subdomain WHERE domain_id = ?', $domain_id);
+    $row1 = $stmt1->fetch(PDO::FETCH_ASSOC);
 
-	$stmt2 = exec_query(
-		'
-			SELECT
-				COUNT(subdomain_alias_id) AS cnt
-			FROM
-				subdomain_alias
-			WHERE
-				alias_id IN (SELECT alias_id FROM domain_aliasses WHERE domain_id = ?)
-		',
-		$domain_id
-	);
-	$row2 = $stmt2->fetch(PDO::FETCH_ASSOC);
+    $stmt2 = exec_query(
+        '
+            SELECT
+                COUNT(subdomain_alias_id) AS cnt
+            FROM
+                subdomain_alias
+            WHERE
+                alias_id IN (SELECT alias_id FROM domain_aliasses WHERE domain_id = ?)
+        ',
+        $domain_id
+    );
+    $row2 = $stmt2->fetch(PDO::FETCH_ASSOC);
 
-	return $row1['cnt'] + $row2['cnt'];
+    return $row1['cnt'] + $row2['cnt'];
 }
 
 /**
@@ -63,13 +63,13 @@ function get_domain_running_sub_cnt($domain_id)
  */
 function get_domain_running_als_cnt($domain_id)
 {
-	$stmt = exec_query(
-		'SELECT COUNT(alias_id) AS cnt FROM domain_aliasses WHERE domain_id = ? AND alias_status != ?',
-		array($domain_id, 'ordered')
-	);
+    $stmt = exec_query(
+        'SELECT COUNT(alias_id) AS cnt FROM domain_aliasses WHERE domain_id = ? AND alias_status != ?',
+        array($domain_id, 'ordered')
+    );
 
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
-	return $row['cnt'];
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row['cnt'];
 }
 
 /**
@@ -81,52 +81,52 @@ function get_domain_running_als_cnt($domain_id)
  */
 function get_domain_running_mail_acc_cnt($domainId)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$query = "
-		SELECT
-			COUNT(mail_id) AS cnt
-		FROM
-			mail_users
-		WHERE
-			mail_type RLIKE ?
-		AND
-			mail_type NOT LIKE ?
-		AND
-			domain_id = ?
-	";
+    $query = "
+        SELECT
+            COUNT(mail_id) AS cnt
+        FROM
+            mail_users
+        WHERE
+            mail_type RLIKE ?
+        AND
+            mail_type NOT LIKE ?
+        AND
+            domain_id = ?
+    ";
 
-	if ($cfg['COUNT_DEFAULT_EMAIL_ADDRESSES'] == 0) {
-		$query .=
-			"
-				AND
-					mail_acc != 'abuse'
-				AND
-					mail_acc != 'postmaster'
-				AND
-					mail_acc != 'webmaster'
-			";
-	}
+    if ($cfg['COUNT_DEFAULT_EMAIL_ADDRESSES'] == 0) {
+        $query .=
+            "
+                AND
+                    mail_acc != 'abuse'
+                AND
+                    mail_acc != 'postmaster'
+                AND
+                    mail_acc != 'webmaster'
+            ";
+    }
 
-	$stmt = exec_query($query, array('normal_', 'normal_catchall', $domainId));
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
-	$dmnMailAcc = $row['cnt'];
+    $stmt = exec_query($query, array('normal_', 'normal_catchall', $domainId));
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $dmnMailAcc = $row['cnt'];
 
-	$stmt = exec_query($query, array('alias_', 'alias_catchall', $domainId));
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
-	$alsMailAcc = $row['cnt'];
+    $stmt = exec_query($query, array('alias_', 'alias_catchall', $domainId));
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $alsMailAcc = $row['cnt'];
 
-	$stmt = exec_query($query, array('subdom_', 'subdom_catchall', $domainId));
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
-	$subMailAcc = $row['cnt'];
+    $stmt = exec_query($query, array('subdom_', 'subdom_catchall', $domainId));
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $subMailAcc = $row['cnt'];
 
-	$stmt = exec_query($query, array('alssub_', 'alssub_catchall', $domainId));
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
-	$alssubMailAcc = $row['cnt'];
+    $stmt = exec_query($query, array('alssub_', 'alssub_catchall', $domainId));
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $alssubMailAcc = $row['cnt'];
 
-	return array(
-		$dmnMailAcc + $alsMailAcc + $subMailAcc + $alssubMailAcc, $dmnMailAcc, $alsMailAcc, $subMailAcc, $alssubMailAcc
-	);
+    return array(
+        $dmnMailAcc + $alsMailAcc + $subMailAcc + $alssubMailAcc, $dmnMailAcc, $alsMailAcc, $subMailAcc, $alssubMailAcc
+    );
 }
 
 /**
@@ -137,9 +137,9 @@ function get_domain_running_mail_acc_cnt($domainId)
  */
 function get_customer_running_ftp_acc_cnt($customerId)
 {
-	$stmt = exec_query('SELECT COUNT(userid) AS cnt FROM ftp_users WHERE admin_id = ?', $customerId);
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
-	return $row['cnt'];
+    $stmt = exec_query('SELECT COUNT(userid) AS cnt FROM ftp_users WHERE admin_id = ?', $customerId);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row['cnt'];
 }
 
 /**
@@ -150,9 +150,9 @@ function get_customer_running_ftp_acc_cnt($customerId)
  */
 function get_domain_running_sqld_acc_cnt($domainId)
 {
-	$stmt = exec_query('SELECT COUNT(*) AS cnt FROM sql_database WHERE domain_id = ?', $domainId);
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
-	return $row['cnt'];
+    $stmt = exec_query('SELECT COUNT(*) AS cnt FROM sql_database WHERE domain_id = ?', $domainId);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row['cnt'];
 }
 
 /**
@@ -163,12 +163,12 @@ function get_domain_running_sqld_acc_cnt($domainId)
  */
 function get_domain_running_sqlu_acc_cnt($domainId)
 {
-	$stmt = exec_query(
-		'SELECT DISTINCT sqlu_name FROM sql_user INNER JOIN sql_database USING(sqld_id) WHERE domain_id = ?',
-		$domainId
-	);
+    $stmt = exec_query(
+        'SELECT DISTINCT sqlu_name FROM sql_user INNER JOIN sql_database USING(sqld_id) WHERE domain_id = ?',
+        $domainId
+    );
 
-	return $stmt->rowCount();
+    return $stmt->rowCount();
 }
 
 /**
@@ -179,7 +179,7 @@ function get_domain_running_sqlu_acc_cnt($domainId)
  */
 function get_domain_running_sql_acc_cnt($domainId)
 {
-	return array(get_domain_running_sqld_acc_cnt($domainId), get_domain_running_sqlu_acc_cnt($domainId));
+    return array(get_domain_running_sqld_acc_cnt($domainId), get_domain_running_sqlu_acc_cnt($domainId));
 }
 
 /**
@@ -190,18 +190,18 @@ function get_domain_running_sql_acc_cnt($domainId)
  */
 function get_domain_running_props_cnt($domainId)
 {
-	$subCount = get_domain_running_sub_cnt($domainId);
-	$alsCount = get_domain_running_als_cnt($domainId);
+    $subCount = get_domain_running_sub_cnt($domainId);
+    $alsCount = get_domain_running_als_cnt($domainId);
 
-	list($mailAccCount) = get_domain_running_mail_acc_cnt($domainId);
+    list($mailAccCount) = get_domain_running_mail_acc_cnt($domainId);
 
-	// Transitional query - Will be removed asap
-	$stmt = exec_query('SELECT domain_admin_id FROM domain WHERE domain_id = ?', $domainId);
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
-	$ftpAccCount = get_customer_running_ftp_acc_cnt($row['domain_admin_id']);
-	list($sqlDbCount, $sqlUserCount) = get_domain_running_sql_acc_cnt($domainId);
+    // Transitional query - Will be removed asap
+    $stmt = exec_query('SELECT domain_admin_id FROM domain WHERE domain_id = ?', $domainId);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $ftpAccCount = get_customer_running_ftp_acc_cnt($row['domain_admin_id']);
+    list($sqlDbCount, $sqlUserCount) = get_domain_running_sql_acc_cnt($domainId);
 
-	return array($subCount, $alsCount, $mailAccCount, $ftpAccCount, $sqlDbCount, $sqlUserCount);
+    return array($subCount, $alsCount, $mailAccCount, $ftpAccCount, $sqlDbCount, $sqlUserCount);
 }
 
 /**
@@ -212,29 +212,29 @@ function get_domain_running_props_cnt($domainId)
  */
 function user_trans_mail_type($mail_type)
 {
-	if ($mail_type === MT_NORMAL_MAIL) {
-		return tr('Domain mail');
-	} else if ($mail_type === MT_NORMAL_FORWARD) {
-		return tr('Email forward');
-	} else if ($mail_type === MT_ALIAS_MAIL) {
-		return tr('Alias mail');
-	} else if ($mail_type === MT_ALIAS_FORWARD) {
-		return tr('Alias forward');
-	} else if ($mail_type === MT_SUBDOM_MAIL) {
-		return tr('Subdomain mail');
-	} else if ($mail_type === MT_SUBDOM_FORWARD) {
-		return tr('Subdomain forward');
-	} else if ($mail_type === MT_ALSSUB_MAIL) {
-		return tr('Alias subdomain mail');
-	} else if ($mail_type === MT_ALSSUB_FORWARD) {
-		return tr('Alias subdomain forward');
-	} else if ($mail_type === MT_NORMAL_CATCHALL) {
-		return tr('Domain mail');
-	} else if ($mail_type === MT_ALIAS_CATCHALL) {
-		return tr('Domain mail');
-	} else {
-		return tr('Unknown type.');
-	}
+    if ($mail_type === MT_NORMAL_MAIL) {
+        return tr('Domain mail');
+    } else if ($mail_type === MT_NORMAL_FORWARD) {
+        return tr('Email forward');
+    } else if ($mail_type === MT_ALIAS_MAIL) {
+        return tr('Alias mail');
+    } else if ($mail_type === MT_ALIAS_FORWARD) {
+        return tr('Alias forward');
+    } else if ($mail_type === MT_SUBDOM_MAIL) {
+        return tr('Subdomain mail');
+    } else if ($mail_type === MT_SUBDOM_FORWARD) {
+        return tr('Subdomain forward');
+    } else if ($mail_type === MT_ALSSUB_MAIL) {
+        return tr('Alias subdomain mail');
+    } else if ($mail_type === MT_ALSSUB_FORWARD) {
+        return tr('Alias subdomain forward');
+    } else if ($mail_type === MT_NORMAL_CATCHALL) {
+        return tr('Domain mail');
+    } else if ($mail_type === MT_ALIAS_CATCHALL) {
+        return tr('Domain mail');
+    } else {
+        return tr('Unknown type.');
+    }
 }
 
 /**
@@ -245,7 +245,7 @@ function user_trans_mail_type($mail_type)
  */
 function check_user_sql_perms($sqlUserId)
 {
-	return (who_owns_this($sqlUserId, 'sqlu_id') == $_SESSION['user_id']);
+    return (who_owns_this($sqlUserId, 'sqlu_id') == $_SESSION['user_id']);
 }
 
 /**
@@ -257,16 +257,16 @@ function check_user_sql_perms($sqlUserId)
  */
 function get_gender_by_code($code, $nullOnBad = false)
 {
-	switch (strtolower($code)) {
-		case 'm':
-		case 'M':
-			return tr('Male');
-		case 'f':
-		case 'F':
-			return tr('Female');
-		default:
-			return (!$nullOnBad) ? tr('Unknown') : null;
-	}
+    switch (strtolower($code)) {
+        case 'm':
+        case 'M':
+            return tr('Male');
+        case 'f':
+        case 'F':
+            return tr('Female');
+        default:
+            return (!$nullOnBad) ? tr('Unknown') : null;
+    }
 }
 
 /**
@@ -278,71 +278,71 @@ function get_gender_by_code($code, $nullOnBad = false)
  */
 function customerHasFeature($featureNames, $forceReload = false)
 {
-	static $availableFeatures = null;
-	static $debug = false;
+    static $availableFeatures = null;
+    static $debug = false;
 
-	if (null === $availableFeatures || $forceReload) {
-		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-		$debug = (bool)$cfg['DEBUG'];
-		$dmnProps = get_domain_default_props($_SESSION['user_id']);
+    if (null === $availableFeatures || $forceReload) {
+        $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+        $debug = (bool)$cfg['DEBUG'];
+        $dmnProps = get_domain_default_props($_SESSION['user_id']);
 
-		$availableFeatures = array(
-			/*'domain' => ($dmnProps['domain_alias_limit'] != '-1'
-				|| $dmnProps['domain_subd_limit'] != '-1'
-				|| $dmnProps['domain_dns'] == 'yes'
-				|| $dmnProps['phpini_perm_system'] == 'yes'
-				|| $cfg['ENABLE_SSL']) ? true : false,
-			*/
-			'external_mail' => ($dmnProps['domain_external_mail'] == 'yes') ? true : false,
-			'php' => ($dmnProps['domain_php'] == 'yes') ? true : false,
-			'php_editor' => ($dmnProps['phpini_perm_system'] == 'yes' &&
-				($dmnProps['phpini_perm_allow_url_fopen'] == 'yes'
-					|| $dmnProps['phpini_perm_display_errors'] == 'yes'
-					|| in_array($dmnProps['phpini_perm_disable_functions'], array('yes', 'exec')))) ? true : false,
-			'cgi' => ($dmnProps['domain_cgi'] == 'yes') ? true : false,
-			'ftp' => ($dmnProps['domain_ftpacc_limit'] != '-1') ? true : false,
-			'sql' => ($dmnProps['domain_sqld_limit'] != '-1') ? true : false,
-			'mail' => ($dmnProps['domain_mailacc_limit'] != '-1') ? true : false,
-			'subdomains' => ($dmnProps['domain_subd_limit'] != '-1') ? true : false,
-			'domain_aliases' => ($dmnProps['domain_alias_limit'] != '-1') ? true : false,
-			'custom_dns_records' =>
-				($dmnProps['domain_dns'] != 'no' && $cfg['NAMED_SERVER'] != 'external_server') ? true : false,
-			'aps_standard' => ($dmnProps['aps_standard'] == 'yes') ? true : false,
-			'webstats' => ($cfg['WEBSTATS_PACKAGES'] != 'No') ? true : false,
-			'backup' => ($cfg['BACKUP_DOMAINS'] != 'no' && $dmnProps['allowbackup'] != '') ? true : false,
-			'protected_areas' => true,
-			'custom_error_pages' => true,
-			'ssl' => ($cfg['ENABLE_SSL']) ? true : false
-		);
+        $availableFeatures = array(
+            /*'domain' => ($dmnProps['domain_alias_limit'] != '-1'
+                || $dmnProps['domain_subd_limit'] != '-1'
+                || $dmnProps['domain_dns'] == 'yes'
+                || $dmnProps['phpini_perm_system'] == 'yes'
+                || $cfg['ENABLE_SSL']) ? true : false,
+            */
+            'external_mail' => ($dmnProps['domain_external_mail'] == 'yes') ? true : false,
+            'php' => ($dmnProps['domain_php'] == 'yes') ? true : false,
+            'php_editor' => ($dmnProps['phpini_perm_system'] == 'yes' &&
+                ($dmnProps['phpini_perm_allow_url_fopen'] == 'yes'
+                    || $dmnProps['phpini_perm_display_errors'] == 'yes'
+                    || in_array($dmnProps['phpini_perm_disable_functions'], array('yes', 'exec')))) ? true : false,
+            'cgi' => ($dmnProps['domain_cgi'] == 'yes') ? true : false,
+            'ftp' => ($dmnProps['domain_ftpacc_limit'] != '-1') ? true : false,
+            'sql' => ($dmnProps['domain_sqld_limit'] != '-1') ? true : false,
+            'mail' => ($dmnProps['domain_mailacc_limit'] != '-1') ? true : false,
+            'subdomains' => ($dmnProps['domain_subd_limit'] != '-1') ? true : false,
+            'domain_aliases' => ($dmnProps['domain_alias_limit'] != '-1') ? true : false,
+            'custom_dns_records' =>
+                ($dmnProps['domain_dns'] != 'no' && $cfg['NAMED_SERVER'] != 'external_server') ? true : false,
+            'aps_standard' => ($dmnProps['aps_standard'] == 'yes') ? true : false,
+            'webstats' => ($cfg['WEBSTATS_PACKAGES'] != 'No') ? true : false,
+            'backup' => ($cfg['BACKUP_DOMAINS'] != 'no' && $dmnProps['allowbackup'] != '') ? true : false,
+            'protected_areas' => true,
+            'custom_error_pages' => true,
+            'ssl' => ($cfg['ENABLE_SSL']) ? true : false
+        );
 
-		if (($cfg['IMSCP_SUPPORT_SYSTEM'])) {
-			$stmt = exec_query(
-				'SELECT support_system FROM reseller_props WHERE reseller_id = ?', $_SESSION['user_created_by']
-			);
-			$row = $stmt->fetch(PDO::FETCH_ASSOC);
-			$availableFeatures['support'] = ($row['support_system'] == 'yes') ? true : false;
-		} else {
-			$availableFeatures['support'] = false;
-		}
-	}
+        if (($cfg['IMSCP_SUPPORT_SYSTEM'])) {
+            $stmt = exec_query(
+                'SELECT support_system FROM reseller_props WHERE reseller_id = ?', $_SESSION['user_created_by']
+            );
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $availableFeatures['support'] = ($row['support_system'] == 'yes') ? true : false;
+        } else {
+            $availableFeatures['support'] = false;
+        }
+    }
 
-	$canAccess = true;
-	foreach ((array)$featureNames as $featureName) {
-		$featureName = strtolower($featureName);
+    $canAccess = true;
+    foreach ((array)$featureNames as $featureName) {
+        $featureName = strtolower($featureName);
 
-		if ($debug && !array_key_exists($featureName, $availableFeatures)) {
-			throw new InvalidArgumentException(
-				sprintf("Feature %s is not known by the customerHasFeature() function.", $featureName)
-			);
-		}
+        if ($debug && !array_key_exists($featureName, $availableFeatures)) {
+            throw new InvalidArgumentException(
+                sprintf("Feature %s is not known by the customerHasFeature() function.", $featureName)
+            );
+        }
 
-		if (!$availableFeatures[$featureName]) {
-			$canAccess = false;
-			break;
-		}
-	}
+        if (!$availableFeatures[$featureName]) {
+            $canAccess = false;
+            break;
+        }
+    }
 
-	return $canAccess;
+    return $canAccess;
 }
 
 /**
@@ -351,7 +351,7 @@ function customerHasFeature($featureNames, $forceReload = false)
  */
 function customerHasMailOrExtMailFeatures()
 {
-	return (customerHasFeature('mail') || customerHasFeature('external_mail'));
+    return (customerHasFeature('mail') || customerHasFeature('external_mail'));
 }
 
 /**
@@ -364,83 +364,83 @@ function customerHasMailOrExtMailFeatures()
  */
 function customerHasDomain($domainName, $customerId)
 {
-	$domainName = encode_idna($domainName);
+    $domainName = encode_idna($domainName);
 
-	// Check in domain table
-	$stmt = exec_query(
-		"SELECT 'found' FROM domain WHERE domain_admin_id = ? AND domain_name = ?", array($customerId, $domainName)
-	);
+    // Check in domain table
+    $stmt = exec_query(
+        "SELECT 'found' FROM domain WHERE domain_admin_id = ? AND domain_name = ?", array($customerId, $domainName)
+    );
 
-	if ($stmt->rowCount()) {
-		return true;
-	}
+    if ($stmt->rowCount()) {
+        return true;
+    }
 
-	// Check in domain_aliasses table
-	$stmt = exec_query(
-		"
-			SELECT
-				'found'
-			FROM
-				domain AS t1
-			INNER JOIN
-				domain_aliasses AS t2 ON(t2.domain_id = t1.domain_id)
-			WHERE
-				t1.domain_admin_id = ?
-			AND
-				t2.alias_name = ?
-		",
-		array($customerId, $domainName)
-	);
+    // Check in domain_aliasses table
+    $stmt = exec_query(
+        "
+            SELECT
+                'found'
+            FROM
+                domain AS t1
+            INNER JOIN
+                domain_aliasses AS t2 ON(t2.domain_id = t1.domain_id)
+            WHERE
+                t1.domain_admin_id = ?
+            AND
+                t2.alias_name = ?
+        ",
+        array($customerId, $domainName)
+    );
 
-	if ($stmt->rowCount()) {
-		return true;
-	}
+    if ($stmt->rowCount()) {
+        return true;
+    }
 
-	// Check in subdomain table
-	$stmt = exec_query(
-		"
-			SELECT
-				'found'
-			FROM
-				domain AS t1
-			INNER JOIN
-				subdomain AS t2 ON (t2.domain_id = t1.domain_id)
-			WHERE
-				t1.domain_admin_id = ?
-			AND
-				CONCAT(t2.subdomain_name, '.', t1.domain_name) = ?
-		",
-		array($customerId, $domainName)
-	);
+    // Check in subdomain table
+    $stmt = exec_query(
+        "
+            SELECT
+                'found'
+            FROM
+                domain AS t1
+            INNER JOIN
+                subdomain AS t2 ON (t2.domain_id = t1.domain_id)
+            WHERE
+                t1.domain_admin_id = ?
+            AND
+                CONCAT(t2.subdomain_name, '.', t1.domain_name) = ?
+        ",
+        array($customerId, $domainName)
+    );
 
-	if ($stmt->rowCount()) {
-		return true;
-	}
+    if ($stmt->rowCount()) {
+        return true;
+    }
 
-	// Check in subdomain_alias table
-	$stmt = exec_query(
-		"
-			SELECT
-				'found'
-			FROM
-				domain AS t1
-			INNER JOIN
-				domain_aliasses AS t2 ON(t2.domain_id = t1.domain_id)
-			INNER JOIN
-			 	subdomain_alias AS t3 ON(t3.alias_id = t2.alias_id)
-			WHERE
-				t1.domain_admin_id = ?
-			AND
-				CONCAT(t3.subdomain_alias_name, '.', t2.alias_name) = ?
-		",
-		array($customerId, $domainName)
-	);
+    // Check in subdomain_alias table
+    $stmt = exec_query(
+        "
+            SELECT
+                'found'
+            FROM
+                domain AS t1
+            INNER JOIN
+                domain_aliasses AS t2 ON(t2.domain_id = t1.domain_id)
+            INNER JOIN
+                 subdomain_alias AS t3 ON(t3.alias_id = t2.alias_id)
+            WHERE
+                t1.domain_admin_id = ?
+            AND
+                CONCAT(t3.subdomain_alias_name, '.', t2.alias_name) = ?
+        ",
+        array($customerId, $domainName)
+    );
 
-	if ($stmt->rowCount()) {
-		return true;
-	}
+    if ($stmt->rowCount()) {
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 /**
@@ -450,5 +450,5 @@ function customerHasDomain($domainName, $customerId)
  */
 function delete_autoreplies_log_entries()
 {
-	exec_query("DELETE FROM autoreplies_log WHERE `from` NOT IN (SELECT mail_addr FROM mail_users)");
+    exec_query("DELETE FROM autoreplies_log WHERE `from` NOT IN (SELECT mail_addr FROM mail_users)");
 }

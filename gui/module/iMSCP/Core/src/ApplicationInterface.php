@@ -30,31 +30,31 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 interface ApplicationInterface
 {
-	/**
-	 * Get service locator object
-	 *
-	 * @return ServiceLocatorInterface
-	 */
-	public function getServiceManager();
+    /**
+     * Get service locator object
+     *
+     * @return ServiceLocatorInterface
+     */
+    public function getServiceManager();
 
-	/**
-	 * Get request object
-	 *
-	 * @return Request
-	 */
-	public function getRequest();
+    /**
+     * Get request object
+     *
+     * @return Request
+     */
+    public function getRequest();
 
-	/**
-	 * Get response object
-	 *
-	 * @return Response
-	 */
-	public function getResponse();
+    /**
+     * Get response object
+     *
+     * @return Response
+     */
+    public function getResponse();
 
-	/**
-	 * Run application
-	 *
-	 * @return self
-	 */
-	public function run();
+    /**
+     * Run application
+     *
+     * @return self
+     */
+    public function run();
 }

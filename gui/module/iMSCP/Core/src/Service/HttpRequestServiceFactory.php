@@ -30,11 +30,11 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class HttpRequestServiceFactory implements FactoryInterface
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
-	{
-		return Request::createFromGlobals();
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        return Request::createFromGlobals();
+    }
 }

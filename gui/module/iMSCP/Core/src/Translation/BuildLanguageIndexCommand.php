@@ -30,28 +30,28 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class BuildLanguageIndexCommand extends Command
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function configure()
-	{
-		$this->setName('imscp:build:language:index')
-			->setDescription('Build i-MSCP Frontend language index')
-			->setHelp(<<<EOT
+    /**
+     * {@inheritdoc}
+     */
+    protected function configure()
+    {
+        $this->setName('imscp:build:language:index')
+            ->setDescription('Build i-MSCP Frontend language index')
+            ->setHelp(<<<EOT
 The <info>imscp:build:language:index</info> command build the i-MSCP Frontend language index:
 
   <info>imscp:build:language:index</info>
 
 EOT
-			);
-	}
+            );
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function execute(InputInterface $input, OutputInterface $output)
-	{
-		i18n_buildLanguageIndex();
-		$output->writeln('i-MSCP Frontend language index built successfully!');
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        i18n_buildLanguageIndex();
+        $output->writeln('i-MSCP Frontend language index built successfully!');
+    }
 }

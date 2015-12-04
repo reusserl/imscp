@@ -31,19 +31,20 @@ use Zend\ServiceManager\ServiceManager;
  */
 class ApplicationFactory implements FactoryInterface
 {
-	/**
-	 * Create the Application service
-	 *
-	 * Creates a iMSCP\Core\Application service, passing it the configuration service and the service manager instance.
-	 *
-	 * @param  ServiceLocatorInterface $serviceLocator
-	 * @return Application
-	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
-	{
-		/** @var ServiceManager $serviceManager */
-		$serviceManager = $serviceLocator;
+    /**
+     * Create the Application service
+     *
+     * Creates a iMSCP\Core\Application service, passing it the configuration
+     * service and the service manager instance.
+     *
+     * @param  ServiceLocatorInterface $serviceLocator
+     * @return Application
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        /** @var ServiceManager $serviceManager */
+        $serviceManager = $serviceLocator;
 
-		return new Application($serviceLocator->get('Config'), $serviceManager);
-	}
+        return new Application($serviceLocator->get('Config'), $serviceManager);
+    }
 }

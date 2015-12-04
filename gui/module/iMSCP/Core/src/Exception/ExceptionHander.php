@@ -28,95 +28,95 @@ use Zend\EventManager\EventManager;
  */
 class ExceptionHandler
 {
-	/** @var EventManager */
-	protected $em;
+    /** @var EventManager */
+    protected $em;
 
-	/**
-	 * @var array Exception writers class names
-	 */
-	protected $writers = array(
-		'iMSCP_Exception_Writer_Browser',
-		'iMSCP_Exception_Writer_Mail'
-	);
+    /**
+     * @var array Exception writers class names
+     */
+    protected $writers = [
+        'iMSCP_Exception_Writer_Browser',
+        'iMSCP_Exception_Writer_Mail'
+    ];
 
-	/**
-	 * Constructor
-	 */
-	public function __construct()
-	{
-		$this->em = new EventManager();
-		$this->setExceptionHandler();
-	}
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->em = new EventManager();
+        $this->setExceptionHandler();
+    }
 
-	/**
-	 * Add exception writer
-	 *
-	 * @param string $className Exception writer class name
-	 * @return void
-	 */
-	public function addWriter($className)
-	{
-		$className = (string)$className;
+    /**
+     * Sets exception handler
+     *
+     * @see exceptionHandler()
+     * @return void
+     */
+    public function setExceptionHandler()
+    {
+        set_exception_handler([$this, 'handleException']);
+    }
 
-		if(!in_array($className, $this->writers)) {
-			$this->writers[] = $className;
-		}
-	}
+    /**
+     * Add exception writer
+     *
+     * @param string $className Exception writer class name
+     * @return void
+     */
+    public function addWriter($className)
+    {
+        $className = (string)$className;
 
-	/**
-	 * Remove exception writer
-	 *
-	 * @param string $className Exception writer class name
-	 * @return void
-	 */
-	public function removeWriter($className)
-	{
-		$classname = (string)$className;
-		unset($this->writers[$classname]);
-	}
+        if (!in_array($className, $this->writers)) {
+            $this->writers[] = $className;
+        }
+    }
 
-	/**
-	 * Sets exception handler
-	 *
-	 * @see exceptionHandler()
-	 * @return void
-	 */
-	public function setExceptionHandler()
-	{
-		set_exception_handler(array($this, 'handleException'));
-	}
+    /**
+     * Remove exception writer
+     *
+     * @param string $className Exception writer class name
+     * @return void
+     */
+    public function removeWriter($className)
+    {
+        $classname = (string)$className;
+        unset($this->writers[$classname]);
+    }
 
-	/**
-	 * Unset exception handler
-	 *
-	 * @return void
-	 */
-	public function unsetExceptionHandler()
-	{
-		restore_exception_handler();
-	}
+    /**
+     * Unset exception handler
+     *
+     * @return void
+     */
+    public function unsetExceptionHandler()
+    {
+        restore_exception_handler();
+    }
 
-	/**
-	 * Handle uncaught exceptions
-	 *
-	 * @param Exception $exception Uncaught exception
-	 * @return void
-	 */
-	public function handleException(Exception $exception)
-	{
-		try {
-			foreach($this->writers as $writer) {
-				$this->em->registerListener('onUncaughtException', new $writer());
-			}
+    /**
+     * Handle uncaught exceptions
+     *
+     * @param \Exception $exception Uncaught exception
+     * @return void
+     */
+    public function handleException(\Exception $exception)
+    {
+        try {
+            foreach ($this->writers as $writer) {
+                $this->em->attach('onUncaughtException', new $writer());
+            }
 
-			$this->em->dispatch(new iMSCP_Exception_Event($exception));
-		} catch(Exception $e) {
-			die(sprintf(
-				'Unable to handle uncaught exception thrown in file %s at line %s with message: %s',
-				$e->getFile(),
-				$e->getLine(),
-				$e->getMessage()
-			));
-		}
-	}
+            $this->em->trigger(new ExceptionEvent($exception));
+        } catch (\Exception $e) {
+            die(sprintf(
+                'Unable to handle uncaught exception thrown in file %s at line %s with message: %s',
+                $e->getFile(),
+                $e->getLine(),
+                $e->getMessage()
+            ));
+        }
+    }
 }

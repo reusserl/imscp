@@ -37,34 +37,34 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class SerializerServiceFactory implements FactoryInterface
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
-	{
-		/** @var ManagerRegistry $managerRegistry */
-		$managerRegistry = $serviceLocator->get('ManagerRegistry');
-		$objectConstructor = new DoctrineObjectConstructor($managerRegistry, new UnserializeObjectConstructor());
+    /**
+     * {@inheritdoc}
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        /** @var ManagerRegistry $managerRegistry */
+        $managerRegistry = $serviceLocator->get('ManagerRegistry');
+        $objectConstructor = new DoctrineObjectConstructor($managerRegistry, new UnserializeObjectConstructor());
 
-		$systemConfig = $serviceLocator->get('SystemConfig');
+        $config = $serviceLocator->get('Config');
 
-		$serializer = SerializerBuilder::create()
-			->setObjectConstructor($objectConstructor)
-			->setCacheDir('data/cache/serializer')
-			->setDebug($systemConfig['DEVMODE']);
+        $serializer = SerializerBuilder::create()
+            ->setObjectConstructor($objectConstructor)
+            ->setCacheDir('data/cache/serializer')
+            ->setDebug($config['DEVMODE']);
 
-		if ($systemConfig['DEVMODE']) {
-			$jsonSerializerVisitor = new JsonSerializationVisitor(
-				new SerializedNameAnnotationStrategy(new CamelCaseNamingStrategy())
-			);
-			$jsonSerializerVisitor->setOptions(JSON_PRETTY_PRINT);
-			$jsonDeserializerVisitor = new JsonDeserializationVisitor(
-				new SerializedNameAnnotationStrategy(new CamelCaseNamingStrategy())
-			);
-			$serializer->setSerializationVisitor('json', $jsonSerializerVisitor);
-			$serializer->setDeserializationVisitor('json', $jsonDeserializerVisitor);
-		}
+        if ($config['DEVMODE']) {
+            $jsonSerializerVisitor = new JsonSerializationVisitor(
+                new SerializedNameAnnotationStrategy(new CamelCaseNamingStrategy())
+            );
+            $jsonSerializerVisitor->setOptions(JSON_PRETTY_PRINT);
+            $jsonDeserializerVisitor = new JsonDeserializationVisitor(
+                new SerializedNameAnnotationStrategy(new CamelCaseNamingStrategy())
+            );
+            $serializer->setSerializationVisitor('json', $jsonSerializerVisitor);
+            $serializer->setDeserializationVisitor('json', $jsonDeserializerVisitor);
+        }
 
-		return $serializer->build();
-	}
+        return $serializer->build();
+    }
 }

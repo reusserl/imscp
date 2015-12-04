@@ -30,8 +30,8 @@
  */
 function get_sql_user_count()
 {
-	$stmt = execute_query('SELECT DISTINCT sqlu_name FROM sql_user');
-	return $stmt->rowCount();
+    $stmt = execute_query('SELECT DISTINCT sqlu_name FROM sql_user');
+    return $stmt->rowCount();
 }
 
 /**
@@ -42,123 +42,123 @@ function get_sql_user_count()
  */
 function generate_reseller_users_props($resellerId)
 {
-	$rdmnConsumed = $rdmnAssigned = $rsubConsumed = $rsubAssigned = $ralsConsumed = $ralsAssigned = $rmailConsumed =
-	$rmailAssigned = $rftpConsumed = $rftpAssigned = $rsqlDbConsumed = $rsqlDbAssigned = $rsqlUserConsumed =
-	$rsqlUserAssigned = $rtraffConsumed = $rtraffAssigned = $rdiskConsumed = $rdiskAssigned = 0;
+    $rdmnConsumed = $rdmnAssigned = $rsubConsumed = $rsubAssigned = $ralsConsumed = $ralsAssigned = $rmailConsumed =
+    $rmailAssigned = $rftpConsumed = $rftpAssigned = $rsqlDbConsumed = $rsqlDbAssigned = $rsqlUserConsumed =
+    $rsqlUserAssigned = $rtraffConsumed = $rtraffAssigned = $rdiskConsumed = $rdiskAssigned = 0;
 
-	$stmt = exec_query('SELECT admin_id FROM admin WHERE created_by = ?', $resellerId);
+    $stmt = exec_query('SELECT admin_id FROM admin WHERE created_by = ?', $resellerId);
 
-	$rdmnUnlimited = $rsubUnlimited = $ralsUnlimited = $rmailUnlimited = $rftpUnlimited = $rsqlDbUnlimited =
-	$rsqlUserUnlimited = $rtraffUnlimited = $rdiskUnlimited = false;
+    $rdmnUnlimited = $rsubUnlimited = $ralsUnlimited = $rmailUnlimited = $rftpUnlimited = $rsqlDbUnlimited =
+    $rsqlUserUnlimited = $rtraffUnlimited = $rdiskUnlimited = false;
 
-	if (!$stmt->rowCount()) { // Case in reseller has not customer yet
-		return array(
-			$rdmnConsumed, $rdmnAssigned, $rdmnUnlimited,
-			$rsubConsumed, $rsubAssigned, $rsubUnlimited,
-			$ralsConsumed, $ralsAssigned, $ralsUnlimited,
-			$rmailConsumed, $rmailAssigned, $rmailUnlimited,
-			$rftpConsumed, $rftpAssigned, $rftpUnlimited,
-			$rsqlDbConsumed, $rsqlDbAssigned, $rsqlDbUnlimited,
-			$rsqlUserConsumed, $rsqlUserAssigned, $rsqlUserUnlimited,
-			$rtraffConsumed, $rtraffAssigned, $rtraffUnlimited,
-			$rdiskConsumed, $rdiskAssigned, $rdiskUnlimited
-		);
-	}
+    if (!$stmt->rowCount()) { // Case in reseller has not customer yet
+        return array(
+            $rdmnConsumed, $rdmnAssigned, $rdmnUnlimited,
+            $rsubConsumed, $rsubAssigned, $rsubUnlimited,
+            $ralsConsumed, $ralsAssigned, $ralsUnlimited,
+            $rmailConsumed, $rmailAssigned, $rmailUnlimited,
+            $rftpConsumed, $rftpAssigned, $rftpUnlimited,
+            $rsqlDbConsumed, $rsqlDbAssigned, $rsqlDbUnlimited,
+            $rsqlUserConsumed, $rsqlUserAssigned, $rsqlUserUnlimited,
+            $rtraffConsumed, $rtraffAssigned, $rtraffUnlimited,
+            $rdiskConsumed, $rdiskAssigned, $rdiskUnlimited
+        );
+    }
 
-	while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-		list(
-			$subConsumed, $subAssigned, $alsConsumed, $alsAssigned, $mailConsumed, $mailAssigned, $ftpConsumed,
-			$ftpAssigned, $sqlDbConsumed, $sqlDbAssigned, $sqlUserConsumed, $sqlUserAssigned, $traffAssigned, $diskAssigned
-		) = shared_getCustomerProps($row['admin_id']);
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        list(
+            $subConsumed, $subAssigned, $alsConsumed, $alsAssigned, $mailConsumed, $mailAssigned, $ftpConsumed,
+            $ftpAssigned, $sqlDbConsumed, $sqlDbAssigned, $sqlUserConsumed, $sqlUserAssigned, $traffAssigned, $diskAssigned
+            ) = shared_getCustomerProps($row['admin_id']);
 
-		list(, , , , , , $traffConsumed, $diskConsumed) = shared_getCustomerStats($row['admin_id']);
+        list(, , , , , , $traffConsumed, $diskConsumed) = shared_getCustomerStats($row['admin_id']);
 
-		$rdmnConsumed += 1;
+        $rdmnConsumed += 1;
 
-		// Compute subdomains
-		if ($subAssigned != -1) {
-			$rsubConsumed += $subConsumed;
-			$rsubAssigned += $subAssigned;
+        // Compute subdomains
+        if ($subAssigned != -1) {
+            $rsubConsumed += $subConsumed;
+            $rsubAssigned += $subAssigned;
 
-			if (!$subAssigned) {
-				$rsubUnlimited = true;
-			}
-		}
+            if (!$subAssigned) {
+                $rsubUnlimited = true;
+            }
+        }
 
-		// Compute domain aliases
-		if ($alsAssigned != -1) {
-			$ralsConsumed += $alsConsumed;
-			$ralsAssigned += $alsAssigned;
+        // Compute domain aliases
+        if ($alsAssigned != -1) {
+            $ralsConsumed += $alsConsumed;
+            $ralsAssigned += $alsAssigned;
 
-			if (!$alsAssigned){
-				$ralsUnlimited = true;
-			}
-		}
+            if (!$alsAssigned) {
+                $ralsUnlimited = true;
+            }
+        }
 
-		// Compute mail accounts
-		if ($sqlDbAssigned != -1) {
-			$rmailConsumed += $mailConsumed;
-			$rmailAssigned += $mailAssigned;
+        // Compute mail accounts
+        if ($sqlDbAssigned != -1) {
+            $rmailConsumed += $mailConsumed;
+            $rmailAssigned += $mailAssigned;
 
-			if (!$mailAssigned){
-				$rmailUnlimited = true;
-			}
-		}
+            if (!$mailAssigned) {
+                $rmailUnlimited = true;
+            }
+        }
 
-		// Compute FTP account
-		if ($ftpAssigned != -1) {
-			$rftpConsumed += $ftpConsumed;
-			$rftpAssigned += $ftpAssigned;
+        // Compute FTP account
+        if ($ftpAssigned != -1) {
+            $rftpConsumed += $ftpConsumed;
+            $rftpAssigned += $ftpAssigned;
 
-			if (!$ftpAssigned){
-				$rftpUnlimited = true;
-			}
-		}
+            if (!$ftpAssigned) {
+                $rftpUnlimited = true;
+            }
+        }
 
-		// Compute Sql databases
-		if ($sqlDbAssigned != -1) {
-			$rsqlDbConsumed += $sqlDbConsumed;
-			$rsqlDbAssigned += $sqlDbAssigned;
+        // Compute Sql databases
+        if ($sqlDbAssigned != -1) {
+            $rsqlDbConsumed += $sqlDbConsumed;
+            $rsqlDbAssigned += $sqlDbAssigned;
 
-			if (!$sqlDbAssigned){
-				$rsqlDbUnlimited = true;
-			}
-		}
+            if (!$sqlDbAssigned) {
+                $rsqlDbUnlimited = true;
+            }
+        }
 
-		// Compute Sql users
-		if ($sqlUserAssigned != -1) {
-			$rsqlUserConsumed += $sqlUserConsumed;
-			$rsqlUserAssigned += $sqlUserAssigned;
+        // Compute Sql users
+        if ($sqlUserAssigned != -1) {
+            $rsqlUserConsumed += $sqlUserConsumed;
+            $rsqlUserAssigned += $sqlUserAssigned;
 
-			if (!$sqlUserAssigned) {
-				$rsqlUserUnlimited = true;
-			}
-		}
+            if (!$sqlUserAssigned) {
+                $rsqlUserUnlimited = true;
+            }
+        }
 
-		// Compute Monthly traffic volume
-		$rtraffConsumed += $traffConsumed;
-		$rtraffAssigned += $traffAssigned;
+        // Compute Monthly traffic volume
+        $rtraffConsumed += $traffConsumed;
+        $rtraffAssigned += $traffAssigned;
 
-		if (!$rtraffAssigned) {
-			$rtraffUnlimited = true;
-		}
+        if (!$rtraffAssigned) {
+            $rtraffUnlimited = true;
+        }
 
-		// Compute diskspace
-		$rdiskConsumed += $diskConsumed;
-		$rdiskAssigned += $diskAssigned;
+        // Compute diskspace
+        $rdiskConsumed += $diskConsumed;
+        $rdiskAssigned += $diskAssigned;
 
-		if (!$rdiskAssigned){
-			$rdiskUnlimited = true;
-		}
-	}
+        if (!$rdiskAssigned) {
+            $rdiskUnlimited = true;
+        }
+    }
 
-	return array(
-		$rdmnConsumed, $rdmnAssigned, $rdmnUnlimited, $rsubConsumed, $rsubAssigned, $rsubUnlimited, $ralsConsumed,
-		$ralsAssigned, $ralsUnlimited, $rmailConsumed, $rmailAssigned, $rmailUnlimited, $rftpConsumed, $rftpAssigned,
-		$rftpUnlimited, $rsqlDbConsumed, $rsqlDbAssigned, $rsqlDbUnlimited, $rsqlUserConsumed, $rsqlUserAssigned,
-		$rsqlUserUnlimited, $rtraffConsumed, $rtraffAssigned, $rtraffUnlimited, $rdiskConsumed, $rdiskAssigned,
-		$rdiskUnlimited
-	);
+    return array(
+        $rdmnConsumed, $rdmnAssigned, $rdmnUnlimited, $rsubConsumed, $rsubAssigned, $rsubUnlimited, $ralsConsumed,
+        $ralsAssigned, $ralsUnlimited, $rmailConsumed, $rmailAssigned, $rmailUnlimited, $rftpConsumed, $rftpAssigned,
+        $rftpUnlimited, $rsqlDbConsumed, $rsqlDbAssigned, $rsqlDbUnlimited, $rsqlUserConsumed, $rsqlUserAssigned,
+        $rsqlUserUnlimited, $rtraffConsumed, $rtraffAssigned, $rtraffUnlimited, $rdiskConsumed, $rdiskAssigned,
+        $rdiskUnlimited
+    );
 }
 
 /**
@@ -173,111 +173,108 @@ function generate_reseller_users_props($resellerId)
  * @param  string $searchStatus
  * @return void
  */
-function gen_admin_domain_query(
-	&$searchQuery, &$countQuery, $startIndex, $rowsPerPage, $searchFor, $searchCommon, $searchStatus
-) {
+function gen_admin_domain_query(&$searchQuery, &$countQuery, $startIndex, $rowsPerPage, $searchFor, $searchCommon, $searchStatus){
+    $condition = '';
+    $startIndex = intval($startIndex);
+    $rowsPerPage = intval($rowsPerPage);
 
-	$condition = '';
-	$startIndex = intval($startIndex);
-	$rowsPerPage = intval($rowsPerPage);
+    if ($searchFor == 'n/a' && $searchCommon == 'n/a' && $searchStatus == 'n/a') {
+        // We have pure list query;
+        $countQuery = 'SELECT COUNT(*) AS cnt FROM domain';
+        $searchQuery = "
+            SELECT
+                *
+            FROM
+                domain AS t1
+            INNER JOIN
+                admin AS t2 ON (t2.admin_id = t1.domain_admin_id)
+            ORDER BY
+                t1.domain_name ASC
+            LIMIT
+                $startIndex, $rowsPerPage
+        ";
+    } else {
+        /** @var \Doctrine\DBAL\Connection $db */
+        $db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
-	if ($searchFor == 'n/a' && $searchCommon == 'n/a' && $searchStatus == 'n/a') {
-		// We have pure list query;
-		$countQuery = 'SELECT COUNT(*) AS cnt FROM domain';
-		$searchQuery = "
-			SELECT
-				*
-			FROM
-				domain AS t1
-			INNER JOIN
-				admin AS t2 ON (t2.admin_id = t1.domain_admin_id)
-			ORDER BY
-				t1.domain_name ASC
-			LIMIT
-				$startIndex, $rowsPerPage
-		";
-	} else {
-		/** @var \Doctrine\DBAL\Connection $db */
-		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
+        $searchFor = str_replace(array('!', '_', '%'), array('!!', '!_', '!%'), $searchFor);
 
-		$searchFor = str_replace(array('!', '_', '%'), array('!!', '!_', '!%'), $searchFor);
+        if ($searchFor == '' && $searchStatus != '') {
+            if ($searchStatus != 'all') {
+                $condition = 'WHERE t1.domain_status = ' . $db->quote($searchStatus);
+            }
 
-		if ($searchFor == '' && $searchStatus != '') {
-			if ($searchStatus != 'all') {
-				$condition = 'WHERE t1.domain_status = ' . $db->quote($searchStatus);
-			}
-
-			$countQuery = "SELECT COUNT(*) AS cnt FROM domain AS t1 $condition";
-			$searchQuery = "
-				SELECT
-					*
-				FROM
-					domain AS t1
-				INNER JOIN
-					admin AS t2 ON (t2.admin_id = t1.domain_admin_id)
-				$condition
-				ORDER BY
-					t1.domain_name ASC
-				LIMIT
-					$startIndex, $rowsPerPage
+            $countQuery = "SELECT COUNT(*) AS cnt FROM domain AS t1 $condition";
+            $searchQuery = "
+                SELECT
+                    *
+                FROM
+                    domain AS t1
+                INNER JOIN
+                    admin AS t2 ON (t2.admin_id = t1.domain_admin_id)
+                $condition
+                ORDER BY
+                    t1.domain_name ASC
+                LIMIT
+                    $startIndex, $rowsPerPage
         	";
-		} elseif ($searchFor != '') {
-			$searchFor = str_replace(array('!', '_', '%'), array('!!', '!_', '!%'), $searchFor);
+        } elseif ($searchFor != '') {
+            $searchFor = str_replace(array('!', '_', '%'), array('!!', '!_', '!%'), $searchFor);
 
-			if ($searchCommon == 'domain_name') {
-				$searchFor = $db->quote('%' . encode_idna($searchFor) . '%');
-				$condition = "WHERE t1.domain_name LIKE $searchFor ESCAPE '!'";
-			} elseif ($searchCommon == 'customer_id') {
-				$searchFor = $db->quote("%$searchFor%");
-				$condition = "WHERE t2.customer_id LIKE $searchFor ESCAPE '!'";
-			} elseif ($searchCommon == 'lname') {
-				$searchFor = $db->quote("%$searchFor%");
-				$condition = "WHERE (t2.lname LIKE $searchFor ESCAPE '=' OR fname LIKE $searchFor ESCAPE '!')";
-			} elseif ($searchCommon == 'firm') {
-				$searchFor = $db->quote("%$searchFor%");
-				$condition = "WHERE t2.firm LIKE $searchFor ESCAPE '!'";
-			} elseif ($searchCommon == 'city') {
-				$searchFor = $db->quote("%$searchFor%");
-				$condition = "WHERE t2.city LIKE $searchFor ESCAPE '!'";
-			} elseif ($searchCommon == 'state') {
-				$searchFor = $db->quote("%$searchFor%");
-				$condition = "WHERE t2.state LIKE $searchFor ESCAPE '!'";
-			} elseif ($searchCommon == 'country') {
-				$searchFor = $db->quote("%$searchFor%");
-				$condition = "WHERE t2.country LIKE $searchFor ESCAPE '!'";
-			}
+            if ($searchCommon == 'domain_name') {
+                $searchFor = $db->quote('%' . encode_idna($searchFor) . '%');
+                $condition = "WHERE t1.domain_name LIKE $searchFor ESCAPE '!'";
+            } elseif ($searchCommon == 'customer_id') {
+                $searchFor = $db->quote("%$searchFor%");
+                $condition = "WHERE t2.customer_id LIKE $searchFor ESCAPE '!'";
+            } elseif ($searchCommon == 'lname') {
+                $searchFor = $db->quote("%$searchFor%");
+                $condition = "WHERE (t2.lname LIKE $searchFor ESCAPE '=' OR fname LIKE $searchFor ESCAPE '!')";
+            } elseif ($searchCommon == 'firm') {
+                $searchFor = $db->quote("%$searchFor%");
+                $condition = "WHERE t2.firm LIKE $searchFor ESCAPE '!'";
+            } elseif ($searchCommon == 'city') {
+                $searchFor = $db->quote("%$searchFor%");
+                $condition = "WHERE t2.city LIKE $searchFor ESCAPE '!'";
+            } elseif ($searchCommon == 'state') {
+                $searchFor = $db->quote("%$searchFor%");
+                $condition = "WHERE t2.state LIKE $searchFor ESCAPE '!'";
+            } elseif ($searchCommon == 'country') {
+                $searchFor = $db->quote("%$searchFor%");
+                $condition = "WHERE t2.country LIKE $searchFor ESCAPE '!'";
+            }
 
-			if ($condition != '') {
-				if ($searchStatus != 'all') {
-					$condition .= ' AND t1.domain_status = ' . $db->quote($searchStatus);
-				}
+            if ($condition != '') {
+                if ($searchStatus != 'all') {
+                    $condition .= ' AND t1.domain_status = ' . $db->quote($searchStatus);
+                }
 
-				$countQuery = "
-					SELECT
-						COUNT(*) AS cnt
-				   	FROM
-						domain AS t1
-				    INNER JOIN
-						admin AS t2 ON(t2.admin_id = t1.domain_admin_id)
-					$condition
-			    ";
+                $countQuery = "
+                    SELECT
+                        COUNT(*) AS cnt
+                       FROM
+                        domain AS t1
+                    INNER JOIN
+                        admin AS t2 ON(t2.admin_id = t1.domain_admin_id)
+                    $condition
+                ";
 
-				$searchQuery = "
-					SELECT
-						t2.admin_id, t2.admin_status, t2.created_by, t1.*
-					FROM
-						domain AS t1
-					INNER JOIN
-						admin AS t2 ON(t2.admin_id = t1.domain_admin_id)
-					$condition
-					ORDER BY
-						t1.domain_name ASC
-					LIMIT
-						$startIndex, $rowsPerPage
-				";
-			}
-		}
-	}
+                $searchQuery = "
+                    SELECT
+                        t2.admin_id, t2.admin_status, t2.created_by, t1.*
+                    FROM
+                        domain AS t1
+                    INNER JOIN
+                        admin AS t2 ON(t2.admin_id = t1.domain_admin_id)
+                    $condition
+                    ORDER BY
+                        t1.domain_name ASC
+                    LIMIT
+                        $startIndex, $rowsPerPage
+                ";
+            }
+        }
+    }
 }
 
 /**
@@ -288,15 +285,15 @@ function gen_admin_domain_query(
  */
 function systemHasResellers($minNbResellers = 1)
 {
-	static $resellersCount = null;
+    static $resellersCount = null;
 
-	if (null === $resellersCount ) {
-		$stmt = exec_query('SELECT COUNT(`admin_id`) AS `count` FROM `admin` WHERE `admin_type` = ?', 'reseller');
-		$row = $stmt->fetch(PDO::FETCH_ASSOC);
-		$resellersCount = $row['count'];
-	}
+    if (null === $resellersCount) {
+        $stmt = exec_query('SELECT COUNT(`admin_id`) AS `count` FROM `admin` WHERE `admin_type` = ?', 'reseller');
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $resellersCount = $row['count'];
+    }
 
-	return ($resellersCount >= $minNbResellers);
+    return ($resellersCount >= $minNbResellers);
 }
 
 /**
@@ -307,19 +304,19 @@ function systemHasResellers($minNbResellers = 1)
  */
 function systemHasCustomers($minNbCustomers = 1)
 {
-	static $customersCount = null;
+    static $customersCount = null;
 
-	if (null === $customersCount ) {
-		$stmt = exec_query(
-			'SELECT COUNT(`admin_id`) AS `count` FROM `admin` WHERE `admin_type` = ? AND `admin_status` <> ?',
-			array('user', 'todelete')
-		);
+    if (null === $customersCount) {
+        $stmt = exec_query(
+            'SELECT COUNT(`admin_id`) AS `count` FROM `admin` WHERE `admin_type` = ? AND `admin_status` <> ?',
+            array('user', 'todelete')
+        );
 
-		$row = $stmt->fetch(PDO::FETCH_ASSOC);
-		$customersCount = $row['count'];
-	}
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $customersCount = $row['count'];
+    }
 
-	return ($customersCount >= $minNbCustomers);
+    return ($customersCount >= $minNbCustomers);
 }
 
 /**
@@ -329,11 +326,11 @@ function systemHasCustomers($minNbCustomers = 1)
  */
 function systemHasAdminsOrResellersOrCustomers()
 {
-	if(systemHasManyAdmins() || systemHasResellers() || systemHasCustomers()) {
-		return true;
-	}
+    if (systemHasManyAdmins() || systemHasResellers() || systemHasCustomers()) {
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 /**
@@ -343,11 +340,11 @@ function systemHasAdminsOrResellersOrCustomers()
  */
 function systemHasResellersOrCustomers()
 {
-	if (systemHasResellers() || systemHasCustomers()) {
-		return true;
-	}
+    if (systemHasResellers() || systemHasCustomers()) {
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 /**
@@ -357,19 +354,19 @@ function systemHasResellersOrCustomers()
  */
 function systemHasManyAdmins()
 {
-	static $hasManyAdmins = null;
+    static $hasManyAdmins = null;
 
-	if (null === $hasManyAdmins) {
-		$stmt = exec_query('SELECT `admin_id` FROM `admin` WHERE `admin_type` = ? LIMIT 2', 'admin');
+    if (null === $hasManyAdmins) {
+        $stmt = exec_query('SELECT `admin_id` FROM `admin` WHERE `admin_type` = ? LIMIT 2', 'admin');
 
-		if ($stmt->rowCount() > 1) {
-			$hasManyAdmins = true;
-		} else {
-			$hasManyAdmins = false;
-		}
-	}
+        if ($stmt->rowCount() > 1) {
+            $hasManyAdmins = true;
+        } else {
+            $hasManyAdmins = false;
+        }
+    }
 
-	return $hasManyAdmins;
+    return $hasManyAdmins;
 }
 
 /**
@@ -379,21 +376,21 @@ function systemHasManyAdmins()
  */
 function systemHasAntiRootkits()
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	if (
-		(
-			isset($cfg['ANTI_ROOTKITS_PACKAGES']) && $cfg['ANTI_ROOTKITS_PACKAGES'] != 'No' &&
-			$cfg['ANTI_ROOTKITS_PACKAGES'] != '' &&
-			(
-				(isset($cfg['CHKROOTKIT_LOG']) && $cfg['CHKROOTKIT_LOG'] != '') ||
-				(isset($cfg['RKHUNTER_LOG']) && $cfg['RKHUNTER_LOG'] != '')
-			)
-		) ||
-		isset($cfg['OTHER_ROOTKIT_LOG']) && $cfg['OTHER_ROOTKIT_LOG'] != ''
-	) {
-		return true;
-	}
+    if (
+        (
+            isset($cfg['ANTI_ROOTKITS_PACKAGES']) && $cfg['ANTI_ROOTKITS_PACKAGES'] != 'No' &&
+            $cfg['ANTI_ROOTKITS_PACKAGES'] != '' &&
+            (
+                (isset($cfg['CHKROOTKIT_LOG']) && $cfg['CHKROOTKIT_LOG'] != '') ||
+                (isset($cfg['RKHUNTER_LOG']) && $cfg['RKHUNTER_LOG'] != '')
+            )
+        ) ||
+        isset($cfg['OTHER_ROOTKIT_LOG']) && $cfg['OTHER_ROOTKIT_LOG'] != ''
+    ) {
+        return true;
+    }
 
-	return false;
+    return false;
 }

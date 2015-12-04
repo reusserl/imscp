@@ -24,9 +24,9 @@ use Doctrine\Common\Persistence\ManagerRegistry;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityNotFoundException;
 use JMS\Serializer\Construction\ObjectConstructorInterface;
-use JMS\Serializer\VisitorInterface;
-use JMS\Serializer\Metadata\ClassMetadata;
 use JMS\Serializer\DeserializationContext;
+use JMS\Serializer\Metadata\ClassMetadata;
+use JMS\Serializer\VisitorInterface;
 
 /**
  * Class DoctrineObjectConstructors
@@ -40,78 +40,78 @@ use JMS\Serializer\DeserializationContext;
  */
 class DoctrineObjectConstructor implements ObjectConstructorInterface
 {
-	/**
-	 * @var ManagerRegistry
-	 */
-	private $managerRegistry;
+    /**
+     * @var ManagerRegistry
+     */
+    private $managerRegistry;
 
-	/**
-	 * @var ObjectConstructorInterface
-	 */
-	private $fallbackConstructor;
+    /**
+     * @var ObjectConstructorInterface
+     */
+    private $fallbackConstructor;
 
-	/**
-	 * Constructor
-	 *
-	 * @param ManagerRegistry $managerRegistry Manager registry
-	 * @param ObjectConstructorInterface $fallbackConstructor Fallback object constructor
-	 */
-	public function __construct(ManagerRegistry $managerRegistry, ObjectConstructorInterface $fallbackConstructor)
-	{
-		$this->managerRegistry = $managerRegistry;
-		$this->fallbackConstructor = $fallbackConstructor;
-	}
+    /**
+     * Constructor
+     *
+     * @param ManagerRegistry $managerRegistry Manager registry
+     * @param ObjectConstructorInterface $fallbackConstructor Fallback object constructor
+     */
+    public function __construct(ManagerRegistry $managerRegistry, ObjectConstructorInterface $fallbackConstructor)
+    {
+        $this->managerRegistry = $managerRegistry;
+        $this->fallbackConstructor = $fallbackConstructor;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function construct(VisitorInterface $visitor, ClassMetadata $metadata, $data, array $type, DeserializationContext $context)
-	{
-		// Locate possible ObjectManager
-		/** @var EntityManagerInterface $objectManager */
-		$objectManager = $this->managerRegistry->getManagerForClass($metadata->name);
+    /**
+     * {@inheritdoc}
+     */
+    public function construct(VisitorInterface $visitor, ClassMetadata $metadata, $data, array $type, DeserializationContext $context)
+    {
+        // Locate possible ObjectManager
+        /** @var EntityManagerInterface $objectManager */
+        $objectManager = $this->managerRegistry->getManagerForClass($metadata->name);
 
-		if (!$objectManager) {
-			// No ObjectManager found, proceed with normal deserialization
-			return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
-		}
+        if (!$objectManager) {
+            // No ObjectManager found, proceed with normal deserialization
+            return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
+        }
 
-		// Locate possible ClassMetadata
-		$classMetadataFactory = $objectManager->getMetadataFactory();
+        // Locate possible ClassMetadata
+        $classMetadataFactory = $objectManager->getMetadataFactory();
 
-		if ($classMetadataFactory->isTransient($metadata->name)) {
-			// No ClassMetadata found, proceed with normal deserialization
-			return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
-		}
+        if ($classMetadataFactory->isTransient($metadata->name)) {
+            // No ClassMetadata found, proceed with normal deserialization
+            return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
+        }
 
-		// Managed entity, check for proxy load
-		if (!is_array($data)) {
-			// Single identifier, load proxy
-			return $objectManager->getReference($metadata->name, $data);
-		}
+        // Managed entity, check for proxy load
+        if (!is_array($data)) {
+            // Single identifier, load proxy
+            return $objectManager->getReference($metadata->name, $data);
+        }
 
-		// Fallback to default constructor if missing identifier(s)
-		$classMetadata = $objectManager->getClassMetadata($metadata->name);
-		$identifierList = array();
+        // Fallback to default constructor if missing identifier(s)
+        $classMetadata = $objectManager->getClassMetadata($metadata->name);
+        $identifierList = [];
 
-		foreach ($classMetadata->getIdentifierFieldNames() as $name) {
-			if (!array_key_exists($name, $data)) {
-				return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
-			}
+        foreach ($classMetadata->getIdentifierFieldNames() as $name) {
+            if (!array_key_exists($name, $data)) {
+                return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
+            }
 
-			$identifierList[$name] = $data[$name];
-		}
+            $identifierList[$name] = $data[$name];
+        }
 
-		// Entity update, load it from database
-		$object = $objectManager->find($metadata->name, $identifierList);
+        // Entity update, load it from database
+        $object = $objectManager->find($metadata->name, $identifierList);
 
-		if(!is_object($object)) {
-			throw EntityNotFoundException::fromClassNameAndIdentifier($metadata->name, $identifierList);
-			//return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
-		}
+        if (!is_object($object)) {
+            throw EntityNotFoundException::fromClassNameAndIdentifier($metadata->name, $identifierList);
+            //return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
+        }
 
-		$objectManager->initializeObject($object);
+        $objectManager->initializeObject($object);
 
-		return $object;
-	}
+        return $object;
+    }
 }

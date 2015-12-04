@@ -34,25 +34,25 @@
  */
 function get_user_gui_props($user_id)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$query = "SELECT `lang`, `layout` FROM `user_gui_props` WHERE `user_id` = ?";
-	$stmt = exec_query($query, $user_id);
-	if ($stmt->rowCount()) {
-		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $query = "SELECT `lang`, `layout` FROM `user_gui_props` WHERE `user_id` = ?";
+    $stmt = exec_query($query, $user_id);
+    if ($stmt->rowCount()) {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-		if (!empty($row['lang']) || !empty($row['layout'])) {
-			if (empty($row['lang'])) {
-				return array($cfg['USER_INITIAL_LANG'], $row['layout']);
-			} elseif (empty($row['layout'])) {
-				return array($row['lang'], $cfg['USER_INITIAL_THEME']);
-			} else {
-				return array($row['lang'], $row['layout']);
-			}
-		}
-	}
+        if (!empty($row['lang']) || !empty($row['layout'])) {
+            if (empty($row['lang'])) {
+                return array($cfg['USER_INITIAL_LANG'], $row['layout']);
+            } elseif (empty($row['layout'])) {
+                return array($row['lang'], $cfg['USER_INITIAL_THEME']);
+            } else {
+                return array($row['lang'], $row['layout']);
+            }
+        }
+    }
 
-	return array($cfg['USER_INITIAL_LANG'], $cfg['USER_INITIAL_THEME']);
+    return array($cfg['USER_INITIAL_LANG'], $cfg['USER_INITIAL_THEME']);
 }
 
 /**
@@ -66,30 +66,25 @@ function get_user_gui_props($user_id)
  */
 function generatePageMessage($tpl)
 {
-	$namespace = new Zend_Session_Namespace('pageMessages');
+    if (isset($_SESSION['pageMessages'])) {
+        foreach (
+            array(
+                'success', 'error', 'warning', 'info', 'static_success', 'static_error', 'static_warning', 'static_info'
+            ) as $level
+        ) {
+            if (isset($_SESSION['pageMessages'][$level])) {
+                $tpl->assign(array(
+                    'MESSAGE_CLS' => $level,
+                    'MESSAGE' => $_SESSION['pageMessages'][$level]
+                ));
+                $tpl->parse('PAGE_MESSAGE', '.page_message');
+            }
+        }
 
-	if (Zend_Session::namespaceIsset('pageMessages')) {
-		foreach (
-			array(
-				'success', 'error', 'warning', 'info', 'static_success', 'static_error', 'static_warning', 'static_info'
-			) as $level
-		) {
-			if (isset($namespace->{$level})) {
-				$tpl->assign(
-					array(
-						'MESSAGE_CLS' => $level,
-						'MESSAGE' => $namespace->{$level}
-					)
-				);
-
-				$tpl->parse('PAGE_MESSAGE', '.page_message');
-			}
-		}
-
-		Zend_Session::namespaceUnset('pageMessages');
-	} else {
-		$tpl->assign('PAGE_MESSAGE', '');
-	}
+        unset($_SESSION['pageMessages']);
+    } else {
+        $tpl->assign('PAGE_MESSAGE', '');
+    }
 }
 
 /**
@@ -101,29 +96,23 @@ function generatePageMessage($tpl)
  */
 function set_page_message($message, $level = 'info')
 {
-	$level = strtolower($level);
+    $level = strtolower($level);
 
-	if (!is_string($message)) {
-		throw new InvalidArgumentException('set_page_message() expects a string for $message');
-	} elseif (
-		!in_array($level, array(
-			'info', 'warning', 'error', 'success', 'static_success', 'static_error', 'static_warning', 'static_info'
-		))
-	) {
-		throw new InvalidArgumentException(sprintf('Wrong level %s for page message.', $level));
-	}
+    if (!is_string($message)) {
+        throw new InvalidArgumentException('set_page_message() expects a string for $message');
+    } elseif (
+    !in_array($level, array(
+        'info', 'warning', 'error', 'success', 'static_success', 'static_error', 'static_warning', 'static_info'
+    ))
+    ) {
+        throw new InvalidArgumentException(sprintf('Wrong level %s for page message.', $level));
+    }
 
-	static $namespace = null;
-
-	if (null === $namespace) {
-		$namespace = new Zend_Session_Namespace('pageMessages');
-	}
-
-	if (isset($namespace->{$level})) {
-		$namespace->{$level} .= "\n<br />$message";
-	} else {
-		$namespace->{$level} = $message;
-	}
+    if (isset($_SESSION['pageMessages'][$level])) {
+        $_SESSION['pageMessages'][$level] .= "\n<br />$message";
+    } else {
+        $_SESSION['pageMessages'][$level] = $message;
+    }
 }
 
 /**
@@ -134,19 +123,19 @@ function set_page_message($message, $level = 'info')
  */
 function format_message($messages)
 {
-	$string = '';
+    $string = '';
 
-	if (is_array($messages)) {
-		foreach ($messages as $message) {
-			$string .= $message . "<br />\n";
-		}
-	} elseif (is_string($messages)) {
-		$string = $messages;
-	} else {
-		throw new InvalidArgumentException('set_page_message() expects a string or an array for $messages.');
-	}
+    if (is_array($messages)) {
+        foreach ($messages as $message) {
+            $string .= $message . "<br />\n";
+        }
+    } elseif (is_string($messages)) {
+        $string = $messages;
+    } else {
+        throw new InvalidArgumentException('set_page_message() expects a string or an array for $messages.');
+    }
 
-	return $string;
+    return $string;
 }
 
 /**
@@ -157,64 +146,64 @@ function format_message($messages)
  */
 function get_menu_vars($menuLink)
 {
-	if (strpos($menuLink, '}') === false || strpos($menuLink, '}') === false) {
-		return $menuLink;
-	}
+    if (strpos($menuLink, '}') === false || strpos($menuLink, '}') === false) {
+        return $menuLink;
+    }
 
-	$query = "
-		SELECT
-			`customer_id`, `fname`, `lname`, `firm`, `zip`, `city`, `state`, `country`, `email`, `phone`, `fax`,
-			`street1`, `street2`
-		FROM
-			`admin`
-		WHERE
-			`admin_id` = ?
-	";
-	$stmt = exec_query($query, $_SESSION['user_id']);
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $query = "
+        SELECT
+            `customer_id`, `fname`, `lname`, `firm`, `zip`, `city`, `state`, `country`, `email`, `phone`, `fax`,
+            `street1`, `street2`
+        FROM
+            `admin`
+        WHERE
+            `admin_id` = ?
+    ";
+    $stmt = exec_query($query, $_SESSION['user_id']);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-	$search = array();
-	$replace = array();
+    $search = array();
+    $replace = array();
 
-	$search [] = '{uid}';
-	$replace[] = $_SESSION['user_id'];
-	$search [] = '{uname}';
-	$replace[] = tohtml($_SESSION['user_logged']);
-	$search [] = '{cid}';
-	$replace[] = tohtml($row['customer_id']);
-	$search [] = '{fname}';
-	$replace[] = tohtml($row['fname']);
-	$search [] = '{lname}';
-	$replace[] = tohtml($row['lname']);
-	$search [] = '{company}';
-	$replace[] = tohtml($row['firm']);
-	$search [] = '{zip}';
-	$replace[] = tohtml($row['zip']);
-	$search [] = '{city}';
-	$replace[] = tohtml($row['city']);
-	$search [] = '{state}';
-	$replace[] = $row['state'];
-	$search [] = '{country}';
-	$replace[] = tohtml($row['country']);
-	$search [] = '{email}';
-	$replace[] = tohtml($row['email']);
-	$search [] = '{phone}';
-	$replace[] = tohtml($row['phone']);
-	$search [] = '{fax}';
-	$replace[] = tohtml($row['fax']);
-	$search [] = '{street1}';
-	$replace[] = tohtml($row['street1']);
-	$search [] = '{street2}';
-	$replace[] = tohtml($row['street2']);
+    $search [] = '{uid}';
+    $replace[] = $_SESSION['user_id'];
+    $search [] = '{uname}';
+    $replace[] = tohtml($_SESSION['user_logged']);
+    $search [] = '{cid}';
+    $replace[] = tohtml($row['customer_id']);
+    $search [] = '{fname}';
+    $replace[] = tohtml($row['fname']);
+    $search [] = '{lname}';
+    $replace[] = tohtml($row['lname']);
+    $search [] = '{company}';
+    $replace[] = tohtml($row['firm']);
+    $search [] = '{zip}';
+    $replace[] = tohtml($row['zip']);
+    $search [] = '{city}';
+    $replace[] = tohtml($row['city']);
+    $search [] = '{state}';
+    $replace[] = $row['state'];
+    $search [] = '{country}';
+    $replace[] = tohtml($row['country']);
+    $search [] = '{email}';
+    $replace[] = tohtml($row['email']);
+    $search [] = '{phone}';
+    $replace[] = tohtml($row['phone']);
+    $search [] = '{fax}';
+    $replace[] = tohtml($row['fax']);
+    $search [] = '{street1}';
+    $replace[] = tohtml($row['street1']);
+    $search [] = '{street2}';
+    $replace[] = tohtml($row['street2']);
 
-	$query = 'SELECT `domain_name`, `domain_admin_id` FROM `domain` WHERE `domain_admin_id` = ?';
-	$stmt = exec_query($query, $_SESSION['user_id']);
-	$row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $query = 'SELECT `domain_name`, `domain_admin_id` FROM `domain` WHERE `domain_admin_id` = ?';
+    $stmt = exec_query($query, $_SESSION['user_id']);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-	$search [] = '{domain_name}';
-	$replace[] = $row['domain_name'];
+    $search [] = '{domain_name}';
+    $replace[] = $row['domain_name'];
 
-	return str_replace($search, $replace, $menuLink);
+    return str_replace($search, $replace, $menuLink);
 }
 
 /**
@@ -224,34 +213,34 @@ function get_menu_vars($menuLink)
  */
 function layout_getAvailableColorSet()
 {
-	static $colorSet = null;
+    static $colorSet = null;
 
-	if (null === $colorSet) {
-		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();;
+    if (null === $colorSet) {
+        $cfg = \iMSCP\Core\Application::getInstance()->getConfig();;
 
-		if (file_exists($cfg['ROOT_TEMPLATE_PATH'] . '/info.php')) {
-			$themeInfo = include_once($cfg['ROOT_TEMPLATE_PATH'] . '/info.php');
+        if (file_exists($cfg['ROOT_TEMPLATE_PATH'] . '/info.php')) {
+            $themeInfo = include_once($cfg['ROOT_TEMPLATE_PATH'] . '/info.php');
 
-			if (is_array($themeInfo)) {
-				$colorSet = (array)$themeInfo['theme_color_set'];
-			} else {
-				ini_set('display_errors', 1);
-				trigger_error(
-					sprintf(
-						"The 'theme_color'_set parameter is missing in the %s file",
-						$cfg['ROOT_TEMPLATE_PATH'] . '/info.php'
-					),
-					E_USER_ERROR
-				);
-			}
-		} else {
-			trigger_error(
-				sprintf("File %s is missing or not readable", $cfg['ROOT_TEMPLATE_PATH'] . '/info.php'), E_USER_ERROR
-			);
-		}
-	}
+            if (is_array($themeInfo)) {
+                $colorSet = (array)$themeInfo['theme_color_set'];
+            } else {
+                ini_set('display_errors', 1);
+                trigger_error(
+                    sprintf(
+                        "The 'theme_color'_set parameter is missing in the %s file",
+                        $cfg['ROOT_TEMPLATE_PATH'] . '/info.php'
+                    ),
+                    E_USER_ERROR
+                );
+            }
+        } else {
+            trigger_error(
+                sprintf("File %s is missing or not readable", $cfg['ROOT_TEMPLATE_PATH'] . '/info.php'), E_USER_ERROR
+            );
+        }
+    }
 
-	return $colorSet;
+    return $colorSet;
 }
 
 /**
@@ -262,30 +251,30 @@ function layout_getAvailableColorSet()
  */
 function layout_getUserLayoutColor($userId)
 {
-	static $color = null;
+    static $color = null;
 
-	if (null === $color) {
-		if (isset($_SESSION['user_theme_color'])) {
-			$color = $_SESSION['user_theme_color'];
-		} else {
-			$allowedColors = layout_getAvailableColorSet();
+    if (null === $color) {
+        if (isset($_SESSION['user_theme_color'])) {
+            $color = $_SESSION['user_theme_color'];
+        } else {
+            $allowedColors = layout_getAvailableColorSet();
 
-			$query = 'SELECT `layout_color` FROM `user_gui_props` WHERE `user_id` = ?';
-			$stmt = exec_query($query, (int)$userId);
+            $query = 'SELECT `layout_color` FROM `user_gui_props` WHERE `user_id` = ?';
+            $stmt = exec_query($query, (int)$userId);
 
-			if ($stmt->rowCount()) {
-				$color = $stmt->fields['layout_color'];
+            if ($stmt->rowCount()) {
+                $color = $stmt->fields['layout_color'];
 
-				if (!$color || !in_array($color, $allowedColors)) {
-					$color = array_shift($allowedColors);
-				}
-			} else {
-				$color = array_shift($allowedColors);
-			}
-		}
-	}
+                if (!$color || !in_array($color, $allowedColors)) {
+                    $color = array_shift($allowedColors);
+                }
+            } else {
+                $color = array_shift($allowedColors);
+            }
+        }
+    }
 
-	return $color;
+    return $color;
 }
 
 /**
@@ -297,46 +286,46 @@ function layout_getUserLayoutColor($userId)
  */
 function layout_init($event)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-	ini_set('default_charset', 'UTF-8');
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    ini_set('default_charset', 'UTF-8');
 
-	if (isset($_SESSION['user_theme_color'])) {
-		$color = $_SESSION['user_theme_color'];
-	} elseif (isset($_SESSION['user_id'])) {
-		$userId = isset($_SESSION['logged_from_id']) ? $_SESSION['logged_from_id'] : $_SESSION['user_id'];
-		$color = layout_getUserLayoutColor($userId);
-		$_SESSION['user_theme_color'] = $color;
-	} else {
-		$colors = layout_getAvailableColorSet();
-		$color = array_shift($colors);
-	}
+    if (isset($_SESSION['user_theme_color'])) {
+        $color = $_SESSION['user_theme_color'];
+    } elseif (isset($_SESSION['user_id'])) {
+        $userId = isset($_SESSION['logged_from_id']) ? $_SESSION['logged_from_id'] : $_SESSION['user_id'];
+        $color = layout_getUserLayoutColor($userId);
+        $_SESSION['user_theme_color'] = $color;
+    } else {
+        $colors = layout_getAvailableColorSet();
+        $color = array_shift($colors);
+    }
 
-	// Get user Identity
-	$identity = \iMSCP\Core\Authentication\Authentication::getInstance()->getIdentity();
+    // Get user Identity
+    $identity = \iMSCP\Core\Authentication\Authentication::getInstance()->getIdentity();
 
-	// Get user locale and language
-	/** @var \Zend\I18n\Translator\Translator $translator */
-	$translator = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Translator');
-	$locale = $translator->getLocale();
-	$localeParts = explode('_', $locale);
-	$lang = $localeParts[0];
-	unset($localeParts);
+    // Get user locale and language
+    /** @var \Zend\I18n\Translator\Translator $translator */
+    $translator = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Translator');
+    $locale = $translator->getLocale();
+    $localeParts = explode('_', $locale);
+    $lang = $localeParts[0];
+    unset($localeParts);
 
-	/** @var $tpl iMSCP\Core\Template\TemplateEngine */
-	$tpl = $event->getParam('templateEngine');
-	$tpl->assign(array(
-		'THEME_COLOR' => $color,
-		'ASSETS_PATH' => $cfg['ASSETS_PATH'],
-		'ISP_LOGO' => (isset($_SESSION['user_id'])) ? layout_getUserLogo() : '',
-		'JS_TRANSLATIONS' => i18n_getJsTranslations(),
-		'USER_IDENTITY' => json_encode(array(
-			'userId' => $identity->admin_id,
-			'userRole' => $identity->admin_type
-		)),
-		'LANG' => $lang,
-		'LOCALE' => $locale,
-	));
-	$tpl->parse('LAYOUT', 'layout');
+    /** @var $tpl iMSCP\Core\Template\TemplateEngine */
+    $tpl = $event->getParam('templateEngine');
+    $tpl->assign(array(
+        'THEME_COLOR' => $color,
+        'ASSETS_PATH' => $cfg['ASSETS_PATH'],
+        'ISP_LOGO' => (isset($_SESSION['user_id'])) ? layout_getUserLogo() : '',
+        'JS_TRANSLATIONS' => i18n_getJsTranslations(),
+        'USER_IDENTITY' => json_encode(array(
+            'userId' => $identity->admin_id,
+            'userRole' => $identity->admin_type
+        )),
+        'LANG' => $lang,
+        'LOCALE' => $locale,
+    ));
+    $tpl->parse('LAYOUT', 'layout');
 }
 
 /**
@@ -348,37 +337,37 @@ function layout_init($event)
  */
 function layout_setUserLayoutColor($userId, $color)
 {
-	if (in_array($color, layout_getAvailableColorSet())) {
-		$query = 'UPDATE `user_gui_props` SET `layout_color` = ? WHERE `user_id` = ?';
-		exec_query($query, array($color, (int)$userId));
+    if (in_array($color, layout_getAvailableColorSet())) {
+        $query = 'UPDATE `user_gui_props` SET `layout_color` = ? WHERE `user_id` = ?';
+        exec_query($query, array($color, (int)$userId));
 
-		// Dealing with sessions across multiple browsers for same user identifier - Begin
+        // Dealing with sessions across multiple browsers for same user identifier - Begin
 
-		$sessionId = session_id();
+        $sessionId = session_id();
 
-		$query = "SELECT `session_id` FROM `login` WHERE `user_name` = ?  AND `session_id` <> ?";
-		$stmt = exec_query($query, array($_SESSION['user_logged'], $sessionId));
+        $query = "SELECT `session_id` FROM `login` WHERE `user_name` = ?  AND `session_id` <> ?";
+        $stmt = exec_query($query, array($_SESSION['user_logged'], $sessionId));
 
-		if ($stmt->rowCount()) {
-			while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-				session_write_close();
-				session_id($row['session_id']);
-				session_start();
-				$_SESSION['user_theme_color'] = $color; // Update user layout color
-			}
+        if ($stmt->rowCount()) {
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                session_write_close();
+                session_id($row['session_id']);
+                session_start();
+                $_SESSION['user_theme_color'] = $color; // Update user layout color
+            }
 
-			// Return back to the previous session
-			session_write_close();
-			session_id($sessionId);
-			session_start();
-		}
+            // Return back to the previous session
+            session_write_close();
+            session_id($sessionId);
+            session_start();
+        }
 
-		// Dealing with data across multiple sessions - End
+        // Dealing with data across multiple sessions - End
 
-		return true;
-	}
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 /**
@@ -394,52 +383,52 @@ function layout_setUserLayoutColor($userId, $color)
  */
 function layout_getUserLogo($searchForCreator = true, $returnDefault = true)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	// On switched level, we want show logo from logged user
-	if (isset($_SESSION['logged_from_id']) && $searchForCreator) {
-		$userId = $_SESSION['logged_from_id'];
-		// Customers inherit the logo of their reseller
-	} elseif ($_SESSION['user_type'] == 'user') {
-		$userId = $_SESSION['user_created_by'];
-	} else {
-		$userId = $_SESSION['user_id'];
-	}
+    // On switched level, we want show logo from logged user
+    if (isset($_SESSION['logged_from_id']) && $searchForCreator) {
+        $userId = $_SESSION['logged_from_id'];
+        // Customers inherit the logo of their reseller
+    } elseif ($_SESSION['user_type'] == 'user') {
+        $userId = $_SESSION['user_created_by'];
+    } else {
+        $userId = $_SESSION['user_id'];
+    }
 
-	$query = 'SELECT `logo` FROM `user_gui_props` WHERE `user_id`= ?';
-	$stmt = exec_query($query, $userId);
+    $query = 'SELECT `logo` FROM `user_gui_props` WHERE `user_id`= ?';
+    $stmt = exec_query($query, $userId);
 
-	// No logo is found for the user, let see for it creator
-	if ($searchForCreator && $userId != 1 && empty($stmt->fields['logo'])) {
-		$query = '
-			SELECT
-				`b`.`logo`
-			FROM
-				`admin` `a`
-			LEFT JOIN
-				`user_gui_props` `b` ON (`b`.`user_id` = `a`.`created_by`)
-			WHERE
-				`a`.`admin_id`= ?
-		';
-		$stmt = exec_query($query, $userId);
-	}
+    // No logo is found for the user, let see for it creator
+    if ($searchForCreator && $userId != 1 && empty($stmt->fields['logo'])) {
+        $query = '
+            SELECT
+                `b`.`logo`
+            FROM
+                `admin` `a`
+            LEFT JOIN
+                `user_gui_props` `b` ON (`b`.`user_id` = `a`.`created_by`)
+            WHERE
+                `a`.`admin_id`= ?
+        ';
+        $stmt = exec_query($query, $userId);
+    }
 
-	// No user logo found
-	if (
-		empty($stmt->fields['logo']) ||
-		!file_exists($cfg['GUI_ROOT_DIR'] . '/data/persistent/ispLogos/' . $stmt->fields['logo'])
-	) {
-		if (!$returnDefault) {
-			return '';
-		} elseif (file_exists($cfg['ROOT_TEMPLATE_PATH'] . '/assets/images/imscp_logo.png')) {
-			return $cfg['ASSETS_PATH'] . '/images/imscp_logo.png';
-		} else {
-			// no logo available, we use default
-			return $cfg['ISP_LOGO_PATH'] . '/' . 'isp_logo.gif';
-		}
-	}
+    // No user logo found
+    if (
+        empty($stmt->fields['logo']) ||
+        !file_exists($cfg['GUI_ROOT_DIR'] . '/data/persistent/ispLogos/' . $stmt->fields['logo'])
+    ) {
+        if (!$returnDefault) {
+            return '';
+        } elseif (file_exists($cfg['ROOT_TEMPLATE_PATH'] . '/assets/images/imscp_logo.png')) {
+            return $cfg['ASSETS_PATH'] . '/images/imscp_logo.png';
+        } else {
+            // no logo available, we use default
+            return $cfg['ISP_LOGO_PATH'] . '/' . 'isp_logo.gif';
+        }
+    }
 
-	return $cfg['ISP_LOGO_PATH'] . '/' . $stmt->fields['logo'];
+    return $cfg['ISP_LOGO_PATH'] . '/' . $stmt->fields['logo'];
 }
 
 /**
@@ -451,63 +440,63 @@ function layout_getUserLogo($searchForCreator = true, $returnDefault = true)
  */
 function layout_updateUserLogo()
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	// closure that is run before move_uploaded_file() function - See the
-	// Utils_UploadFile() function for further information about implementation
-	// details
-	$beforeMove = function ($cfg) {
-		$tmpFilePath = $_FILES['logoFile']['tmp_name'];
+    // closure that is run before move_uploaded_file() function - See the
+    // Utils_UploadFile() function for further information about implementation
+    // details
+    $beforeMove = function ($cfg) {
+        $tmpFilePath = $_FILES['logoFile']['tmp_name'];
 
-		// Checking file mime type
-		if (!($fileMimeType = checkMimeType($tmpFilePath, ['image/gif', 'image/jpeg', 'image/pjpeg', 'image/png']))) {
-			set_page_message(tr('You can only upload images.'), 'error');
-			return false;
-		}
+        // Checking file mime type
+        if (!($fileMimeType = checkMimeType($tmpFilePath, ['image/gif', 'image/jpeg', 'image/pjpeg', 'image/png']))) {
+            set_page_message(tr('You can only upload images.'), 'error');
+            return false;
+        }
 
-		// Retrieving file extension (gif|jpeg|png)
-		if ($fileMimeType == 'image/pjpeg' || $fileMimeType == 'image/jpeg') {
-			$fileExtension = 'jpeg';
-		} else {
-			$fileExtension = substr($fileMimeType, -3);
-		}
+        // Retrieving file extension (gif|jpeg|png)
+        if ($fileMimeType == 'image/pjpeg' || $fileMimeType == 'image/jpeg') {
+            $fileExtension = 'jpeg';
+        } else {
+            $fileExtension = substr($fileMimeType, -3);
+        }
 
-		// Getting the image size
-		list($imageWidth, $imageHeigth) = getimagesize($tmpFilePath);
+        // Getting the image size
+        list($imageWidth, $imageHeigth) = getimagesize($tmpFilePath);
 
-		// Checking image size
-		if ($imageWidth > 500 || $imageHeigth > 90) {
-			set_page_message(tr('Images have to be smaller than 500 x 90 pixels.'), 'error');
-			return false;
-		}
+        // Checking image size
+        if ($imageWidth > 500 || $imageHeigth > 90) {
+            set_page_message(tr('Images have to be smaller than 500 x 90 pixels.'), 'error');
+            return false;
+        }
 
-		// Building an unique file name
-		$fileName = sha1(utils_randomString(15) . '-' . $_SESSION['user_id']) . '.' . $fileExtension;
+        // Building an unique file name
+        $fileName = sha1(utils_randomString(15) . '-' . $_SESSION['user_id']) . '.' . $fileExtension;
 
-		// Return destination file path
-		return $cfg['GUI_ROOT_DIR'] . '/data/persistent/ispLogos/' . $fileName;
-	};
+        // Return destination file path
+        return $cfg['GUI_ROOT_DIR'] . '/data/persistent/ispLogos/' . $fileName;
+    };
 
-	if (($logoPath = utils_uploadFile('logoFile', array($beforeMove, $cfg))) === false) {
-		return false;
-	} else {
-		if ($_SESSION['user_type'] == 'admin') {
-			$userId = 1;
-		} else {
-			$userId = $_SESSION['user_id'];
-		}
+    if (($logoPath = utils_uploadFile('logoFile', array($beforeMove, $cfg))) === false) {
+        return false;
+    } else {
+        if ($_SESSION['user_type'] == 'admin') {
+            $userId = 1;
+        } else {
+            $userId = $_SESSION['user_id'];
+        }
 
-		// We must catch old logo before update
-		$oldLogoFile = layout_getUserLogo(false, false);
+        // We must catch old logo before update
+        $oldLogoFile = layout_getUserLogo(false, false);
 
-		exec_query('UPDATE `user_gui_props` SET `logo` = ? WHERE `user_id` = ?', array(basename($logoPath), $userId));
+        exec_query('UPDATE `user_gui_props` SET `logo` = ? WHERE `user_id` = ?', array(basename($logoPath), $userId));
 
-		// Deleting old logo (we are safe here) - We don't return FALSE on failure.
-		// The administrator will be warned through logs.
-		layout_deleteUserLogo($oldLogoFile, true);
-	}
+        // Deleting old logo (we are safe here) - We don't return FALSE on failure.
+        // The administrator will be warned through logs.
+        layout_deleteUserLogo($oldLogoFile, true);
+    }
 
-	return true;
+    return true;
 }
 
 /**
@@ -519,38 +508,38 @@ function layout_updateUserLogo()
  */
 function layout_deleteUserLogo($logoFilePath = null, $onlyFile = false)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	if (null === $logoFilePath) {
-		if ($_SESSION['user_type'] == 'admin') {
-			$logoFilePath = layout_getUserLogo(true);
-		} else {
-			$logoFilePath = layout_getUserLogo(false);
-		}
-	}
+    if (null === $logoFilePath) {
+        if ($_SESSION['user_type'] == 'admin') {
+            $logoFilePath = layout_getUserLogo(true);
+        } else {
+            $logoFilePath = layout_getUserLogo(false);
+        }
+    }
 
-	if ($_SESSION['user_type'] == 'admin') {
-		$userId = 1;
-	} else {
-		$userId = $_SESSION['user_id'];
-	}
+    if ($_SESSION['user_type'] == 'admin') {
+        $userId = 1;
+    } else {
+        $userId = $_SESSION['user_id'];
+    }
 
-	if (!$onlyFile) {
-		exec_query('UPDATE `user_gui_props` SET `logo` = ? WHERE `user_id` = ?', array(null, $userId));
-	}
+    if (!$onlyFile) {
+        exec_query('UPDATE `user_gui_props` SET `logo` = ? WHERE `user_id` = ?', array(null, $userId));
+    }
 
-	if (strpos($logoFilePath, $cfg['ISP_LOGO_PATH']) !== false) {
-		$logoFilePath = $cfg['GUI_ROOT_DIR'] . '/data/persistent/ispLogos/' . basename($logoFilePath);
+    if (strpos($logoFilePath, $cfg['ISP_LOGO_PATH']) !== false) {
+        $logoFilePath = $cfg['GUI_ROOT_DIR'] . '/data/persistent/ispLogos/' . basename($logoFilePath);
 
-		if (file_exists($logoFilePath) && @unlink($logoFilePath)) {
-			return true;
-		} else {
-			write_log(tr("System is unable to remove '%s' user logo.", $logoFilePath), E_USER_WARNING);
-			return false;
-		}
-	}
+        if (file_exists($logoFilePath) && @unlink($logoFilePath)) {
+            return true;
+        } else {
+            write_log(tr("System is unable to remove '%s' user logo.", $logoFilePath), E_USER_WARNING);
+            return false;
+        }
+    }
 
-	return true;
+    return true;
 }
 
 /**
@@ -561,16 +550,16 @@ function layout_deleteUserLogo($logoFilePath = null, $onlyFile = false)
  */
 function layout_isUserLogo($logoPath)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	if (
-		$logoPath == '/themes/' . $_SESSION['user_theme'] . '/assets/images/imscp_logo.png'
-		|| $logoPath == $cfg['ISP_LOGO_PATH'] . '/' . 'isp_logo.gif'
-	) {
-		return false;
-	}
+    if (
+        $logoPath == '/themes/' . $_SESSION['user_theme'] . '/assets/images/imscp_logo.png'
+        || $logoPath == $cfg['ISP_LOGO_PATH'] . '/' . 'isp_logo.gif'
+    ) {
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
 /**
@@ -580,37 +569,37 @@ function layout_isUserLogo($logoPath)
  */
 function layout_LoadNavigation()
 {
-	if (isset($_SESSION['user_type'])) {
-		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    if (isset($_SESSION['user_type'])) {
+        $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-		/** @var \Zend\I18n\Translator\Translator $translator */
-		$translator = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Translator');
-		$locale = $translator->getLocale();
+        /** @var \Zend\I18n\Translator\Translator $translator */
+        $translator = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Translator');
+        $locale = $translator->getLocale();
 
-		switch ($_SESSION['user_type']) {
-			case 'admin':
-				$userLevel = 'admin';
-				$filepath = 'data/cache/translations/navigation/admin_' . $locale . '.php';
-				break;
-			case 'reseller':
-				$userLevel = 'reseller';
-				$filepath = 'data/cache/translations/navigation/reseller_' . $locale . '.php';
-				break;
-			default:
-				$userLevel = 'client';
-				$filepath = 'data/cache/translations/navigation/client_' . $locale . '.php';
-		}
-		if(!file_exists($filepath)) {
-			layout_createNavigationFile($cfg['ROOT_TEMPLATE_PATH'] . "/$userLevel/navigation.php", $locale, $userLevel);
-		}
+        switch ($_SESSION['user_type']) {
+            case 'admin':
+                $userLevel = 'admin';
+                $filepath = 'data/cache/translations/navigation/admin_' . $locale . '.php';
+                break;
+            case 'reseller':
+                $userLevel = 'reseller';
+                $filepath = 'data/cache/translations/navigation/reseller_' . $locale . '.php';
+                break;
+            default:
+                $userLevel = 'client';
+                $filepath = 'data/cache/translations/navigation/client_' . $locale . '.php';
+        }
+        if (!file_exists($filepath)) {
+            layout_createNavigationFile($cfg['ROOT_TEMPLATE_PATH'] . "/$userLevel/navigation.php", $locale, $userLevel);
+        }
 
-		iMSCP_Registry::set('navigation', new Zend\Navigation\Navigation(include($filepath)));
+        iMSCP_Registry::set('navigation', new Zend\Navigation\Navigation(include($filepath)));
 
-		// Set main menu labels visibility for the current environment
-		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-			\iMSCP\Core\Events::onBeforeGenerateNavigation, 'layout_setMainMenuLabelsVisibilityEvt'
-		);
-	}
+        // Set main menu labels visibility for the current environment
+        \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+            \iMSCP\Core\Events::onBeforeGenerateNavigation, 'layout_setMainMenuLabelsVisibilityEvt'
+        );
+    }
 }
 
 /**
@@ -622,17 +611,17 @@ function layout_LoadNavigation()
  */
 function layout_createNavigationFile($filepath, $locale, $userLevel)
 {
-	$translationsCacheDir = 'data/cache/translations/navigation';
+    $translationsCacheDir = 'data/cache/translations/navigation';
 
-	if(!is_dir($translationsCacheDir)) {
-		if(!@mkdir($translationsCacheDir)) {
-			throw new RuntimeException('Unable to create cache directory for navigation translations');
-		}
-	}
+    if (!is_dir($translationsCacheDir)) {
+        if (!@mkdir($translationsCacheDir)) {
+            throw new RuntimeException('Unable to create cache directory for navigation translations');
+        }
+    }
 
-	(new \Zend\Config\Writer\PhpArray())
-		->setUseBracketArraySyntax(true)
-		->toFile($translationsCacheDir . '/' . $userLevel . '_' . $locale . '.php', include($filepath));
+    (new \Zend\Config\Writer\PhpArray())
+        ->setUseBracketArraySyntax(true)
+        ->toFile($translationsCacheDir . '/' . $userLevel . '_' . $locale . '.php', include($filepath));
 }
 
 /**
@@ -643,14 +632,14 @@ function layout_createNavigationFile($filepath, $locale, $userLevel)
  */
 function layout_isMainMenuLabelsVisible($userId)
 {
-	$stmt = exec_query('SELECT `show_main_menu_labels` FROM `user_gui_props` WHERE `user_id` = ?', $userId);
+    $stmt = exec_query('SELECT `show_main_menu_labels` FROM `user_gui_props` WHERE `user_id` = ?', $userId);
 
-	if ($stmt->rowCount()) {
-		$row = $stmt->fetch(PDO::FETCH_ASSOC);
-		return (bool)$row['show_main_menu_labels'];
-	}
+    if ($stmt->rowCount()) {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (bool)$row['show_main_menu_labels'];
+    }
 
-	return true;
+    return true;
 }
 
 /**
@@ -662,14 +651,14 @@ function layout_isMainMenuLabelsVisible($userId)
  */
 function layout_setMainMenuLabelsVisibility($userId, $visibility)
 {
-	$visibility = (int)$visibility;
+    $visibility = (int)$visibility;
 
-	$query = 'UPDATE `user_gui_props` SET `show_main_menu_labels` = ? WHERE `user_id` = ?';
-	exec_query($query, array($visibility, (int)$userId));
+    $query = 'UPDATE `user_gui_props` SET `show_main_menu_labels` = ? WHERE `user_id` = ?';
+    exec_query($query, array($visibility, (int)$userId));
 
-	if (!isset($_SESSION['logged_from_id'])) {
-		$_SESSION['show_main_menu_labels'] = $visibility;
-	}
+    if (!isset($_SESSION['logged_from_id'])) {
+        $_SESSION['show_main_menu_labels'] = $visibility;
+    }
 }
 
 /**
@@ -679,8 +668,8 @@ function layout_setMainMenuLabelsVisibility($userId, $visibility)
  */
 function layout_setMainMenuLabelsVisibilityEvt()
 {
-	if (!isset($_SESSION['show_main_menu_labels']) && isset($_SESSION['user_type'])) {
-		$userId = isset($_SESSION['logged_from_id']) ? $_SESSION['logged_from_id'] : $_SESSION['user_id'];
-		$_SESSION['show_main_menu_labels'] = layout_isMainMenuLabelsVisible($userId);
-	}
+    if (!isset($_SESSION['show_main_menu_labels']) && isset($_SESSION['user_type'])) {
+        $userId = isset($_SESSION['logged_from_id']) ? $_SESSION['logged_from_id'] : $_SESSION['user_id'];
+        $_SESSION['show_main_menu_labels'] = layout_isMainMenuLabelsVisible($userId);
+    }
 }

@@ -26,41 +26,41 @@ namespace iMSCP\Core\Config;
  */
 class FileConfigHandler extends AbstractConfigHandler
 {
-	/**
-	 * Constructor
-	 *
-	 * @param string $configFilePath Configuration file path
-	 */
-	public function __construct($configFilePath)
-	{
-		$this->loadConfig((string)$configFilePath);
-	}
+    /**
+     * Constructor
+     *
+     * @param string $configFilePath Configuration file path
+     */
+    public function __construct($configFilePath)
+    {
+        $this->loadConfig((string)$configFilePath);
+    }
 
-	/**
-	 * Load configuration parameters from file
-	 *
-	 * @param string $configFilePath Configuration file path
-	 * @return void
-	 */
-	protected function loadConfig($configFilePath)
-	{
-		if (($string = @file_get_contents($configFilePath)) == false) {
-			throw new \RuntimeException(sprintf('Could not open the `%s` configuration file.', $configFilePath));
-		}
+    /**
+     * Load configuration parameters from file
+     *
+     * @param string $configFilePath Configuration file path
+     * @return void
+     */
+    protected function loadConfig($configFilePath)
+    {
+        if (($string = @file_get_contents($configFilePath)) == false) {
+            throw new \RuntimeException(sprintf('Could not open the `%s` configuration file.', $configFilePath));
+        }
 
-		$lines = explode("\n", $string);
+        $lines = explode("\n", $string);
 
-		foreach ($lines as $i => $line) {
-			// Ignore empty lines and commented lines
-			if (empty($line) || strpos($line, "#") === 0) {
-				continue;
-			}
+        foreach ($lines as $i => $line) {
+            // Ignore empty lines and commented lines
+            if (empty($line) || strpos($line, "#") === 0) {
+                continue;
+            }
 
-			$key = substr($line, 0, strpos($line, '='));
-			$value = substr($line, strpos($line, '=') + 1, strlen($line));
+            $key = substr($line, 0, strpos($line, '='));
+            $value = substr($line, strpos($line, '=') + 1, strlen($line));
 
-			$this->parameters[trim($key)] = trim($value);
-			unset($lines[$i]);
-		}
-	}
+            $this->config[trim($key)] = trim($value);
+            unset($lines[$i]);
+        }
+    }
 }

@@ -30,11 +30,11 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class ValidatorServiceFactory implements FactoryInterface
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
-	{
-		return Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        return Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
+    }
 }

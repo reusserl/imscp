@@ -11,36 +11,36 @@ use Zend\ServiceManager\ServiceManager;
  */
 class ServiceManagerHelper extends Helper
 {
-	/**
-	 * @var ServiceManager
-	 */
-	protected $serviceManager;
+    /**
+     * @var ServiceManager
+     */
+    protected $serviceManager;
 
-	/**
-	 * Constructor
-	 *
-	 * @param ServiceManager $serviceManager
-	 */
-	public function __construct(ServiceManager $serviceManager)
-	{
-		$this->serviceManager = $serviceManager;
-	}
+    /**
+     * Constructor
+     *
+     * @param ServiceManager $serviceManager
+     */
+    public function __construct(ServiceManager $serviceManager)
+    {
+        $this->serviceManager = $serviceManager;
+    }
 
-	/**
-	 * Retrieves the service manager
-	 *
-	 * @return ServiceManager $serviceManager
-	 */
-	public function getServiceManager()
-	{
-		return $this->serviceManager;
-	}
+    /**
+     * Retrieves the service manager
+     *
+     * @return ServiceManager $serviceManager
+     */
+    public function getServiceManager()
+    {
+        return $this->serviceManager;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getName()
-	{
-		return 'servicemanager';
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function getName()
+    {
+        return 'servicemanager';
+    }
 }

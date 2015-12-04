@@ -31,35 +31,35 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class UpdateDatabaseCommand extends Command
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function configure()
-	{
-		$this->setName('imscp:update:database')
-			->setDescription('Update i-MSCP Database')
-			->setHelp(<<<EOT
+    /**
+     * {@inheritdoc}
+     */
+    protected function configure()
+    {
+        $this->setName('imscp:update:database')
+            ->setDescription('Update i-MSCP Database')
+            ->setHelp(<<<EOT
 The <info>imscp:update-database</info> command update i-MSCP database
 
   <info>imscp:aps-standard:update-package-index</info>
 
 EOT
-			);
-	}
+            );
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function execute(InputInterface $input, OutputInterface $output)
-	{
-		// Update database schema (for tables which are not yet managed through ORM)
-		DatabaseUpdater::getInstance()->applyUpdates();
+    /**
+     * {@inheritdoc}
+     */
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        // Update database schema (for tables which are not yet managed through ORM)
+        DatabaseUpdater::getInstance()->applyUpdates();
 
-		// Update database schema (for tables which are managed through ORM)
-		$this->getApplication()->find('orm:schema-tool:update')->run(
-			new ArrayInput(['command' => 'orm:schema-tool:update', '-f' => true]), $output
-		);
+        // Update database schema (for tables which are managed through ORM)
+        $this->getApplication()->find('orm:schema-tool:update')->run(
+            new ArrayInput(['command' => 'orm:schema-tool:update', '-f' => true]), $output
+        );
 
-		$output->writeln('Database schema updated successfully!');
-	}
+        $output->writeln('Database schema updated successfully!');
+    }
 }

@@ -32,52 +32,52 @@ use Zend\ServiceManager\ServiceManagerAwareInterface;
  */
 class ManagerRegistry extends AbstractManagerRegistry implements ServiceManagerAwareInterface
 {
-	/** @var ServiceManager */
-	protected $serviceManager;
+    /** @var ServiceManager */
+    protected $serviceManager;
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function getService($name)
-	{
-		return $this->serviceManager->get($name);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function getService($name)
+    {
+        return $this->serviceManager->get($name);
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	protected function resetService($name)
-	{
-		$this->serviceManager->setService($name, null);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    protected function resetService($name)
+    {
+        $this->serviceManager->setService($name, null);
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getAliasNamespace($alias)
-	{
-		foreach (array_keys($this->getManagers()) as $name) {
-			$manager = $this->getManager($name);
+    /**
+     * {@inheritdoc}
+     */
+    public function getAliasNamespace($alias)
+    {
+        foreach (array_keys($this->getManagers()) as $name) {
+            $manager = $this->getManager($name);
 
-			if ($manager instanceof EntityManager) {
-				try {
-					return $manager->getConfiguration()->getEntityNamespace($alias);
-				} catch (ORMException $ex) {
-					// Probably mapped by another entity manager, or invalid, just ignore this here.
-				}
-			} else {
-				throw new \LogicException(sprintf('Unsupported manager type "%s".', get_class($manager)));
-			}
-		}
+            if ($manager instanceof EntityManager) {
+                try {
+                    return $manager->getConfiguration()->getEntityNamespace($alias);
+                } catch (ORMException $ex) {
+                    // Probably mapped by another entity manager, or invalid, just ignore this here.
+                }
+            } else {
+                throw new \LogicException(sprintf('Unsupported manager type "%s".', get_class($manager)));
+            }
+        }
 
-		throw new \RuntimeException(sprintf('The namespace alias "%s" is not known to any manager.', $alias));
-	}
+        throw new \RuntimeException(sprintf('The namespace alias "%s" is not known to any manager.', $alias));
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function setServiceManager(ServiceManager $serviceManager)
-	{
-		$this->serviceManager = $serviceManager;
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function setServiceManager(ServiceManager $serviceManager)
+    {
+        $this->serviceManager = $serviceManager;
+    }
 }

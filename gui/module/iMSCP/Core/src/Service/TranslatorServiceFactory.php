@@ -33,88 +33,88 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class TranslatorServiceFactory implements FactoryInterface
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
-	{
-		$systemConfig = $serviceLocator->get('SystemConfig');
+    /**
+     * {@inheritdoc}
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        $systemConfig = $serviceLocator->get('SystemConfig');
 
-		/** @var Request $request */
-		//$request = $serviceLocator->get('Request');
+        /** @var Request $request */
+        //$request = $serviceLocator->get('Request');
 
 
-		/*
-		if (PHP_SAPI != 'cli') {
-			$lang = Registry::set('user_def_lang', isset($_SESSION['user_def_lang'])
-				? $_SESSION['user_def_lang']
-				: (isset($config['USER_INITIAL_LANG']) ? $config['USER_INITIAL_LANG'] : 'auto')
-			);
+        /*
+        if (PHP_SAPI != 'cli') {
+            $lang = Registry::set('user_def_lang', isset($_SESSION['user_def_lang'])
+                ? $_SESSION['user_def_lang']
+                : (isset($config['USER_INITIAL_LANG']) ? $config['USER_INITIAL_LANG'] : 'auto')
+            );
 
-			if (Locale::isLocale($lang)) {
-				$locale = new Locale($lang);
+            if (Locale::isLocale($lang)) {
+                $locale = new Locale($lang);
 
-				if ($lang == 'auto') {
-					$locale->setLocale('en_GB');
-					$browser = $locale->getBrowser();
+                if ($lang == 'auto') {
+                    $locale->setLocale('en_GB');
+                    $browser = $locale->getBrowser();
 
-					arsort($browser);
-					foreach ($browser as $language => $quality) {
-						if (file_exists(sprintf($trFilePathPattern, $language, $language))) {
-							$locale->setLocale($language);
-							break;
-						}
-					}
-				} elseif (!file_exists(sprintf($trFilePathPattern, $locale, $locale))) {
-					$locale->setLocale('en_GB');
-				}
-			} else {
-				$locale = new Locale('en_GB');
-			}
-		} else {
-			$locale = new Locale('en_GB');
-		}
-		*/
+                    arsort($browser);
+                    foreach ($browser as $language => $quality) {
+                        if (file_exists(sprintf($trFilePathPattern, $language, $language))) {
+                            $locale->setLocale($language);
+                            break;
+                        }
+                    }
+                } elseif (!file_exists(sprintf($trFilePathPattern, $locale, $locale))) {
+                    $locale->setLocale('en_GB');
+                }
+            } else {
+                $locale = new Locale('en_GB');
+            }
+        } else {
+            $locale = new Locale('en_GB');
+        }
+        */
 
-		/** @var Filesystem $cache */
-		$cache = StorageFactory::factory([
-			'adapter' => [
-				'name' => $systemConfig['DEVMODE'] ? 'Filesystem' : 'Apc', // TODO only if available
-				'options' => [
-					'cache_dir' => 'data/cache/translations',
-					'ttl' => 0, // Translation cache is never flushed automatically
-					'namespace' => 'iMSCP_Translations'
-				],
-			],
-			'plugins' => [
-				[
-					'name' => 'serializer',
-					'options' => []
-				],
-				'exception_handler' => [
-					'throw_exceptions' => true
-				]
-			]
-		]);
+        /** @var Filesystem $cache */
+        $cache = StorageFactory::factory([
+            'adapter' => [
+                'name' => $systemConfig['DEVMODE'] ? 'Filesystem' : 'Apc', // TODO only if available
+                'options' => [
+                    'cache_dir' => 'data/cache/translations',
+                    'ttl' => 0, // Translation cache is never flushed automatically
+                    'namespace' => 'iMSCP_Translations'
+                ],
+            ],
+            'plugins' => [
+                [
+                    'name' => 'serializer',
+                    'options' => []
+                ],
+                'exception_handler' => [
+                    'throw_exceptions' => true
+                ]
+            ]
+        ]);
 
-		// Setup primary translator for iMSCP core translations
-		$translator = Translator::factory([
-			'locale' => '',
-			'translation_file_patterns' => [
-				'type' => 'gettext',
-				'base_dir' => $systemConfig['GUI_ROOT_DIR'] . '/i18n/locales',
-				'pattern' => '%s/LC_MESSAGES/%s.mo',
-				'text_domain' => 'iMSCP'
-			],
+        // Setup primary translator for iMSCP core translations
+        $translator = Translator::factory([
+            'locale' => '',
+            'translation_file_patterns' => [
+                'type' => 'gettext',
+                'base_dir' => $systemConfig['GUI_ROOT_DIR'] . '/i18n/locales',
+                'pattern' => '%s/LC_MESSAGES/%s.mo',
+                'text_domain' => 'iMSCP'
+            ],
 
-		]);
+        ]);
 
-		if ($systemConfig['DEBUG']) {
-			$cache->clearByNamespace('translations');
-		} else {
-			$translator->setCache($cache);
-		}
+        if ($systemConfig['DEBUG']) {
+            $cache->clearByNamespace('translations');
+        } else {
+            $translator->setCache($cache);
+        }
 
-		return $translator;
-	}
+        return $translator;
+    }
 }

@@ -50,54 +50,54 @@ define('MT_ALSSUB_CATCHALL', 'alssub_catchall');
  */
 function get_email_tpl_data($userId, $tplName)
 {
-	$stmt = exec_query("SELECT fname, lname, firm, email FROM admin WHERE admin_id = ?", $userId);
+    $stmt = exec_query("SELECT fname, lname, firm, email FROM admin WHERE admin_id = ?", $userId);
 
-	if ($stmt->rowCount()) {
-		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($stmt->rowCount()) {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-		$firstname = trim($row['fname']);
-		$lastname = trim($row['lname']);
+        $firstname = trim($row['fname']);
+        $lastname = trim($row['lname']);
 
-		if ($firstname != '' && $lastname != '') {
-			$data['sender_name'] = $firstname . ' ' . $lastname;
-		} else if ($firstname != '') {
-			$data['sender_name'] = $firstname;
-		} else if ($lastname != '') {
-			$data['sender_name'] = $lastname;
-		} else {
-			$data['sender_name'] = '';
-		}
+        if ($firstname != '' && $lastname != '') {
+            $data['sender_name'] = $firstname . ' ' . $lastname;
+        } else if ($firstname != '') {
+            $data['sender_name'] = $firstname;
+        } else if ($lastname != '') {
+            $data['sender_name'] = $lastname;
+        } else {
+            $data['sender_name'] = '';
+        }
 
-		$firm = trim($row['firm']);
+        $firm = trim($row['firm']);
 
-		if ($firm != '') {
-			if ($data['sender_name'] != '') {
-				$data['sender_name'] .= " [$firm]";
-			} else {
-				$data['sender_name'] = $firm;
-			}
-		}
+        if ($firm != '') {
+            if ($data['sender_name'] != '') {
+                $data['sender_name'] .= " [$firm]";
+            } else {
+                $data['sender_name'] = $firm;
+            }
+        }
 
-		$data['sender_email'] = $row['email'];
+        $data['sender_email'] = $row['email'];
 
-		$stmt = exec_query(
-			'SELECT subject, message FROM email_tpls WHERE owner_id = ? AND name = ?', array($userId, $tplName)
-		);
+        $stmt = exec_query(
+            'SELECT subject, message FROM email_tpls WHERE owner_id = ? AND name = ?', array($userId, $tplName)
+        );
 
-		if ($stmt->rowCount()) {
-			$row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($stmt->rowCount()) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-			$data['subject'] = $row['subject'];
-			$data['message'] = $row['message'];
-		} else {
-			$data['subject'] = '';
-			$data['message'] = '';
-		}
+            $data['subject'] = $row['subject'];
+            $data['message'] = $row['message'];
+        } else {
+            $data['subject'] = '';
+            $data['message'] = '';
+        }
 
-		return $data;
-	} else {
-		throw new InvalidArgumentException('Unable to find email template data');
-	}
+        return $data;
+    } else {
+        throw new InvalidArgumentException('Unable to find email template data');
+    }
 }
 
 /**
@@ -111,17 +111,17 @@ function get_email_tpl_data($userId, $tplName)
 function set_email_tpl_data($userId, $tplName, $data)
 {
 
-	$stmt = exec_query(
-		'SELECT subject, message FROM email_tpls WHERE owner_id = ? AND name = ?', array($userId, $tplName)
-	);
+    $stmt = exec_query(
+        'SELECT subject, message FROM email_tpls WHERE owner_id = ? AND name = ?', array($userId, $tplName)
+    );
 
-	if (!$stmt->rowCount()) {
-		$query = 'INSERT INTO email_tpls (subject, message, owner_id, name) VALUES (?, ?, ?, ?)';
-	} else {
-		$query = 'UPDATE email_tpls SET subject = ?, message = ? WHERE owner_id = ? AND name = ?';
-	}
+    if (!$stmt->rowCount()) {
+        $query = 'INSERT INTO email_tpls (subject, message, owner_id, name) VALUES (?, ?, ?, ?)';
+    } else {
+        $query = 'UPDATE email_tpls SET subject = ?, message = ? WHERE owner_id = ? AND name = ?';
+    }
 
-	exec_query($query, array($data['subject'], $data['message'], $userId, $tplName));
+    exec_query($query, array($data['subject'], $data['message'], $userId, $tplName));
 }
 
 /**
@@ -135,18 +135,18 @@ function set_email_tpl_data($userId, $tplName, $data)
  */
 function get_welcome_email($userId, $userType = 'user')
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$data = get_email_tpl_data($userId, 'add-user-auto-msg');
+    $data = get_email_tpl_data($userId, 'add-user-auto-msg');
 
-	if ($data['subject'] == '') {
-		$data['subject'] = tr('Welcome {USERNAME} to i-MSCP');
-	}
+    if ($data['subject'] == '') {
+        $data['subject'] = tr('Welcome {USERNAME} to i-MSCP');
+    }
 
-	// No custom template for welcome mail - return the default
-	if ($data['message'] == '') {
-		if ($userType == 'user' && $cfg['WEBSTATS_PACKAGES'] != 'No') {
-			$data['message'] = tr('
+    // No custom template for welcome mail - return the default
+    if ($data['message'] == '') {
+        if ($userType == 'user' && $cfg['WEBSTATS_PACKAGES'] != 'No') {
+            $data['message'] = tr('
 Dear {NAME},
 
 A new account has been created for you.
@@ -166,8 +166,8 @@ Statistics: http://{USERNAME}/stats/ (Same username and password than above)
 Thank you for using our services.
 ', true);
 
-		} else {
-			$data['message'] = tr('
+        } else {
+            $data['message'] = tr('
 Dear {NAME},
 
 A new account has been created for you.
@@ -184,10 +184,10 @@ You can login right now at {BASE_SERVER_VHOST_PREFIX}{BASE_SERVER_VHOST}{BASE_SE
 
 Thank you for using our services.
 ');
-		}
-	}
+        }
+    }
 
-	return $data;
+    return $data;
 }
 
 /**
@@ -200,7 +200,7 @@ Thank you for using our services.
  */
 function set_welcome_email($userId, $data)
 {
-	set_email_tpl_data($userId, 'add-user-auto-msg', $data);
+    set_email_tpl_data($userId, 'add-user-auto-msg', $data);
 }
 
 /**
@@ -213,14 +213,14 @@ function set_welcome_email($userId, $data)
  */
 function get_lostpassword_activation_email($adminId)
 {
-	$data = get_email_tpl_data($adminId, 'lostpw-msg-1');
+    $data = get_email_tpl_data($adminId, 'lostpw-msg-1');
 
-	if (!$data['subject']) {
-		$data['subject'] = tr('Please activate your new i-MSCP password');
-	}
+    if (!$data['subject']) {
+        $data['subject'] = tr('Please activate your new i-MSCP password');
+    }
 
-	if (!$data['message']) {
-		$data['message'] = tr('
+    if (!$data['message']) {
+        $data['message'] = tr('
 
 Dear {NAME},
 
@@ -234,9 +234,9 @@ ___________________________
 The i-MSCP Team
 
 ');
-	}
+    }
 
-	return $data;
+    return $data;
 }
 
 /**
@@ -249,7 +249,7 @@ The i-MSCP Team
  */
 function set_lostpassword_activation_email($adminId, $data)
 {
-	set_email_tpl_data($adminId, 'lostpw-msg-1', $data);
+    set_email_tpl_data($adminId, 'lostpw-msg-1', $data);
 }
 
 /**
@@ -262,14 +262,14 @@ function set_lostpassword_activation_email($adminId, $data)
  */
 function get_lostpassword_password_email($userId)
 {
-	$data = get_email_tpl_data($userId, 'lostpw-msg-2');
+    $data = get_email_tpl_data($userId, 'lostpw-msg-2');
 
-	if (!$data['subject']) {
-		$data['subject'] = tr('Your new i-MSCP login');
-	}
+    if (!$data['subject']) {
+        $data['subject'] = tr('Your new i-MSCP login');
+    }
 
-	if (!$data['message']) {
-		$data['message'] = tr('
+    if (!$data['message']) {
+        $data['message'] = tr('
 
 Hello {NAME},
 
@@ -284,9 +284,9 @@ ___________________________
 The i-MSCP Team
 
 ');
-	}
+    }
 
-	return $data;
+    return $data;
 }
 
 /**
@@ -299,7 +299,7 @@ The i-MSCP Team
  */
 function set_lostpassword_password_email($userId, $data)
 {
-	set_email_tpl_data($userId, 'lostpw-msg-2', $data);
+    set_email_tpl_data($userId, 'lostpw-msg-2', $data);
 }
 
 /**
@@ -312,14 +312,14 @@ function set_lostpassword_password_email($userId, $data)
  */
 function get_alias_order_email($userId)
 {
-	$data = get_email_tpl_data($userId, 'alias-order-msg');
+    $data = get_email_tpl_data($userId, 'alias-order-msg');
 
-	if (!$data['subject']) {
-		$data['subject'] = tr('New alias order for {CUSTOMER}');
-	}
+    if (!$data['subject']) {
+        $data['subject'] = tr('New alias order for {CUSTOMER}');
+    }
 
-	if (!$data['message']) {
-		$data['message'] = tr('
+    if (!$data['message']) {
+        $data['message'] = tr('
 
 Dear {RESELLER},
 
@@ -335,7 +335,7 @@ ___________________________
 The i-MSCP Team
 
 ');
-	}
+    }
 
-	return $data;
+    return $data;
 }

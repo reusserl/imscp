@@ -23,6 +23,7 @@ namespace iMSCP\Core\Authentication;
 use iMSCP\Core\Application;
 use iMSCP\Core\Events;
 use Zend\EventManager\EventManager;
+use Zend\EventManager\EventManagerInterface;
 
 /**
  * Class Authentication
@@ -40,222 +41,216 @@ use Zend\EventManager\EventManager;
  */
 class Authentication
 {
-	/**
-	 * Singleton instance
-	 *
-	 * @var Authentication
-	 */
-	protected static $instance = null;
+    /**
+     * Singleton instance
+     *
+     * @var Authentication
+     */
+    protected static $instance = null;
 
-	/**
-	 * @var EventManager
-	 */
-	protected $eventManager = null;
+    /**
+     * @var EventManager
+     */
+    protected $eventManager = null;
 
-	/**
-	 * @var \StdClass identity
-	 */
-	protected $identity;
+    /**
+     * @var \StdClass identity
+     */
+    protected $identity;
 
-	/**
-	 * Singleton pattern implementation -  makes "new" unavailable
-	 */
-	protected function __construct()
-	{
+    /**
+     * Singleton pattern implementation -  makes "new" unavailable
+     */
+    protected function __construct()
+    {
 
-	}
+    }
 
-	/**
-	 * Singleton pattern implementation -  makes "clone" unavailable
-	 *
-	 * @return void
-	 */
-	protected function __clone()
-	{
+    /**
+     * Singleton pattern implementation -  makes "clone" unavailable
+     *
+     * @return void
+     */
+    protected function __clone()
+    {
 
-	}
+    }
 
-	/**
-	 * Implements singleton design pattern
-	 *
-	 * @return Authentication Provides a fluent interface, returns self
-	 */
-	public static function getInstance()
-	{
-		if(null === self::$instance) {
-			self::$instance = new self();
-		}
+    /**
+     * Implements singleton design pattern
+     *
+     * @return Authentication Provides a fluent interface, returns self
+     */
+    public static function getInstance()
+    {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
 
-		return self::$instance;
-	}
+        return self::$instance;
+    }
 
-	/**
-	 * Return an iMSCP_Events_Manager instance
-	 *
-	 * @param EventManager $events
-	 * @return EventManager
-	 */
-	public function getEventManager(EventManager $events = null)
-	{
-		if(null !== $events) {
-			$this->eventManager = $events;
-		} elseif(null === $this->eventManager) {
-			$this->eventManager = Application::getInstance()->getEventManager();
-		}
+    /**
+     * Return an iMSCP_Events_Manager instance
+     *
+     * @param EventManagerInterface $events
+     * @return EventManager
+     */
+    public function getEventManager(EventManagerInterface $events = null)
+    {
+        if (null !== $events) {
+            $this->eventManager = $events;
+        } elseif (null === $this->eventManager) {
+            $this->eventManager = Application::getInstance()->getEventManager();
+        }
 
-		return $this->eventManager;
-	}
+        return $this->eventManager;
+    }
 
-	/**
-	 * Process authentication
-	 *
-	 * @trigger onBeforeAuthentication
-	 * @trigger onAuthentication
-	 * @trigger onAfterAuthentication
-	 * @return AuthenticationResult
-	 */
-	public function authenticate()
-	{
-		$em = $this->getEventManager();
+    /**
+     * Process authentication
+     *
+     * @trigger onBeforeAuthentication
+     * @trigger onAuthentication
+     * @trigger onAfterAuthentication
+     * @return AuthenticationResult
+     */
+    public function authenticate()
+    {
+        $em = $this->getEventManager();
 
-		$response = $em->trigger(Events::onBeforeAuthentication, array('context' => $this));
+        $response = $em->trigger(Events::onBeforeAuthentication, $this);
 
-		if(!$response->stopped()) {
-			// Process authentication through registered handlers
-			$response = $em->trigger(Events::onAuthentication, array('context' => $this));
+        if (!$response->stopped()) {
+            // Process authentication through registered handlers
+            $response = $em->trigger(Events::onAuthentication, $this);
 
-			if(!($resultAuth = $response->last()) instanceof AuthenticationResult) {
-				$resultAuth = new AuthenticationResult(
-					AuthenticationResult::FAILURE_UNCATEGORIZED, tr('Unknown reason.')
-				);
-			}
+            if (!($resultAuth = $response->last()) instanceof AuthenticationResult) {
+                $resultAuth = new AuthenticationResult(
+                    AuthenticationResult::FAILURE_UNCATEGORIZED, tr('Unknown reason.')
+                );
+            }
 
-			if($resultAuth->isValid()) {
-				$this->unsetIdentity(); // Prevent multiple successive calls from storing inconsistent results
-				$this->setIdentity($resultAuth->getIdentity());
-			}
-		} else {
-			$resultAuth = new AuthenticationResult(
-				AuthenticationResult::FAILURE_UNCATEGORIZED, null, $response->last()
-			);
-		}
+            if ($resultAuth->isValid()) {
+                $this->unsetIdentity(); // Prevent multiple successive calls from storing inconsistent results
+                $this->setIdentity($resultAuth->getIdentity());
+            }
+        } else {
+            $resultAuth = new AuthenticationResult(AuthenticationResult::FAILURE_UNCATEGORIZED, null, $response->last());
+        }
 
-		$em->trigger(Events::onAfterAuthentication, array('context' => $this, 'authResult' => $resultAuth));
+        $em->trigger(Events::onAfterAuthentication, $this, ['authResult' => $resultAuth]);
 
-		return $resultAuth;
-	}
+        return $resultAuth;
+    }
 
-	/**
-	 * Returns true if and only if an identity is available from storage
-	 *
-	 * @return boolean
-	 */
-	public function hasIdentity()
-	{
-		if(isset($_SESSION['user_id'])) {
-			$stmt = exec_query(
-				'SELECT COUNT(session_id) AS cnt FROM login WHERE session_id = ? AND ipaddr = ?',
-				array(session_id(), getipaddr())
-			);
+    /**
+     * Returns true if and only if an identity is available from storage
+     *
+     * @return boolean
+     */
+    public function hasIdentity()
+    {
+        if (isset($_SESSION['user_id'])) {
+            $stmt = exec_query(
+                'SELECT COUNT(session_id) AS cnt FROM login WHERE session_id = ? AND ipaddr = ?',
+                array(session_id(), getipaddr())
+            );
 
-			$row = $stmt->fetchRow(\PDO::FETCH_ASSOC);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-			return (bool)$row['cnt'];
-		}
+            return (bool)$row['cnt'];
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	/**
-	 * Returns the identity from storage or null if no identity is available
-	 *
-	 * @return \stdClass|null
-	 */
-	public function getIdentity()
-	{
-		if($this->identity === null) {
-			if ($this->hasIdentity()) {
-				$this->identity = new \stdClass();
-				$this->identity->admin_id = $_SESSION['user_id'];
-				$this->identity->admin_name = $_SESSION['user_logged'];
-				$this->identity->admin_type = $_SESSION['user_type'];
-				$this->identity->email = $_SESSION['user_email'];
-				$this->identity->created_by = $_SESSION['user_created_by'];
+    /**
+     * Returns the identity from storage or null if no identity is available
+     *
+     * @return \stdClass|null
+     */
+    public function getIdentity()
+    {
+        if ($this->identity === null) {
+            if ($this->hasIdentity()) {
+                $this->identity = new \stdClass();
+                $this->identity->admin_id = $_SESSION['user_id'];
+                $this->identity->admin_name = $_SESSION['user_logged'];
+                $this->identity->admin_type = $_SESSION['user_type'];
+                $this->identity->email = $_SESSION['user_email'];
+                $this->identity->created_by = $_SESSION['user_created_by'];
 
-				if (isset($_SESSION['logged_from_type'])) {
-					$this->identity->logged_from_admin_id = $_SESSION['logged_from_id'];
-					$this->identity->logged_from_admin_name = $_SESSION['logged_from'];
-					$this->identity->logged_from_admin_type = $_SESSION['logged_from_type'];
-				}
-			} else {
-				$this->identity = new \stdClass();
-				$this->identity->admin_id = null;
-				$this->identity->admin_name = null;
-				$this->identity->admin_type = 'guest';
-				$this->identity->email = null;
-				$this->identity->created_by = null;
-			}
-		}
+                if (isset($_SESSION['logged_from_type'])) {
+                    $this->identity->logged_from_admin_id = $_SESSION['logged_from_id'];
+                    $this->identity->logged_from_admin_name = $_SESSION['logged_from'];
+                    $this->identity->logged_from_admin_type = $_SESSION['logged_from_type'];
+                }
+            } else {
+                $this->identity = new \stdClass();
+                $this->identity->admin_id = null;
+                $this->identity->admin_name = null;
+                $this->identity->admin_type = 'guest';
+                $this->identity->email = null;
+                $this->identity->created_by = null;
+            }
+        }
 
-		return $this->identity;
-	}
+        return $this->identity;
+    }
 
-	/**
-	 * Set the given identity
-	 *
-	 * @trigger onBeforeSetIdentity
-	 * @trigger onAfterSetIdentify
-	 * @param \stdClass $identity Identity data
-	 */
-	public function setIdentity($identity)
-	{
-		$this->getEventManager()->trigger(
-			Events::onBeforeSetIdentity, array('context' => $this, 'identity' => $identity)
-		);
+    /**
+     * Set the given identity
+     *
+     * @trigger onBeforeSetIdentity
+     * @trigger onAfterSetIdentify
+     * @param \stdClass $identity Identity data
+     */
+    public function setIdentity($identity)
+    {
+        $this->getEventManager()->trigger(Events::onBeforeSetIdentity, $this, ['identity' => $identity]);
 
-		session_regenerate_id();
-		$lastAccess = time();
+        session_regenerate_id();
+        $lastAccess = time();
 
-		exec_query(
-			'INSERT INTO login (session_id, ipaddr, lastaccess, user_name) VALUES (?, ?, ?, ?)',
-			array(session_id(), getIpAddr(), $lastAccess, $identity->admin_name)
-		);
+        exec_query(
+            'INSERT INTO login (session_id, ipaddr, lastaccess, user_name) VALUES (?, ?, ?, ?)',
+            [session_id(), getIpAddr(), $lastAccess, $identity->admin_name]
+        );
 
-		$_SESSION['user_logged'] = $identity->admin_name;
-		$_SESSION['user_type'] = $identity->admin_type;
-		$_SESSION['user_id'] = $identity->admin_id;
-		$_SESSION['user_email'] = $identity->email;
-		$_SESSION['user_created_by'] = $identity->created_by;
-		$_SESSION['user_login_time'] = $lastAccess;
-		$_SESSION['user_identity'] = $identity;
+        $_SESSION['user_logged'] = $identity->admin_name;
+        $_SESSION['user_type'] = $identity->admin_type;
+        $_SESSION['user_id'] = $identity->admin_id;
+        $_SESSION['user_email'] = $identity->email;
+        $_SESSION['user_created_by'] = $identity->created_by;
+        $_SESSION['user_login_time'] = $lastAccess;
+        $_SESSION['user_identity'] = $identity;
 
-		$this->getEventManager()->trigger(Events::onAfterSetIdentity, array('context' => $this));
-	}
+        $this->getEventManager()->trigger(Events::onAfterSetIdentity, $this);
+    }
 
-	/**
-	 * Unset the current identity
-	 *
-	 * @trigger onBeforeUnsetIdentity
-	 * @trigger onAfterUnserIdentity
-	 * @return void
-	 */
-	public function unsetIdentity()
-	{
-		$this->getEventManager()->trigger(Events::onBeforeUnsetIdentity, array('context' => $this));
+    /**
+     * Unset the current identity
+     *
+     * @trigger onBeforeUnsetIdentity
+     * @trigger onAfterUnserIdentity
+     * @return void
+     */
+    public function unsetIdentity()
+    {
+        $this->getEventManager()->trigger(Events::onBeforeUnsetIdentity, $this);
 
-		exec_query('DELETE FROM login WHERE session_id = ?', session_id());
+        exec_query('DELETE FROM login WHERE session_id = ?', session_id());
 
-		$preserveList = array(
-			'user_def_lang', 'user_theme', 'user_theme_color', 'show_main_menu_labels', 'pageMessages'
-		);
+        $preserveList = ['user_def_lang', 'user_theme', 'user_theme_color', 'show_main_menu_labels', 'pageMessages'];
 
-		foreach(array_keys($_SESSION) as $sessionVariable) {
-			if(!in_array($sessionVariable, $preserveList)) {
-				unset($_SESSION[$sessionVariable]);
-			}
-		}
+        foreach (array_keys($_SESSION) as $sessionVariable) {
+            if (!in_array($sessionVariable, $preserveList)) {
+                unset($_SESSION[$sessionVariable]);
+            }
+        }
 
-		$this->identity = null;
-		$this->getEventManager()->trigger(Events::onAfterUnsetIdentity, array('context' => $this));
-	}
+        $this->identity = null;
+        $this->getEventManager()->trigger(Events::onAfterUnsetIdentity, $this);
+    }
 }

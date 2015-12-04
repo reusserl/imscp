@@ -29,28 +29,28 @@ use Zend\EventManager\Event;
  */
 class ConsoleEvent extends Event
 {
-	/**
-	 * @var Command[]
-	 */
-	protected $commands = [];
+    /**
+     * @var Command[]
+     */
+    protected $commands = [];
 
-	/**
-	 * Add command
-	 *
-	 * @param Command $command
-	 */
-	public function addCommand(Command $command)
-	{
-		$this->commands[] = $command;
-	}
+    /**
+     * Add command
+     *
+     * @param Command $command
+     */
+    public function addCommand(Command $command)
+    {
+        $this->commands[] = $command;
+    }
 
-	/**
-	 * Get commands
-	 *
-	 * @return Command[]
-	 */
-	public function getCommands()
-	{
-		return $this->commands;
-	}
+    /**
+     * Get commands
+     *
+     * @return Command[]
+     */
+    public function getCommands()
+    {
+        return $this->commands;
+    }
 }

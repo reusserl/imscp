@@ -30,28 +30,28 @@ namespace iMSCP\Core\Config;
  */
 class ConfigHandlerFactory
 {
-	/**
-	 * @var array Map
-	 */
-	protected static $configHandlerClasses = [
-		'Array' => 'iMSCP\Core\Config\ArrayConfigHandler',
-		'Db' => 'iMSCP\Core\Config\DbConfigHandler',
-		'File' => 'iMSCP\Core\Config\FileConfigHandler'
-	];
+    /**
+     * @var array Map
+     */
+    protected static $configHandlerClasses = [
+        'Array' => 'iMSCP\Core\Config\ArrayConfigHandler',
+        'Db' => 'iMSCP\Core\Config\DbConfigHandler',
+        'File' => 'iMSCP\Core\Config\FileConfigHandler'
+    ];
 
-	/**
-	 * Create configuration handler
-	 *
-	 * @param string $configHandlerName Configuration handler adapter name
-	 * @param mixed $params Parameters to pass to the configuration handler constructor
-	 * @return AbstractConfigHandler
-	 */
-	public static function factory($configHandlerName = 'array', $params = null)
-	{
-		if (!array_key_exists($configHandlerName, self::$configHandlerClasses) === false) {
-			throw new \InvalidArgumentException('Unknown configuration handler adapter');
-		}
+    /**
+     * Create configuration handler
+     *
+     * @param string $configHandlerName Configuration handler adapter name
+     * @param mixed $params Parameters to pass to the configuration handler constructor
+     * @return AbstractConfigHandler
+     */
+    public static function factory($configHandlerName = 'array', $params = null)
+    {
+        if (!array_key_exists($configHandlerName, self::$configHandlerClasses) === false) {
+            throw new \InvalidArgumentException('Unknown configuration handler adapter');
+        }
 
-		return new self::$configHandlerClasses[$configHandlerName]($params);
-	}
+        return new self::$configHandlerClasses[$configHandlerName]($params);
+    }
 }

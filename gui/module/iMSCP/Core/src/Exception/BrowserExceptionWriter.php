@@ -28,80 +28,80 @@ use iMSCP\Core\Template\TemplateEngine;
  */
 class BrowserExceptionWriter extends AbstractExceptionWriter
 {
-	/**
-	 * @var TemplateEngine
-	 */
-	protected $templateEngine;
+    /**
+     * @var TemplateEngine
+     */
+    protected $templateEngine;
 
-	/**
-	 * @var string Template file path
-	 */
-	protected $templateFile;
+    /**
+     * @var string Template file path
+     */
+    protected $templateFile;
 
-	/** @var  string message */
-	protected $message;
+    /** @var  string message */
+    protected $message;
 
-	/**
-	 * Constructor
-	 *
-	 * @param string $templateFile Template file path
-	 */
-	public function __construct($templateFile = 'message.tpl')
-	{
-		$this->templateFile = (string)$templateFile;
-	}
+    /**
+     * Constructor
+     *
+     * @param string $templateFile Template file path
+     */
+    public function __construct($templateFile = 'message.tpl')
+    {
+        $this->templateFile = (string)$templateFile;
+    }
 
-	/**
-	 * onUncaughtException event listener
-	 *
-	 * @param ExceptionEvent $event
-	 * @return void
-	 */
-	public function onUncaughtException(ExceptionEvent $event)
-	{
-		$exception = $event->getException();
+    /**
+     * onUncaughtException event listener
+     *
+     * @param ExceptionEvent $event
+     * @return void
+     */
+    public function onUncaughtException(ExceptionEvent $event)
+    {
+        $exception = $event->getException();
 
-		if(iMSCP_Registry::isRegistered('config')) {
-			$debug = iMSCP_Registry::get('config')->DEBUG;
-		} else {
-			$debug = 1;
-		}
+        if (iMSCP_Registry::isRegistered('config')) {
+            $debug = iMSCP_Registry::get('config')->DEBUG;
+        } else {
+            $debug = 1;
+        }
 
-		if($debug) {
-			$exception = $event->getException();
+        if ($debug) {
+            $exception = $event->getException();
 
-			$this->message .= sprintf(
-				"An exception has been thrown in file %s at line %s:\n\n", $exception->getFile(), $exception->getLine()
-			);
+            $this->message .= sprintf(
+                "An exception has been thrown in file %s at line %s:\n\n", $exception->getFile(), $exception->getLine()
+            );
 
-			$this->message .= preg_replace('#([\t\n]+|<br \/>)#', ' ', $exception->getMessage());
-			$this->message .= "\n\nTrace:\n\n" . $exception->getTraceAsString();
+            $this->message .= preg_replace('#([\t\n]+|<br \/>)#', ' ', $exception->getMessage());
+            $this->message .= "\n\nTrace:\n\n" . $exception->getTraceAsString();
 
 
-			/*if($exception instanceof iMSCP_Exception_Database) {
-				$query = $exception->getQuery();
+            /*if($exception instanceof iMSCP_Exception_Database) {
+                $query = $exception->getQuery();
 
-				if($query !== '') {
-					$this->message .= sprintf("<br><br><strong>Query was:</strong><br><br>%s", $exception->getQuery());
-				}
-			}
-			*/
-		} else {
-			//$exception = new iMSCP_Exception_Production($exception->getMessage(), $exception->getCode(), $exception);
-			//throw new \Exception('An unexpected error occured. Please contact your administrator');
-			//$this->message = $exception->getMessage();
-		}
+                if($query !== '') {
+                    $this->message .= sprintf("<br><br><strong>Query was:</strong><br><br>%s", $exception->getQuery());
+                }
+            }
+            */
+        } else {
+            //$exception = new iMSCP_Exception_Production($exception->getMessage(), $exception->getCode(), $exception);
+            //throw new \Exception('An unexpected error occured. Please contact your administrator');
+            //$this->message = $exception->getMessage();
+        }
 
-		try {
-			if($this->templateFile) {
-				$this->render();
-			}
-		} catch(\Exception $event) {
-		}
+        try {
+            if ($this->templateFile) {
+                $this->render();
+            }
+        } catch (\Exception $event) {
+        }
 
-		# Fallback to inline template in case something goes wrong with template engine
-		if(!($tpl = $this->templateEngine)) {
-			echo <<<HTML
+        # Fallback to inline template in case something goes wrong with template engine
+        if (!($tpl = $this->templateEngine)) {
+            echo <<<HTML
 <!DOCTYPE html>
 <html>
 	<head>
@@ -136,51 +136,47 @@ class BrowserExceptionWriter extends AbstractExceptionWriter
 	</body>
 </html>
 HTML;
-		} else {
-			$event->setParam('templateEngine', $tpl);
-			layout_init($event);
-			$tpl->parse('LAYOUT', 'layout');
-			$tpl->prnt();
-		}
-	}
+        } else {
+            $event->setParam('templateEngine', $tpl);
+            layout_init($event);
+            $tpl->parse('LAYOUT', 'layout');
+            $tpl->prnt();
+        }
+    }
 
-	/**
-	 * Render exception template file
-	 *
-	 * @return void
-	 */
-	protected function render()
-	{
-		$tpl = new \iMSCP\Core\Template\TemplateEngine();
-		$tpl->define_dynamic(
-			array(
-				'layout' => 'shared/layouts/simple.tpl',
-				'page' => $this->templateFile,
-				'page_message' => 'layout',
-				'backlink_block' => 'page'
-			)
-		);
+    /**
+     * Render exception template file
+     *
+     * @return void
+     */
+    protected function render()
+    {
+        $tpl = new \iMSCP\Core\Template\TemplateEngine();
+        $tpl->define_dynamic([
+            'layout' => 'shared/layouts/simple.tpl',
+            'page' => $this->templateFile,
+            'page_message' => 'layout',
+            'backlink_block' => 'page'
+        ]);
 
-		if(iMSCP_Registry::isRegistered('backButtonDestination')) {
-			$backButtonDestination = iMSCP_Registry::get('backButtonDestination');
-		} else {
-			$backButtonDestination = 'javascript:history.go(-1)';
-		}
+        if (iMSCP_Registry::isRegistered('backButtonDestination')) {
+            $backButtonDestination = iMSCP_Registry::get('backButtonDestination');
+        } else {
+            $backButtonDestination = 'javascript:history.go(-1)';
+        }
 
-		$tpl->assign(
-			array(
-				'TR_PAGE_TITLE' => 'i-MSCP - internet Multi Server Control Panel - Fatal Error',
-				'HEADER_BLOCK' => '',
-				'BOX_MESSAGE_TITLE' => 'An unexpected error occurred',
-				'PAGE_MESSAGE' => '',
-				'BOX_MESSAGE' => $this->message,
-				'BACK_BUTTON_DESTINATION' => $backButtonDestination,
-				'TR_BACK' => 'Back'
-			)
-		);
+        $tpl->assign([
+            'TR_PAGE_TITLE' => 'i-MSCP - internet Multi Server Control Panel - Fatal Error',
+            'HEADER_BLOCK' => '',
+            'BOX_MESSAGE_TITLE' => 'An unexpected error occurred',
+            'PAGE_MESSAGE' => '',
+            'BOX_MESSAGE' => $this->message,
+            'BACK_BUTTON_DESTINATION' => $backButtonDestination,
+            'TR_BACK' => 'Back'
+        ]);
 
-		$tpl->parse('LAYOUT_CONTENT', 'page');
+        $tpl->parse('LAYOUT_CONTENT', 'page');
 
-		$this->templateEngine = $tpl;
-	}
+        $this->templateEngine = $tpl;
+    }
 }

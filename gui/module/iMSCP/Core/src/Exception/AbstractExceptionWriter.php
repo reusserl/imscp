@@ -26,11 +26,11 @@ namespace iMSCP\Core\Exception;
  */
 abstract class AbstractExceptionWriter
 {
-	/**
-	 * onUncaughtException event listener
-	 *
-	 * @param ExceptionEvent $event
-	 * @return void
-	 */
-	abstract public function onUncaughtException(ExceptionEvent $event);
+    /**
+     * onUncaughtException event listener
+     *
+     * @param ExceptionEvent $event
+     * @return void
+     */
+    abstract public function onUncaughtException(ExceptionEvent $event);
 }

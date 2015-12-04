@@ -19,6 +19,7 @@
  */
 
 namespace iMSCP\Core;
+
 use Zend\Uri\Exception\InvalidUriException;
 use Zend\Uri\Uri;
 
@@ -28,49 +29,49 @@ use Zend\Uri\Uri;
  */
 class Redirect extends Uri
 {
-	/**
-	 * Creates a iMSCP_Uri_Redirect from the given string
-	 *
-	 * @param  string $uri String to create URI from, must start with prefix http://, https:// or 'ftp://
-	 * @return Redirect
-	 */
-	public static function fromString($uri)
-	{
-		if (is_string($uri) === false) {
-			throw new InvalidUriException(sprintf('%s is not a string', $uri));
-		}
+    /**
+     * Creates a iMSCP_Uri_Redirect from the given string
+     *
+     * @param  string $uri String to create URI from, must start with prefix http://, https:// or 'ftp://
+     * @return Redirect
+     */
+    public static function fromString($uri)
+    {
+        if (is_string($uri) === false) {
+            throw new InvalidUriException(sprintf('%s is not a string', $uri));
+        }
 
-		$uri = explode(':', $uri, 2);
-		$scheme = strtolower($uri[0]);
-		$schemeSpecific = isset($uri[1]) === true ? $uri[1] : '';
+        $uri = explode(':', $uri, 2);
+        $scheme = strtolower($uri[0]);
+        $schemeSpecific = isset($uri[1]) === true ? $uri[1] : '';
 
-		if (in_array($scheme, array('http', 'https', 'ftp')) === false) {
-			throw new InvalidUriException(sprintf('Invalid scheme: %s', $scheme));
-		}
+        if (in_array($scheme, array('http', 'https', 'ftp')) === false) {
+            throw new InvalidUriException(sprintf('Invalid scheme: %s', $scheme));
+        }
 
-		$schemeHandler = new Redirect($scheme, $schemeSpecific);
-		return $schemeHandler;
-	}
+        $schemeHandler = new Redirect($scheme, $schemeSpecific);
+        return $schemeHandler;
+    }
 
-	/**
-	 * Returns true if and only if the host string passes validation. If no host is passed, then the host contained in
-	 * the instance variable is used.
-	 *
-	 * @param  string $host The HTTP host
-	 * @return boolean
-	 * @uses   Zend_Filter
-	 */
-	public static function validateHost($host = null)
-	{
-		if ($host === null) {
-			$host = $this->_host;
-		}
+    /**
+     * Returns true if and only if the host string passes validation. If no host is passed, then the host contained in
+     * the instance variable is used.
+     *
+     * @param  string $host The HTTP host
+     * @return boolean
+     * @uses   Zend_Filter
+     */
+    public static function validateHost($host = null)
+    {
+        if ($host === null) {
+            $host = $this->_host;
+        }
 
-		// If the host is empty, then it is considered invalid
-		if (strlen($host) === 0) {
-			return false;
-		}
+        // If the host is empty, then it is considered invalid
+        if (strlen($host) === 0) {
+            return false;
+        }
 
-		return isValidDomainName($host);
-	}
+        return isValidDomainName($host);
+    }
 }

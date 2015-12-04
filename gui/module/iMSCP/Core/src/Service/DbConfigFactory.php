@@ -18,33 +18,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Database;
+namespace iMSCP\Core\Service;
 
-use Zend\EventManager\Event;
+use iMSCP\Core\Config\DbConfigHandler;
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class DatabaseEvent
- * @package iMSCP\Core\Database
+ * Class DbConfigFactory
+ * @package iMSCP\Core\Service
  */
-class DatabaseEvent extends Event
+class DbConfigFactory implements FactoryInterface
 {
-	/**
-	 * Returns the database instance in which this event was dispatched.
-	 *
-	 * @return Database
-	 */
-	public function getDb()
-	{
-		return $this->getParam('context');
-	}
-
-	/**
-	 * Returns the query string.
-	 *
-	 * @return string
-	 */
-	public function getQueryString()
-	{
-		return $this->getParam('query');
-	}
+    /**
+     * {@inheritdoc]
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        return new DbConfigHandler([
+            'connection' => $serviceLocator->get('DBALConnection'),
+            'table_name' => 'config',
+            'key_column' => 'name',
+            'value_column' => 'value'
+        ]);
+    }
 }

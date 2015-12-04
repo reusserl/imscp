@@ -37,94 +37,96 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class ORMServiceFactory implements FactoryInterface
 {
-	const ARRAY_CACHE_DRIVER_CLASS = 'Doctrine\Common\Cache\ArrayCache';
-	const APC_CACHE_DRIVER_CLASS = 'Doctrine\Common\Cache\ApcCache';
-	const XCACHE_CACHE_DRIVER_CLASS = 'Doctrine\Common\Cache\XcacheCache';
+    const ARRAY_CACHE_DRIVER_CLASS = 'Doctrine\Common\Cache\ArrayCache';
+    const APC_CACHE_DRIVER_CLASS = 'Doctrine\Common\Cache\ApcCache';
+    const XCACHE_CACHE_DRIVER_CLASS = 'Doctrine\Common\Cache\XcacheCache';
 
-	/**
-	 * @var string
-	 */
-	protected $cacheDriverClass;
+    /**
+     * @var string
+     */
+    protected $cacheDriverClass;
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
-	{
-		/** @var  \Doctrine\DBAL\Connection $connection */
-		$connection = $serviceLocator->get('DBALConnection');
+    /**
+     * {@inheritdoc}
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        /** @var  \Doctrine\DBAL\Connection $connection */
+        $connection = $serviceLocator->get('DBALConnection');
 
-		$systemConfig = $serviceLocator->get('SystemConfig');
+        $config = $serviceLocator->get('Config');
 
-		// Set devmode mode flag
-		$devmode = (bool)!$systemConfig['DEVMODE'];
+        // Set devmode mode flag
+        $devmode = (bool)!$config['DEVMODE'];
 
-		// Create new ORM configuration object
-		/** @var Configuration $ORMConfig */
-		$ORMConfig = $connection->getConfiguration();
+        // Create new ORM configuration object
+        /** @var Configuration $ORMConfig */
+        $ORMConfig = $connection->getConfiguration();
 
-		// Get common cache object
-		$cacheImpl = $this->getCacheDriverInstance($devmode, 'imscp_');
+        // Get common cache object
+        $cacheImpl = $this->getCacheDriverInstance($devmode, 'imscp_');
 
-		// Setup metadata driver
-		/** @var AnnotationReader $annotationReader */
-		$annotationReader = new CachedReader(new AnnotationReader(), $cacheImpl);
-		$annotationDriver = new AnnotationDriver($annotationReader, [
-			'module/Core/src/Entity',
-			'module/ApsStandard/src/Entity'
-		]);
-		$ORMConfig->setMetadataDriverImpl($annotationDriver);
+        // Setup metadata driver
+        //$driver = new MappingDriverChain()
 
-		// Setup proxy configuration
-		$ORMConfig->setProxyDir('data/doctrine/proxies');
-		$ORMConfig->setProxyNamespace('iMSCP\Proxies');
-		$ORMConfig->setAutoGenerateProxyClasses($devmode);
+        /** @var AnnotationReader $annotationReader */
+        $annotationReader = new CachedReader(new AnnotationReader(), $cacheImpl);
+        $annotationDriver = new AnnotationDriver($annotationReader, [
+            __dir__ . '/../Entity',
+            './module/iMSCP/ApsStandard/src/Entity'
+        ]);
+        $ORMConfig->setMetadataDriverImpl($annotationDriver);
 
-		// Setup entity namespaces
-		$ORMConfig->setEntityNamespaces([
-			'Core' => 'iMSCP\Core\Entity',
-			'Aps' => 'iMSCP\ApsStandard\Entity'
-		]);
+        // Setup proxy configuration
+        $ORMConfig->setProxyDir('data/doctrine/proxies');
+        $ORMConfig->setProxyNamespace('iMSCP\Proxies');
+        $ORMConfig->setAutoGenerateProxyClasses($devmode);
 
-		// Setup caches
-		$ORMConfig->setHydrationCacheImpl($cacheImpl);
-		$ORMConfig->setMetadataCacheImpl($cacheImpl);
-		$ORMConfig->setQueryCacheImpl($cacheImpl);
-		$ORMConfig->setResultCacheImpl($cacheImpl);
+        // Setup entity namespaces
+        $ORMConfig->setEntityNamespaces([
+            'Core' => 'iMSCP\Core\Entity',
+            'Aps' => 'iMSCP\ApsStandard\Entity'
+        ]);
 
-		// Setup second-level cache
-		$cacheImpl = $this->getCacheDriverInstance($devmode, 'imscp_sec');
-		$cacheFactory = new DefaultCacheFactory(new RegionsConfiguration(), $cacheImpl);
-		//$cacheFactory->setFileLockRegionDirectory('data/cache/locks'); // Only needed for READ_WRITE mode
-		$ORMConfig->setSecondLevelCacheEnabled(true);
-		$ORMConfig->getSecondLevelCacheConfiguration()->setCacheFactory($cacheFactory);
+        // Setup caches
+        $ORMConfig->setHydrationCacheImpl($cacheImpl);
+        $ORMConfig->setMetadataCacheImpl($cacheImpl);
+        $ORMConfig->setQueryCacheImpl($cacheImpl);
+        $ORMConfig->setResultCacheImpl($cacheImpl);
 
-		return EntityManager::create($connection, $ORMConfig);
-	}
+        // Setup second-level cache
+        $cacheImpl = $this->getCacheDriverInstance($devmode, 'imscp_sec');
+        $cacheFactory = new DefaultCacheFactory(new RegionsConfiguration(), $cacheImpl);
+        //$cacheFactory->setFileLockRegionDirectory('data/cache/locks'); // Only needed for READ_WRITE mode
+        $ORMConfig->setSecondLevelCacheEnabled(true);
+        $ORMConfig->getSecondLevelCacheConfiguration()->setCacheFactory($cacheFactory);
 
-	/**
-	 * Return new doctrine cache instance according current environment
-	 *
-	 * @param bool $devmode
-	 * @param string $namespace
-	 * @return CacheProvider
-	 */
-	protected function getCacheDriverInstance($devmode, $namespace)
-	{
-		if (null === $this->cacheDriverClass) {
-			if (!$devmode && extension_loaded('apc')) {
-				$this->cacheDriverClass = self::APC_CACHE_DRIVER_CLASS;
-			} elseif (!$devmode && extension_loaded('xcache')) {
-				$this->cacheDriverClass = self::XCACHE_CACHE_DRIVER_CLASS;
-			} else {
-				$this->cacheDriverClass = self::ARRAY_CACHE_DRIVER_CLASS;
-			}
-		}
+        return EntityManager::create($connection, $ORMConfig);
+    }
 
-		/** @var CacheProvider $cache */
-		$cache = new $this->cacheDriverClass();
-		$cache->setNamespace($namespace);
+    /**
+     * Return new doctrine cache instance according current environment
+     *
+     * @param bool $devmode
+     * @param string $namespace
+     * @return CacheProvider
+     */
+    protected function getCacheDriverInstance($devmode, $namespace)
+    {
+        if (null === $this->cacheDriverClass) {
+            if (!$devmode && extension_loaded('apc')) {
+                $this->cacheDriverClass = self::APC_CACHE_DRIVER_CLASS;
+            } elseif (!$devmode && extension_loaded('xcache')) {
+                $this->cacheDriverClass = self::XCACHE_CACHE_DRIVER_CLASS;
+            } else {
+                $this->cacheDriverClass = self::ARRAY_CACHE_DRIVER_CLASS;
+            }
+        }
 
-		return $cache;
-	}
+        /** @var CacheProvider $cache */
+        $cache = new $this->cacheDriverClass();
+        $cache->setNamespace($namespace);
+
+        return $cache;
+    }
 }

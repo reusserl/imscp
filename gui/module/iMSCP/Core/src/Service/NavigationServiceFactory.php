@@ -29,11 +29,11 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class NavigationServiceFactory implements FactoryInterface
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
-	{
-		// TODO
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        // TODO
+    }
 }

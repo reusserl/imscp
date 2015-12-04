@@ -26,65 +26,65 @@ namespace iMSCP\Core\Updater;
  */
 abstract class AbstractUpdater
 {
-	/**
-	 * Last error message
-	 *
-	 * @var string|null
-	 */
-	protected $lastError;
+    /**
+     * Last error message
+     *
+     * @var string|null
+     */
+    protected $lastError;
 
-	/**
-	 * Set error
-	 *
-	 * @param string $error
-	 * @return self
-	 */
-	protected function setError($error)
-	{
-		$this->lastError = $error;
+    /**
+     * Returns last error that occurred
+     *
+     * @return string Last error
+     */
+    public function getError()
+    {
+        return $this->lastError;
+    }
 
-		return $this;
-	}
+    /**
+     * Apply all available update
+     *
+     * @abstract
+     * @return bool TRUE on success, FALSE othewise
+     */
+    abstract public function applyUpdates();
 
-	/**
-	 * Returns last error that occurred
-	 *
-	 * @return string Last error
-	 */
-	public function getError()
-	{
-		return $this->lastError;
-	}
+    /**
+     * Checks for available update
+     *
+     * @abstract
+     * @return bool TRUE if an update available, FALSE otherwise
+     */
+    abstract public function isAvailableUpdate();
 
-	/**
-	 * Apply all available update
-	 *
-	 * @abstract
-	 * @return bool TRUE on success, FALSE othewise
-	 */
-	abstract public function applyUpdates();
+    /**
+     * Set error
+     *
+     * @param string $error
+     * @return self
+     */
+    protected function setError($error)
+    {
+        $this->lastError = $error;
 
-	/**
-	 * Checks for available update
-	 *
-	 * @abstract
-	 * @return bool TRUE if an update available, FALSE otherwise
-	 */
-	abstract public function isAvailableUpdate();
+        return $this;
+    }
 
-	/**
-	 * Returns last applied update
-	 *
-	 * @abstract
-	 * @return mixed
-	 */
-	abstract protected function getLastAppliedUpdate();
+    /**
+     * Returns last applied update
+     *
+     * @abstract
+     * @return mixed
+     */
+    abstract protected function getLastAppliedUpdate();
 
-	/**
-	 * Return next update
-	 *
-	 * @abstract
-	 * @return mixed next update info
-	 */
-	abstract protected function getNextUpdate();
+    /**
+     * Return next update
+     *
+     * @abstract
+     * @return mixed next update info
+     */
+    abstract protected function getNextUpdate();
 }

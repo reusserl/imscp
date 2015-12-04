@@ -28,23 +28,23 @@ use Zend\EventManager\Event;
  */
 class ExceptionEvent extends Event
 {
-	/**
-	 * Constructor
-	 *
-	 * @param \Exception $exception
-	 */
-	public function __construct(\Exception $exception)
-	{
-		parent::__construct('onUncaughtException', array('exception' => $exception));
-	}
+    /**
+     * Constructor
+     *
+     * @param \Exception $exception
+     */
+    public function __construct(\Exception $exception)
+    {
+        parent::__construct('onUncaughtException', ['exception' => $exception]);
+    }
 
-	/**
-	 * Get Exception
-	 *
-	 * @return \Exception
-	 */
-	public function getException()
-	{
-		return $this->getParam('exception');
-	}
+    /**
+     * Get Exception
+     *
+     * @return \Exception
+     */
+    public function getException()
+    {
+        return $this->getParam('exception');
+    }
 }

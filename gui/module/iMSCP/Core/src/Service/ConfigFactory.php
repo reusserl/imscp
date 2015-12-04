@@ -30,24 +30,25 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class ConfigFactory implements FactoryInterface
 {
-	/**
-	 * Create the configuration service
-	 *
-	 * Retrieves the Module Manager from the service locator, and executes
-	 * {@link Zend\ModuleManager\ModuleManager::loadModules()}.
-	 *
-	 * It then retrieves the config listener from the module manager, and from that the merged configuration.
-	 *
-	 * @param ServiceLocatorInterface $serviceLocator
-	 * @return array|\Traversable
-	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
-	{
-		/** @var ModuleManager $moduleManager */
-		$moduleManager = $serviceLocator->get('ModuleManager');
-		$moduleManager->loadModules();
-		$moduleParams = $moduleManager->getEvent()->getParams();
-		$config = $moduleParams['configListener']->getMergedConfig(false);
-		return $config;
-	}
+    /**
+     * Create the configuration service
+     *
+     * Retrieves the Module Manager from the service locator, and executes
+     * {@link Zend\ModuleManager\ModuleManager::loadModules()}.
+     *
+     * It then retrieves the config listener from the module manager, and from
+     * that the merged configuration.
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return array|\Traversable
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        /** @var ModuleManager $moduleManager */
+        $moduleManager = $serviceLocator->get('ModuleManager');
+        $moduleManager->loadModules();
+        $moduleParams = $moduleManager->getEvent()->getParams();
+        $config = $moduleParams['configListener']->getMergedConfig(false);
+        return $config;
+    }
 }

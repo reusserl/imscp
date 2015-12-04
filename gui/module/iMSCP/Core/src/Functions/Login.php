@@ -26,23 +26,23 @@
  */
 function init_login($eventManager)
 {
-	// Purge expired sessions
-	do_session_timeout();
+    // Purge expired sessions
+    do_session_timeout();
 
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	if ($cfg['BRUTEFORCE']) {
-		/** @var \iMSCP\Core\Plugin\PluginManager $pluginManager */
-		$pluginManager = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('PluginManager');
-		$bruteforce = new iMSCP\Core\Plugin\Bruteforce($pluginManager);
-		$bruteforce->register($pluginManager->getEventManager());
-	}
+    if ($cfg['BRUTEFORCE']) {
+        /** @var \iMSCP\Core\Plugin\PluginManager $pluginManager */
+        $pluginManager = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('PluginManager');
+        $bruteforce = new iMSCP\Core\Plugin\Bruteforce($pluginManager);
+        $bruteforce->register($pluginManager->getEventManager());
+    }
 
-	// Register default authentication handler with lower priority
-	$eventManager->attach(\iMSCP\Core\Events::onAuthentication, 'login_credentials', -99);
+    // Register default authentication handler with lower priority
+    $eventManager->attach(\iMSCP\Core\Events::onAuthentication, 'login_credentials', -99);
 
-	// Register listener that is responsible to check domain status and expire date
-	$eventManager->attach(\iMSCP\Core\Events::onBeforeSetIdentity, 'login_checkDomainAccount');
+    // Register listener that is responsible to check domain status and expire date
+    $eventManager->attach(\iMSCP\Core\Events::onBeforeSetIdentity, 'login_checkDomainAccount');
 }
 
 /**
@@ -53,66 +53,66 @@ function init_login($eventManager)
  */
 function login_credentials($event)
 {
-	$username = (!empty($_POST['uname'])) ? encode_idna(clean_input($_POST['uname'])) : '';
-	$password =  (!empty($_POST['upass'])) ? clean_input($_POST['upass']) : '';
+    $username = (!empty($_POST['uname'])) ? encode_idna(clean_input($_POST['uname'])) : '';
+    $password = (!empty($_POST['upass'])) ? clean_input($_POST['upass']) : '';
 
-	if(empty($username) || empty($password)) {
-		if(empty($username)) {
-			$message[] = tr('The username field is empty.');
-		}
+    if (empty($username) || empty($password)) {
+        if (empty($username)) {
+            $message[] = tr('The username field is empty.');
+        }
 
-		if(empty($password)) {
-			$message[] = tr('The password field is empty.');
-		}
-	}
+        if (empty($password)) {
+            $message[] = tr('The password field is empty.');
+        }
+    }
 
-	if(!isset($message)) {
-		$stmt = exec_query(
-			'SELECT admin_id, admin_name, admin_pass, admin_type, email, created_by FROM admin WHERE admin_name = ?',
-			$username
-		);
+    if (!isset($message)) {
+        $stmt = exec_query(
+            'SELECT admin_id, admin_name, admin_pass, admin_type, email, created_by FROM admin WHERE admin_name = ?',
+            $username
+        );
 
-		if(!$stmt->rowCount()) {
-			$result = new \iMSCP\Core\Authentication\AuthenticationResult(
-				\iMSCP\Core\Authentication\AuthenticationResult::FAILURE_IDENTITY_NOT_FOUND, null, tr('Unknown username.')
-			);
-		} else {
-			$identity = $stmt->fetch(PDO::FETCH_OBJ);
-			$passwordHash = $identity->admin_pass;
+        if (!$stmt->rowCount()) {
+            $result = new \iMSCP\Core\Authentication\AuthenticationResult(
+                \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_IDENTITY_NOT_FOUND, null, tr('Unknown username.')
+            );
+        } else {
+            $identity = $stmt->fetch(PDO::FETCH_OBJ);
+            $passwordHash = $identity->admin_pass;
 
-			if(! \iMSCP\Core\Utils\Crypt::verify($password, $passwordHash)) {
-				$result = new \iMSCP\Core\Authentication\AuthenticationResult(
-					\iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_INVALID, null, tr('Bad password.')
-				);
-			} else {
-				if(strpos($passwordHash, '$2a$') !== 0) { # Not a password encrypted with Bcrypt, then re-encrypt it
-					exec_query('UPDATE admin SET admin_pass = ? WHERE admin_id = ?', array(
-						\iMSCP\Core\Utils\Crypt::bcrypt($password), $identity->admin_id
-					));
-					write_log(
-						sprintf('Info: Password for user %s has been re-encrypted using bcrypt', $identity->admin_name),
-						E_USER_NOTICE
-					);
-				}
+            if (!\iMSCP\Core\Utils\Crypt::verify($password, $passwordHash)) {
+                $result = new \iMSCP\Core\Authentication\AuthenticationResult(
+                    \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_INVALID, null, tr('Bad password.')
+                );
+            } else {
+                if (strpos($passwordHash, '$2a$') !== 0) { # Not a password encrypted with Bcrypt, then re-encrypt it
+                    exec_query('UPDATE admin SET admin_pass = ? WHERE admin_id = ?', array(
+                        \iMSCP\Core\Utils\Crypt::bcrypt($password), $identity->admin_id
+                    ));
+                    write_log(
+                        sprintf('Info: Password for user %s has been re-encrypted using bcrypt', $identity->admin_name),
+                        E_USER_NOTICE
+                    );
+                }
 
-				$result = new \iMSCP\Core\Authentication\AuthenticationResult(
-					\iMSCP\Core\Authentication\AuthenticationResult::SUCCESS, $identity
-				);
-				$event->stopPropagation();
-			}
-		}
-	} else {
-		$result = new \iMSCP\Core\Authentication\AuthenticationResult(
-			(count($message) == 2)
-				? \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_EMPTY
-				: \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_INVALID
-			,
-			null,
-			$message
-		);
-	}
+                $result = new \iMSCP\Core\Authentication\AuthenticationResult(
+                    \iMSCP\Core\Authentication\AuthenticationResult::SUCCESS, $identity
+                );
+                $event->stopPropagation();
+            }
+        }
+    } else {
+        $result = new \iMSCP\Core\Authentication\AuthenticationResult(
+            (count($message) == 2)
+                ? \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_EMPTY
+                : \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_INVALID
+            ,
+            null,
+            $message
+        );
+    }
 
-	return $result;
+    return $result;
 }
 
 /**
@@ -125,43 +125,43 @@ function login_credentials($event)
  */
 function login_checkDomainAccount($event)
 {
-	/** @var $identity stdClass */
-	$identity = $event->getParam('identity');
+    /** @var $identity stdClass */
+    $identity = $event->getParam('identity');
 
-	if ($identity->admin_type == 'user') {
-		$query = '
-			SELECT
-				domain_expires, domain_status, admin_status
-			FROM
-				domain
-			INNER JOIN
-				admin ON(domain_admin_id = admin_id)
-			WHERE
-				domain_admin_id = ?
+    if ($identity->admin_type == 'user') {
+        $query = '
+            SELECT
+                domain_expires, domain_status, admin_status
+            FROM
+                domain
+            INNER JOIN
+                admin ON(domain_admin_id = admin_id)
+            WHERE
+                domain_admin_id = ?
         ';
-		$stmt = exec_query($query, $identity->admin_id);
-		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = exec_query($query, $identity->admin_id);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-		$isAccountStateOk = true;
+        $isAccountStateOk = true;
 
-		if (($row['admin_status'] != 'ok') || ($row['domain_status'] != 'ok')) {
-			$isAccountStateOk = false;
-			set_page_message(
-				tr('Your account is currently under maintenance or disabled. Please, contact your reseller.'), 'error'
-			);
-		} else {
-			$domainExpireDate = $row['domain_expires'];
+        if (($row['admin_status'] != 'ok') || ($row['domain_status'] != 'ok')) {
+            $isAccountStateOk = false;
+            set_page_message(
+                tr('Your account is currently under maintenance or disabled. Please, contact your reseller.'), 'error'
+            );
+        } else {
+            $domainExpireDate = $row['domain_expires'];
 
-			if ($domainExpireDate && $domainExpireDate < time()) {
-				$isAccountStateOk = false;
-				set_page_message(tr('Your account has expired.'), 'error');
-			}
-		}
+            if ($domainExpireDate && $domainExpireDate < time()) {
+                $isAccountStateOk = false;
+                set_page_message(tr('Your account has expired.'), 'error');
+            }
+        }
 
-		if (!$isAccountStateOk) {
-			redirectTo('index.php');
-		}
-	}
+        if (!$isAccountStateOk) {
+            redirectTo('index.php');
+        }
+    }
 }
 
 /**
@@ -171,12 +171,12 @@ function login_checkDomainAccount($event)
  */
 function do_session_timeout()
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	// We must not remove bruteforce plugin data (AND `user_name` IS NOT NULL)
-	exec_query(
-		'DELETE FROM login WHERE lastaccess < ? AND user_name IS NOT NULL', time() - $cfg['SESSION_TIMEOUT'] * 60
-	);
+    // We must not remove bruteforce plugin data (AND `user_name` IS NOT NULL)
+    exec_query(
+        'DELETE FROM login WHERE lastaccess < ? AND user_name IS NOT NULL', time() - $cfg['SESSION_TIMEOUT'] * 60
+    );
 }
 
 /**
@@ -187,76 +187,76 @@ function do_session_timeout()
  */
 function check_login($userLevel = '', $preventExternalLogin = true)
 {
-	do_session_timeout();
+    do_session_timeout();
 
-	$auth = iMSCP\Core\Authentication\Authentication::getInstance();
+    $auth = iMSCP\Core\Authentication\Authentication::getInstance();
 
-	if (!$auth->hasIdentity()) {
-		$auth->unsetIdentity(); // Ensure deletion of all identity data
+    if (!$auth->hasIdentity()) {
+        $auth->unsetIdentity(); // Ensure deletion of all identity data
 
-		if (is_xhr()) {
-			header('Status: 401 Unauthorized');
-			exit;
-		}
+        if (is_xhr()) {
+            header('Status: 401 Unauthorized');
+            exit;
+        }
 
-		redirectTo('/index.php');
-	}
+        redirectTo('/index.php');
+    }
 
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$identity = $auth->getIdentity();
+    $identity = $auth->getIdentity();
 
-	if ($cfg['MAINTENANCEMODE'] && $identity->admin_type != 'admin' &&
-		(!isset($_SESSION['logged_from_type']) || $_SESSION['logged_from_type'] != 'admin')
-	) {
-		$auth->unsetIdentity();
-		redirectTo('/index.php');
-	}
+    if ($cfg['MAINTENANCEMODE'] && $identity->admin_type != 'admin' &&
+        (!isset($_SESSION['logged_from_type']) || $_SESSION['logged_from_type'] != 'admin')
+    ) {
+        $auth->unsetIdentity();
+        redirectTo('/index.php');
+    }
 
-	// Check user level
-	if (!empty($userLevel) && ($userType = $identity->admin_type) != $userLevel) {
-		if ($userType != 'admin' && (!isset($_SESSION['logged_from']) || $_SESSION['logged_from'] != 'admin')) {
-			$loggedUser = isset($_SESSION['logged_from']) ? $_SESSION['logged_from'] : $identity->admin_name;
-			write_log('Warning! user |' . $loggedUser . '| requested |' . tohtml($_SERVER['REQUEST_URI']) .
-				'| with REQUEST_METHOD |' . $_SERVER['REQUEST_METHOD'] . '|', E_USER_WARNING);
-		}
+    // Check user level
+    if (!empty($userLevel) && ($userType = $identity->admin_type) != $userLevel) {
+        if ($userType != 'admin' && (!isset($_SESSION['logged_from']) || $_SESSION['logged_from'] != 'admin')) {
+            $loggedUser = isset($_SESSION['logged_from']) ? $_SESSION['logged_from'] : $identity->admin_name;
+            write_log('Warning! user |' . $loggedUser . '| requested |' . tohtml($_SERVER['REQUEST_URI']) .
+                '| with REQUEST_METHOD |' . $_SERVER['REQUEST_METHOD'] . '|', E_USER_WARNING);
+        }
 
-		redirectTo('/index.php');
-	}
+        redirectTo('/index.php');
+    }
 
-	// prevent external login / check for referer
-	if ($preventExternalLogin && !empty($_SERVER['HTTP_REFERER'])) {
-		// Extracting hostname from referer URL
-		// Note2: We remove any braket in referer (ipv6 issue)
-		$refererHostname = str_replace(array('[', ']'), '', parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST));
+    // prevent external login / check for referer
+    if ($preventExternalLogin && !empty($_SERVER['HTTP_REFERER'])) {
+        // Extracting hostname from referer URL
+        // Note2: We remove any braket in referer (ipv6 issue)
+        $refererHostname = str_replace(array('[', ']'), '', parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST));
 
-		// The URL does contains the host element ?
-		if (!is_null($refererHostname)) {
-			// Note1: We don't care about the scheme, we only want make parse_url() happy
-			// Note2: We remove any braket in hostname (ipv6 issue)
-			$http_host = str_replace(array('[', ']'), '', parse_url("http://{$_SERVER['HTTP_HOST']}", PHP_URL_HOST));
+        // The URL does contains the host element ?
+        if (!is_null($refererHostname)) {
+            // Note1: We don't care about the scheme, we only want make parse_url() happy
+            // Note2: We remove any braket in hostname (ipv6 issue)
+            $http_host = str_replace(array('[', ']'), '', parse_url("http://{$_SERVER['HTTP_HOST']}", PHP_URL_HOST));
 
-			// The referer doesn't match the panel hostname ?
-			if (!in_array($refererHostname, array($http_host, $_SERVER['SERVER_NAME']))) {
-				set_page_message(tr('Request from foreign host was blocked.'), 'info');
+            // The referer doesn't match the panel hostname ?
+            if (!in_array($refererHostname, array($http_host, $_SERVER['SERVER_NAME']))) {
+                set_page_message(tr('Request from foreign host was blocked.'), 'info');
 
-				# Quick fix for #96 (will be rewritten ASAP)
-				isset($_SERVER['REDIRECT_URL']) ? : $_SERVER['REDIRECT_URL'] = '';
+                # Quick fix for #96 (will be rewritten ASAP)
+                isset($_SERVER['REDIRECT_URL']) ?: $_SERVER['REDIRECT_URL'] = '';
 
-				if (!(substr($_SERVER['SCRIPT_FILENAME'], (int)-strlen($_SERVER['REDIRECT_URL']),
-						strlen($_SERVER['REDIRECT_URL'])) == $_SERVER['REDIRECT_URL'])
-				) {
-					redirectToUiLevel();
-				}
-			}
-		}
-	}
+                if (!(substr($_SERVER['SCRIPT_FILENAME'], (int)-strlen($_SERVER['REDIRECT_URL']),
+                        strlen($_SERVER['REDIRECT_URL'])) == $_SERVER['REDIRECT_URL'])
+                ) {
+                    redirectToUiLevel();
+                }
+            }
+        }
+    }
 
-	// If all goes fine update session and lastaccess
-	$_SESSION['user_login_time'] = time();
-	exec_query(
-		'UPDATE login SET lastaccess = ? WHERE session_id = ?', array($_SESSION['user_login_time'], session_id())
-	);
+    // If all goes fine update session and lastaccess
+    $_SESSION['user_login_time'] = time();
+    exec_query(
+        'UPDATE login SET lastaccess = ? WHERE session_id = ?', array($_SESSION['user_login_time'], session_id())
+    );
 }
 
 /**
@@ -268,77 +268,77 @@ function check_login($userLevel = '', $preventExternalLogin = true)
  */
 function change_user_interface($fromId, $toId)
 {
-	$toActionScript = false;
+    $toActionScript = false;
 
-	while (1) { // We loop over nothing here, it's just a way to avoid code repetition
-		$query = '
-			SELECT
-				admin_id, admin_name, admin_type, email, created_by
-			FROM
-				admin
-			WHERE
-				admin_id IN(?, ?)
-			ORDER BY
-				FIELD(admin_id, ?, ?)
-			LIMIT
-				2
-		';
-		$stmt = exec_query($query, array($fromId, $toId, $fromId, $toId));
+    while (1) { // We loop over nothing here, it's just a way to avoid code repetition
+        $query = '
+            SELECT
+                admin_id, admin_name, admin_type, email, created_by
+            FROM
+                admin
+            WHERE
+                admin_id IN(?, ?)
+            ORDER BY
+                FIELD(admin_id, ?, ?)
+            LIMIT
+                2
+        ';
+        $stmt = exec_query($query, array($fromId, $toId, $fromId, $toId));
 
-		if ($stmt->rowCount() < 2) {
-			set_page_message(tr('Wrong request.'), 'error');
-		}
+        if ($stmt->rowCount() < 2) {
+            set_page_message(tr('Wrong request.'), 'error');
+        }
 
-		list($from, $to) = $stmt->fetchAll(PDO::FETCH_OBJ);
+        list($from, $to) = $stmt->fetchAll(PDO::FETCH_OBJ);
 
-		$fromToMap = array();
-		$fromToMap['admin']['BACK'] = 'manage_users.php';
-		$fromToMap['admin']['reseller'] = 'index.php';
-		$fromToMap['admin']['user'] = 'index.php';
-		$fromToMap['reseller']['user'] = 'index.php';
-		$fromToMap['reseller']['BACK'] = 'users.php';
+        $fromToMap = array();
+        $fromToMap['admin']['BACK'] = 'manage_users.php';
+        $fromToMap['admin']['reseller'] = 'index.php';
+        $fromToMap['admin']['user'] = 'index.php';
+        $fromToMap['reseller']['user'] = 'index.php';
+        $fromToMap['reseller']['BACK'] = 'users.php';
 
-		if (!isset($fromToMap[$from->admin_type][$to->admin_type]) || ($from->admin_type == $to->admin_type)) {
-			if (isset($_SESSION['logged_from_id']) && $_SESSION['logged_from_id'] == $to->admin_id) {
-				$toActionScript = $fromToMap[$to->admin_type]['BACK'];
-			} else {
-				set_page_message(tr('Wrong request.'), 'error');
-				write_log(
-					sprintf("%s tried to switch onto %s's interface", $from->admin_name, decode_idna($to->admin_name)),
-					E_USER_WARNING
-				);
-				break;
-			}
-		}
+        if (!isset($fromToMap[$from->admin_type][$to->admin_type]) || ($from->admin_type == $to->admin_type)) {
+            if (isset($_SESSION['logged_from_id']) && $_SESSION['logged_from_id'] == $to->admin_id) {
+                $toActionScript = $fromToMap[$to->admin_type]['BACK'];
+            } else {
+                set_page_message(tr('Wrong request.'), 'error');
+                write_log(
+                    sprintf("%s tried to switch onto %s's interface", $from->admin_name, decode_idna($to->admin_name)),
+                    E_USER_WARNING
+                );
+                break;
+            }
+        }
 
-		$toActionScript = ($toActionScript) ? $toActionScript : $fromToMap[$from->admin_type][$to->admin_type];
+        $toActionScript = ($toActionScript) ? $toActionScript : $fromToMap[$from->admin_type][$to->admin_type];
 
-		// Set new identity
-		$auth = iMSCP\Core\Authentication\Authentication::getInstance();
-		$auth->unsetIdentity();
-		$auth->setIdentity($to);
+        // Set new identity
+        $auth = iMSCP\Core\Authentication\Authentication::getInstance();
+        $auth->unsetIdentity();
+        $auth->setIdentity($to);
 
-		if ($from->admin_type != 'user' && $to->admin_type != 'admin') {
-			// Set additional data about user from wich we are logged from
-			$_SESSION['logged_from_type'] = $from->admin_type;
-			$_SESSION['logged_from'] = $from->admin_name;
-			$_SESSION['logged_from_id'] = $from->admin_id;
+        if ($from->admin_type != 'user' && $to->admin_type != 'admin') {
+            // Set additional data about user from wich we are logged from
+            $_SESSION['logged_from_type'] = $from->admin_type;
+            $_SESSION['logged_from'] = $from->admin_name;
+            $_SESSION['logged_from_id'] = $from->admin_id;
 
-			write_log(
-				sprintf("%s switched onto %s's interface", $from->admin_name, decode_idna($to->admin_name)),
-				E_USER_NOTICE
-			);
-		} else {
-			write_log(
-				sprintf("%s switched back from %s's interface", $to->admin_name, decode_idna($from->admin_name)),
-				E_USER_NOTICE
-			);
-		}
+            write_log(
+                sprintf("%s switched onto %s's interface", $from->admin_name, decode_idna($to->admin_name)),
+                E_USER_NOTICE
+            );
+        } else {
+            write_log(
+                sprintf("%s switched back from %s's interface", $to->admin_name, decode_idna($from->admin_name)),
+                E_USER_NOTICE
+            );
+        }
 
-		break;
-	}
+        break;
+    }
 
-	redirectToUiLevel($toActionScript);
+    redirectToUiLevel($toActionScript);
 }
 
 /**
@@ -349,20 +349,20 @@ function change_user_interface($fromId, $toId)
  */
 function redirectToUiLevel($actionScript = 'index.php')
 {
-	$auth = iMSCP\Core\Authentication\Authentication::getInstance();
+    $auth = iMSCP\Core\Authentication\Authentication::getInstance();
 
-	if ($auth->hasIdentity()) {
-		$userType = $auth->getIdentity()->admin_type;
-		switch ($userType) {
-			case 'user':
-			case 'admin':
-			case 'reseller':
-				// Prevents display of any old message when switching to another user level
-				\Zend\Session::namespaceUnset('pageMessages');
-				redirectTo('/' . (($userType == 'user') ? 'client' : $userType . '/' . $actionScript));
-				exit;
-			default:
-				throw new InvalidArgumentException('Unknown UI level');
-		}
-	}
+    if ($auth->hasIdentity()) {
+        $userType = $auth->getIdentity()->admin_type;
+        switch ($userType) {
+            case 'user':
+            case 'admin':
+            case 'reseller':
+                // Prevents display of any old message when switching to another user level
+                unset($_SESSION['pageMessages']);
+                redirectTo('/' . (($userType == 'user') ? 'client' : $userType . '/' . $actionScript));
+                exit;
+            default:
+                throw new InvalidArgumentException('Unknown UI level');
+        }
+    }
 }

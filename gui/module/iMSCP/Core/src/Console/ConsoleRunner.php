@@ -53,95 +53,95 @@ use Zend\ServiceManager\ServiceManager;
  */
 class ConsoleRunner
 {
-	/**
-	 * Create a Symfony Console HelperSet
-	 *
-	 * @param ServiceManager $serviceManager
-	 * @return HelperSet
-	 */
-	public static function createHelperSet(ServiceManager $serviceManager)
-	{
-		/** @var EntityManager $em */
-		$em = $serviceManager->get('EntityManager');
+    /**
+     * Create a Symfony Console HelperSet
+     *
+     * @param ServiceManager $serviceManager
+     * @return HelperSet
+     */
+    public static function createHelperSet(ServiceManager $serviceManager)
+    {
+        /** @var EntityManager $em */
+        $em = $serviceManager->get('EntityManager');
 
-		return new HelperSet([
-			'sm' => new ServiceManagerHelper($serviceManager),
-			'db' => new ConnectionHelper($em->getConnection()),
-			'em' => new EntityManagerHelper($em)
-		]);
-	}
+        return new HelperSet([
+            'sm' => new ServiceManagerHelper($serviceManager),
+            'db' => new ConnectionHelper($em->getConnection()),
+            'em' => new EntityManagerHelper($em)
+        ]);
+    }
 
-	/**
-	 * Runs console with the given helperset
-	 *
-	 * @param \Symfony\Component\Console\Helper\HelperSet $helperSet
-	 * @param \Symfony\Component\Console\Command\Command[] $commands
-	 * @return void
-	 */
-	public static function run(HelperSet $helperSet, $commands = [])
-	{
-		$cli = self::createApplication($helperSet, $commands);
-		$cli->run();
-	}
+    /**
+     * Runs console with the given helperset
+     *
+     * @param \Symfony\Component\Console\Helper\HelperSet $helperSet
+     * @param \Symfony\Component\Console\Command\Command[] $commands
+     * @return void
+     */
+    public static function run(HelperSet $helperSet, $commands = [])
+    {
+        $cli = self::createApplication($helperSet, $commands);
+        $cli->run();
+    }
 
-	/**
-	 * Creates a console application with the given helperset and optional commands.
-	 *
-	 * @param \Symfony\Component\Console\Helper\HelperSet $helperSet
-	 * @param array $commands
-	 * @return \Symfony\Component\Console\Application
-	 */
-	static public function createApplication(HelperSet $helperSet, $commands = [])
-	{
-		$cli = new Application('i-MSCP Frontend Command Line Interface', '1.3.0');
-		$cli->setCatchExceptions(true);
-		$cli->setHelperSet($helperSet);
-		self::addCommands($cli);
-		$cli->addCommands($commands);
+    /**
+     * Creates a console application with the given helperset and optional commands.
+     *
+     * @param \Symfony\Component\Console\Helper\HelperSet $helperSet
+     * @param array $commands
+     * @return \Symfony\Component\Console\Application
+     */
+    static public function createApplication(HelperSet $helperSet, $commands = [])
+    {
+        $cli = new Application('i-MSCP Frontend Command Line Interface', '1.3.0');
+        $cli->setCatchExceptions(true);
+        $cli->setHelperSet($helperSet);
+        self::addCommands($cli);
+        $cli->addCommands($commands);
 
-		return $cli;
-	}
+        return $cli;
+    }
 
-	/**
-	 * Add commands
-	 *
-	 * @param Application $cli
-	 * @return void
-	 */
-	static public function addCommands(Application $cli)
-	{
-		$cli->addCommands([
-			#
-			# i-MSCP commands
-			#
-			new BuildLanguageIndexCommand(),
-			new UpdateDatabaseCommand(),
+    /**
+     * Add commands
+     *
+     * @param Application $cli
+     * @return void
+     */
+    static public function addCommands(Application $cli)
+    {
+        $cli->addCommands([
+            #
+            # i-MSCP commands
+            #
+            new BuildLanguageIndexCommand(),
+            new UpdateDatabaseCommand(),
 
-			#
-			# Doctrine commands
-			#
+            #
+            # Doctrine commands
+            #
 
-			// DBAL Commands
-			new RunSqlCommand(),
-			new ImportCommand(),
+            // DBAL Commands
+            new RunSqlCommand(),
+            new ImportCommand(),
 
-			// ORM Commands
-			new MetadataCommand(),
-			new ResultCommand(),
-			new QueryCommand(),
-			new CreateCommand(),
-			new UpdateCommand(),
-			new DropCommand(),
-			new EnsureProductionSettingsCommand(),
-			new ConvertDoctrine1SchemaCommand(),
-			new GenerateRepositoriesCommand(),
-			new GenerateEntitiesCommand(),
-			new GenerateProxiesCommand(),
-			new ConvertMappingCommand(),
-			new RunDqlCommand(),
-			new ValidateSchemaCommand(),
-			new InfoCommand(),
-			new MappingDescribeCommand()
-		]);
-	}
+            // ORM Commands
+            new MetadataCommand(),
+            new ResultCommand(),
+            new QueryCommand(),
+            new CreateCommand(),
+            new UpdateCommand(),
+            new DropCommand(),
+            new EnsureProductionSettingsCommand(),
+            new ConvertDoctrine1SchemaCommand(),
+            new GenerateRepositoriesCommand(),
+            new GenerateEntitiesCommand(),
+            new GenerateProxiesCommand(),
+            new ConvertMappingCommand(),
+            new RunDqlCommand(),
+            new ValidateSchemaCommand(),
+            new InfoCommand(),
+            new MappingDescribeCommand()
+        ]);
+    }
 }

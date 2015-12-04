@@ -34,39 +34,39 @@ use Zend\ServiceManager\ServiceManager;
  */
 class ModuleManagerFactory implements FactoryInterface
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
-	{
-		if (!$serviceLocator->has('ServiceListener')) {
-			/** @var ServiceManager $serviceManager */
-			$serviceManager = $serviceLocator;
-			$serviceManager->setFactory('ServiceListener', 'iMSCP\Core\Service\ServiceListenerFactory');
-		}
+    /**
+     * {@inheritdoc}
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        if (!$serviceLocator->has('ServiceListener')) {
+            /** @var ServiceManager $serviceManager */
+            $serviceManager = $serviceLocator;
+            $serviceManager->setFactory('ServiceListener', 'iMSCP\Core\Service\ServiceListenerFactory');
+        }
 
-		$configuration = $serviceLocator->get('ApplicationConfig');
-		$listenerOptions = new ListenerOptions($configuration['module_listener_options']);
-		$defaultListeners = new DefaultListenerAggregate($listenerOptions);
-		$serviceListener = $serviceLocator->get('ServiceListener');
+        $configuration = $serviceLocator->get('ApplicationConfig');
+        $listenerOptions = new ListenerOptions($configuration['module_listener_options']);
+        $defaultListeners = new DefaultListenerAggregate($listenerOptions);
+        $serviceListener = $serviceLocator->get('ServiceListener');
 
-		$serviceListener->addServiceManager(
-			$serviceLocator,
-			'service_manager',
-			'Zend\ModuleManager\Feature\ServiceProviderInterface',
-			'getServiceConfig'
-		);
+        $serviceListener->addServiceManager(
+            $serviceLocator,
+            'service_manager',
+            'Zend\ModuleManager\Feature\ServiceProviderInterface',
+            'getServiceConfig'
+        );
 
-		$events = $serviceLocator->get('EventManager');
-		$events->attach($defaultListeners);
-		$events->attach($serviceListener);
+        $events = $serviceLocator->get('EventManager');
+        $events->attach($defaultListeners);
+        $events->attach($serviceListener);
 
-		$moduleEvent = new ModuleEvent();
-		$moduleEvent->setParam('ServiceManager', $serviceLocator);
+        $moduleEvent = new ModuleEvent();
+        $moduleEvent->setParam('ServiceManager', $serviceLocator);
 
-		$moduleManager = new ModuleManager($configuration['modules'], $events);
-		$moduleManager->setEvent($moduleEvent);
+        $moduleManager = new ModuleManager($configuration['modules'], $events);
+        $moduleManager->setEvent($moduleEvent);
 
-		return $moduleManager;
-	}
+        return $moduleManager;
+    }
 }

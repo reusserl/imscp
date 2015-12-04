@@ -26,182 +26,182 @@ namespace iMSCP\Core\Updater;
  */
 class VersionUpdater extends AbstractUpdater
 {
-	/**
-	 * @var VersionUpdater
-	 */
-	protected static $instance;
+    /**
+     * @var VersionUpdater
+     */
+    protected static $instance;
 
-	/**
-	 * @var array|null Update info
-	 */
-	protected $updateInfo;
+    /**
+     * @var array|null Update info
+     */
+    protected $updateInfo;
 
-	/**
-	 * Singleton - Make new unavailable
-	 */
-	protected function __construct()
-	{
+    /**
+     * Singleton - Make new unavailable
+     */
+    protected function __construct()
+    {
 
-	}
+    }
 
-	/**
-	 * Singleton - Make clone unavailable
-	 *
-	 * @return void
-	 */
-	protected function __clone()
-	{
+    /**
+     * Implements Singleton design pattern
+     *
+     * @return VersionUpdater
+     */
+    public static function getInstance()
+    {
+        if (null === self::$instance) {
+            self::$instance = new self();
+        }
 
-	}
+        return self::$instance;
+    }
 
-	/**
-	 * Implements Singleton design pattern
-	 *
-	 * @return VersionUpdater
-	 */
-	public static function getInstance()
-	{
-		if (null === self::$instance) {
-			self::$instance = new self();
-		}
+    /**
+     * Check for available update
+     *
+     * @return bool TRUE if an update is available, FALSE otherwise
+     */
+    public function isAvailableUpdate()
+    {
+        if (version_compare($this->getNextUpdate(), $this->getLastAppliedUpdate(), '>')) {
+            return true;
+        }
 
-		return self::$instance;
-	}
+        return false;
+    }
 
-	/**
-	 * Check for available update
-	 *
-	 * @return bool TRUE if an update is available, FALSE otherwise
-	 */
-	public function isAvailableUpdate()
-	{
-		if (version_compare($this->getNextUpdate(), $this->getLastAppliedUpdate(), '>')) {
-			return true;
-		}
+    /**
+     * Return build number for the last available i-MSCP version
+     *
+     * @return string
+     */
+    protected function getNextUpdate()
+    {
+        $updateInfo = $this->getUpdateInfo();
 
-		return false;
-	}
+        if (is_array($updateInfo) && isset($updateInfo['tag_name'])) {
+            return $updateInfo['tag_name'];
+        }
 
-	/**
-	 * Apply all available update
-	 *
-	 * @return bool TRUE on success, FALSE othewise
-	 */
-	public function applyUpdates()
-	{
-		$this->setError('i-MSCP version update can be initiated through the i-MSCP installer only.');
+        return $this->getLastAppliedUpdate(); // We are safe here
+    }
 
-		return false;
-	}
+    /**
+     * Get update info from GitHub (using the GitHub API)
+     *
+     * @param bool $forceReload Whether data must be reloaded from Github
+     * @return array|bool An array containing update info on success, false on failure
+     */
+    public function getUpdateInfo($forceReload = false)
+    {
+        if (null === $this->updateInfo) {
+            $file = '/data/cache/imscp_info.json';
 
-	/**
-	 * Get update info from GitHub (using the GitHub API)
-	 *
-	 * @param bool $forceReload Whether data must be reloaded from Github
-	 * @return array|bool An array containing update info on success, false on failure
-	 */
-	public function getUpdateInfo($forceReload = false)
-	{
-		if (null === $this->updateInfo) {
-			$file = '/data/cache/imscp_info.json';
+            if ($forceReload || !file_exists($file) || strtotime('+1 day', filemtime($file)) < time()) {
+                clearstatcache();
 
-			if ($forceReload || !file_exists($file) || strtotime('+1 day', filemtime($file)) < time()) {
-				clearstatcache();
+                $context = stream_context_create(
+                    array(
+                        'http' => array(
+                            'method' => 'GET',
+                            'protocol_version' => '1.1',
+                            'header' => array(
+                                'Host: api.github.com',
+                                'Accept: application/vnd.github.v3+json',
+                                'User-Agent: i-MSCP',
+                                'Connection: close',
+                                'timeout' => 3
+                            )
+                        )
+                    )
+                );
 
-				$context = stream_context_create(
-					array(
-						'http' => array(
-							'method' => 'GET',
-							'protocol_version' => '1.1',
-							'header' => array(
-								'Host: api.github.com',
-								'Accept: application/vnd.github.v3+json',
-								'User-Agent: i-MSCP',
-								'Connection: close',
-								'timeout' => 3
-							)
-						)
-					)
-				);
+                if (!stream_context_set_option($context, 'ssl', 'verify_peer', false)) {
+                    $this->setError(tr('Unable to set sslverifypeer option'));
+                    return false;
+                }
 
-				if (!stream_context_set_option($context, 'ssl', 'verify_peer', false)) {
-					$this->setError(tr('Unable to set sslverifypeer option'));
-					return false;
-				}
+                if (!stream_context_set_option($context, 'ssl', 'allow_self_signed', true)) {
+                    $this->setError(tr('Unable to set sslallowselfsigned option'));
+                    return false;
+                }
 
-				if (!stream_context_set_option($context, 'ssl', 'allow_self_signed', true)) {
-					$this->setError(tr('Unable to set sslallowselfsigned option'));
-					return false;
-				}
+                // Retrieving latest release info from GitHub
+                $info = @file_get_contents('https://api.github.com/repos/i-MSCP/imscp/releases/latest', false, $context);
 
-				// Retrieving latest release info from GitHub
-				$info = @file_get_contents('https://api.github.com/repos/i-MSCP/imscp/releases/latest', false, $context);
+                if ($info === false) {
+                    $this->setError(tr('Unable to get update info from Github'));
+                } elseif (!isJson($info)) {
+                    $this->setError(tr('Invalid payload received from GitHub'));
+                    return false;
+                }
 
-				if ($info === false) {
-					$this->setError(tr('Unable to get update info from Github'));
-				} elseif(!isJson($info)) {
-					$this->setError(tr('Invalid payload received from GitHub'));
-					return false;
-				}
+                if (file_exists($file)) {
+                    if (!@unlink($file)) {
+                        $this->setError(tr('Unable to delete i-MSCP info file.'));
+                        write_log(sprintf('Unable to deelte i-MSCP info file.'), E_USER_ERROR);
+                        return false;
+                    }
+                }
 
-				if(file_exists($file)) {
-					if(!@unlink($file)) {
-						$this->setError(tr('Unable to delete i-MSCP info file.'));
-						write_log(sprintf('Unable to deelte i-MSCP info file.'), E_USER_ERROR);
-						return false;
-					}
-				}
+                if (@file_put_contents($file, $info, LOCK_EX) === false) {
+                    write_log(sprintf('Unable to create i-MSCP info file.'), E_USER_ERROR);
+                } else {
+                    write_log(sprintf('New i-MSCP info file has been created.'), E_USER_NOTICE);
+                }
+            } else {
+                if (($info = file_get_contents($file)) === false) {
+                    $this->setError(tr('Unable to load i-MSCP info file.'));
+                    write_log(sprintf('Unable to load i-MSCP info file.'), E_USER_ERROR);
+                    return false;
+                }
+            }
 
-				if (@file_put_contents($file, $info, LOCK_EX) === false) {
-					write_log(sprintf('Unable to create i-MSCP info file.'), E_USER_ERROR);
-				} else {
-					write_log(sprintf('New i-MSCP info file has been created.'), E_USER_NOTICE);
-				}
-			} else {
-				if(($info = file_get_contents($file)) === false) {
-					$this->setError(tr('Unable to load i-MSCP info file.'));
-					write_log(sprintf('Unable to load i-MSCP info file.'), E_USER_ERROR);
-					return false;
-				}
-			}
+            $this->updateInfo = json_decode($info, true);
+        }
 
-			$this->updateInfo = json_decode($info, true);
-		}
+        return $this->updateInfo;
+    }
 
-		return $this->updateInfo;
-	}
+    /**
+     * Returns last applied update
+     *
+     * @throws iMSCP_Update_Exception When unable to retrieve last applied update
+     * @return string
+     */
+    protected function getLastAppliedUpdate()
+    {
+        /** @var $cfg iMSCP_Config_Handler_File */
+        $cfg = iMSCP_Registry::get('config');
 
-	/**
-	 * Return build number for the last available i-MSCP version
-	 *
-	 * @return string
-	 */
-	protected function getNextUpdate()
-	{
-		$updateInfo = $this->getUpdateInfo();
+        if (isset($cfg['Version']) && stripos($cfg['Version'], 'git') === false) {
+            return $cfg['Version'];
+        }
 
-		if (is_array($updateInfo) && isset($updateInfo['tag_name'])) {
-			return $updateInfo['tag_name'];
-		}
+        return '99'; // Case where the version in use has not been officially released (eg. git branch).
+    }
 
-		return $this->getLastAppliedUpdate(); // We are safe here
-	}
+    /**
+     * Apply all available update
+     *
+     * @return bool TRUE on success, FALSE othewise
+     */
+    public function applyUpdates()
+    {
+        $this->setError('i-MSCP version update can be initiated through the i-MSCP installer only.');
 
-	/**
-	 * Returns last applied update
-	 *
-	 * @throws iMSCP_Update_Exception When unable to retrieve last applied update
-	 * @return string
-	 */
-	protected function getLastAppliedUpdate()
-	{
-		/** @var $cfg iMSCP_Config_Handler_File */
-		$cfg = iMSCP_Registry::get('config');
+        return false;
+    }
 
-		if (isset($cfg['Version']) && stripos($cfg['Version'], 'git') === false) {
-			return $cfg['Version'];
-		}
+    /**
+     * Singleton - Make clone unavailable
+     *
+     * @return void
+     */
+    protected function __clone()
+    {
 
-		return '99'; // Case where the version in use has not been officially released (eg. git branch).
-	}
+    }
 }

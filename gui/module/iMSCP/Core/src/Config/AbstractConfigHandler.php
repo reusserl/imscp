@@ -26,94 +26,94 @@ namespace iMSCP\Core\Config;
  */
 class AbstractConfigHandler implements \ArrayAccess, \iterator
 {
-	/**
-	 * @var array Configuration parameters
-	 */
-	protected $parameters = [];
+    /**
+     * @var array Configuration
+     */
+    protected $config = [];
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function offsetSet($offset, $value)
-	{
-		$this->parameters[$offset] = $value;
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function offsetSet($offset, $value)
+    {
+        $this->config[$offset] = $value;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function offsetGet($offset)
-	{
-		if (!$this->offsetExists($offset)) {
-			throw new \InvalidArgumentException("Configuration variable `$offset` is missing.");
-		}
+    /**
+     * {@inheritdoc}
+     */
+    public function offsetGet($offset)
+    {
+        if (!$this->offsetExists($offset)) {
+            throw new \InvalidArgumentException("Configuration parameter `$offset` is missing.");
+        }
 
-		return $this->parameters[$offset];
-	}
+        return $this->config[$offset];
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function offsetExists($offset)
-	{
-		return key($this->parameters) !== null;
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function offsetExists($offset)
+    {
+        return key($this->config) !== null;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function offsetUnset($offset)
-	{
-		unset($this->parameters[$offset]);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function offsetUnset($offset)
+    {
+        unset($this->config[$offset]);
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function current()
-	{
-		return current($this->parameters);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function current()
+    {
+        return current($this->config);
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function next()
-	{
-		next($this->parameters);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function next()
+    {
+        next($this->config);
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function key()
-	{
-		return key($this->parameters);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function key()
+    {
+        return key($this->config);
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function valid()
-	{
-		return array_key_exists(key($this->parameters), $this->parameters);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function valid()
+    {
+        return array_key_exists(key($this->config), $this->config);
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function rewind()
-	{
-		reset($this->parameters);
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function rewind()
+    {
+        reset($this->config);
+    }
 
-	/**
-	 * Return array representation of the configuration object
-	 *
-	 * @return array
-	 */
-	public function toArray()
-	{
-		return $this->parameters;
-	}
+    /**
+     * Return array representation of the configuration object
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        return $this->config;
+    }
 }

@@ -35,271 +35,271 @@ use Zend\EventManager\EventManagerInterface;
  */
 class Bruteforce extends ActionPlugin
 {
-	/**
-	 * @var int Tells whether or not bruteforce detection is enabled
-	 */
-	protected $bruteForceEnabled = 0;
+    /**
+     * @var int Tells whether or not bruteforce detection is enabled
+     */
+    protected $bruteForceEnabled = 0;
 
-	/**
-	 * @var int Tells whether or not waiting time between login|captcha attempts is enabled
-	 */
-	protected $waitTimeEnabled = 0;
+    /**
+     * @var int Tells whether or not waiting time between login|captcha attempts is enabled
+     */
+    protected $waitTimeEnabled = 0;
 
-	/**
-	 * @var int Blocking time in minutes
-	 */
-	protected $blockTime = 0;
+    /**
+     * @var int Blocking time in minutes
+     */
+    protected $blockTime = 0;
 
-	/**
-	 * @var int Waiting time in seconds between each login|captcha attempts
-	 */
-	protected $waitTime = 0;
+    /**
+     * @var int Waiting time in seconds between each login|captcha attempts
+     */
+    protected $waitTime = 0;
 
-	/**
-	 * @var int Max attempts before an IP address is blocked
-	 */
-	protected $maxAttempts = 0;
+    /**
+     * @var int Max attempts before an IP address is blocked
+     */
+    protected $maxAttempts = 0;
 
-	/**
-	 * @var string IP address (The subject)
-	 */
-	protected $ipAddr = '';
+    /**
+     * @var string IP address (The subject)
+     */
+    protected $ipAddr = '';
 
-	/**
-	 * @var string Bruteforce detection type (login|captcha)
-	 */
-	protected $type = 'login';
+    /**
+     * @var string Bruteforce detection type (login|captcha)
+     */
+    protected $type = 'login';
 
-	/**
-	 * @var int Time during which an IP address is blocked
-	 */
-	protected $isBlockedFor = 0;
+    /**
+     * @var int Time during which an IP address is blocked
+     */
+    protected $isBlockedFor = 0;
 
-	/**
-	 * @var int Time to wait before a new login|captcha attempts is allowed
-	 */
-	protected $isWaitingFor = 0;
-	
-	/**
-	 * @var int Max attemps before IP is forced to wait
-	 */
-	protected $maxAttemptsBeforeWait = 0;
+    /**
+     * @var int Time to wait before a new login|captcha attempts is allowed
+     */
+    protected $isWaitingFor = 0;
 
-	/**
-	 * @var bool Tells whether or not a bruteforce detection record exists for $_ipAddr
-	 */
-	protected $recordExists = false;
+    /**
+     * @var int Max attemps before IP is forced to wait
+     */
+    protected $maxAttemptsBeforeWait = 0;
 
-	/**
-	 * @var string Session unique identifier
-	 */
-	protected $sessionId = '';
+    /**
+     * @var bool Tells whether or not a bruteforce detection record exists for $_ipAddr
+     */
+    protected $recordExists = false;
 
-	/**
-	 * @var string Last message raised
-	 */
-	protected $message = '';
+    /**
+     * @var string Session unique identifier
+     */
+    protected $sessionId = '';
 
-	/**
-	 * Constructor
-	 *
-	 * @param PluginManager $pluginManager
-	 * @param string $type Bruteforce detection type (login|captcha) (defaulted to login)
-	 * @çeturn void
-	 */
-	public function __construct(PluginManager $pluginManager, $type = 'login')
-	{
-		$cfg = Application::getInstance()->getConfig();
-		$this->sessionId = session_id();
-		$this->type = $type;
-		$this->ipAddr = getIpAddr();
+    /**
+     * @var string Last message raised
+     */
+    protected $message = '';
 
-		if ($type == 'login') {
-			$this->maxAttempts = $cfg['BRUTEFORCE_MAX_LOGIN'];
-		} elseif($type == 'captcha') {
-			$this->maxAttempts = $cfg['BRUTEFORCE_MAX_CAPTCHA'];
-		} else {
-			throw new \InvalidArgumentException(tr('Unknown bruteforce detection type: %s', $type));
-		}
+    /**
+     * Constructor
+     *
+     * @param PluginManager $pluginManager
+     * @param string $type Bruteforce detection type (login|captcha) (defaulted to login)
+     * @çeturn void
+     */
+    public function __construct(PluginManager $pluginManager, $type = 'login')
+    {
+        $cfg = Application::getInstance()->getConfig();
+        $this->sessionId = session_id();
+        $this->type = $type;
+        $this->ipAddr = getIpAddr();
 
-		$this->blockTime = $cfg['BRUTEFORCE_BLOCK_TIME'];
-		$this->waitTime = $cfg['BRUTEFORCE_BETWEEN_TIME'];
-		$this->maxAttemptsBeforeWait = $cfg['BRUTEFORCE_MAX_ATTEMPTS_BEFORE_WAIT'];
+        if ($type == 'login') {
+            $this->maxAttempts = $cfg['BRUTEFORCE_MAX_LOGIN'];
+        } elseif ($type == 'captcha') {
+            $this->maxAttempts = $cfg['BRUTEFORCE_MAX_CAPTCHA'];
+        } else {
+            throw new \InvalidArgumentException(tr('Unknown bruteforce detection type: %s', $type));
+        }
 
-		$this->unblock();
+        $this->blockTime = $cfg['BRUTEFORCE_BLOCK_TIME'];
+        $this->waitTime = $cfg['BRUTEFORCE_BETWEEN_TIME'];
+        $this->maxAttemptsBeforeWait = $cfg['BRUTEFORCE_MAX_ATTEMPTS_BEFORE_WAIT'];
 
-		parent::__construct($pluginManager);
-	}
+        $this->unblock();
 
-	/**
-	 * Initialization
-	 *
-	 * @return void
-	 */
-	protected function init()
-	{
-		$stmt = exec_query('SELECT * FROM login WHERE ipaddr = ? AND user_name IS NULL', $this->ipAddr);
+        parent::__construct($pluginManager);
+    }
 
-		if ($stmt->rowCount()) {
-			$row = $stmt->fetchRow(\PDO::FETCH_ASSOC);
-			$this->recordExists = true;
+    /**
+     * Initialization
+     *
+     * @return void
+     */
+    protected function init()
+    {
+        $stmt = exec_query('SELECT * FROM login WHERE ipaddr = ? AND user_name IS NULL', $this->ipAddr);
 
-			if ($row[$this->type . '_count'] >= $this->maxAttempts) {
-				$this->isBlockedFor = $row['lastaccess'] + $this->blockTime * 60;
-				$this->isWaitingFor = 0;
-			} else {
-				$this->isBlockedFor = 0;
-				if ($row[$this->type . '_count'] >= $this->maxAttemptsBeforeWait) {
-					$this->isWaitingFor = $row['lastaccess'] + $this->waitTime;
-				} else {
-					$this->isWaitingFor = 0;
-				}
-			}
-		} else {
-			$this->recordExists = false;
-		}
-	}
+        if ($stmt->rowCount()) {
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $this->recordExists = true;
 
-	/**
-	 * Returns plugin general information
-	 *
-	 * @return array
-	 */
-	public function getInfo()
-	{
-		return array(
-			'author' => array('Daniel Andreca', 'Laurent Declercq'),
-			'email' => 'team@i-mscp.net',
-			'version' => '0.0.5',
-			'require_api' => '1.0.0',
-			'date' => '2015-03-15',
-			'name' => 'Bruteforce',
-			'desc' => 'Improve security by preventing dictionary attacks.',
-			'url' => 'http://www.i-mscp.net'
-		);
-	}
+            if ($row[$this->type . '_count'] >= $this->maxAttempts) {
+                $this->isBlockedFor = $row['lastaccess'] + $this->blockTime * 60;
+                $this->isWaitingFor = 0;
+            } else {
+                $this->isBlockedFor = 0;
+                if ($row[$this->type . '_count'] >= $this->maxAttemptsBeforeWait) {
+                    $this->isWaitingFor = $row['lastaccess'] + $this->waitTime;
+                } else {
+                    $this->isWaitingFor = 0;
+                }
+            }
+        } else {
+            $this->recordExists = false;
+        }
+    }
 
-	/**
-	 * Register a callback for the given event(s)
-	 *
-	 * @param EventManagerInterface $eventsManager
-	 */
-	public function register(EventManagerInterface $eventsManager)
-	{
-		$eventsManager->attach([Events::onBeforeAuthentication, Events::onBeforeSetIdentity], $this, -99);
-	}
+    /**
+     * Returns plugin general information
+     *
+     * @return array
+     */
+    public function getInfo()
+    {
+        return [
+            'author' => ['Daniel Andreca', 'Laurent Declercq'],
+            'email' => 'team@i-mscp.net',
+            'version' => '0.0.5',
+            'require_api' => '1.0.0',
+            'date' => '2015-03-15',
+            'name' => 'Bruteforce',
+            'desc' => 'Improve security by preventing dictionary attacks.',
+            'url' => 'http://www.i-mscp.net'
+        ];
+    }
 
-	/**
-	 * onBeforeAuthentication event listener
-	 *
-	 * @param Event $event
-	 * @return null|string
-	 */
-	public function onBeforeAuthentication($event)
-	{
-		if ($this->isWaiting() || $this->isBlocked()) {
-			$event->stopPropagation();
-			return $this->getLastMessage();
-		}
+    /**
+     * Register a callback for the given event(s)
+     *
+     * @param EventManagerInterface $eventsManager
+     */
+    public function register(EventManagerInterface $eventsManager)
+    {
+        $eventsManager->attach([Events::onBeforeAuthentication, Events::onBeforeSetIdentity], $this, -99);
+    }
 
-		$this->recordAttempt();
+    /**
+     * onBeforeAuthentication event listener
+     *
+     * @param Event $event
+     * @return null|string
+     */
+    public function onBeforeAuthentication($event)
+    {
+        if ($this->isWaiting() || $this->isBlocked()) {
+            $event->stopPropagation();
+            return $this->getLastMessage();
+        }
 
-		return null;
-	}
+        $this->recordAttempt();
 
-	/**
-	 * onBeforeSetIdentity event listener
-	 *
-	 * @return void
-	 */
-	public function onBeforeSetIdentity()
-	{
-		exec_query('DELETE FROM login WHERE session_id = ?', $this->sessionId);
-	}
+        return null;
+    }
 
-	/**
-	 * Is blocked IP address?
-	 *
-	 * @return bool TRUE if IP address is blocked, FALSE otherwise
-	 */
-	public function isBlocked()
-	{
-		if ($this->isBlockedFor - time() > 0) {
-			$this->message = tr('%s IP address is blocked for %s minutes.', $this->ipAddr, $this->isBlockedFor());
-			return true;
-		}
+    /**
+     * onBeforeSetIdentity event listener
+     *
+     * @return void
+     */
+    public function onBeforeSetIdentity()
+    {
+        exec_query('DELETE FROM login WHERE session_id = ?', $this->sessionId);
+    }
 
-		return false;
-	}
+    /**
+     * Is blocked IP address?
+     *
+     * @return bool TRUE if IP address is blocked, FALSE otherwise
+     */
+    public function isBlocked()
+    {
+        if ($this->isBlockedFor - time() > 0) {
+            $this->message = tr('%s IP address is blocked for %s minutes.', $this->ipAddr, $this->isBlockedFor());
+            return true;
+        }
 
-	/**
-	 * Is waiting IP address?
-	 *
-	 * @return bool TRUE if IP address is waiting, FALSE otherwise
-	 */
-	public function isWaiting()
-	{
-		if ($this->isWaitingFor - time() > 0) {
-			$this->message = tr('%s IP address is waiting %s seconds.', $this->ipAddr, $this->isWaitingFor());
-			return true;
-		}
+        return false;
+    }
 
-		return false;
-	}
+    /**
+     * Is waiting IP address?
+     *
+     * @return bool TRUE if IP address is waiting, FALSE otherwise
+     */
+    public function isWaiting()
+    {
+        if ($this->isWaitingFor - time() > 0) {
+            $this->message = tr('%s IP address is waiting %s seconds.', $this->ipAddr, $this->isWaitingFor());
+            return true;
+        }
 
-	/**
-	 * Create/Update bruteforce detection record for IP address
-	 *
-	 * @return void
-	 */
-	public function recordAttempt()
-	{
-		if (!$this->recordExists) {
-			$this->createRecord();
-		} else {
-			$this->updateRecord();
-		}
-	}
+        return false;
+    }
 
-	/**
-	 * Returns last message raised
-	 *
-	 * @return string
-	 */
-	public function getLastMessage()
-	{
-		return $this->message;
-	}
+    /**
+     * Create/Update bruteforce detection record for IP address
+     *
+     * @return void
+     */
+    public function recordAttempt()
+    {
+        if (!$this->recordExists) {
+            $this->createRecord();
+        } else {
+            $this->updateRecord();
+        }
+    }
 
-	/**
-	 * Returns human readable blocking time
-	 *
-	 * @return string
-	 */
-	protected function isBlockedFor()
-	{
-		return strftime("%M:%S", ($this->isBlockedFor - time() > 0) ? $this->isBlockedFor - time() : 0);
-	}
+    /**
+     * Returns last message raised
+     *
+     * @return string
+     */
+    public function getLastMessage()
+    {
+        return $this->message;
+    }
 
-	/**
-	 * Returns human readable waiting time
-	 *
-	 * @return string
-	 */
-	protected function isWaitingFor()
-	{
-		return strftime("%M:%S", ($this->isWaitingFor - time() > 0) ? $this->isWaitingFor - time() : 0);
-	}
+    /**
+     * Returns human readable blocking time
+     *
+     * @return string
+     */
+    protected function isBlockedFor()
+    {
+        return strftime("%M:%S", ($this->isBlockedFor - time() > 0) ? $this->isBlockedFor - time() : 0);
+    }
 
-	/**
-	 * Increase login|captcha attempts by 1 for $_ipAddr
-	 *
-	 * @return void
-	 */
-	protected function updateRecord()
-	{
-		exec_query(
-			"
+    /**
+     * Returns human readable waiting time
+     *
+     * @return string
+     */
+    protected function isWaitingFor()
+    {
+        return strftime("%M:%S", ($this->isWaitingFor - time() > 0) ? $this->isWaitingFor - time() : 0);
+    }
+
+    /**
+     * Increase login|captcha attempts by 1 for $_ipAddr
+     *
+     * @return void
+     */
+    protected function updateRecord()
+    {
+        exec_query(
+            "
 				UPDATE
 					login
 				SET
@@ -307,37 +307,37 @@ class Bruteforce extends ActionPlugin
 				WHERE
 					ipaddr= ? AND user_name IS NULL
 			",
-			($this->ipAddr)
-		);
-	}
+            ($this->ipAddr)
+        );
+    }
 
-	/**
-	 * Create bruteforce detection record
-	 *
-	 * @return void
-	 */
-	protected function createRecord()
-	{
-		exec_query(
-			"
+    /**
+     * Create bruteforce detection record
+     *
+     * @return void
+     */
+    protected function createRecord()
+    {
+        exec_query(
+            "
 				REPLACE INTO login (
 					session_id, ipaddr, {$this->type}_count, user_name, lastaccess
 					) VALUES (
 						?, ?, 1, NULL, UNIX_TIMESTAMP()
 				)
 			",
-			array($this->sessionId, $this->ipAddr)
-		);
-	}
+            [$this->sessionId, $this->ipAddr]
+        );
+    }
 
-	/**
-	 * Unblock any Ip address for which blocking time is expired
-	 *
-	 * @return void
-	 */
-	protected function unblock()
-	{
-		$timeout = time() - ($this->blockTime * 60);
-		exec_query("DELETE FROM login WHERE lastaccess < ? AND `{$this->type}_count` > 0", $timeout);
-	}
+    /**
+     * Unblock any Ip address for which blocking time is expired
+     *
+     * @return void
+     */
+    protected function unblock()
+    {
+        $timeout = time() - ($this->blockTime * 60);
+        exec_query("DELETE FROM login WHERE lastaccess < ? AND `{$this->type}_count` > 0", $timeout);
+    }
 }

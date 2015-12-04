@@ -29,368 +29,368 @@ namespace iMSCP\Core\i18n;
  */
 class GettextParser
 {
-	/**
-	 * @var int Headers
-	 */
-	const HEADERS = 1;
+    /**
+     * @var int Headers
+     */
+    const HEADERS = 1;
 
-	/**
-	 * @var int Translation table
-	 */
-	const TRANSLATION_TABLE = 2;
+    /**
+     * @var int Translation table
+     */
+    const TRANSLATION_TABLE = 2;
 
-	/**
-	 * @var resource File handle
-	 */
-	protected $fh;
+    /**
+     * @var resource File handle
+     */
+    protected $fh;
 
-	/**
-	 * @var string Path to the gettext file
-	 */
-	protected $filePath;
+    /**
+     * @var string Path to the gettext file
+     */
+    protected $filePath;
 
-	/**
-	 * @var string Headers from gettext file
-	 */
-	protected $headers = '';
+    /**
+     * @var string Headers from gettext file
+     */
+    protected $headers = '';
 
-	/**
-	 * @var array Translation table
-	 */
-	protected $translationTable = array();
+    /**
+     * @var array Translation table
+     */
+    protected $translationTable = [];
 
-	/**
-	 * @var string Whether the current file is little endian
-	 */
-	protected $littleEndian;
+    /**
+     * @var string Whether the current file is little endian
+     */
+    protected $littleEndian;
 
-	/**
-	 * @var int Number of strings in the file.
-	 */
-	protected $nbStrings;
+    /**
+     * @var int Number of strings in the file.
+     */
+    protected $nbStrings;
 
-	/**
-	 * @var array Index table of original strings (msgid).
-	 */
-	protected $msgidIndexTable;
+    /**
+     * @var array Index table of original strings (msgid).
+     */
+    protected $msgidIndexTable;
 
-	/**
-	 * @var array Index table of translated strings (msgstr)
-	 */
-	protected $msgstrIndexTable;
+    /**
+     * @var array Index table of translated strings (msgstr)
+     */
+    protected $msgstrIndexTable;
 
-	/**
-	 * @var bool Does the mo file is loaded?
-	 */
-	protected $isLoaded;
+    /**
+     * @var bool Does the mo file is loaded?
+     */
+    protected $isLoaded;
 
-	/**
-	 * Constructor
-	 *
-	 * @param string $filePath Path to gettext file
-	 */
-	public function __construct($filePath)
-	{
-		$filePath = (string)$filePath;
+    /**
+     * Constructor
+     *
+     * @param string $filePath Path to gettext file
+     */
+    public function __construct($filePath)
+    {
+        $filePath = (string)$filePath;
 
-		if (!is_readable($filePath)) {
-			throw new \InvalidArgumentException(sprintf('%s is not readable', $filePath));
-		}
+        if (!is_readable($filePath)) {
+            throw new \InvalidArgumentException(sprintf('%s is not readable', $filePath));
+        }
 
-		$this->filePath = $filePath;
-	}
+        $this->filePath = $filePath;
+    }
 
-	/**
-	 * Destructor
-	 */
-	public function __destruct()
-	{
-		if (is_resource($this->fh)) {
-			fclose($this->fh);
-		}
-	}
+    /**
+     * Destructor
+     */
+    public function __destruct()
+    {
+        if (is_resource($this->fh)) {
+            fclose($this->fh);
+        }
+    }
 
-	/**
-	 * Returns headers
-	 *
-	 * @return string A string that contains gettext file headers, each separed by EOL
-	 */
-	public function getHeaders()
-	{
-		if (!$this->headers) {
-			$this->headers = $this->_parse(self::HEADERS);
-		}
+    /**
+     * Returns translation table
+     *
+     * @return array An array of pairs key/value where the keys are the original strings (msgid) and the values, the
+     *               translated strings (msgstr)
+     */
+    public function getTranslationTable()
+    {
+        if (!$this->translationTable) {
+            $this->translationTable = $this->_parse(self::TRANSLATION_TABLE);
+        }
 
-		return $this->headers;
-	}
+        return $this->translationTable;
+    }
 
-	/**
-	 * Returns translation table
-	 *
-	 * @return array An array of pairs key/value where the keys are the original strings (msgid) and the values, the
-	 *               translated strings (msgstr)
-	 */
-	public function getTranslationTable()
-	{
-		if (!$this->translationTable) {
-			$this->translationTable = $this->_parse(self::TRANSLATION_TABLE);
-		}
+    /**
+     * Parse a machine object file
+     *
+     * @param int $part iMSCP_I18n_Parser_Gettext::HEADERS|iMSCP_I18n_Parser_Gettext::TRANSLATION_TABLE
+     * @return array|string An array of pairs key/value where the keys are the original strings (msgid) and the values,
+     *                      the translated strings (msgstr) or a string that contains headers, eachof them separated by
+     *                      EOL.
+     */
+    protected function _parse($part)
+    {
+        if ($this->fh === null) {
+            if (!($this->fh = fopen($this->filePath, 'rb'))) {
+                throw new \RuntimeException('Unable to open ' . $this->filePath);
+            }
+        }
 
-		return $this->translationTable;
-	}
+        if ($this->isLoaded === null) {
+            // Magic number
+            $magic = fread($this->fh, 4);
 
-	/**
-	 * Retruns project id version header value
-	 *
-	 * @return string Project id version header value
-	 */
-	public function getProjectIdVersion()
-	{
-		return $this->_getHeaderValue('Project-Id-Version:');
-	}
+            if ($magic == "\x95\x04\x12\xde") {
+                $this->littleEndian = false;
+            } elseif ($magic == "\xde\x12\x04\x95") {
+                $this->littleEndian = true;
+            } else {
+                fclose($this->fh);
+                throw new \InvalidArgumentException(sprintf('%s is not a valid gettext file', $this->filePath));
+            }
 
-	/**
-	 * Returns report msgid bugs value header value
-	 *
-	 * @return string R eport msgid bugs header value
-	 */
-	public function getReportMsgidBugs()
-	{
-		return $this->_getHeaderValue('Report-Msgid-Bugs-To:');
-	}
+            // Verify major revision (only 0 and 1 supported)
+            $majorRevision = ($this->readInteger() >> 16);
 
-	/**
-	 * Returns pot creation date header value
-	 *
-	 * @return string POT creation date header value
-	 */
-	public function getPotCreationDate()
-	{
-		return $this->_getHeaderValue('POT-Creation-Date:');
-	}
+            if ($majorRevision !== 0 && $majorRevision !== 1) {
+                fclose($this->fh);
+                throw new \InvalidArgumentException(sprintf('%s has an unknown major revision', $this->filePath));
+            }
 
-	/**
-	 * Returns po creation date header value
-	 *
-	 * @return string PO creation date header value
-	 */
-	public function getPoRevisionDate()
-	{
-		return $this->_getHeaderValue('PO-Revision-Date:');
-	}
+            $this->nbStrings = $this->readInteger(); // Number of strings
+            $msgidtableOffset = $this->readInteger(); // Offset of table with original strings
+            $msgstrTableOffset = $this->readInteger(); // Offset of table with translation strings
 
-	/**
-	 * Returns last translator header value
-	 *
-	 * @return string Last translator header value
-	 */
-	public function getLastTranslator()
-	{
-		return $this->_getHeaderValue('Last-Translator:');
-	}
+            // Getting index of original strings
+            fseek($this->fh, $msgidtableOffset);
+            $this->msgidIndexTable = $this->readIntegerList(2 * $this->nbStrings);
 
-	/**
-	 * Returns language team header value
-	 *
-	 * @return string language team header value
-	 */
-	public function getLanguageTeam()
-	{
-		return $this->_getHeaderValue('Language-Team:');
-	}
+            // Getting index of translated strings
+            fseek($this->fh, $msgstrTableOffset);
+            $this->msgstrIndexTable = $this->readIntegerList(2 * $this->nbStrings);
 
-	/**
-	 * Returns mime version header value
-	 *
-	 * @return string Mime version header value
-	 */
-	public function getMimeVersion()
-	{
-		return $this->_getHeaderValue('MIME-Version:');
-	}
+            $this->isLoaded = true;
+        }
 
-	/**
-	 * Returns content type header value
-	 *
-	 * @return string Content type header value
-	 */
-	public function getContentType()
-	{
-		return $this->_getHeaderValue('Content-Type:');
-	}
+        switch ((int)$part) {
+            case self::HEADERS:
+                fseek($this->fh, $this->msgstrIndexTable[2]);
+                return fread($this->fh, $this->msgstrIndexTable[1]);
+                break;
+            case self::TRANSLATION_TABLE:
+                $nbString = $this->nbStrings;
+                $parseResult = array();
 
-	/**
-	 * Returns content transfer encoding header value
-	 *
-	 * @return string Content transfer encoding header value
-	 */
-	public function getContentTransferEncoding()
-	{
-		return $this->_getHeaderValue('Content-Transfer-Encoding:');
-	}
+                for ($index = 1; $index < $nbString; $index++) {
+                    // Getting msgid
+                    fseek($this->fh, $this->msgidIndexTable[$index * 2 + 2]);
+                    $msgid = fread($this->fh, $this->msgidIndexTable[$index * 2 + 1]);
 
-	/**
-	 * Returns language header value
-	 *
-	 * @return string Language header value
-	 */
-	public function getLanguage()
-	{
-		return $this->_getHeaderValue('Language:');
-	}
+                    // Getting msgstr
+                    fseek($this->fh, $this->msgstrIndexTable[$index * 2 + 2]);
 
-	/**
-	 * Returns plural forms header value
-	 *
-	 * @return string Plural forms header value
-	 */
-	public function getPluralForms()
-	{
-		return $this->_getHeaderValue('Plural-Forms:');
-	}
+                    if (!$length = $this->msgstrIndexTable[$index * 2 + 1]) {
+                        $msgstr = '';
+                    } else {
+                        $msgstr = fread($this->fh, $length);
+                    }
 
-	/**
-	 * Returns number of stranslated strings
-	 *
-	 * @return int Number of translated strings
-	 */
-	public function getNumberOfTranslatedStrings()
-	{
-		if (null === $this->nbStrings) {
-			$this->getHeaders();
-		}
+                    $parseResult[$msgid] = $msgstr;
+                }
 
-		return $this->nbStrings - 1;
-	}
+                return $parseResult;
+                break;
+            default:
+                throw new \InvalidArgumentException('Unknown part type to parse');
+        }
+    }
 
-	/**
-	 * Parse a machine object file
-	 *
-	 * @param int $part iMSCP_I18n_Parser_Gettext::HEADERS|iMSCP_I18n_Parser_Gettext::TRANSLATION_TABLE
-	 * @return array|string An array of pairs key/value where the keys are the original strings (msgid) and the values,
-	 *                      the translated strings (msgstr) or a string that contains headers, eachof them separated by
-	 *                      EOL.
-	 */
-	protected function _parse($part)
-	{
-		if ($this->fh === null) {
-			if (!($this->fh = fopen($this->filePath, 'rb'))) {
-				throw new \RuntimeException('Unable to open ' . $this->filePath);
-			}
-		}
+    /**
+     * Read a single integer from the current file
+     *
+     * @return int
+     */
+    protected function readInteger()
+    {
+        if ($this->littleEndian) {
+            $result = unpack('Vint', fread($this->fh, 4));
+        } else {
+            $result = unpack('Nint', fread($this->fh, 4));
+        }
 
-		if ($this->isLoaded === null) {
-			// Magic number
-			$magic = fread($this->fh, 4);
+        return $result['int'];
+    }
 
-			if ($magic == "\x95\x04\x12\xde") {
-				$this->littleEndian = false;
-			} elseif ($magic == "\xde\x12\x04\x95") {
-				$this->littleEndian = true;
-			} else {
-				fclose($this->fh);
-				throw new \InvalidArgumentException(sprintf('%s is not a valid gettext file', $this->filePath));
-			}
+    /**
+     * Read an integer from the current file
+     *
+     * @param int $num
+     * @return int
+     */
+    protected function readIntegerList($num)
+    {
+        if ($this->littleEndian) {
+            return unpack('V' . $num, fread($this->fh, 4 * $num));
+        }
 
-			// Verify major revision (only 0 and 1 supported)
-			$majorRevision = ($this->readInteger() >> 16);
+        return unpack('N' . $num, fread($this->fh, 4 * $num));
+    }
 
-			if ($majorRevision !== 0 && $majorRevision !== 1) {
-				fclose($this->fh);
-				throw new \InvalidArgumentException(sprintf('%s has an unknown major revision', $this->filePath));
-			}
+    /**
+     * Retruns project id version header value
+     *
+     * @return string Project id version header value
+     */
+    public function getProjectIdVersion()
+    {
+        return $this->_getHeaderValue('Project-Id-Version:');
+    }
 
-			$this->nbStrings = $this->readInteger(); // Number of strings
-			$msgidtableOffset = $this->readInteger(); // Offset of table with original strings
-			$msgstrTableOffset = $this->readInteger(); // Offset of table with translation strings
+    /**
+     * Returns given header value
+     *
+     * @param string $header header name
+     * @return string header value
+     */
+    protected function _getHeaderValue($header)
+    {
+        $headers = $this->getHeaders();
+        $header = str_replace(chr(13), '', substr($headers, strpos($headers, $header)));
+        $header = substr($header, ($start = strpos($header, ':') + 2), (strpos($header, chr(10)) - $start));
 
-			// Getting index of original strings
-			fseek($this->fh, $msgidtableOffset);
-			$this->msgidIndexTable = $this->readIntegerList(2 * $this->nbStrings);
+        return (!empty($header)) ? $header : '';
+    }
 
-			// Getting index of translated strings
-			fseek($this->fh, $msgstrTableOffset);
-			$this->msgstrIndexTable = $this->readIntegerList(2 * $this->nbStrings);
+    /**
+     * Returns headers
+     *
+     * @return string A string that contains gettext file headers, each separed by EOL
+     */
+    public function getHeaders()
+    {
+        if (!$this->headers) {
+            $this->headers = $this->_parse(self::HEADERS);
+        }
 
-			$this->isLoaded = true;
-		}
+        return $this->headers;
+    }
 
-		switch ((int)$part) {
-			case self::HEADERS:
-				fseek($this->fh, $this->msgstrIndexTable[2]);
-				return fread($this->fh, $this->msgstrIndexTable[1]);
-				break;
-			case self::TRANSLATION_TABLE:
-				$nbString = $this->nbStrings;
-				$parseResult = array();
+    /**
+     * Returns report msgid bugs value header value
+     *
+     * @return string R eport msgid bugs header value
+     */
+    public function getReportMsgidBugs()
+    {
+        return $this->_getHeaderValue('Report-Msgid-Bugs-To:');
+    }
 
-				for ($index = 1; $index < $nbString; $index++) {
-					// Getting msgid
-					fseek($this->fh, $this->msgidIndexTable[$index * 2 + 2]);
-					$msgid = fread($this->fh, $this->msgidIndexTable[$index * 2 + 1]);
+    /**
+     * Returns pot creation date header value
+     *
+     * @return string POT creation date header value
+     */
+    public function getPotCreationDate()
+    {
+        return $this->_getHeaderValue('POT-Creation-Date:');
+    }
 
-					// Getting msgstr
-					fseek($this->fh, $this->msgstrIndexTable[$index * 2 + 2]);
+    /**
+     * Returns po creation date header value
+     *
+     * @return string PO creation date header value
+     */
+    public function getPoRevisionDate()
+    {
+        return $this->_getHeaderValue('PO-Revision-Date:');
+    }
 
-					if (!$length = $this->msgstrIndexTable[$index * 2 + 1]) {
-						$msgstr = '';
-					} else {
-						$msgstr = fread($this->fh, $length);
-					}
+    /**
+     * Returns last translator header value
+     *
+     * @return string Last translator header value
+     */
+    public function getLastTranslator()
+    {
+        return $this->_getHeaderValue('Last-Translator:');
+    }
 
-					$parseResult[$msgid] = $msgstr;
-				}
+    /**
+     * Returns language team header value
+     *
+     * @return string language team header value
+     */
+    public function getLanguageTeam()
+    {
+        return $this->_getHeaderValue('Language-Team:');
+    }
 
-				return $parseResult;
-				break;
-			default:
-				throw new \InvalidArgumentException('Unknown part type to parse');
-		}
-	}
+    /**
+     * Returns mime version header value
+     *
+     * @return string Mime version header value
+     */
+    public function getMimeVersion()
+    {
+        return $this->_getHeaderValue('MIME-Version:');
+    }
 
-	/**
-	 * Returns given header value
-	 *
-	 * @param string $header header name
-	 * @return string header value
-	 */
-	protected function _getHeaderValue($header)
-	{
-		$headers = $this->getHeaders();
-		$header = str_replace(chr(13), '', substr($headers, strpos($headers, $header)));
-		$header = substr($header, ($start = strpos($header, ':') + 2), (strpos($header, chr(10)) - $start));
+    /**
+     * Returns content type header value
+     *
+     * @return string Content type header value
+     */
+    public function getContentType()
+    {
+        return $this->_getHeaderValue('Content-Type:');
+    }
 
-		return (!empty($header)) ? $header : '';
-	}
+    /**
+     * Returns content transfer encoding header value
+     *
+     * @return string Content transfer encoding header value
+     */
+    public function getContentTransferEncoding()
+    {
+        return $this->_getHeaderValue('Content-Transfer-Encoding:');
+    }
 
-	/**
-	 * Read a single integer from the current file
-	 *
-	 * @return int
-	 */
-	protected function readInteger()
-	{
-		if ($this->littleEndian) {
-			$result = unpack('Vint', fread($this->fh, 4));
-		} else {
-			$result = unpack('Nint', fread($this->fh, 4));
-		}
+    /**
+     * Returns language header value
+     *
+     * @return string Language header value
+     */
+    public function getLanguage()
+    {
+        return $this->_getHeaderValue('Language:');
+    }
 
-		return $result['int'];
-	}
+    /**
+     * Returns plural forms header value
+     *
+     * @return string Plural forms header value
+     */
+    public function getPluralForms()
+    {
+        return $this->_getHeaderValue('Plural-Forms:');
+    }
 
-	/**
-	 * Read an integer from the current file
-	 *
-	 * @param int $num
-	 * @return int
-	 */
-	protected function readIntegerList($num)
-	{
-		if ($this->littleEndian) {
-			return unpack('V' . $num, fread($this->fh, 4 * $num));
-		}
+    /**
+     * Returns number of stranslated strings
+     *
+     * @return int Number of translated strings
+     */
+    public function getNumberOfTranslatedStrings()
+    {
+        if (null === $this->nbStrings) {
+            $this->getHeaders();
+        }
 
-		return unpack('N' . $num, fread($this->fh, 4 * $num));
-	}
+        return $this->nbStrings - 1;
+    }
 }

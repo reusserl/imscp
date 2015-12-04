@@ -32,36 +32,36 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class DBALConnectionFactory implements FactoryInterface
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
-	{
-		$config = $serviceLocator->get('Config');
+    /**
+     * {@inheritdoc}
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        $config = $serviceLocator->get('Config');
 
-		/** @var EncryptionDataService $encryptionDataService */
-		$encryptionDataService = $serviceLocator->get('EncryptionDataService');
+        /** @var EncryptionDataService $encryptionDataService */
+        $encryptionDataService = $serviceLocator->get('EncryptionDataService');
 
-		$dbalConfig = new Configuration();
+        $dbalConfig = new Configuration();
 
-		// Ignore tables which are not managed through ORM service
-		$dbalConfig->setFilterSchemaAssetsExpression('/^(?:admin|aps_.*)$/');
+        // Ignore tables which are not managed through ORM service
+        $dbalConfig->setFilterSchemaAssetsExpression('/^(?:admin|aps_.*)$/');
 
-		$conn = DriverManager::getConnection(
-			[
-				'driver' => 'pdo_' . $config['DATABASE_TYPE'],
-				'host' => $config['DATABASE_HOST'],
-				'port' => $config['DATABASE_PORT'],
-				'dbname' => $config['DATABASE_NAME'],
-				'user' => $config['DATABASE_USER'],
-				'password' => Crypt::decryptRijndaelCBC(
-					$encryptionDataService->getKey(), $encryptionDataService->getIV(), $config['DATABASE_PASSWORD']
-				),
-				'charset' => 'utf8'
-			],
-			$dbalConfig
-		);
+        $conn = DriverManager::getConnection(
+            [
+                'driver' => 'pdo_' . $config['DATABASE_TYPE'],
+                'host' => $config['DATABASE_HOST'],
+                'port' => $config['DATABASE_PORT'],
+                'dbname' => $config['DATABASE_NAME'],
+                'user' => $config['DATABASE_USER'],
+                'password' => Crypt::decryptRijndaelCBC(
+                    $encryptionDataService->getKey(), $encryptionDataService->getIV(), $config['DATABASE_PASSWORD']
+                ),
+                'charset' => 'utf8'
+            ],
+            $dbalConfig
+        );
 
-		return $conn;
-	}
+        return $conn;
+    }
 }

@@ -21,7 +21,6 @@
 namespace iMSCP\Core\Service;
 
 use iMSCP\Core\Config\FileConfigHandler;
-use Zend\ModuleManager\ModuleManager;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -31,55 +30,51 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class EncryptionDataService implements FactoryInterface
 {
-	/**
-	 * @var string Encryption key
-	 */
-	protected $key;
+    /**
+     * @var string Encryption key
+     */
+    protected $key;
 
-	/**
-	 * @var string Initialization vector
-	 */
-	protected $iv;
+    /**
+     * @var string Initialization vector
+     */
+    protected $iv;
 
-	/**
-	 * Get encryption key
-	 *
-	 * @return string
-	 */
-	public function getKey()
-	{
-		return $this->key;
-	}
+    /**
+     * Get encryption key
+     *
+     * @return string
+     */
+    public function getKey()
+    {
+        return $this->key;
+    }
 
-	/**
-	 * Return initialization vector
-	 *
-	 * @return string
-	 */
-	public function getIv()
-	{
-		return $this->iv;
-	}
+    /**
+     * Return initialization vector
+     *
+     * @return string
+     */
+    public function getIv()
+    {
+        return $this->iv;
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function createService(ServiceLocatorInterface $serviceLocator)
-	{
-		// We cannot use the Config service here (not available yet)
-		/** @var ModuleManager $moduleManager */
-		$moduleManager = $serviceLocator->get('ModuleManager');
-		$config = $moduleManager->getEvent()->getConfigListener()->getMergedConfig();
+    /**
+     * {@inheritdoc}
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator)
+    {
+        $config = $serviceLocator->get('Config');
+        $config = new FileConfigHandler($config['CONF_DIR'] . '/imscp-db-keys');
 
-		$config = new FileConfigHandler($config['CONF_DIR'] . '/imscp-db-keys');
+        if (!isset($config['KEY']) || !isset($config['IV'])) {
+            throw new \RuntimeException('Encryption data file (imscp-db-keys) is corrupted.');
+        }
 
-		if (!isset($config['KEY']) || !isset($config['IV'])) {
-			throw new \RuntimeException('Encryption data file (imscp-db-keys) is corrupted.');
-		}
+        $this->key = $config['KEY'];
+        $this->iv = $config['IV'];
 
-		$this->key = $config['KEY'];
-		$this->iv = $config['IV'];
-
-		return $this;
-	}
+        return $this;
+    }
 }
