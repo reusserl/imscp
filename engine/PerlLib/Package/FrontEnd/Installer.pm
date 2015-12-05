@@ -69,7 +69,7 @@ sub registerSetupListeners
 		# Register pear repository (needed for the pear/net_dns2 package)
 		$composerManager->registerRepository('pear', 'http://pear.php.net');
 
-		# Register required composer packages
+		# Register required composer/pear packages
 		$composerManager->registerPackages({
 			'doctrine/orm' => '~2.5.0',
 			'jms/serializer' => '~1.0.0',
@@ -88,21 +88,26 @@ sub registerSetupListeners
 			'zendframework/zend-modulemanager' => '~2.4.0',
 			'zendframework/zend-navigation' => '~2.4.0',
 			'zendframework/zend-servicemanager' => '~2.4.0',
-			'zendframework/zend-session' => '~2.4.0',
+			#'zendframework/zend-session' => '~2.4.0',
 			'zendframework/zend-uri' => '~2.4.0',
 			'zendframework/zend-validator' => '~2.4.0'
 		});
 
 		# Register PSR-4 autoload mapping rules for i-MSCP frontend modules
-		for my $module(iMSCP::Dir->new( dirname => $main::imscpConfig{'GUI_ROOT_DIR'} . '/module/iMSCP' )->getDirs()) {
+		for my $module(iMSCP::Dir->new( dirname => "$main::imscpConfig{'GUI_ROOT_DIR'}/module/iMSCP" )->getDirs()) {
 			$composerManager->registerAutoloaderMap(
-				'psr-4', "iMSCP\\\\$module\\\\", $main::imscpConfig{'GUI_ROOT_DIR'} . "/module/iMSCP/$module/src"
+				'psr-4', "iMSCP\\\\$module\\\\", "$main::imscpConfig{'GUI_ROOT_DIR'}/module/iMSCP/$module/src"
 			);
 		}
+
+		# Register PSR-4 autoload mapping rules for i-MSCP plugins
+		$composerManager->registerAutoloaderMap(
+			'psr-4', "iMSCP\\\\Plugin\\\\", "$main::imscpConfig{'GUI_ROOT_DIR'}/plugins"
+		);
 	});
 
 	$eventManager->register('beforeSetupDialog', sub {
-		push @{$_[0]}, sub { $self->askHostname(@_) }, sub { $self->askSsl(@_) }, sub { $self->askPorts(@_) }; 0;
+		push @{$_[0]}, sub { $self->askDomain(@_) }, sub { $self->askSsl(@_) }, sub { $self->askPorts(@_) }; 0;
 	});
 }
 
@@ -115,7 +120,7 @@ sub registerSetupListeners
 
 =cut
 
-sub askHostname
+sub askDomain
 {
 	my ($self, $dialog) = @_;
 
@@ -847,13 +852,13 @@ sub _buildHttpdConfig
 	if($nbCPUcores eq 'auto') {
 		my $rs = execute('grep processor /proc/cpuinfo | wc -l', \my $stdout, \my $stderr);
 		debug($stdout) if $stdout;
-		debug('Unable to detect number of CPU cores. nginx worker_processes value set to 2') if $rs;
 
 		unless($rs) {
 			chomp($stdout);
 			$nbCPUcores = $stdout;
 			$nbCPUcores = 4 if $nbCPUcores > 4; # Limit number of workers
 		} else {
+			debug('Could not detect number of CPU cores. nginx worker_processes value set to 2');
 			$nbCPUcores = 2;
 		}
 	}
