@@ -20,6 +20,13 @@
 
 namespace iMSCP\Core\Updater;
 
+use Doctrine\DBAL\Connection;
+use iMSCP\Core\Application;
+use iMSCP\Core\Config\DbConfigHandler;
+use iMSCP\Core\Utils\Crypt;
+use iMSCP\Core\Utils\OpcodeCache;
+use Zend\Uri\Uri;
+
 /**
  * Class DatabaseUpdater
  * @package iMSCP\Core\Updater
@@ -27,7 +34,7 @@ namespace iMSCP\Core\Updater;
 class DatabaseUpdater extends AbstractUpdater
 {
     /**
-     * @var iMSCP_Update
+     * @var DatabaseUpdater
      */
     protected static $instance;
 
@@ -56,15 +63,17 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function __construct()
     {
-        if (isset(iMSCP_Registry::get('config')->DATABASE_NAME)) {
-            $this->databaseName = iMSCP_Registry::get('config')->DATABASE_NAME;
-        } else {
-            throw new iMSCP_Update_Exception('Database name not found.');
+        $config = Application::getInstance()->getConfig();
+
+        if (!isset($config['DATABASE_NAME'])) {
+            throw new \RuntimeException('Database name not found.');
         }
+
+        $this->databaseName = $config['DATABASE_NAME'];
     }
 
     /**
-     * Implements Singleton design pattern
+     * Get database updater instance
      *
      * @return DatabaseUpdater
      */
@@ -84,11 +93,11 @@ class DatabaseUpdater extends AbstractUpdater
      */
     public function applyUpdates()
     {
-        /** @var $dbConfig iMSCP_Config_Handler_Db */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
-        /** @var $pdo PDO */
-        $pdo = iMSCP_Database::getRawInstance();
+        /** @var Connection $db */
+        $db = Application::getInstance()->getServiceManager()->get('Database');
 
         while ($this->isAvailableUpdate()) {
             $revision = $this->getNextUpdate();
@@ -97,18 +106,18 @@ class DatabaseUpdater extends AbstractUpdater
 
             if (!empty($queries)) {
                 try {
-                    $pdo->beginTransaction();
+                    $db->beginTransaction();
 
                     foreach ($queries as $query) {
                         if (!empty($query)) {
-                            $pdo->query($query);
+                            $db->query($query);
                         }
                     }
 
                     $dbConfig['DATABASE_REVISION'] = $revision;
-                    $pdo->commit();
-                } catch (Exception $e) {
-                    $pdo->rollBack();
+                    $db->commit();
+                } catch (\Exception $e) {
+                    $db->rollBack();
                     $this->setError(sprintf('Database update %s failed: %s', $revision, $e->getMessage()));
                     return false;
                 }
@@ -145,8 +154,8 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function getLastAppliedUpdate()
     {
-        /** @var $dbConfig iMSCP_Config_Handler_Db */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
         if (!isset($dbConfig['DATABASE_REVISION'])) {
             $dbConfig['DATABASE_REVISION'] = 1;
@@ -201,7 +210,7 @@ class DatabaseUpdater extends AbstractUpdater
     {
         $updatesDetails = array();
 
-        $reflection = new ReflectionClass(__CLASS__);
+        $reflection = new \ReflectionClass(__CLASS__);
 
         foreach (range($this->getNextUpdate(), $this->getLastUpdate()) as $revision) {
             $methodName = "r$revision";
@@ -234,8 +243,6 @@ class DatabaseUpdater extends AbstractUpdater
     /**
      * Catch any database updates that were removed
      *
-     *
-     * @throws iMSCP_Update_Exception
      * @param  string $updateMethod Database update method name
      * @param array $params Params
      * @return null
@@ -243,7 +250,7 @@ class DatabaseUpdater extends AbstractUpdater
     public function __call($updateMethod, $params)
     {
         if (!preg_match('/^r[0-9]+$/', $updateMethod)) {
-            throw new iMSCP_Update_Exception(sprintf('%s is not a valid database update method', $updateMethod));
+            throw new \InvalidArgumentException(sprintf('%s is not a valid database update method', $updateMethod));
         }
 
         return null;
@@ -261,10 +268,10 @@ class DatabaseUpdater extends AbstractUpdater
         $stmt = execute_query('SELECT cert_id, password, `key` FROM ssl_certs');
 
         if ($stmt->rowCount()) {
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-                $certId = quoteValue($row['cert_id'], PDO::PARAM_INT);
-                $privateKey = new Crypt_RSA();
+                $certId = quoteValue($row['cert_id'], \PDO::PARAM_INT);
+                $privateKey = new \Crypt_RSA();
 
                 if ($row['password'] != '') {
                     $privateKey->setPassword($row['password']);
@@ -313,6 +320,7 @@ class DatabaseUpdater extends AbstractUpdater
      * Rename table
      *
      * @param string $table Table name
+     * @param string $newTableName
      * @return null|string SQL statement to be executed
      */
     protected function renameTable($table, $newTableName)
@@ -351,6 +359,7 @@ class DatabaseUpdater extends AbstractUpdater
      * Drop table
      *
      * @param string $table Table name
+     * @return string
      */
     public function dropTable($table)
     {
@@ -364,8 +373,8 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r50()
     {
-        /** @var $dbConfig iMSCP_Config_Handler_Db */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
         $dbConfig['PORT_IMSCP_DAEMON'] = '9876;tcp;i-MSCP-Daemon;1;0;127.0.0.1';
 
         return null;
@@ -412,8 +421,8 @@ class DatabaseUpdater extends AbstractUpdater
     {
         $sqlUpd = array();
 
-        /** @var \iMSCP\Service\EncryptionDataService $encryptionDataService */
-        $encryptionDataService = iMSCP_Registry::get('ServiceLocator')->get('EncryptionDataService');
+        /** @var \iMSCP\Core\Service\EncryptionDataService $encryptionDataService */
+        $encryptionDataService = Application::getInstance()->getServiceManager()->get('ServiceLocator')->get('EncryptionDataService');
         $encryptionKey = $encryptionDataService->getKey();
         $encryptionIV = $encryptionDataService->getIv();
 
@@ -429,10 +438,10 @@ class DatabaseUpdater extends AbstractUpdater
         );
 
         if ($stmt->rowCount()) {
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $password = quoteValue(\iMSCP\Crypt::decryptRijndaelCBC($encryptionKey, $encryptionIV, $row['mail_pass']));
+            while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                $password = quoteValue(Crypt::decryptRijndaelCBC($encryptionKey, $encryptionIV, $row['mail_pass']));
                 $status = quoteValue('tochange');
-                $mailId = quoteValue($row['mail_id'], PDO::PARAM_INT);
+                $mailId = quoteValue($row['mail_id'], \PDO::PARAM_INT);
                 $sqlUpd[] = "UPDATE mail_users SET mail_pass = $password, status = $status WHERE mail_id = $mailId";
             }
         }
@@ -440,9 +449,9 @@ class DatabaseUpdater extends AbstractUpdater
         // Decrypt all SQL users passwords
         $stmt = exec_query('SELECT sqlu_id, sqlu_pass FROM sql_user');
         if ($stmt->rowCount()) {
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $password = quoteValue(\iMSCP\Crypt::decryptRijndaelCBC($encryptionKey, $encryptionIV, $row['sqlu_pass']));
-                $id = quoteValue($row['sqlu_id'], PDO::PARAM_INT);
+            while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                $password = quoteValue(Crypt::decryptRijndaelCBC($encryptionKey, $encryptionIV, $row['sqlu_pass']));
+                $id = quoteValue($row['sqlu_id'], \PDO::PARAM_INT);
                 $sqlUpd[] = "UPDATE sql_user SET sqlu_pass = $password WHERE sqlu_id = $id";
             }
         }
@@ -450,8 +459,8 @@ class DatabaseUpdater extends AbstractUpdater
         // Decrypt all FTP users passwords
         $stmt = exec_query('SELECT userid, passwd FROM ftp_users');
         if ($stmt->rowCount()) {
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $password = quoteValue(\iMSCP\Crypt::decryptRijndaelCBC($encryptionKey, $encryptionIV, $row['passwd']));
+            while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                $password = quoteValue(Crypt::decryptRijndaelCBC($encryptionKey, $encryptionIV, $row['passwd']));
                 $userId = quoteValue($row['userid']);
                 $sqlUpd[] = "UPDATE ftp_users SET rawpasswd = $password WHERE userid = $userId";
             }
@@ -473,10 +482,10 @@ class DatabaseUpdater extends AbstractUpdater
     {
         $sqlUpd = array();
 
-        /** @var $db iMSCP_Database */
-        $db = iMSCP_Registry::get('db');
+        /** @var Connection $db */
+        $db = Application::getInstance()->getServiceManager()->get('ServiceLocator')->get('Database');
 
-        foreach ($db->getTables() as $table) {
+        foreach ($db->getSchemaManager()->listTableNames() as $table) {
             $table = quoteIdentifier($table);
             $sqlUpd[] = "ALTER TABLE $table ENGINE=InnoDB";
         }
@@ -491,11 +500,11 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r66()
     {
-        /** @var $dbConfig iMSCP_Config_Handler_Db */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
-        if (isset($dbConfig->DUMP_GUI_DEBUG)) {
-            $dbConfig->del('DUMP_GUI_DEBUG');
+        if (isset($dbConfig['DUMP_GUI_DEBUG'])) {
+            unset($dbConfig['DUMP_GUI_DEBUG']);
         }
 
         return null;
@@ -512,8 +521,8 @@ class DatabaseUpdater extends AbstractUpdater
 
         // First step: Update default language (new naming convention)
 
-        /** @var $dbConfig iMSCP_Config_Handler_Db */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
         if (isset($dbConfig['USER_INITIAL_LANG'])) {
             $dbConfig['USER_INITIAL_LANG'] = str_replace('lang_', '', $dbConfig['USER_INITIAL_LANG']);
@@ -521,10 +530,14 @@ class DatabaseUpdater extends AbstractUpdater
 
         // Second step: Removing all database languages tables
 
-        /** @var $db iMSCP_Database */
-        $db = iMSCP_Registry::get('db');
+        /** @var Connection $db */
+        $db = Application::getInstance()->getServiceManager()->get('Database');
 
-        foreach ($db->getTables('lang_%') as $tableName) {
+        $tableNames = array_filter($db->getSchemaManager()->listTableNames(), function ($tableName) {
+            return strpos($tableName, 'lang_') === 0;
+        });
+
+        foreach ($tableNames as $tableName) {
             $sqlUpd[] = $this->dropTable($tableName);
         }
 
@@ -568,7 +581,7 @@ class DatabaseUpdater extends AbstractUpdater
         $stmt = exec_query('SELECT ip_id, ip_card FROM server_ips');
 
         if ($stmt->rowCount()) {
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
                 $cardname = explode(':', $row['ip_card']);
                 $cardname = quoteValue($cardname[0]);
                 $ipId = quoteValue($row['ip_id']);
@@ -675,7 +688,7 @@ class DatabaseUpdater extends AbstractUpdater
         $stmt = exec_query("SHOW INDEX FROM $table WHERE column_name = ?", $column);
 
         if ($stmt->rowCount()) {
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
                 $row = array_change_key_case($row, CASE_LOWER);
                 $sqlUpd[] = sprintf('ALTER TABLE %s DROP INDEX %s', $table, quoteIdentifier($row['key_name']));
             }
@@ -687,7 +700,6 @@ class DatabaseUpdater extends AbstractUpdater
     /**
      * Remove any duplicate rows in the given table for the given column(s)
      *
-     * @throws iMSCP_Exception_Database
      * @param string $table Table name
      * @param string|array $columns Column(s)
      * @return void
@@ -703,7 +715,7 @@ class DatabaseUpdater extends AbstractUpdater
             $columns = quoteIdentifier($columns);
         }
 
-        $stmt = exec_query(
+        exec_query(
             "
 				CREATE TABLE $tmpTable AS SELECT * FROM $table GROUP BY $columns;
 				DELETE FROM $table;
@@ -745,7 +757,6 @@ class DatabaseUpdater extends AbstractUpdater
             }
 
             $indexName = ($indexName == 'PRIMARY') ? '' : quoteIdentifier($indexName);
-
             return sprintf('ALTER TABLE %s ADD %s %s (%s)', $table, $indexType, $indexName, $columns);
         }
 
@@ -867,9 +878,8 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r84()
     {
-        /** @var iMSCP_Config_Handler_Db $dbConfig */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
-
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
         $dbConfig['PHPINI_ALLOW_URL_FOPEN'] = 'off';
         $dbConfig['PHPINI_DISPLAY_ERRORS'] = 'off';
         $dbConfig['PHPINI_REGISTER_GLOBALS'] = 'off';
@@ -880,7 +890,6 @@ class DatabaseUpdater extends AbstractUpdater
         $dbConfig['PHPINI_MAX_EXECUTION_TIME'] = '30';
         $dbConfig['PHPINI_ERROR_REPORTING'] = 'E_ALL & ~E_NOTICE';
         $dbConfig['PHPINI_DISABLE_FUNCTIONS'] = 'show_source,system,shell_exec,passthru,exec,phpinfo,shell,symlink';
-
         return null;
     }
 
@@ -1162,8 +1171,8 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r97()
     {
-        /** @var iMSCP_Config_Handler_Db $dbConfig */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
         if (isset($dbConfig['PORT_SSH'])) {
             $dbConfig['PORT_SSH'] = '22;tcp;SSH;1;1;';
@@ -1272,8 +1281,8 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r105()
     {
-        /** @var $dbConfig iMSCP_Config_Handler_Db */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
         if (!isset($dbConfig['PHPINI_OPEN_BASEDIR'])) {
             $dbConfig['PHPINI_OPEN_BASEDIR'] = '';
@@ -1308,11 +1317,11 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r107()
     {
-        /** @var $dbConfig iMSCP_Config_Handler_Db */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
         if (isset($dbConfig['MAIN_MENU_SHOW_LABELS'])) {
-            $dbConfig->del('MAIN_MENU_SHOW_LABELS');
+            unset($dbConfig['MAIN_MENU_SHOW_LABELS']);
         }
 
         return $this->addColumn('user_gui_props', 'show_main_menu_labels', "tinyint(1) NOT NULL DEFAULT '1'");
@@ -1375,11 +1384,11 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r113()
     {
-        /** @var iMSCP_Config_Handler_Db $dbConfig */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
         if (isset($dbConfig['PHPINI_REGISTER_GLOBALS'])) {
-            $dbConfig->del('PHPINI_REGISTER_GLOBALS');
+            unset($dbConfig['PHPINI_REGISTER_GLOBALS']);
         }
 
         return array(
@@ -1399,120 +1408,120 @@ class DatabaseUpdater extends AbstractUpdater
         return array(
             // domain_dns.domain_id field should never be set to zero
             "
-				UPDATE
-					domain_dns AS t1
-				SET
-					t1.domain_id = (
-						SELECT t2.domain_id FROM domain_aliasses AS t2 WHERE t1.alias_id = t2.alias_id
-					)
-				WHERE
-					t1.domain_id = 0
-			",
+                UPDATE
+                    domain_dns AS t1
+                SET
+                    t1.domain_id = (
+                        SELECT t2.domain_id FROM domain_aliasses AS t2 WHERE t1.alias_id = t2.alias_id
+                    )
+                WHERE
+                    t1.domain_id = 0
+            ",
             // domain_dns.domain_dns field should not be empty (domain related entries)
             "
-				UPDATE
-					domain_dns AS t1
-				SET
-					t1.domain_dns = CONCAT(
-						(SELECT t2.domain_name FROM domain AS t2 WHERE t1.domain_id = t2.domain_id), '.'
-					)
-				WHERE
-					t1.domain_dns = ''
-				AND
-					t1.protected = 'yes'
-			",
+                UPDATE
+                    domain_dns AS t1
+                SET
+                    t1.domain_dns = CONCAT(
+                        (SELECT t2.domain_name FROM domain AS t2 WHERE t1.domain_id = t2.domain_id), '.'
+                    )
+                WHERE
+                    t1.domain_dns = ''
+                AND
+                    t1.protected = 'yes'
+            ",
             // domain_dns.domain_dns field should not be empty (domain aliases related entries)
             "
-				UPDATE
-					domain_dns AS t1
-				SET
-					t1.domain_dns = CONCAT(
-						(SELECT t2.alias_name FROM domain_aliasses AS t2 WHERE t1.alias_id = t2.alias_id),
-						'.'
-					)
-				WHERE
-					t1.domain_dns = ''
-				AND
-					t1.protected = 'yes'
-			",
+                UPDATE
+                    domain_dns AS t1
+                SET
+                    t1.domain_dns = CONCAT(
+                        (SELECT t2.alias_name FROM domain_aliasses AS t2 WHERE t1.alias_id = t2.alias_id),
+                        '.'
+                    )
+                WHERE
+                    t1.domain_dns = ''
+                AND
+                    t1.protected = 'yes'
+            ",
             // domain_dns.domain_dns with value * must be completed with the domain name (domain related entries)
             "
-				UPDATE
-					domain_dns AS t1
-				SET
-					t1.domain_dns = CONCAT(
-						'*.',
-						(SELECT t2.domain_name FROM domain AS t2 WHERE t1.domain_id = t2.domain_id),
-						'.'
-					)
-				WHERE
-					t1.alias_id = 0
-				AND
-					t1.domain_dns = '*'
-				AND
-					t1.protected = 'yes'
-			",
+                UPDATE
+                    domain_dns AS t1
+                SET
+                    t1.domain_dns = CONCAT(
+                        '*.',
+                        (SELECT t2.domain_name FROM domain AS t2 WHERE t1.domain_id = t2.domain_id),
+                        '.'
+                    )
+                WHERE
+                    t1.alias_id = 0
+                AND
+                    t1.domain_dns = '*'
+                AND
+                    t1.protected = 'yes'
+            ",
             // domain_dns.domain_dns with value * must be completed with the domain name (domain aliases related entries)
             "
-				UPDATE
-					domain_dns AS t1
-				SET
-					t1.domain_dns = CONCAT(
-						'*.',
-						(SELECT t2.alias_name FROM domain_aliasses AS t2 WHERE t1.alias_id = t2.alias_id),
-						'.'
-					)
-				WHERE
-					t1.alias_id <> 0
-				AND
-					t1.domain_dns = '*'
-				AND
-					t1.protected = 'yes'
-			",
+                UPDATE
+                    domain_dns AS t1
+                SET
+                    t1.domain_dns = CONCAT(
+                        '*.',
+                        (SELECT t2.alias_name FROM domain_aliasses AS t2 WHERE t1.alias_id = t2.alias_id),
+                        '.'
+                    )
+                WHERE
+                    t1.alias_id <> 0
+                AND
+                    t1.domain_dns = '*'
+                AND
+                    t1.protected = 'yes'
+            ",
             // If a domain has only wildcard MX entries for external servers, update the domain.external_mail field to 'wildcard'
             "
-				UPDATE
-					domain AS t1
-				SET
-					t1.external_mail = 'wildcard'
-				WHERE
-					0 = (
-						SELECT
-							COUNT(t2.domain_dns_id)
-						FROM
-							domain_dns AS t2
-						WHERE
-							t2.domain_id = t1.domain_id
-						AND
-							t2.alias_id = 0
-						AND
-							t2.domain_dns NOT LIKE '*.%'
-					)
-				AND
-					t1.external_mail = 'on'
-			",
+                UPDATE
+                    domain AS t1
+                SET
+                    t1.external_mail = 'wildcard'
+                WHERE
+                    0 = (
+                        SELECT
+                            COUNT(t2.domain_dns_id)
+                        FROM
+                            domain_dns AS t2
+                        WHERE
+                            t2.domain_id = t1.domain_id
+                        AND
+                            t2.alias_id = 0
+                        AND
+                            t2.domain_dns NOT LIKE '*.%'
+                    )
+                AND
+                    t1.external_mail = 'on'
+            ",
             // If a domain alias has only wildcard MX entries for external servers, update the domain.external_mail field to 'wildcard'
             "
-				UPDATE
-					domain_aliasses AS t1
-				SET
-					t1.external_mail = 'wildcard'
-				WHERE
-					t1.alias_id <> 0
-				AND
-					0 = (
-						SELECT COUNT(
-							t2.domain_dns_id)
-						FROM
-							domain_dns AS t2
-						WHERE
-							t2.alias_id = t1.alias_id
-						AND
-							t2.domain_dns NOT LIKE '*.%'
-					)
-				AND
-					t1.external_mail = 'on'
-				",
+                UPDATE
+                    domain_aliasses AS t1
+                SET
+                    t1.external_mail = 'wildcard'
+                WHERE
+                    t1.alias_id <> 0
+                AND
+                    0 = (
+                        SELECT COUNT(
+                            t2.domain_dns_id)
+                        FROM
+                            domain_dns AS t2
+                        WHERE
+                            t2.alias_id = t1.alias_id
+                        AND
+                            t2.domain_dns NOT LIKE '*.%'
+                    )
+                AND
+                    t1.external_mail = 'on'
+                ",
             // Custom DNS CNAME record set via external mail feature are no longer allowed (User will have to re-add them)
             // via the custom DNS interface (easy update way)
             "DELETE FROM domain_dns WHERE domain_type = 'CNAME' AND protected = 'yes'"
@@ -1539,7 +1548,7 @@ class DatabaseUpdater extends AbstractUpdater
         );
 
         $stmt = execute_query('SELECT admin_id FROM admin');
-        $usersIds = implode(',', $stmt->fetchall(PDO::FETCH_COLUMN));
+        $usersIds = implode(',', $stmt->fetchall(\PDO::FETCH_COLUMN));
 
         foreach ($tablesToForeignKey as $table => $foreignKey) {
             if (is_array($foreignKey)) {
@@ -1608,9 +1617,8 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r119()
     {
-        /** @var iMSCP_Config_Handler_Db $dbConfig */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
-
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
         $dbConfig['PHPINI_ALLOW_URL_FOPEN'] = 'off';
         $dbConfig['PHPINI_DISPLAY_ERRORS'] = 'off';
 
@@ -1643,9 +1651,9 @@ class DatabaseUpdater extends AbstractUpdater
             $sqlUpd[] = "UPDATE php_ini SET error_reporting = '$i' WHERE error_reporting = '$c'";
         }
 
-        /** @var iMSCP_Config_Handler_Db $dbConfig */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
-        $dbConfig->forceReload();
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
+        $dbConfig->refresh();
 
         return $sqlUpd;
     }
@@ -1659,42 +1667,42 @@ class DatabaseUpdater extends AbstractUpdater
     {
         return array(
             "
-				ALTER TABLE
-					domain_aliasses CHANGE url_forward url_forward
-				VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no'
-			",
+                ALTER TABLE
+                    domain_aliasses CHANGE url_forward url_forward
+                VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no'
+            ",
             "
-				ALTER TABLE
-					subdomain CHANGE subdomain_url_forward subdomain_url_forward
-				VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no'
-			",
+                ALTER TABLE
+                    subdomain CHANGE subdomain_url_forward subdomain_url_forward
+                VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no'
+            ",
             "
-				ALTER TABLE
-					subdomain_alias CHANGE subdomain_alias_url_forward subdomain_alias_url_forward
-				VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no'
-			",
+                ALTER TABLE
+                    subdomain_alias CHANGE subdomain_alias_url_forward subdomain_alias_url_forward
+                VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no'
+            ",
             "
-				UPDATE domain_aliasses SET url_forward = 'no' WHERE url_forward IS NULL OR url_forward = ''",
+                UPDATE domain_aliasses SET url_forward = 'no' WHERE url_forward IS NULL OR url_forward = ''",
             "
-				UPDATE
-					subdomain
-				SET
-					subdomain_url_forward = 'no'
-				WHERE
-					subdomain_url_forward IS NULL
-				OR
-					subdomain_url_forward = ''
-			",
+                UPDATE
+                    subdomain
+                SET
+                    subdomain_url_forward = 'no'
+                WHERE
+                    subdomain_url_forward IS NULL
+                OR
+                    subdomain_url_forward = ''
+            ",
             "
-				UPDATE
-					subdomain_alias
-				SET
-					subdomain_alias_url_forward = 'no'
-				WHERE
-					subdomain_alias_url_forward IS NULL
-				OR
-					subdomain_alias_url_forward = ''
-			"
+                UPDATE
+                    subdomain_alias
+                SET
+                    subdomain_alias_url_forward = 'no'
+                WHERE
+                    subdomain_alias_url_forward IS NULL
+                OR
+                    subdomain_alias_url_forward = ''
+            "
         );
     }
 
@@ -1738,14 +1746,14 @@ class DatabaseUpdater extends AbstractUpdater
 
         if ($stmt->rowCount()) {
             $sqlUpdt = "
-				UPDATE
-					admin AS t1
-				JOIN
-					domain AS t2 ON(t2.domain_admin_id = t1.admin_id)
-				SET
-					t1.admin_sys_uid = t2.domain_uid,
-					t1.admin_sys_gid = t2.domain_gid
-			";
+                UPDATE
+                    admin AS t1
+                JOIN
+                    domain AS t2 ON(t2.domain_admin_id = t1.admin_id)
+                SET
+                    t1.admin_sys_uid = t2.domain_uid,
+                    t1.admin_sys_gid = t2.domain_gid
+            ";
         }
 
         return $sqlUpdt;
@@ -1784,13 +1792,13 @@ class DatabaseUpdater extends AbstractUpdater
     protected function r128()
     {
         return "
-			UPDATE
-				ftp_users AS t1
-			JOIN
-				admin AS t2 ON (t2.admin_sys_uid = t1.uid)
-			SET
-				t1.admin_id = t2.admin_id
-		";
+            UPDATE
+                ftp_users AS t1
+            JOIN
+                admin AS t2 ON (t2.admin_sys_uid = t1.uid)
+            SET
+                t1.admin_id = t2.admin_id
+        ";
     }
 
     /**
@@ -1854,15 +1862,15 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r134()
     {
-        /** @var iMSCP_Config_Handler_Db $dbConfig */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
         if (isset($dbConfig['CUSTOM_ORDERPANEL_ID'])) {
-            $dbConfig->del('CUSTOM_ORDERPANEL_ID');
+            unset($dbConfig['CUSTOM_ORDERPANEL_ID']);
         }
 
         if (isset($dbConfig['ORDERS_EXPIRE_TIME'])) {
-            $dbConfig->del('ORDERS_EXPIRE_TIME');
+            unset($dbConfig['ORDERS_EXPIRE_TIME']);
         }
 
         return null;
@@ -1978,27 +1986,27 @@ class DatabaseUpdater extends AbstractUpdater
             $todelete = 'todelete';
 
             $sqlUdp[] = "
-				UPDATE
-					plugin AS t1
-				JOIN
-					plugin AS t2 ON (t2.plugin_id = t1.plugin_id)
-				SET
-					t1.plugin_status = '$toinstall',
-					t1.plugin_error = t2.plugin_status
-				WHERE
-					t1.plugin_status NOT IN(
-						'$enabled', '$disabled', '$uninstalled', '$toinstall', '$toupdate', '$touninstall', '$toenable',
-						'$todisable', '$todelete'
-					)
-			";
+                UPDATE
+                    plugin AS t1
+                JOIN
+                    plugin AS t2 ON (t2.plugin_id = t1.plugin_id)
+                SET
+                    t1.plugin_status = '$toinstall',
+                    t1.plugin_error = t2.plugin_status
+                WHERE
+                    t1.plugin_status NOT IN(
+                        '$enabled', '$disabled', '$uninstalled', '$toinstall', '$toupdate', '$touninstall', '$toenable',
+                        '$todisable', '$todelete'
+                    )
+            ";
 
             $sqlUdp[] = "
-				ALTER TABLE
-					plugin
-				CHANGE
-					 plugin_status plugin_status VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci
-					 NOT NULL DEFAULT 'uninstalled';
-			";
+                ALTER TABLE
+                    plugin
+                CHANGE
+                     plugin_status plugin_status VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci
+                     NOT NULL DEFAULT 'uninstalled';
+            ";
         }
 
         return $sqlUdp;
@@ -2011,15 +2019,15 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r142()
     {
-        /** @var iMSCP_Config_Handler_Db $dbConfig */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
         if (isset($dbConfig['PORT_AMAVIS'])) {
-            $dbConfig->del('PORT_AMAVIS');
+            unset($dbConfig['PORT_AMAVIS']);
         }
 
         if (isset($dbConfig['PORT_SPAMASSASSIN'])) {
-            $dbConfig->del('PORT_SPAMASSASSIN');
+            unset($dbConfig['PORT_SPAMASSASSIN']);
         }
 
         return null;
@@ -2051,9 +2059,10 @@ class DatabaseUpdater extends AbstractUpdater
         $stmt = execute_query('SELECT plugin_id, plugin_info, plugin_config FROM plugin');
 
         if ($stmt->rowCount()) {
-            $db = iMSCP_Database::getRawInstance();
+            /** @var Connection $db */
+            $db = Application::getInstance()->getServiceManager()->get('Database');
 
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
                 if (!isJson($row['plugin_info'])) {
                     $pluginInfo = $db->quote(json_encode(unserialize($row['plugin_info'])));
                 } else {
@@ -2067,13 +2076,13 @@ class DatabaseUpdater extends AbstractUpdater
                 }
 
                 $sqlUdp[] = "
-					UPDATE
-						plugin
-					SET
-						plugin_info = $pluginInfo, plugin_config = $pluginConfig
-					WHERE
-						plugin_id = {$row['plugin_id']}
-				";
+                    UPDATE
+                        plugin
+                    SET
+                        plugin_info = $pluginInfo, plugin_config = $pluginConfig
+                    WHERE
+                        plugin_id = {$row['plugin_id']}
+                ";
             }
         }
 
@@ -2137,15 +2146,15 @@ class DatabaseUpdater extends AbstractUpdater
 
         if ($stmt->rowCount()) {
             $sqlUpd[] = "
-				ALTER TABLE
-					domain_dns
-				CHANGE
-					protected owned_by VARCHAR(255)
-				CHARACTER SET
-					utf8 COLLATE utf8_unicode_ci
-				NOT NULL DEFAULT
-					'custom_dns_feature'
-			";
+                ALTER TABLE
+                    domain_dns
+                CHANGE
+                    protected owned_by VARCHAR(255)
+                CHARACTER SET
+                    utf8 COLLATE utf8_unicode_ci
+                NOT NULL DEFAULT
+                    'custom_dns_feature'
+            ";
         };
 
         $sqlUpd[] = "UPDATE domain_dns SET owned_by = 'custom_dns_feature' WHERE owned_by = 'no'";
@@ -2194,13 +2203,13 @@ class DatabaseUpdater extends AbstractUpdater
     protected function r163()
     {
         return "
-			UPDATE
-				mail_users
-			SET
-				quota = NULL
-			WHERE
-				mail_type NOT RLIKE '^(normal_mail|alias_mail|subdom_mail|alssub_mail)'
-		";
+            UPDATE
+                mail_users
+            SET
+                quota = NULL
+            WHERE
+                mail_type NOT RLIKE '^(normal_mail|alias_mail|subdom_mail|alssub_mail)'
+        ";
     }
 
     /**
@@ -2213,41 +2222,41 @@ class DatabaseUpdater extends AbstractUpdater
     {
         return array(
             '
-				UPDATE
-					domain AS t1
-				JOIN (
-					SELECT
-						COUNT(mail_id) AS nb_mailboxes, domain_id
-					FROM
-						mail_users
-					WHERE
-						quota IS NOT NULL
-				) AS t2 USING(domain_id)
-				SET
-					t1.domain_disk_limit = t2.nb_mailboxes
-				WHERE
-					t1.domain_disk_limit <> 0
-				AND
-					t1.domain_disk_limit < t2.nb_mailboxes
-			',
+                UPDATE
+                    domain AS t1
+                JOIN (
+                    SELECT
+                        COUNT(mail_id) AS nb_mailboxes, domain_id
+                    FROM
+                        mail_users
+                    WHERE
+                        quota IS NOT NULL
+                ) AS t2 USING(domain_id)
+                SET
+                    t1.domain_disk_limit = t2.nb_mailboxes
+                WHERE
+                    t1.domain_disk_limit <> 0
+                AND
+                    t1.domain_disk_limit < t2.nb_mailboxes
+            ',
             '
-				UPDATE
-					domain AS t1
-				JOIN (
-					SELECT
-						COUNT(mail_id) AS nb_mailboxes, domain_id
-					FROM
-						mail_users
-					WHERE
-						quota IS NOT NULL
-				) AS t2 USING(domain_id)
-				SET
-					t1.mail_quota = t2.nb_mailboxes
-				WHERE
-					t1.mail_quota <> 0
-				AND
-					t1.mail_quota < t2.nb_mailboxes
-			'
+                UPDATE
+                    domain AS t1
+                JOIN (
+                    SELECT
+                        COUNT(mail_id) AS nb_mailboxes, domain_id
+                    FROM
+                        mail_users
+                    WHERE
+                        quota IS NOT NULL
+                ) AS t2 USING(domain_id)
+                SET
+                    t1.mail_quota = t2.nb_mailboxes
+                WHERE
+                    t1.mail_quota <> 0
+                AND
+                    t1.mail_quota < t2.nb_mailboxes
+            '
         );
     }
 
@@ -2260,7 +2269,7 @@ class DatabaseUpdater extends AbstractUpdater
     {
         $stmt = exec_query('SELECT domain_id, mail_quota FROM domain');
 
-        while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($data = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             sync_mailboxes_quota($data['domain_id'], $data['mail_quota']);
         }
 
@@ -2284,8 +2293,8 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r168()
     {
-        /** @var $dbConfig iMSCP_Config_Handler_Db */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
         if (isset($dbConfig['TLD_STRICT_VALIDATION'])) {
             unset($dbConfig['TLD_STRICT_VALIDATION']);
@@ -2313,7 +2322,8 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r169()
     {
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
         # Retrieve service ports
         $services = array_filter(
@@ -2382,7 +2392,7 @@ class DatabaseUpdater extends AbstractUpdater
 
             $stmt = exec_query("SELECT admin_id, admin_sys_uid FROM admin WHERE admin_type in('admin', 'user')");
 
-            while ($data = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            while ($data = $stmt->fetch(\PDO::FETCH_ASSOC)) {
                 if ($data['admin_sys_uid']) {
                     $adminSysPwUid = posix_getpwuid($data['admin_sys_uid']);
                     $adminSysGrUid = posix_getgrgid($adminSysPwUid['gid']);
@@ -2391,19 +2401,19 @@ class DatabaseUpdater extends AbstractUpdater
                     $adminSysGname = quoteValue($adminSysGrUid['name']);
 
                     $sqlUdp[] = "
-						UPDATE
-							admin
-						SET
-							admin_sys_name = $adminSysName, admin_sys_gname = $adminSysGname
-						WHERE
-							admin_id = {$data['admin_id']}
-					";
+                        UPDATE
+                            admin
+                        SET
+                            admin_sys_name = $adminSysName, admin_sys_gname = $adminSysGname
+                        WHERE
+                            admin_id = {$data['admin_id']}
+                    ";
                 }
             }
 
             return $sqlUdp;
         } else {
-            throw new iMSCP_Update_Exception(
+            throw new \RuntimeException(
                 'Database update 172 require root user privileges. Please run the i-MSCP installer.'
             );
         }
@@ -2473,7 +2483,8 @@ class DatabaseUpdater extends AbstractUpdater
     {
         $sqlUdp = array();
 
-        $sqlUserHost = iMSCP_Registry::get('config')->DATABASE_USER_HOST;
+        $config = Application::getInstance()->getConfig();
+        $sqlUserHost = $config['DATABASE_USER_HOST'];
 
         if ($sqlUserHost == '127.0.0.1') {
             $sqlUserHost = 'localhost';
@@ -2484,41 +2495,41 @@ class DatabaseUpdater extends AbstractUpdater
         $stmt = exec_query('SELECT DISTINCT sqlu_name FROM sql_user');
 
         if ($stmt->rowCount()) {
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
                 $sqlUser = quoteValue($row['sqlu_name']);
 
                 $sqlUdp[] = "
-					UPDATE
-						mysql.user
-					SET
-						Host = $sqlUserHost
-					WHERE
-						User = $sqlUser
-					AND
-						Host NOT IN ($sqlUserHost, '%')
-				";
+                    UPDATE
+                        mysql.user
+                    SET
+                        Host = $sqlUserHost
+                    WHERE
+                        User = $sqlUser
+                    AND
+                        Host NOT IN ($sqlUserHost, '%')
+                ";
 
                 $sqlUdp[] = "
-					UPDATE
-						mysql.db
-					SET
-						Host = $sqlUserHost
-					WHERE
-						User = $sqlUser
-					AND
-						Host NOT IN ($sqlUserHost, '%')
-				";
+                    UPDATE
+                        mysql.db
+                    SET
+                        Host = $sqlUserHost
+                    WHERE
+                        User = $sqlUser
+                    AND
+                        Host NOT IN ($sqlUserHost, '%')
+                ";
 
                 $sqlUdp[] = "
-					UPDATE
-						sql_user
-					SET
-						sqlu_host = $sqlUserHost
-					WHERE
-						sqlu_name = $sqlUser
-					AND
-						sqlu_host NOT IN ($sqlUserHost, '%')
-				";
+                    UPDATE
+                        sql_user
+                    SET
+                        sqlu_host = $sqlUserHost
+                    WHERE
+                        sqlu_name = $sqlUser
+                    AND
+                        sqlu_host NOT IN ($sqlUserHost, '%')
+                ";
             }
 
             $sqlUdp[] = 'FLUSH PRIVILEGES';
@@ -2619,8 +2630,8 @@ class DatabaseUpdater extends AbstractUpdater
         $stmt = execute_query('SELECT cert_id, private_key, certificate, ca_bundle FROM ssl_certs');
 
         if ($stmt->rowCount()) {
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $certificateId = quoteValue($row['cert_id'], PDO::PARAM_INT);
+            while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                $certificateId = quoteValue($row['cert_id'], \PDO::PARAM_INT);
 
                 // Data normalization
                 $privateKey = quoteValue(str_replace("\r\n", "\n", trim($row['private_key'])) . PHP_EOL);
@@ -2628,13 +2639,13 @@ class DatabaseUpdater extends AbstractUpdater
                 $caBundle = quoteValue(str_replace("\r\n", "\n", trim($row['ca_bundle'])));
 
                 $sqlUdp[] = "
-					UPDATE
-						ssl_certs
-					SET
-						private_key = $privateKey, certificate = $certificate, ca_bundle = $caBundle
-					WHERE
-						cert_id = $certificateId
-				";
+                    UPDATE
+                        ssl_certs
+                    SET
+                        private_key = $privateKey, certificate = $certificate, ca_bundle = $caBundle
+                    WHERE
+                        cert_id = $certificateId
+                ";
             }
         }
 
@@ -2648,11 +2659,11 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r190()
     {
-        /** @var iMSCP_Config_Handler_Db $dbConfig */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
-        if ($dbConfig->exists('WEB_FOLDER_PROTECTION')) {
-            $dbConfig->del('WEB_FOLDER_PROTECTION');
+        if (isset($dbConfig['WEB_FOLDER_PROTECTION'])) {
+            unset($dbConfig['WEB_FOLDER_PROTECTION']);
         }
 
         return null;
@@ -2678,15 +2689,15 @@ class DatabaseUpdater extends AbstractUpdater
     protected function r192()
     {
         return "
-			UPDATE
-				mail_users
-			SET
-				mail_pass = SUBSTRING(mail_pass, 4), po_active = 'no'
-			WHERE
-				mail_pass <> '_no_'
-			AND
-				status = 'disabled'
-		";
+            UPDATE
+                mail_users
+            SET
+                mail_pass = SUBSTRING(mail_pass, 4), po_active = 'no'
+            WHERE
+                mail_pass <> '_no_'
+            AND
+                status = 'disabled'
+        ";
     }
 
     /**
@@ -2723,8 +2734,8 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r195()
     {
-        /** @var $dbConfig iMSCP_Config_Handler_Db */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
         if (isset($dbConfig['MAIL_WRITER_EXPIRY_TIME'])) {
             unset($dbConfig['MAIL_WRITER_EXPIRY_TIME']);
@@ -2738,8 +2749,8 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r196()
     {
-        /** @var $dbConfig iMSCP_Config_Handler_Db */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
         if (isset($dbConfig['MAIL_BODY_FOOTPRINTS'])) {
             unset($dbConfig['MAIL_BODY_FOOTPRINTS']);
@@ -2753,15 +2764,15 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r198()
     {
-        /** @var $dbConfig iMSCP_Config_Handler_Db */
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
         if (isset($dbConfig['PORT_POSTGREY'])) {
-            $dbConfig->del('PORT_POSTGREY');
+            unset($dbConfig['PORT_POSTGREY']);
         }
 
         if (isset($dbConfig['PORT_POLICYD-WEIGHT'])) {
-            $dbConfig->del('PORT_POLICYD-WEIGHT');
+            unset($dbConfig['PORT_POLICYD-WEIGHT']);
         }
     }
 
@@ -2899,57 +2910,53 @@ class DatabaseUpdater extends AbstractUpdater
     /**
      * #IP-1395: Domain redirect feature - Missing URL path separator
      *
-     * @throws Zend_Uri_Exception
-     * @throws iMSCP_Exception_Database
-     * @throws iMSCP_Uri_Exception
+     * @return void
      */
     protected function r212()
     {
         $stmt = exec_query("SELECT alias_id, url_forward FROM domain_aliasses WHERE url_forward <> 'no'");
 
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $uri = iMSCP_Uri_Redirect::fromString($row['url_forward']);
+        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $uri = new Uri($row['url_forward']);
             $uriPath = rtrim(preg_replace('#/+#', '/', $uri->getPath()), '/') . '/';
             $uri->setPath($uriPath);
 
-            exec_query(
-                'UPDATE domain_aliasses SET url_forward = ? WHERE alias_id = ?', array($uri->getUri(), $row['alias_id'])
-            );
+            exec_query('UPDATE domain_aliasses SET url_forward = ? WHERE alias_id = ?', [$uri, $row['alias_id']]);
         }
 
         $stmt = exec_query(
             "SELECT subdomain_id, subdomain_url_forward FROM subdomain WHERE subdomain_url_forward <> 'no'"
         );
 
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $uri = iMSCP_Uri_Redirect::fromString($row['subdomain_url_forward']);
+        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $uri = new Uri($row['subdomain_url_forward']);
             $uriPath = rtrim(preg_replace('#/+#', '/', $uri->getPath()), '/') . '/';
             $uri->setPath($uriPath);
 
             exec_query(
-                'UPDATE subdomain SET subdomain_url_forward = ? WHERE subdomain_id = ?',
-                array($uri->getUri(), $row['subdomain_id'])
+                'UPDATE subdomain SET subdomain_url_forward = ? WHERE subdomain_id = ?', [$uri, $row['subdomain_id']]
             );
         }
 
         $stmt = exec_query(
             "
-				SELECT
-					subdomain_alias_id, subdomain_alias_url_forward
-				FROM
-					subdomain_alias
-				WHERE
-					subdomain_alias_url_forward <> 'no'
-			"
+                SELECT
+                    subdomain_alias_id, subdomain_alias_url_forward
+                FROM
+                    subdomain_alias
+                WHERE
+                    subdomain_alias_url_forward <> 'no'
+            "
         );
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $uri = iMSCP_Uri_Redirect::fromString($row['subdomain_alias_url_forward']);
+        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $uri = new Uri($row['subdomain_alias_url_forward']);
+
             $uriPath = rtrim(preg_replace('#/+#', '/', $uri->getPath()), '/') . '/';
             $uri->setPath($uriPath);
 
             exec_query(
                 'UPDATE subdomain_alias SET subdomain_alias_url_forward = ? WHERE subdomain_alias_id = ?',
-                array($uri->getUri(), $row['subdomain_alias_id'])
+                [$uri, $row['subdomain_alias_id']]
             );
         }
     }
@@ -2961,7 +2968,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r213()
     {
-        $sqlUpd = array();
+        $sqlUpd = [];
 
         $sql = $this->addColumn(
             'domain_aliasses',
@@ -3006,7 +3013,8 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r214()
     {
-        $dbConfig = iMSCP_Registry::get('dbConfig');
+        /** @var $dbConfig DbConfigHandler */
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
         $dbConfig['PORT_SMTP_SUBMISSION'] = '587;tcp;SMTP-SUBMISSION;1;0.0.0.0';
         return null;
     }
@@ -3067,8 +3075,8 @@ class DatabaseUpdater extends AbstractUpdater
             array('_no_', '$6$%')
         );
 
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $row['mail_pass'] = \iMSCP\Crypt::sha512($row['mail_pass']);
+        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $row['mail_pass'] = Crypt::sha512($row['mail_pass']);
             exec_query(
                 'UPDATE mail_users SET mail_pass = ? WHERE mail_id = ?', array($row['mail_pass'], $row['mail_id'])
             );
@@ -3135,17 +3143,17 @@ class DatabaseUpdater extends AbstractUpdater
     protected function r223()
     {
         return "
-			UPDATE mysql.db AS dst
-			INNER JOIN sql_database AS src
-			ON dst.Db = REPLACE(src.sqld_name, '_', '\_')
-			SET dst.Db = REPLACE(src.sqld_name, '\_', '_')
-		";
+            UPDATE mysql.db AS dst
+            INNER JOIN sql_database AS src
+            ON dst.Db = REPLACE(src.sqld_name, '_', '\_')
+            SET dst.Db = REPLACE(src.sqld_name, '\_', '_')
+        ";
     }
 
     /**
      * Change admin.admin_id column key type (UNIQUE to PRIMARY KEY)
      *
-     * @return tring SQL statements to be executed
+     * @return string SQL statements to be executed
      */
     protected function r224()
     {
@@ -3155,7 +3163,6 @@ class DatabaseUpdater extends AbstractUpdater
     /**
      * Update the given index
      *
-     * @throws iMSCP_Exception_Database
      * @param string $table Table name
      * @param string $column Column name
      * @param string $indexName Index name
@@ -3167,7 +3174,7 @@ class DatabaseUpdater extends AbstractUpdater
         $stmt = exec_query(sprintf('SHOW INDEX FROM %s WHERE column_name = ?', quoteIdentifier($table)), $column);
 
         if ($stmt->rowCount()) {
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
             $row = array_change_key_case($row, CASE_LOWER);
             $table = quoteIdentifier($table);
             $indexName = quoteIdentifier($indexName);
@@ -3218,9 +3225,9 @@ class DatabaseUpdater extends AbstractUpdater
     protected function r227()
     {
         /** @var \iMSCP\Core\Config\DbConfigHandler $dbConfig */
-        $dbConfig = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('DbConfig');
+        $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
         unset($dbConfig['COMPRESS_OUTPUT'], $dbConfig['SHOW_COMPRESSION_SIZE']);
         @unlink('data/cache/module-config-cache.imscp.php');
-        \iMSCP\Core\Utils\OpcodeCache::clearAllActive('data/cache/module-config-cache.imscp.php');
+        OpcodeCache::clearAllActive('data/cache/module-config-cache.imscp.php');
     }
 }
