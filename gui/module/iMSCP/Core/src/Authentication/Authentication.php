@@ -344,6 +344,6 @@ class Authentication implements EventManagerAwareInterface
     protected function attachDefaultListeners()
     {
         $events = $this->getEventManager();
-        $events->attach(AuthenticationEvent::onAuthentication, array($this, 'onAuthentication'));
+        $events->attach(AuthenticationEvent::onAuthentication, [$this, 'onAuthentication']);
     }
 }
