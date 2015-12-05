@@ -169,7 +169,7 @@ class Authentication implements EventManagerAwareInterface
         $events->setIdentifiers(array(
             __CLASS__,
             get_class($this),
-            'module_manager',
+            'authentication_service',
         ));
         $this->events = $events;
         $this->attachDefaultListeners();
