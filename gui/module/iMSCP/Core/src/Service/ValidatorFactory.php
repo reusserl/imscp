@@ -20,20 +20,21 @@
 
 namespace iMSCP\Core\Service;
 
+use Symfony\Component\Validator\Validation;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class NavigationServiceFactory
+ * Class ValidatorServiceFactory
  * @package iMSCP\Core\Service
  */
-class NavigationServiceFactory implements FactoryInterface
+class ValidatorFactory implements FactoryInterface
 {
     /**
      * {@inheritdoc}
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        // TODO
+        return Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
     }
 }

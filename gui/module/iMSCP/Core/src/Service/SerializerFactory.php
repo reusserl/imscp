@@ -20,8 +20,8 @@
 
 namespace iMSCP\Core\Service;
 
-use iMSCP\Core\Doctrine\Persistence\ManagerRegistry;
-use iMSCP\Core\Doctrine\Serializer\Construction\DoctrineObjectConstructor;
+use iMSCP\DoctrineIntegration\Persistence\ManagerRegistry;
+use iMSCP\DoctrineIntegration\Serializer\Construction\DoctrineObjectConstructor;
 use JMS\Serializer\Construction\UnserializeObjectConstructor;
 use JMS\Serializer\JsonDeserializationVisitor;
 use JMS\Serializer\JsonSerializationVisitor;
@@ -35,7 +35,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  * Class SerializerServiceFactory
  * @package iMSCP\Core\Service
  */
-class SerializerServiceFactory implements FactoryInterface
+class SerializerFactory implements FactoryInterface
 {
     /**
      * {@inheritdoc}

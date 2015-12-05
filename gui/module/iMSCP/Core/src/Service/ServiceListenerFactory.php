@@ -56,24 +56,18 @@ class ServiceListenerFactory implements FactoryInterface
             'Authentication' => 'iMSCP\Core\Service\AuthenticationFactory',
             'Application' => 'iMSCP\Core\Service\ApplicationFactory',
             'Config' => 'iMSCP\Core\Service\ConfigFactory',
-            'DBALConnection' => 'iMSCP\Core\Service\DBALConnectionFactory',
             'DbConfig' => 'iMSCP\Core\Service\DbConfigFactory',
             'EncryptionDataService' => 'iMSCP\Core\Service\EncryptionDataService',
-            'ORM' => 'iMSCP\Core\Service\ORMServiceFactory',
             'ManagerRegistry' => 'iMSCP\Core\Service\ManagerRegistryFactory',
-            'navigation' => 'iMSCP\Core\ServiceNavigationFactory',
-            'Request' => 'iMSCP\Core\Service\HttpRequestServiceFactory',
-            'Response' => 'iMSCP\Core\Service\HttpResponseServiceFactory',
-            'Serializer' => 'iMSCP\Core\Service\SerializerServiceFactory',
-            'Translator' => 'iMSCP\Core\Service\TranslatorServiceFactory',
-            'Validator' => 'iMSCP\Core\Service\ValidatorServiceFactory'
+            'navigation' => 'iMSCP\Core\Service\NavigationFactory',
+            'Request' => 'iMSCP\Core\Service\RequestServiceFactory',
+            'Response' => 'iMSCP\Core\Service\ResponseFactory',
+            'Serializer' => 'iMSCP\Core\Service\SerializerFactory',
+            'Translator' => 'iMSCP\Core\Service\TranslatorFactory',
+            'Validator' => 'iMSCP\Core\Service\ValidatorFactory'
         ],
         'aliases' => [
-            'Configuration' => 'Config',
-            'EntityManager' => 'ORM',
-            'default_manager' => 'ORM',
-            'default_connection' => 'DBALConnection',
-            'Database' => 'DBALConnection'
+            'Configuration' => 'Config'
         ],
         'abstract_factories' => []
     ];

@@ -20,21 +20,32 @@
 
 namespace iMSCP\Core\Service;
 
-use Symfony\Component\Validator\Validation;
+use Symfony\Component\HttpFoundation\JsonResponse as JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class ValidatorServiceFactory
+ * Class HttpResponseServiceFactory
  * @package iMSCP\Core\Service
  */
-class ValidatorServiceFactory implements FactoryInterface
+class ResponseFactory implements FactoryInterface
 {
     /**
      * {@inheritdoc}
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        return Validation::createValidatorBuilder()->enableAnnotationMapping()->getValidator();
+        /** @var Request $request */
+        $request = $serviceLocator->get('Request');
+
+        if ($request->headers->has('XMLHttpRequest')) {
+            $response = new JsonResponse();
+            $response->headers->set('Content-Type', 'application/json');
+            return $response;
+        }
+
+        return new Response();
     }
 }

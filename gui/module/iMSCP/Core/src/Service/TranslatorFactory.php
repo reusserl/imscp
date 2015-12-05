@@ -31,7 +31,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  * Class TranslatorServiceFactory
  * @package iMSCP\Core\Service
  */
-class TranslatorServiceFactory implements FactoryInterface
+class TranslatorFactory implements FactoryInterface
 {
     /**
      * {@inheritdoc}
