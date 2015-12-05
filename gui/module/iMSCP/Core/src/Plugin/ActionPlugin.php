@@ -20,24 +20,16 @@
 
 namespace iMSCP\Core\Plugin;
 
-use Zend\EventManager\EventManagerInterface;
+use Zend\EventManager\ListenerAggregateInterface;
+use Zend\EventManager\ListenerAggregateTrait;
 
 /**
- * Class iMSCP_Plugin_Action
- *
- * All i-MSCP plugins which interfere with the event system need to inherit from this class.
+ * Class ActionPlugin
+ * @package iMSCP\Core\Plugin
  */
-abstract class ActionPlugin extends AbstractPlugin
+abstract class ActionPlugin extends AbstractPlugin implements ListenerAggregateInterface
 {
-    /**
-     * Register a callback for the given event(s)
-     *
-     * @param EventManagerInterface $eventsManager
-     * @return void
-     */
-    public function attach(EventManagerInterface $eventsManager)
-    {
-    }
+    use ListenerAggregateTrait
 
     /**
      * Get routes
