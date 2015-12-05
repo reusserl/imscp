@@ -23,6 +23,7 @@ namespace iMSCP\Core\Config;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Driver\Statement;
+use iMSCP\Core\Utils\OpcodeCache;
 
 /**
  * Class DbConfigHandler
@@ -164,13 +165,10 @@ class DbConfigHandler extends AbstractConfigHandler
         switch ($queriesCounterType) {
             case 'update':
                 return $this->updateQueriesCounter;
-                break;
             case 'insert':
                 return $this->insertQueriesCounter;
-                break;
             case 'delete':
                 return $this->deleteQueriesCounter;
-                break;
             default:
                 throw new \InvalidArgumentException('Unknown queries counter.');
         }
@@ -257,6 +255,30 @@ class DbConfigHandler extends AbstractConfigHandler
 
             $this->deleteQueriesCounter++;
             unset($this->config[$offset]);
+        }
+    }
+
+    /**
+     * Refresh configuration from database
+     *
+     * @return void
+     */
+    public function refresh()
+    {
+        $this->config = [];
+        $this->loadConfig();
+    }
+
+    /**
+     * Remove cached configuration on change
+     * @return void
+     */
+    public function destroy()
+    {
+        if ($this->insertStmt || $this->updateStmt || $this->deleteStmt) {
+            // FIXME: filepath shouldn't be hardcoded
+            @unlink('cache/data/module-config-cache.imscp.php');
+            OpcodeCache::clearAllActive('cache/data/module-config-cache.imscp.php');
         }
     }
 
