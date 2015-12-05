@@ -21,17 +21,19 @@
 namespace iMSCP\Core\Plugin;
 
 use iMSCP\Core\Application;
-use iMSCP\Core\Events;
+use iMSCP\Core\Authentication\AuthenticationEvent;
 use Zend\EventManager\Event;
 use Zend\EventManager\EventManagerInterface;
 
 /**
- * Class iMSCP_Plugin_Bruteforce
+ * Class Bruteforce
  *
  * This plugin improve security by preventing dictionnary attacks. It can be used in two different ways:
  *
  * - As an action plugin that listen to some events triggered in i-MSCP core code
  * - As a simple component
+ *
+ * @package iMSCP\Core\Plugin
  */
 class Bruteforce extends ActionPlugin
 {
@@ -125,10 +127,17 @@ class Bruteforce extends ActionPlugin
         $this->blockTime = $cfg['BRUTEFORCE_BLOCK_TIME'];
         $this->waitTime = $cfg['BRUTEFORCE_BETWEEN_TIME'];
         $this->maxAttemptsBeforeWait = $cfg['BRUTEFORCE_MAX_ATTEMPTS_BEFORE_WAIT'];
-
         $this->unblock();
-
         parent::__construct($pluginManager);
+    }
+
+    /**
+     * {@inheritdoc]
+     */
+    public function attach(EventManagerInterface $events)
+    {
+        $listener[] = $events->attach(AuthenticationEvent::onBeforeAuthentication, $this, -99);
+        $listener[] = $events->attach(AuthenticationEvent::onBeforeSetIdentity, $this, -99);
     }
 
     /**
@@ -180,16 +189,6 @@ class Bruteforce extends ActionPlugin
     }
 
     /**
-     * Register a callback for the given event(s)
-     *
-     * @param EventManagerInterface $eventsManager
-     */
-    public function register(EventManagerInterface $eventsManager)
-    {
-        $eventsManager->attach([Events::onBeforeAuthentication, Events::onBeforeSetIdentity], $this, -99);
-    }
-
-    /**
      * onBeforeAuthentication event listener
      *
      * @param Event $event
@@ -203,7 +202,6 @@ class Bruteforce extends ActionPlugin
         }
 
         $this->recordAttempt();
-
         return null;
     }
 
@@ -300,13 +298,13 @@ class Bruteforce extends ActionPlugin
     {
         exec_query(
             "
-				UPDATE
-					login
-				SET
-					lastaccess = UNIX_TIMESTAMP(), {$this->type}_count = {$this->type}_count + 1
-				WHERE
-					ipaddr= ? AND user_name IS NULL
-			",
+                UPDATE
+                    login
+                SET
+                    lastaccess = UNIX_TIMESTAMP(), {$this->type}_count = {$this->type}_count + 1
+                WHERE
+                    ipaddr= ? AND user_name IS NULL
+            ",
             ($this->ipAddr)
         );
     }
@@ -320,12 +318,12 @@ class Bruteforce extends ActionPlugin
     {
         exec_query(
             "
-				REPLACE INTO login (
-					session_id, ipaddr, {$this->type}_count, user_name, lastaccess
-					) VALUES (
-						?, ?, 1, NULL, UNIX_TIMESTAMP()
-				)
-			",
+                REPLACE INTO login (
+                    session_id, ipaddr, {$this->type}_count, user_name, lastaccess
+                ) VALUES (
+                    ?, ?, 1, NULL, UNIX_TIMESTAMP()
+                )
+            ",
             [$this->sessionId, $this->ipAddr]
         );
     }
