@@ -24,28 +24,34 @@ use Doctrine\ORM\Mapping as ORM;
 use iMSCP\Core\Utils\OpcodeCache;
 
 /**
- * iMSCP_Plugin class
- *
- * Please, do not inherite from this class. Instead, inherite from the specialized classes localized into
- * gui/library/iMSCP/Plugin/
+ * Class AbstractPlugin
+ * @package iMSCP\Core\Plugin
  */
 abstract class AbstractPlugin
 {
-    /** @var array Plugin configuration parameters */
+    /**
+     * @var array Plugin configuration parameters
+     */
     private $config = [];
 
-    /** @var array Plugin previous configuration parameters */
+    /**
+     * @var array Plugin previous configuration parameters
+     */
     private $configPrev = [];
 
-    /** @var bool TRUE if plugin configuration is loaded, FALSE otherwise
-     * @ORM\Column(type="boolean")
+    /**
+     * @var bool TRUE if plugin configuration is loaded, FALSE otherwise
      */
     private $isLoadedConfig = false;
 
-    /** @var string Plugin name */
+    /**
+     * @var string Plugin name
+     */
     private $pluginName;
 
-    /** @var string $Plungin name */
+    /**
+     * @var string Plugin type
+     */
     private $pluginType;
 
     /**
@@ -159,7 +165,8 @@ abstract class AbstractPlugin
     final public function getName()
     {
         if (null === $this->pluginName) {
-            list(, , $this->pluginName) = explode('_', get_class($this), 3);
+            $class = get_class($this);
+            $this->pluginName = explode('\\', $class)[substr_count($class, '\\')];
         }
 
         return $this->pluginName;
@@ -173,7 +180,8 @@ abstract class AbstractPlugin
     final public function getType()
     {
         if (null === $this->pluginType) {
-            list(, , $this->pluginType) = explode('_', get_parent_class($this), 3);
+            $class = get_parent_class($this);
+            $this->pluginType = explode('\\', $class)[substr_count($class, '\\')];
         }
 
         return $this->pluginType;
@@ -262,9 +270,7 @@ abstract class AbstractPlugin
                     }
                 }
             } else {
-                throw new \RuntimeException(
-                    tr('Unable to read the plugin %s file. Please check file permissions', $file)
-                );
+                throw new \RuntimeException(tr('Unable to read the plugin %s file. Please check file permissions', $file));
             }
         }
 
