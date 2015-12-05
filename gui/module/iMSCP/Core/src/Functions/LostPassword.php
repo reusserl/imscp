@@ -44,7 +44,6 @@ function check_gd()
 function createImage($strSessionVar)
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
     $rgBgColor = $cfg['LOSTPASSWORD_CAPTCHA_BGCOLOR'];
     $rgTextColor = $cfg['LOSTPASSWORD_CAPTCHA_TEXTCOLOR'];
 
@@ -56,7 +55,6 @@ function createImage($strSessionVar)
     $textColor = imagecolorallocate($image, $rgTextColor[0], $rgTextColor[1], $rgTextColor[2]);
     $white = imagecolorallocate($image, 0xFF, 0xFF, 0xFF);
     $nbLetters = 6;
-
     $x = ($cfg['LOSTPASSWORD_CAPTCHA_WIDTH'] / 2) - ($nbLetters * 20 / 2);
     $y = mt_rand(15, 30);
 
@@ -93,10 +91,8 @@ function createImage($strSessionVar)
 
     // send Header
     header('Content-type: image/png');
-
     // create and send PNG image
     imagepng($image);
-
     // destroy image from server
     imagedestroy($image);
 }
@@ -146,10 +142,9 @@ function removeOldKeys($ttl)
  */
 function setUniqKey($adminName, $uniqueKey)
 {
-    exec_query(
-        'UPDATE `admin` SET `uniqkey` = ?, `uniqkey_time` = ? WHERE `admin_name` = ?',
-        array($uniqueKey, date('Y-m-d H:i:s', time()), $adminName)
-    );
+    exec_query('UPDATE `admin` SET `uniqkey` = ?, `uniqkey_time` = ? WHERE `admin_name` = ?', [
+        $uniqueKey, date('Y-m-d H:i:s', time()), $adminName
+    ]);
 }
 
 /**
@@ -165,9 +160,9 @@ function setPassword($uniqueKey, $userPassword)
         exit;
     }
 
-    exec_query('UPDATE `admin` SET `admin_pass` = ? WHERE `uniqkey` = ?', array(
+    exec_query('UPDATE `admin` SET `admin_pass` = ? WHERE `uniqkey` = ?', [
         \iMSCP\Core\Utils\Crypt::bcrypt($userPassword), $uniqueKey
-    ));
+    ]);
 }
 
 /**
@@ -179,7 +174,6 @@ function setPassword($uniqueKey, $userPassword)
 function uniqueKeyExists($uniqueKey)
 {
     $stmt = exec_query('SELECT `uniqkey` FROM `admin` WHERE `uniqkey` = ?', $uniqueKey);
-
     return (bool)$stmt->rowCount();
 }
 
@@ -208,38 +202,31 @@ function uniqkeygen()
 function sendPassword($uniqueKey)
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
     $stmt = exec_query(
         'SELECT `admin_name`, `created_by`, `fname`, `lname`, `email` FROM `admin` WHERE `uniqkey` = ?', $uniqueKey
     );
 
     if ($stmt->rowCount()) {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
         $adminName = $row['admin_name'];
         $createdBy = $row['created_by'];
         $adminFirstName = $row['fname'];
         $adminLastName = $row['lname'];
         $to = $row['email'];
-
         $userPassword = \iMSCP\Core\Utils\Crypt::randomStr($cfg['PASSWD_CHARS']);
         setPassword($uniqueKey, $userPassword);
         write_log('Lostpassword: ' . $adminName . ': password updated', E_USER_NOTICE);
-        exec_query(
-            'UPDATE `admin` SET `uniqkey` = ?, `uniqkey_time` = ? WHERE `uniqkey` = ?', array('', '', $uniqueKey)
-        );
+        exec_query('UPDATE `admin` SET `uniqkey` = ?, `uniqkey_time` = ? WHERE `uniqkey` = ?', ['', '', $uniqueKey]);
 
         if ($createdBy == 0) {
             $createdBy = 1;
         }
 
         $data = get_lostpassword_password_email($createdBy);
-
         $fromName = $data['sender_name'];
         $fromEmail = $data['sender_email'];
         $subject = $data['subject'];
         $message = $data['message'];
-
         $baseServerVhostPrefix = $cfg['BASE_SERVER_VHOST_PREFIX'];
         $baseServerVhost = $cfg['BASE_SERVER_VHOST'];
         $baseServerVhostPort = ($baseServerVhostPrefix == 'http://')
@@ -252,42 +239,30 @@ function sendPassword($uniqueKey)
             $from = $fromEmail;
         }
 
-        $search = array();
-        $replace = array();
-
+        $search = [];
+        $replace = [];
         $search[] = '{USERNAME}';
         $replace[] = $adminName;
-
         $search[] = '{NAME}';
         $replace[] = $adminFirstName . " " . $adminLastName;
-
         $search[] = '{PASSWORD}';
         $replace[] = $userPassword;
-
         $search[] = '{BASE_SERVER_VHOST_PREFIX}';
         $replace[] = $baseServerVhostPrefix;
-
         $search[] = '{BASE_SERVER_VHOST}';
         $replace[] = $baseServerVhost;
-
         $search[] = '{BASE_SERVER_VHOST_PORT}';
         $replace[] = $baseServerVhostPort;
-
         $subject = str_replace($search, $replace, $subject);
         $message = str_replace($search, $replace, $message);
-
         $headers = 'From: ' . $from . "\n";
         $headers .= "MIME-Version: 1.0\nContent-Type: text/plain; charset=utf-8\n";
         $headers .= "Content-Transfer-Encoding: 7bit\n";
         $headers .= 'X-Mailer: i-MSCP mailer';
-
         $mailResult = mail($to, $subject, $message, $headers);
         $mailStatus = ($mailResult) ? 'OK' : 'NOT OK';
-
         $from = tohtml($from);
-
         write_log("Lostpassword activated: To: |$to|, From: |$from|, Status: |$mailStatus| !", E_USER_NOTICE);
-
         return true;
     }
 
@@ -303,10 +278,7 @@ function sendPassword($uniqueKey)
 function requestPassword($adminName)
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
-    $stmt = exec_query(
-        'SELECT `created_by`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_name` = ?', $adminName
-    );
+    $stmt = exec_query('SELECT `created_by`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_name` = ?', $adminName);
 
     if (!$stmt->rowCount()) {
         return false;
@@ -317,11 +289,8 @@ function requestPassword($adminName)
     $adminFirstName = $row['fname'];
     $adminLastName = $row['lname'];
     $to = $row['email'];
-
     $uniqueKey = uniqkeygen();
-
     setUniqKey($adminName, $uniqueKey);
-
     write_log('Lostpassword: ' . $adminName . ': uniqkey created', E_USER_NOTICE);
 
     if ($createdBy == 0) {
@@ -344,11 +313,10 @@ function requestPassword($adminName)
         $from = $fromEmail;
     }
 
-    $link = $baseServerVhostPrefix . $baseServerVhost . ':' . $baseServerVhostPort .
-        $_SERVER["PHP_SELF"] . '?key=' . $uniqueKey;
+    $link = $baseServerVhostPrefix . $baseServerVhost . ':' . $baseServerVhostPort . $_SERVER["PHP_SELF"] . '?key=' . $uniqueKey;
 
-    $search = array();
-    $replace = array();
+    $search = [];
+    $replace = [];
     $search [] = '{USERNAME}';
     $replace[] = $adminName;
     $search [] = '{NAME}';
@@ -371,8 +339,6 @@ function requestPassword($adminName)
     $mailResult = mail($to, encode_mime_header($subject), $message, $headers, "-f $fromEmail");
     $mailStatus = ($mailResult) ? 'OK' : 'NOT OK';
     $from = tohtml($from);
-
     write_log("Lostpassword send: To: |$to|, From: |$from|, Status: |$mailStatus| !", E_USER_NOTICE);
-
     return true;
 }

@@ -133,12 +133,12 @@ function generate_reseller_user_props($resellerId)
         $rdiskMax += $diskMax;
     }
 
-    return array(
+    return [
         $rdmnCurrent, $rdmnMax, $rdmnUf, $rsubCurrent, $rsubMax, $rsubUf, $ralsCurrent, $ralsMax, $ralsUf,
         $rmailCurrent, $rmailMax, $rmailUf, $rftpCurrent, $rftpMax, $rftpUf, $rsqlDbCurrent, $rsqlDbMax, $rsqlDbUf,
         $rsqlUserCurrent, $rsqlUserMax, $rsqlUserUf, $rtraffCurrent, $rtraffMax, $rtraffUf, $rdiskCurrent, $rdiskMax,
         $rdiskUf
-    );
+    ];
 }
 
 /**
@@ -165,15 +165,14 @@ function get_user_trafficAndDiskUsage($customerId)
 
     if (!$stmt->rowCount()) {
         throw new Exception("Unable to found main domain for customer with ID $customerId");
-    } else {
-        $data = $stmt->fetch();
+    }
 
-        $domainId = $data['domain_id'];
-        $diskspaceUsage = $data['diskspace_usage'];
-        $monthlyTrafficLimit = $data['monthly_traffic_limit'];
-        $diskspaceLimit = $data['diskspace_limit'];
-
-        $query = "
+    $data = $stmt->fetch();
+    $domainId = $data['domain_id'];
+    $diskspaceUsage = $data['diskspace_usage'];
+    $monthlyTrafficLimit = $data['monthly_traffic_limit'];
+    $diskspaceLimit = $data['diskspace_limit'];
+    $query = "
             SELECT
                 YEAR(FROM_UNIXTIME(dtraff_time)) AS tyear,
                 MONTH(FROM_UNIXTIME(dtraff_time)) AS tmonth,
@@ -189,33 +188,24 @@ function get_user_trafficAndDiskUsage($customerId)
             GROUP BY
                 tyear, tmonth
         ";
-        $stmt = exec_query($query, $domainId);
+    $stmt = exec_query($query, $domainId);
+    $maxMonthlyTraffic = $data['web'] = $data['ftp'] = $data['smtp'] = $data['pop'] = $data['total'] = 0;
 
-        $maxMonthlyTraffic = $data['web'] = $data['ftp'] = $data['smtp'] = $data['pop'] = $data['total'] = 0;
+    while ($row = $stmt->fetch()) {
+        $data['web'] += $row['web'];
+        $data['ftp'] += $row['ftp'];
+        $data['smtp'] += $row['smtp'];
+        $data['pop'] += $row['total'];
 
-        while ($row = $stmt->fetch()) {
-            $data['web'] += $row['web'];
-            $data['ftp'] += $row['ftp'];
-            $data['smtp'] += $row['smtp'];
-            $data['pop'] += $row['total'];
-
-            if ($row['total'] > $maxMonthlyTraffic) {
-                $maxMonthlyTraffic = $row['total'];
-            }
+        if ($row['total'] > $maxMonthlyTraffic) {
+            $maxMonthlyTraffic = $row['total'];
         }
-
-        return array(
-            $data['web'],
-            $data['ftp'],
-            $data['smtp'],
-            $data['pop'],
-            $data['total'],
-            $diskspaceUsage, // Total diskspace usage
-            $monthlyTrafficLimit, // Monthly traffic limit
-            $diskspaceLimit, // diskspace limit
-            $maxMonthlyTraffic
-        );
     }
+
+    return [
+        $data['web'], $data['ftp'], $data['smtp'], $data['pop'], $data['total'], $diskspaceUsage, $monthlyTrafficLimit,
+        $diskspaceLimit, $maxMonthlyTraffic
+    ];
 }
 
 /**
@@ -227,7 +217,6 @@ function get_user_trafficAndDiskUsage($customerId)
 function get_user_props($adminId)
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
     $stmt = exec_query('SELECT * FROM domain WHERE domain_id = ?', $adminId);
 
     if (!$stmt->rowCount()) {
@@ -242,9 +231,7 @@ function get_user_props($adminId)
 
     if ($cfg['COUNT_DEFAULT_EMAIL_ADDRESSES']) {
         // Catch all is not a mailbox and haven't to be count
-        $mail_current = records_count('mail_users',
-            'mail_type NOT RLIKE \'_catchall\' AND domain_id',
-            $adminId);
+        $mail_current = records_count('mail_users', 'mail_type NOT RLIKE \'_catchall\' AND domain_id', $adminId);
     } else {
         $where = "
                 mail_acc != 'abuse'
@@ -262,15 +249,8 @@ function get_user_props($adminId)
     }
 
     $mail_max = $data['domain_mailacc_limit'];
-
-    $ftp_current = sub_records_rlike_count(
-        'domain_name', 'domain', 'domain_id', $adminId, 'userid', 'ftp_users', 'userid', '@', ''
-    );
-
-    $ftp_current += sub_records_rlike_count(
-        'alias_name', 'domain_aliasses', 'domain_id', $adminId, 'userid', 'ftp_users', 'userid', '@', ''
-    );
-
+    $ftp_current = sub_records_rlike_count('domain_name', 'domain', 'domain_id', $adminId, 'userid', 'ftp_users', 'userid', '@', '');
+    $ftp_current += sub_records_rlike_count('alias_name', 'domain_aliasses', 'domain_id', $adminId, 'userid', 'ftp_users', 'userid', '@', '');
     $ftp_max = $data['domain_ftpacc_limit'];
     $sql_db_current = records_count('sql_database', 'domain_id', $adminId);
     $sql_db_max = $data['domain_sqld_limit'];
@@ -279,10 +259,10 @@ function get_user_props($adminId)
     $traff_max = $data['domain_traffic_limit'];
     $disk_max = $data['domain_disk_limit'];
 
-    return array(
+    return [
         $sub_current, $sub_max, $als_current, $als_max, $mail_current, $mail_max, $ftp_current, $ftp_max,
         $sql_db_current, $sql_db_max, $sql_user_current, $sql_user_max, $traff_max, $disk_max
-    );
+    ];
 }
 
 /**
@@ -314,7 +294,6 @@ function gen_manage_domain_query(
             WHERE
                 created_by = '$resellerId'
         ";
-
         $searchQuery = "
             SELECT
                 *
@@ -337,7 +316,6 @@ function gen_manage_domain_query(
         }
 
         $countQuery = "SELECT COUNT(domain_id) AS cnt FROM domain WHERE $addQuery";
-
         $searchQuery = "
             SELECT
                 *
@@ -359,8 +337,7 @@ function gen_manage_domain_query(
         } elseif ($searchCommon == 'customer_id') {
             $addQuery = "WHERE customer_id RLIKE '" . addslashes($searchFor) . "' %s";
         } elseif ($searchCommon == 'lname') {
-            $addQuery = "WHERE (lname RLIKE '" . addslashes($searchFor) .
-                "' OR fname RLIKE '" . addslashes($searchFor) . "') %s";
+            $addQuery = "WHERE (lname RLIKE '" . addslashes($searchFor) . "' OR fname RLIKE '" . addslashes($searchFor) . "') %s";
         } elseif ($searchCommon == 'firm') {
             $addQuery = "WHERE firm RLIKE '" . addslashes($searchFor) . "' %s";
         } elseif ($searchCommon == 'city') {
@@ -373,10 +350,7 @@ function gen_manage_domain_query(
 
         if (isset($addQuery)) {
             if ($searchStatus != 'all') {
-                $addQuery = sprintf(
-                    $addQuery, " AND created_by = '$resellerId' AND domain_status = '$searchStatus'"
-                );
-
+                $addQuery = sprintf($addQuery, " AND created_by = '$resellerId' AND domain_status = '$searchStatus'");
                 $countQuery = "
                     SELECT
                         COUNT(admin_id) AS cnt
@@ -424,12 +398,12 @@ function reseller_limits_check($resellerId, $hp)
         } else {
             $stmt = exec_query('SELECT props FROM hosting_plans WHERE id = ?', $hp);
 
-            if ($stmt->rowCount()) {
-                $data = $stmt->fetch();
-                $hostingPlanProperties = $data['props'];
-            } else {
+            if (!$stmt->rowCount()) {
                 throw new Exception('Hosting plan not found');
             }
+
+            $data = $stmt->fetch();
+            $hostingPlanProperties = $data['props'];
         }
     } else {
         $hostingPlanProperties = $hp;
@@ -557,10 +531,8 @@ function reseller_limits_check($resellerId, $hp)
 function send_alias_order_email($aliasName)
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
     $userId = $_SESSION['user_id'];
     $resellerId = who_owns_this($userId, 'user');
-
     $stmt = exec_query('SELECT fname, lname FROM admin WHERE admin_id = ?', $userId);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     $userFirstname = $row['fname'];
@@ -571,7 +543,6 @@ function send_alias_order_email($aliasName)
     $toEmail = $data['sender_email'];
     $subject = $data['subject'];
     $message = $data['message'];
-
     $to = ($toName) ? encode_mime_header($toName) . " <$toEmail>" : $toEmail;
 
     if ($userFirstname && $userLastname) {
@@ -593,10 +564,8 @@ function send_alias_order_email($aliasName)
     $port = ($baseServerVhostPrefix == 'http://')
         ? (($cfg['BASE_SERVER_VHOST_HTTP_PORT'] == '80') ? '' : ':' . $cfg['BASE_SERVER_VHOST_HTTP_PORT'])
         : (($cfg['BASE_SERVER_VHOST_HTTPS_PORT'] == '443') ? '' : ':' . $cfg['BASE_SERVER_VHOST_HTTPS_PORT']);
-
-    $search = array();
-    $replace = array();
-
+    $search = [];
+    $replace = [];
     $search [] = '{RESELLER}';
     $replace[] = $toName;
     $search[] = '{CUSTOMER}';
@@ -609,18 +578,14 @@ function send_alias_order_email($aliasName)
     $replace[] = $cfg['BASE_SERVER_VHOST'];
     $search[] = '{BASE_SERVER_VHOST_PORT}';
     $replace[] = $port;
-
     $subject = str_replace($search, $replace, $subject);
     $message = str_replace($search, $replace, $message);
-
     $subject = encode_mime_header($subject);
-
     $headers = "From: $from\r\n";
     $headers .= "MIME-Version: 1.0\r\n";
     $headers .= "Content-Type: text/plain; charset=utf-8\r\n";
     $headers .= "Content-Transfer-Encoding: 8bit\r\n";
     $headers .= "X-Mailer: i-MSCP Mailer";
-
     mail($to, $subject, $message, $headers, "-f $userEmail");
 }
 
@@ -638,7 +603,6 @@ function client_mail_add_default_accounts($dmnId, $userEmail, $dmnName, $dmnType
 {
     $forwardType = ($dmnType == 'alias') ? 'alias_forward' : 'normal_forward';
     $resellerEmail = $_SESSION['user_email'];
-
     /** @var \Doctrine\DBAL\Connection $db */
     $db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
@@ -658,22 +622,18 @@ function client_mail_add_default_accounts($dmnId, $userEmail, $dmnName, $dmnType
         );
 
         foreach (
-            array(
+            [
                 'abuse' => $resellerEmail, 'hostmaster' => $resellerEmail, 'postmaster' => $resellerEmail,
                 'webmaster' => $userEmail
-            ) as $umail => $forwardTo
+            ] as $umail => $forwardTo
         ) {
-            $stmt->execute(
-                array(
-                    $umail, '_no_', $forwardTo, $dmnId, $forwardType, $subId, 'toadd', 0, null, $umail . '@' . $dmnName
-                )
-            );
+            $stmt->execute([$umail, '_no_', $forwardTo, $dmnId, $forwardType, $subId, 'toadd', 0, null, $umail . '@' . $dmnName]);
         }
 
         $db->commit();
     } catch (PDOException $e) {
         $db->rollBack();
-        throw new Exception($e->getMessage(), $e->getCode(), null, $e);
+        throw new Exception($e->getMessage(), $e->getCode(), $e);
     }
 }
 
@@ -703,10 +663,8 @@ function resellerHasFeature($featureName, $forceReload = false)
 
     if (null == $availableFeatures || $forceReload) {
         $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
         $resellerProps = imscp_getResellerProperties($_SESSION['user_id'], true);
-
-        $availableFeatures = array(
+        $availableFeatures = [
             'domains' => ($resellerProps['max_dmn_cnt'] != '-1') ? true : false,
             'subdomains' => ($resellerProps['max_sub_cnt'] != '-1') ? true : false,
             'domain_aliases' => ($resellerProps['max_als_cnt'] != '-1') ? true : false,
@@ -723,13 +681,11 @@ function resellerHasFeature($featureName, $forceReload = false)
             'external_mail' => true,
             'backup' => ($cfg['BACKUP_DOMAINS'] != 'no') ? true : false,
             'support' => ($cfg['IMSCP_SUPPORT_SYSTEM'] && $resellerProps['support_system'] == 'yes') ? true : false
-        );
+        ];
     }
 
     if (!array_key_exists($featureName, $availableFeatures)) {
-        throw new InvalidArgumentException(
-            sprintf("Feature %s is not known by the resellerHasFeature() function.", $featureName)
-        );
+        throw new InvalidArgumentException(sprintf("Feature %s is not known by the resellerHasFeature() function.", $featureName));
     }
 
     return $availableFeatures[$featureName];
@@ -759,7 +715,7 @@ function resellerHasCustomers($minNbCustomers = 1)
                 AND
                     admin_status <> ?
             ',
-            array('user', $_SESSION['user_id'], 'todelete')
+            ['user', $_SESSION['user_id'], 'todelete']
         );
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);

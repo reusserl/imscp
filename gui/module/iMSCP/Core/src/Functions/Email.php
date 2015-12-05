@@ -52,52 +52,49 @@ function get_email_tpl_data($userId, $tplName)
 {
     $stmt = exec_query("SELECT fname, lname, firm, email FROM admin WHERE admin_id = ?", $userId);
 
-    if ($stmt->rowCount()) {
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        $firstname = trim($row['fname']);
-        $lastname = trim($row['lname']);
-
-        if ($firstname != '' && $lastname != '') {
-            $data['sender_name'] = $firstname . ' ' . $lastname;
-        } else if ($firstname != '') {
-            $data['sender_name'] = $firstname;
-        } else if ($lastname != '') {
-            $data['sender_name'] = $lastname;
-        } else {
-            $data['sender_name'] = '';
-        }
-
-        $firm = trim($row['firm']);
-
-        if ($firm != '') {
-            if ($data['sender_name'] != '') {
-                $data['sender_name'] .= " [$firm]";
-            } else {
-                $data['sender_name'] = $firm;
-            }
-        }
-
-        $data['sender_email'] = $row['email'];
-
-        $stmt = exec_query(
-            'SELECT subject, message FROM email_tpls WHERE owner_id = ? AND name = ?', array($userId, $tplName)
-        );
-
-        if ($stmt->rowCount()) {
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            $data['subject'] = $row['subject'];
-            $data['message'] = $row['message'];
-        } else {
-            $data['subject'] = '';
-            $data['message'] = '';
-        }
-
-        return $data;
-    } else {
+    if (!$stmt->rowCount()) {
         throw new InvalidArgumentException('Unable to find email template data');
     }
+
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $firstname = trim($row['fname']);
+    $lastname = trim($row['lname']);
+
+    if ($firstname != '' && $lastname != '') {
+        $data['sender_name'] = $firstname . ' ' . $lastname;
+    } else if ($firstname != '') {
+        $data['sender_name'] = $firstname;
+    } else if ($lastname != '') {
+        $data['sender_name'] = $lastname;
+    } else {
+        $data['sender_name'] = '';
+    }
+
+    $firm = trim($row['firm']);
+
+    if ($firm != '') {
+        if ($data['sender_name'] != '') {
+            $data['sender_name'] .= " [$firm]";
+        } else {
+            $data['sender_name'] = $firm;
+        }
+    }
+
+    $data['sender_email'] = $row['email'];
+    $stmt = exec_query('SELECT subject, message FROM email_tpls WHERE owner_id = ? AND name = ?', [
+        $userId, $tplName
+    ]);
+
+    if ($stmt->rowCount()) {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $data['subject'] = $row['subject'];
+        $data['message'] = $row['message'];
+    } else {
+        $data['subject'] = '';
+        $data['message'] = '';
+    }
+
+    return $data;
 }
 
 /**
@@ -110,10 +107,7 @@ function get_email_tpl_data($userId, $tplName)
  */
 function set_email_tpl_data($userId, $tplName, $data)
 {
-
-    $stmt = exec_query(
-        'SELECT subject, message FROM email_tpls WHERE owner_id = ? AND name = ?', array($userId, $tplName)
-    );
+    $stmt = exec_query('SELECT subject, message FROM email_tpls WHERE owner_id = ? AND name = ?', [$userId, $tplName]);
 
     if (!$stmt->rowCount()) {
         $query = 'INSERT INTO email_tpls (subject, message, owner_id, name) VALUES (?, ?, ?, ?)';
@@ -121,7 +115,7 @@ function set_email_tpl_data($userId, $tplName, $data)
         $query = 'UPDATE email_tpls SET subject = ?, message = ? WHERE owner_id = ? AND name = ?';
     }
 
-    exec_query($query, array($data['subject'], $data['message'], $userId, $tplName));
+    exec_query($query, [$data['subject'], $data['message'], $userId, $tplName]);
 }
 
 /**
@@ -136,7 +130,6 @@ function set_email_tpl_data($userId, $tplName, $data)
 function get_welcome_email($userId, $userType = 'user')
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
     $data = get_email_tpl_data($userId, 'add-user-auto-msg');
 
     if ($data['subject'] == '') {

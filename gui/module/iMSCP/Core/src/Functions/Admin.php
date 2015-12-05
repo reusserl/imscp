@@ -24,14 +24,13 @@
  */
 
 /**
- * Returns count of SQL users.
+ * Returns count of SQL users
  *
  * @return int Number of SQL users
  */
 function get_sql_user_count()
 {
-    $stmt = execute_query('SELECT DISTINCT sqlu_name FROM sql_user');
-    return $stmt->rowCount();
+    return execute_query('SELECT DISTINCT sqlu_name FROM sql_user')->rowCount();
 }
 
 /**
@@ -45,24 +44,18 @@ function generate_reseller_users_props($resellerId)
     $rdmnConsumed = $rdmnAssigned = $rsubConsumed = $rsubAssigned = $ralsConsumed = $ralsAssigned = $rmailConsumed =
     $rmailAssigned = $rftpConsumed = $rftpAssigned = $rsqlDbConsumed = $rsqlDbAssigned = $rsqlUserConsumed =
     $rsqlUserAssigned = $rtraffConsumed = $rtraffAssigned = $rdiskConsumed = $rdiskAssigned = 0;
-
     $stmt = exec_query('SELECT admin_id FROM admin WHERE created_by = ?', $resellerId);
-
     $rdmnUnlimited = $rsubUnlimited = $ralsUnlimited = $rmailUnlimited = $rftpUnlimited = $rsqlDbUnlimited =
     $rsqlUserUnlimited = $rtraffUnlimited = $rdiskUnlimited = false;
 
     if (!$stmt->rowCount()) { // Case in reseller has not customer yet
-        return array(
-            $rdmnConsumed, $rdmnAssigned, $rdmnUnlimited,
-            $rsubConsumed, $rsubAssigned, $rsubUnlimited,
-            $ralsConsumed, $ralsAssigned, $ralsUnlimited,
-            $rmailConsumed, $rmailAssigned, $rmailUnlimited,
-            $rftpConsumed, $rftpAssigned, $rftpUnlimited,
-            $rsqlDbConsumed, $rsqlDbAssigned, $rsqlDbUnlimited,
-            $rsqlUserConsumed, $rsqlUserAssigned, $rsqlUserUnlimited,
-            $rtraffConsumed, $rtraffAssigned, $rtraffUnlimited,
+        return [
+            $rdmnConsumed, $rdmnAssigned, $rdmnUnlimited, $rsubConsumed, $rsubAssigned, $rsubUnlimited,
+            $ralsConsumed, $ralsAssigned, $ralsUnlimited, $rmailConsumed, $rmailAssigned, $rmailUnlimited,
+            $rftpConsumed, $rftpAssigned, $rftpUnlimited, $rsqlDbConsumed, $rsqlDbAssigned, $rsqlDbUnlimited,
+            $rsqlUserConsumed, $rsqlUserAssigned, $rsqlUserUnlimited, $rtraffConsumed, $rtraffAssigned, $rtraffUnlimited,
             $rdiskConsumed, $rdiskAssigned, $rdiskUnlimited
-        );
+        ];
     }
 
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -152,13 +145,13 @@ function generate_reseller_users_props($resellerId)
         }
     }
 
-    return array(
+    return [
         $rdmnConsumed, $rdmnAssigned, $rdmnUnlimited, $rsubConsumed, $rsubAssigned, $rsubUnlimited, $ralsConsumed,
         $ralsAssigned, $ralsUnlimited, $rmailConsumed, $rmailAssigned, $rmailUnlimited, $rftpConsumed, $rftpAssigned,
         $rftpUnlimited, $rsqlDbConsumed, $rsqlDbAssigned, $rsqlDbUnlimited, $rsqlUserConsumed, $rsqlUserAssigned,
         $rsqlUserUnlimited, $rtraffConsumed, $rtraffAssigned, $rtraffUnlimited, $rdiskConsumed, $rdiskAssigned,
         $rdiskUnlimited
-    );
+    ];
 }
 
 /**
@@ -173,7 +166,8 @@ function generate_reseller_users_props($resellerId)
  * @param  string $searchStatus
  * @return void
  */
-function gen_admin_domain_query(&$searchQuery, &$countQuery, $startIndex, $rowsPerPage, $searchFor, $searchCommon, $searchStatus){
+function gen_admin_domain_query(&$searchQuery, &$countQuery, $startIndex, $rowsPerPage, $searchFor, $searchCommon, $searchStatus)
+{
     $condition = '';
     $startIndex = intval($startIndex);
     $rowsPerPage = intval($rowsPerPage);
@@ -196,8 +190,7 @@ function gen_admin_domain_query(&$searchQuery, &$countQuery, $startIndex, $rowsP
     } else {
         /** @var \Doctrine\DBAL\Connection $db */
         $db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
-
-        $searchFor = str_replace(array('!', '_', '%'), array('!!', '!_', '!%'), $searchFor);
+        $searchFor = str_replace(['!', '_', '%'], ['!!', '!_', '!%'], $searchFor);
 
         if ($searchFor == '' && $searchStatus != '') {
             if ($searchStatus != 'all') {
@@ -217,9 +210,9 @@ function gen_admin_domain_query(&$searchQuery, &$countQuery, $startIndex, $rowsP
                     t1.domain_name ASC
                 LIMIT
                     $startIndex, $rowsPerPage
-        	";
+            ";
         } elseif ($searchFor != '') {
-            $searchFor = str_replace(array('!', '_', '%'), array('!!', '!_', '!%'), $searchFor);
+            $searchFor = str_replace(['!', '_', '%'], ['!!', '!_', '!%'], $searchFor);
 
             if ($searchCommon == 'domain_name') {
                 $searchFor = $db->quote('%' . encode_idna($searchFor) . '%');
@@ -258,7 +251,6 @@ function gen_admin_domain_query(&$searchQuery, &$countQuery, $startIndex, $rowsP
                         admin AS t2 ON(t2.admin_id = t1.domain_admin_id)
                     $condition
                 ";
-
                 $searchQuery = "
                     SELECT
                         t2.admin_id, t2.admin_status, t2.created_by, t1.*
@@ -278,7 +270,7 @@ function gen_admin_domain_query(&$searchQuery, &$countQuery, $startIndex, $rowsP
 }
 
 /**
- * Whether or not the system has a least the given number of registered resellers.
+ * Whether or not the system has a least the given number of registered resellers
  *
  * @param int $minNbResellers Minimum number of resellers
  * @return bool TRUE if the system has a least the given number of registered resellers, FALSE otherwise
@@ -297,7 +289,7 @@ function systemHasResellers($minNbResellers = 1)
 }
 
 /**
- * Whether or not the system has a least the given number of registered customers.
+ * Whether or not the system has a least the given number of registered customers
  *
  * @param int $minNbCustomers Minimum number of customers
  * @return bool TRUE if system has a least the given number of registered customers, FALSE otherwise
@@ -309,7 +301,7 @@ function systemHasCustomers($minNbCustomers = 1)
     if (null === $customersCount) {
         $stmt = exec_query(
             'SELECT COUNT(`admin_id`) AS `count` FROM `admin` WHERE `admin_type` = ? AND `admin_status` <> ?',
-            array('user', 'todelete')
+            ['user', 'todelete']
         );
 
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -320,7 +312,7 @@ function systemHasCustomers($minNbCustomers = 1)
 }
 
 /**
- * Whether or not system has registered admins (many), resellers or customers.
+ * Whether or not system has registered admins (many), resellers or customers
  *
  * @return bool
  */
@@ -334,7 +326,7 @@ function systemHasAdminsOrResellersOrCustomers()
 }
 
 /**
- * Whether or not system has registered resellers or customers.
+ * Whether or not system has registered resellers or customers
  *
  * @return bool
  */
@@ -348,7 +340,7 @@ function systemHasResellersOrCustomers()
 }
 
 /**
- * Whether or not system as many admins.
+ * Whether or not system as many admins
  *
  * @return bool
  */

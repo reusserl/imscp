@@ -43,16 +43,18 @@ function get_user_gui_props($user_id)
 
         if (!empty($row['lang']) || !empty($row['layout'])) {
             if (empty($row['lang'])) {
-                return array($cfg['USER_INITIAL_LANG'], $row['layout']);
-            } elseif (empty($row['layout'])) {
-                return array($row['lang'], $cfg['USER_INITIAL_THEME']);
-            } else {
-                return array($row['lang'], $row['layout']);
+                return [$cfg['USER_INITIAL_LANG'], $row['layout']];
             }
+
+            if (empty($row['layout'])) {
+                return [$row['lang'], $cfg['USER_INITIAL_THEME']];
+            }
+
+            return [$row['lang'], $row['layout']];
         }
     }
 
-    return array($cfg['USER_INITIAL_LANG'], $cfg['USER_INITIAL_THEME']);
+    return [$cfg['USER_INITIAL_LANG'], $cfg['USER_INITIAL_THEME']];
 }
 
 /**
@@ -68,15 +70,15 @@ function generatePageMessage($tpl)
 {
     if (isset($_SESSION['pageMessages'])) {
         foreach (
-            array(
+            [
                 'success', 'error', 'warning', 'info', 'static_success', 'static_error', 'static_warning', 'static_info'
-            ) as $level
+            ] as $level
         ) {
             if (isset($_SESSION['pageMessages'][$level])) {
-                $tpl->assign(array(
+                $tpl->assign([
                     'MESSAGE_CLS' => $level,
                     'MESSAGE' => $_SESSION['pageMessages'][$level]
-                ));
+                ]);
                 $tpl->parse('PAGE_MESSAGE', '.page_message');
             }
         }
@@ -101,9 +103,9 @@ function set_page_message($message, $level = 'info')
     if (!is_string($message)) {
         throw new InvalidArgumentException('set_page_message() expects a string for $message');
     } elseif (
-    !in_array($level, array(
+    !in_array($level, [
         'info', 'warning', 'error', 'success', 'static_success', 'static_error', 'static_warning', 'static_info'
-    ))
+    ])
     ) {
         throw new InvalidArgumentException(sprintf('Wrong level %s for page message.', $level));
     }
@@ -162,9 +164,8 @@ function get_menu_vars($menuLink)
     $stmt = exec_query($query, $_SESSION['user_id']);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    $search = array();
-    $replace = array();
-
+    $search = [];
+    $replace = [];
     $search [] = '{uid}';
     $replace[] = $_SESSION['user_id'];
     $search [] = '{uname}';
@@ -263,7 +264,8 @@ function layout_getUserLayoutColor($userId)
             $stmt = exec_query($query, (int)$userId);
 
             if ($stmt->rowCount()) {
-                $color = $stmt->fields['layout_color'];
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                $color = $row['layout_color'];
 
                 if (!$color || !in_array($color, $allowedColors)) {
                     $color = array_shift($allowedColors);
@@ -313,18 +315,18 @@ function layout_init($event)
 
     /** @var $tpl iMSCP\Core\Template\TemplateEngine */
     $tpl = $event->getParam('templateEngine');
-    $tpl->assign(array(
+    $tpl->assign([
         'THEME_COLOR' => $color,
         'ASSETS_PATH' => $cfg['ASSETS_PATH'],
         'ISP_LOGO' => (isset($_SESSION['user_id'])) ? layout_getUserLogo() : '',
         'JS_TRANSLATIONS' => i18n_getJsTranslations(),
-        'USER_IDENTITY' => json_encode(array(
+        'USER_IDENTITY' => json_encode([
             'userId' => $identity->admin_id,
             'userRole' => $identity->admin_type
-        )),
+        ]),
         'LANG' => $lang,
         'LOCALE' => $locale,
-    ));
+    ]);
     $tpl->parse('LAYOUT', 'layout');
 }
 
@@ -339,14 +341,14 @@ function layout_setUserLayoutColor($userId, $color)
 {
     if (in_array($color, layout_getAvailableColorSet())) {
         $query = 'UPDATE `user_gui_props` SET `layout_color` = ? WHERE `user_id` = ?';
-        exec_query($query, array($color, (int)$userId));
+        exec_query($query, [$color, (int)$userId]);
 
         // Dealing with sessions across multiple browsers for same user identifier - Begin
 
         $sessionId = session_id();
 
         $query = "SELECT `session_id` FROM `login` WHERE `user_name` = ?  AND `session_id` <> ?";
-        $stmt = exec_query($query, array($_SESSION['user_logged'], $sessionId));
+        $stmt = exec_query($query, [$_SESSION['user_logged'], $sessionId]);
 
         if ($stmt->rowCount()) {
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -395,11 +397,16 @@ function layout_getUserLogo($searchForCreator = true, $returnDefault = true)
         $userId = $_SESSION['user_id'];
     }
 
+    $logo = null;
+
     $query = 'SELECT `logo` FROM `user_gui_props` WHERE `user_id`= ?';
     $stmt = exec_query($query, $userId);
 
-    // No logo is found for the user, let see for it creator
-    if ($searchForCreator && $userId != 1 && empty($stmt->fields['logo'])) {
+    if ($stmt->rowCount()) {
+        $logo = $stmt->fetch(PDO::FETCH_ASSOC)['logo'];
+    }
+
+    if ($logo === null && $searchForCreator && $userId != 1) {
         $query = '
             SELECT
                 `b`.`logo`
@@ -411,24 +418,28 @@ function layout_getUserLogo($searchForCreator = true, $returnDefault = true)
                 `a`.`admin_id`= ?
         ';
         $stmt = exec_query($query, $userId);
-    }
 
-    // No user logo found
-    if (
-        empty($stmt->fields['logo']) ||
-        !file_exists($cfg['GUI_ROOT_DIR'] . '/data/persistent/ispLogos/' . $stmt->fields['logo'])
-    ) {
-        if (!$returnDefault) {
-            return '';
-        } elseif (file_exists($cfg['ROOT_TEMPLATE_PATH'] . '/assets/images/imscp_logo.png')) {
-            return $cfg['ASSETS_PATH'] . '/images/imscp_logo.png';
-        } else {
-            // no logo available, we use default
-            return $cfg['ISP_LOGO_PATH'] . '/' . 'isp_logo.gif';
+        if ($stmt->rowCount()) {
+            $logo = $stmt->fetch(PDO::FETCH_ASSOC)['logo'];
         }
     }
 
-    return $cfg['ISP_LOGO_PATH'] . '/' . $stmt->fields['logo'];
+    // No user logo found
+    if ($logo === null || !file_exists($cfg['GUI_ROOT_DIR'] . '/data/persistent/ispLogos/' . $logo)) {
+        if (!$returnDefault) {
+            return '';
+        }
+
+        if (file_exists($cfg['ROOT_TEMPLATE_PATH'] . '/assets/images/imscp_logo.png')) {
+            return $cfg['ASSETS_PATH'] . '/images/imscp_logo.png';
+        }
+
+        // no logo available, we use default
+        return $cfg['ISP_LOGO_PATH'] . '/' . 'isp_logo.gif';
+
+    }
+
+    return $cfg['ISP_LOGO_PATH'] . '/' . $logo;
 }
 
 /**
@@ -477,7 +488,7 @@ function layout_updateUserLogo()
         return $cfg['GUI_ROOT_DIR'] . '/data/persistent/ispLogos/' . $fileName;
     };
 
-    if (($logoPath = utils_uploadFile('logoFile', array($beforeMove, $cfg))) === false) {
+    if (($logoPath = utils_uploadFile('logoFile', [$beforeMove, $cfg])) === false) {
         return false;
     } else {
         if ($_SESSION['user_type'] == 'admin') {
@@ -489,7 +500,7 @@ function layout_updateUserLogo()
         // We must catch old logo before update
         $oldLogoFile = layout_getUserLogo(false, false);
 
-        exec_query('UPDATE `user_gui_props` SET `logo` = ? WHERE `user_id` = ?', array(basename($logoPath), $userId));
+        exec_query('UPDATE `user_gui_props` SET `logo` = ? WHERE `user_id` = ?', [basename($logoPath), $userId]);
 
         // Deleting old logo (we are safe here) - We don't return FALSE on failure.
         // The administrator will be warned through logs.
@@ -525,7 +536,7 @@ function layout_deleteUserLogo($logoFilePath = null, $onlyFile = false)
     }
 
     if (!$onlyFile) {
-        exec_query('UPDATE `user_gui_props` SET `logo` = ? WHERE `user_id` = ?', array(null, $userId));
+        exec_query('UPDATE `user_gui_props` SET `logo` = ? WHERE `user_id` = ?', [null, $userId]);
     }
 
     if (strpos($logoFilePath, $cfg['ISP_LOGO_PATH']) !== false) {
@@ -533,10 +544,10 @@ function layout_deleteUserLogo($logoFilePath = null, $onlyFile = false)
 
         if (file_exists($logoFilePath) && @unlink($logoFilePath)) {
             return true;
-        } else {
-            write_log(tr("System is unable to remove '%s' user logo.", $logoFilePath), E_USER_WARNING);
-            return false;
         }
+
+        write_log(tr("System is unable to remove '%s' user logo.", $logoFilePath), E_USER_WARNING);
+        return false;
     }
 
     return true;
@@ -593,7 +604,7 @@ function layout_LoadNavigation()
             layout_createNavigationFile($cfg['ROOT_TEMPLATE_PATH'] . "/$userLevel/navigation.php", $locale, $userLevel);
         }
 
-        iMSCP_Registry::set('navigation', new Zend\Navigation\Navigation(include($filepath)));
+        //iMSCP_Registry::set('navigation', new Zend\Navigation\Navigation(include($filepath)));
 
         // Set main menu labels visibility for the current environment
         \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
@@ -652,9 +663,8 @@ function layout_isMainMenuLabelsVisible($userId)
 function layout_setMainMenuLabelsVisibility($userId, $visibility)
 {
     $visibility = (int)$visibility;
-
     $query = 'UPDATE `user_gui_props` SET `show_main_menu_labels` = ? WHERE `user_id` = ?';
-    exec_query($query, array($visibility, (int)$userId));
+    exec_query($query, [$visibility, (int)$userId]);
 
     if (!isset($_SESSION['logged_from_id'])) {
         $_SESSION['show_main_menu_labels'] = $visibility;

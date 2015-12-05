@@ -40,7 +40,6 @@ function init_login($eventManager)
 
     // Register default authentication handler with lower priority
     $eventManager->attach(\iMSCP\Core\Events::onAuthentication, 'login_credentials', -99);
-
     // Register listener that is responsible to check domain status and expire date
     $eventManager->attach(\iMSCP\Core\Events::onBeforeSetIdentity, 'login_checkDomainAccount');
 }
@@ -86,9 +85,9 @@ function login_credentials($event)
                 );
             } else {
                 if (strpos($passwordHash, '$2a$') !== 0) { # Not a password encrypted with Bcrypt, then re-encrypt it
-                    exec_query('UPDATE admin SET admin_pass = ? WHERE admin_id = ?', array(
+                    exec_query('UPDATE admin SET admin_pass = ? WHERE admin_id = ?', [
                         \iMSCP\Core\Utils\Crypt::bcrypt($password), $identity->admin_id
-                    ));
+                    ]);
                     write_log(
                         sprintf('Info: Password for user %s has been re-encrypted using bcrypt', $identity->admin_name),
                         E_USER_NOTICE
@@ -120,7 +119,7 @@ function login_credentials($event)
  *
  * Note: Listen to the onBeforeSetIdentity event triggered in the iMSCP_Authentication component.
  *
- * @param \Zend\EventManager\Event $event An iMSCP_Events_Events object representing an onBeforeSetIdentity event.
+ * @param \Zend\EventManager\Event $event An Zend\EventManager\EventInterface object representing an onBeforeSetIdentity event.
  * @return void
  */
 function login_checkDomainAccount($event)
@@ -228,16 +227,16 @@ function check_login($userLevel = '', $preventExternalLogin = true)
     if ($preventExternalLogin && !empty($_SERVER['HTTP_REFERER'])) {
         // Extracting hostname from referer URL
         // Note2: We remove any braket in referer (ipv6 issue)
-        $refererHostname = str_replace(array('[', ']'), '', parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST));
+        $refererHostname = str_replace(['[', ']'], '', parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST));
 
         // The URL does contains the host element ?
         if (!is_null($refererHostname)) {
             // Note1: We don't care about the scheme, we only want make parse_url() happy
             // Note2: We remove any braket in hostname (ipv6 issue)
-            $http_host = str_replace(array('[', ']'), '', parse_url("http://{$_SERVER['HTTP_HOST']}", PHP_URL_HOST));
+            $http_host = str_replace(['[', ']'], '', parse_url("http://{$_SERVER['HTTP_HOST']}", PHP_URL_HOST));
 
             // The referer doesn't match the panel hostname ?
-            if (!in_array($refererHostname, array($http_host, $_SERVER['SERVER_NAME']))) {
+            if (!in_array($refererHostname, [$http_host, $_SERVER['SERVER_NAME']])) {
                 set_page_message(tr('Request from foreign host was blocked.'), 'info');
 
                 # Quick fix for #96 (will be rewritten ASAP)
@@ -254,9 +253,7 @@ function check_login($userLevel = '', $preventExternalLogin = true)
 
     // If all goes fine update session and lastaccess
     $_SESSION['user_login_time'] = time();
-    exec_query(
-        'UPDATE login SET lastaccess = ? WHERE session_id = ?', array($_SESSION['user_login_time'], session_id())
-    );
+    exec_query('UPDATE login SET lastaccess = ? WHERE session_id = ?', [$_SESSION['user_login_time'], session_id()]);
 }
 
 /**
@@ -283,7 +280,7 @@ function change_user_interface($fromId, $toId)
             LIMIT
                 2
         ';
-        $stmt = exec_query($query, array($fromId, $toId, $fromId, $toId));
+        $stmt = exec_query($query, [$fromId, $toId, $fromId, $toId]);
 
         if ($stmt->rowCount() < 2) {
             set_page_message(tr('Wrong request.'), 'error');
@@ -291,7 +288,7 @@ function change_user_interface($fromId, $toId)
 
         list($from, $to) = $stmt->fetchAll(PDO::FETCH_OBJ);
 
-        $fromToMap = array();
+        $fromToMap = [];
         $fromToMap['admin']['BACK'] = 'manage_users.php';
         $fromToMap['admin']['reseller'] = 'index.php';
         $fromToMap['admin']['user'] = 'index.php';
