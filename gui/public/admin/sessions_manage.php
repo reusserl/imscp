@@ -50,12 +50,14 @@ function kill_session()
         session_id($sessionId);
         session_start();
 
+        /** @var \iMSCP\Core\Authentication\Authentication $authentication */
+        $authentication = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Authentication');
+        $authentication->unsetIdentity();
+
         if (isset($_GET['logout_only'])) {
-            \iMSCP\Core\Authentication\Authentication::getInstance()->unsetIdentity();
             session_write_close();
             $message = tr('User successfully disconnected.');
         } else {
-            \iMSCP\Core\Authentication\Authentication::getInstance()->unsetIdentity();
             session_destroy();
             $message = tr('User session successfully destroyed.');
         }

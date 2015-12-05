@@ -20,9 +20,8 @@
 
 namespace iMSCP\Core\Authentication;
 
-use iMSCP\Core\Application;
-use iMSCP\Core\Events;
 use Zend\EventManager\EventManager;
+use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
 
 /**
@@ -32,26 +31,24 @@ use Zend\EventManager\EventManagerInterface;
  * event listener which listen to the onAuthenticate event that is triggered when the authentication process occurs.
  *
  * An authentication handler which was successful, must short-circuit the execution of any other authentication handlers
- * by stopping the onAuthentication event propagation.
+ * by stopping the AutthenticationEvent::onAuthentication event propagation.
  *
- * In any case, all authentication handler must return an iMSCP_Authentication_Result object which allows the
+ * In any case, all authentication handler must set an AuthenticationResult object onto the event that allows the
  * authentication component to known if the authentication process was successful.
  *
  * @package iMSCP\Core\Authentication
  */
-class Authentication
+class Authentication implements EventManagerAwareInterface
 {
-    /**
-     * Singleton instance
-     *
-     * @var Authentication
-     */
-    protected static $instance = null;
-
     /**
      * @var EventManager
      */
-    protected $eventManager = null;
+    protected $events;
+
+    /**
+     * @var AuthenticationEvent
+     */
+    protected $event;
 
     /**
      * @var \StdClass identity
@@ -59,89 +56,111 @@ class Authentication
     protected $identity;
 
     /**
-     * Singleton pattern implementation -  makes "new" unavailable
+     * Constructor
+     *
+     * @param EventManagerInterface $eventManager
      */
-    protected function __construct()
+    public function __construct(EventManagerInterface $eventManager)
     {
-
+        if ($eventManager instanceof EventManagerInterface) {
+            $this->setEventManager($eventManager);
+        }
     }
 
     /**
-     * Singleton pattern implementation -  makes "clone" unavailable
+     * Set the authentication event
      *
+     * @param  AuthenticationEvent $event
+     * @return AuthenticationEvent
+     */
+    public function setEvent(AuthenticationEvent $event)
+    {
+        $this->event = $event;
+        return $this;
+    }
+
+    /**
+     * Get the authentication event
+     *
+     * @return AuthenticationEvent
+     */
+    public function getEvent()
+    {
+        if (!$this->event instanceof AuthenticationEvent) {
+            $this->setEvent(new AuthenticationEvent());
+        }
+
+        return $this->event;
+    }
+
+    /**
+     * Inject an EventManager instance
+     *
+     * @param  EventManagerInterface $eventManager
      * @return void
      */
-    protected function __clone()
+    public function setEventManager(EventManagerInterface $eventManager)
     {
-
+        // TODO: Implement setEventManager() method.
     }
 
     /**
-     * Implements singleton design pattern
+     * Retrieve the event manager
      *
-     * @return Authentication Provides a fluent interface, returns self
+     * Lazy-loads an EventManager instance if none registered.
+     *
+     * @return EventManagerInterface
      */
-    public static function getInstance()
+    public function getEventManager()
     {
-        if (null === self::$instance) {
-            self::$instance = new self();
+        if (null === $this->events) {
+            $events = new EventManager();
+            $events->setIdentifiers([
+                __CLASS__,
+                get_class($this),
+            ]);
+            $this->events = $events;
+            return $this;
         }
 
-        return self::$instance;
-    }
-
-    /**
-     * Return an iMSCP_Events_Manager instance
-     *
-     * @param EventManagerInterface $events
-     * @return EventManager
-     */
-    public function getEventManager(EventManagerInterface $events = null)
-    {
-        if (null !== $events) {
-            $this->eventManager = $events;
-        } elseif (null === $this->eventManager) {
-            $this->eventManager = Application::getInstance()->getEventManager();
-        }
-
-        return $this->eventManager;
+        return $this->events;
     }
 
     /**
      * Process authentication
      *
-     * @trigger onBeforeAuthentication
-     * @trigger onAuthentication
-     * @trigger onAfterAuthentication
+     * @trigger AuthenticationEvent::onBeforeAuthentication
+     * @trigger AuthenticationEvent::onAuthentication
+     * @trigger AuthenticationEvent::onAfterAuthentication
      * @return AuthenticationResult
      */
     public function authenticate()
     {
         $em = $this->getEventManager();
-
-        $response = $em->trigger(Events::onBeforeAuthentication, $this);
+        $response = $em->trigger(AuthenticationEvent::onBeforeAuthentication, $this, $this->getEvent());
 
         if (!$response->stopped()) {
-            // Process authentication through registered handlers
-            $response = $em->trigger(Events::onAuthentication, $this);
+            // Process authentication through attached handlers
+            $em->trigger(AuthenticationEvent::onAuthentication, $this, $this->getEvent());
+            $authResult = $this->getEvent()->getAuthenticationResult();
 
-            if (!($resultAuth = $response->last()) instanceof AuthenticationResult) {
-                $resultAuth = new AuthenticationResult(
-                    AuthenticationResult::FAILURE_UNCATEGORIZED, tr('Unknown reason.')
-                );
+            if (!$authResult instanceof AuthenticationResult) {
+                $authResult = new AuthenticationResult(AuthenticationResult::FAILURE_UNCATEGORIZED, tr('Unknown reason.'));
+                $this->getEvent()->setAuthenticationResult($authResult);
             }
 
-            if ($resultAuth->isValid()) {
+            if ($authResult->isValid()) {
                 $this->unsetIdentity(); // Prevent multiple successive calls from storing inconsistent results
-                $this->setIdentity($resultAuth->getIdentity());
+                $this->setIdentity($authResult->getIdentity());
             }
         } else {
-            $resultAuth = new AuthenticationResult(AuthenticationResult::FAILURE_UNCATEGORIZED, null, $response->last());
+            $authResult = new AuthenticationResult(AuthenticationResult::FAILURE_UNCATEGORIZED, null, $response->last());
+            $this->getEvent()->setAuthenticationResult($authResult);
         }
 
-        $em->trigger(Events::onAfterAuthentication, $this, ['authResult' => $resultAuth]);
+        $em->trigger(AuthenticationEvent::onAfterAuthentication, $this, $this->getEvent());
 
-        return $resultAuth;
+        return $authResult;
     }
 
     /**
@@ -152,13 +171,11 @@ class Authentication
     public function hasIdentity()
     {
         if (isset($_SESSION['user_id'])) {
-            $stmt = exec_query(
-                'SELECT COUNT(session_id) AS cnt FROM login WHERE session_id = ? AND ipaddr = ?',
-                array(session_id(), getipaddr())
-            );
+            $stmt = exec_query('SELECT COUNT(session_id) AS cnt FROM login WHERE session_id = ? AND ipaddr = ?', [
+                session_id(), getipaddr()
+            ]);
 
             $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-
             return (bool)$row['cnt'];
         }
 
@@ -202,21 +219,20 @@ class Authentication
     /**
      * Set the given identity
      *
-     * @trigger onBeforeSetIdentity
-     * @trigger onAfterSetIdentify
+     * @trigger AuthenticationEvent::onBeforeSetIdentity
+     * @trigger AuthenticationEvent::onAfterSetIdentify
      * @param \stdClass $identity Identity data
      */
     public function setIdentity($identity)
     {
-        $this->getEventManager()->trigger(Events::onBeforeSetIdentity, $this, ['identity' => $identity]);
+        $this->getEventManager()->trigger(AuthenticationEvent::onBeforeSetIdentity, $this->getEvent());
 
         session_regenerate_id();
         $lastAccess = time();
 
-        exec_query(
-            'INSERT INTO login (session_id, ipaddr, lastaccess, user_name) VALUES (?, ?, ?, ?)',
-            [session_id(), getIpAddr(), $lastAccess, $identity->admin_name]
-        );
+        exec_query('INSERT INTO login (session_id, ipaddr, lastaccess, user_name) VALUES (?, ?, ?, ?)', [
+            session_id(), getIpAddr(), $lastAccess, $identity->admin_name
+        ]);
 
         $_SESSION['user_logged'] = $identity->admin_name;
         $_SESSION['user_type'] = $identity->admin_type;
@@ -226,19 +242,19 @@ class Authentication
         $_SESSION['user_login_time'] = $lastAccess;
         $_SESSION['user_identity'] = $identity;
 
-        $this->getEventManager()->trigger(Events::onAfterSetIdentity, $this);
+        $this->getEventManager()->trigger(AuthenticationEvent::onAfterSetIdentity, $this, $this->getEvent());
     }
 
     /**
      * Unset the current identity
      *
-     * @trigger onBeforeUnsetIdentity
-     * @trigger onAfterUnserIdentity
+     * @trigger AuthenticationEvent::onBeforeUnsetIdentity
+     * @trigger AuthenticationEvent::onAfterUnserIdentity
      * @return void
      */
     public function unsetIdentity()
     {
-        $this->getEventManager()->trigger(Events::onBeforeUnsetIdentity, $this);
+        $this->getEventManager()->trigger(AuthenticationEvent::onBeforeUnsetIdentity, $this, $this->getEvent());
 
         exec_query('DELETE FROM login WHERE session_id = ?', session_id());
 
@@ -251,6 +267,6 @@ class Authentication
         }
 
         $this->identity = null;
-        $this->getEventManager()->trigger(Events::onAfterUnsetIdentity, $this);
+        $this->getEventManager()->trigger(AuthenticationEvent::onAfterUnsetIdentity, $this, $this->getEvent());
     }
 }

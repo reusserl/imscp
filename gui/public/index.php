@@ -18,117 +18,116 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-// Include core library
-require 'imscp-lib.php';
+require '../application.php';
 
-$eventManager = iMSCP_Events_Aggregator::getInstance();
-$eventManager->dispatch(iMSCP_Events::onLoginScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onLoginScriptStart);
 
-if(isset($_REQUEST['action'])) {
-	init_login($eventManager);
-	$auth = iMSCP_Authentication::getInstance();
+if (isset($_REQUEST['action'])) {
+    init_login($eventManager);
+    /** @var \iMSCP\Core\Authentication\Authentication $authentication */
+    $authentication = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Authentication');
 
-	switch($_REQUEST['action']) {
-		case 'logout':
-			if($auth->hasIdentity()) {
-				$adminName = $auth->getIdentity()->admin_name;
-				$auth->unsetIdentity();
-				set_page_message(tr('You have been successfully logged out.'), 'success');
-				write_log(sprintf("%s logged out", decode_idna($adminName)), E_USER_NOTICE);
-			}
-			break;
-		case 'login':
-			$authResult = $auth->authenticate();
+    switch ($_REQUEST['action']) {
+        case 'logout':
+            if ($authentication->hasIdentity()) {
+                $adminName = $authentication->getIdentity()->admin_name;
+                $authentication->unsetIdentity();
+                set_page_message(tr('You have been successfully logged out.'), 'success');
+                write_log(sprintf("%s logged out", decode_idna($adminName)), E_USER_NOTICE);
+            }
+            break;
+        case 'login':
+            $authResult = $authentication->authenticate();
 
-			if($authResult->isValid()) {
-				write_log(sprintf("%s logged in", $authResult->getIdentity()->admin_name), E_USER_NOTICE);
-			} elseif(($messages = $authResult->getMessages())) {
-				$messages = format_message($messages);
-				set_page_message($messages, 'error');
-				write_log(sprintf("Authentication failed. Reason: %s", $messages), E_USER_NOTICE);
-			}
-	}
+            if ($authResult->isValid()) {
+                write_log(sprintf("%s logged in", $authResult->getIdentity()->admin_name), E_USER_NOTICE);
+            } elseif (($messages = $authResult->getMessages())) {
+                $messages = format_message($messages);
+                set_page_message($messages, 'error');
+                write_log(sprintf("Authentication failed. Reason: %s", $messages), E_USER_NOTICE);
+            }
+    }
 }
 
 redirectToUiLevel();
 
-$tpl = new iMSCP_pTemplate();
-$tpl->define_dynamic(array(
-	'layout' => 'shared/layouts/simple.tpl',
-	'page_message' => 'layout',
-	'lostpwd_button' => 'page'
-));
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic([
+    'layout' => 'shared/layouts/simple.tpl',
+    'page_message' => 'layout',
+    'lostpwd_button' => 'page'
+]);
 
-$tpl->assign(array(
-	'productLongName' => tr('internet Multi Server Control Panel'),
-	'productLink' => 'http://www.i-mscp.net',
-	'productCopyright' => tr('© 2010-2015 i-MSCP Team<br/>All Rights Reserved')
-));
+$tpl->assign([
+    'productLongName' => tr('internet Multi Server Control Panel'),
+    'productLink' => 'http://www.i-mscp.net',
+    'productCopyright' => tr('© 2010-2015 i-MSCP Team<br/>All Rights Reserved')
+]);
 
-/** @var $cfg iMSCP_Config_Handler_File */
-$cfg = iMSCP_Registry::get('config');
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if ($cfg['MAINTENANCEMODE'] && !isset($_GET['admin'])) {
-	$tpl->define_dynamic('page', 'message.tpl');
-	$tpl->assign(array(
-		'TR_PAGE_TITLE' => tr('i-MSCP - Multi Server Control Panel / Maintenance'),
-		'HEADER_BLOCK' => '',
-		'BOX_MESSAGE_TITLE' => tr('System under maintenance'),
-		'BOX_MESSAGE' => (isset($cfg['MAINTENANCEMODE_MESSAGE']))
-			? preg_replace('/\s\s+/', '', nl2br(tohtml($cfg['MAINTENANCEMODE_MESSAGE'])))
-			: tr("We are sorry, but the system is currently under maintenance.\nPlease try again later."),
-		'TR_BACK' => tr('Administrator login'),
-		'BACK_BUTTON_DESTINATION' => '/index.php?admin=1'
-	));
+    $tpl->define_dynamic('page', 'message.tpl');
+    $tpl->assign([
+        'TR_PAGE_TITLE' => tr('i-MSCP - Multi Server Control Panel / Maintenance'),
+        'HEADER_BLOCK' => '',
+        'BOX_MESSAGE_TITLE' => tr('System under maintenance'),
+        'BOX_MESSAGE' => (isset($cfg['MAINTENANCEMODE_MESSAGE']))
+            ? preg_replace('/\s\s+/', '', nl2br(tohtml($cfg['MAINTENANCEMODE_MESSAGE'])))
+            : tr("We are sorry, but the system is currently under maintenance.\nPlease try again later."),
+        'TR_BACK' => tr('Administrator login'),
+        'BACK_BUTTON_DESTINATION' => '/index.php?admin=1'
+    ]);
 } else {
-	$tpl->define_dynamic(array(
-		'page' => 'index.tpl',
-		'lost_password_support' => 'page',
-		'ssl_support' => 'page'
-	));
+    $tpl->define_dynamic([
+        'page' => 'index.tpl',
+        'lost_password_support' => 'page',
+        'ssl_support' => 'page'
+    ]);
+    $tpl->assign([
+        'TR_PAGE_TITLE' => tr('i-MSCP - Multi Server Control Panel / Login'),
+        'TR_LOGIN' => tr('Login'),
+        'TR_USERNAME' => tr('Username'),
+        'UNAME' => isset($_POST['uname']) ? tohtml($_POST['uname'], 'htmlAttr') : '',
+        'TR_PASSWORD' => tr('Password')
+    ]);
 
-	$tpl->assign(array(
-		'TR_PAGE_TITLE' => tr('i-MSCP - Multi Server Control Panel / Login'),
-		'TR_LOGIN' => tr('Login'),
-		'TR_USERNAME' => tr('Username'),
-		'UNAME' => isset($_POST['uname']) ? tohtml($_POST['uname'], 'htmlAttr') : '',
-		'TR_PASSWORD' => tr('Password')
-	));
+    if (
+        isset($cfg['PANEL_SSL_ENABLED']) && $cfg['PANEL_SSL_ENABLED'] == 'yes' &&
+        $cfg['BASE_SERVER_VHOST_PREFIX'] != 'https://'
+    ) {
+        $isSecure = isSecureRequest() ? true : false;
+        $uri = [
+            ($isSecure) ? 'http://' : 'https://',
+            $_SERVER['SERVER_NAME'],
+            ($isSecure)
+                ? (($cfg['BASE_SERVER_VHOST_HTTP_PORT'] == 80) ? '' : ':' . $cfg['BASE_SERVER_VHOST_HTTP_PORT'])
+                : (($cfg['BASE_SERVER_VHOST_HTTPS_PORT'] == 443) ? '' : ':' . $cfg['BASE_SERVER_VHOST_HTTPS_PORT'])
+        ];
 
-	if (
-		$cfg->exists('PANEL_SSL_ENABLED') && $cfg['PANEL_SSL_ENABLED'] == 'yes' &&
-		$cfg['BASE_SERVER_VHOST_PREFIX'] != 'https://'
-	) {
-		$isSecure = isSecureRequest() ? true : false;
-		$uri = array(
-			($isSecure) ? 'http://' : 'https://',
-			$_SERVER['SERVER_NAME'],
-			($isSecure)
-				? (($cfg['BASE_SERVER_VHOST_HTTP_PORT'] == 80 ) ? '' : ':' . $cfg['BASE_SERVER_VHOST_HTTP_PORT'])
-				: (($cfg['BASE_SERVER_VHOST_HTTPS_PORT'] == 443 ) ? '' : ':' . $cfg['BASE_SERVER_VHOST_HTTPS_PORT'])
-		);
+        $tpl->assign([
+            'SSL_LINK' => tohtml(implode('', $uri), 'htmlAttr'),
+            'SSL_IMAGE_CLASS' => ($isSecure) ? 'i_unlock' : 'i_lock',
+            'TR_SSL' => ($isSecure) ? tr('Normal connection') : tr('Secure connection'),
+            'TR_SSL_DESCRIPTION' => ($isSecure)
+                ? tohtml(tr('Use normal connection (No SSL)'), 'htmlAttr')
+                : tohtml(tr('Use secure connection (SSL)'), 'htmlAttr')
+        ]);
+    } else {
+        $tpl->assign('SSL_SUPPORT', '');
+    }
 
-		$tpl->assign(array(
-			'SSL_LINK' => tohtml(implode('', $uri), 'htmlAttr'),
-			'SSL_IMAGE_CLASS' => ($isSecure) ? 'i_unlock' : 'i_lock',
-			'TR_SSL' => ($isSecure) ? tr('Normal connection') : tr('Secure connection'),
-			'TR_SSL_DESCRIPTION' => ($isSecure)
-				? tohtml(tr('Use normal connection (No SSL)'), 'htmlAttr')
-				: tohtml(tr('Use secure connection (SSL)'), 'htmlAttr')
-		));
-	} else {
-		$tpl->assign('SSL_SUPPORT', '');
-	}
-
-	if ($cfg['LOSTPASSWORD']) {
-		$tpl->assign('TR_LOSTPW', tr('Lost password'));
-	} else {
-		$tpl->assign('LOST_PASSWORD_SUPPORT', '');
-	}
+    if ($cfg['LOSTPASSWORD']) {
+        $tpl->assign('TR_LOSTPW', tr('Lost password'));
+    } else {
+        $tpl->assign('LOST_PASSWORD_SUPPORT', '');
+    }
 }
 
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-$eventManager::getInstance()->dispatch(iMSCP_Events::onLoginScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onLoginScriptEnd, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();

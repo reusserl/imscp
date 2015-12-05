@@ -35,20 +35,20 @@ function init_login($eventManager)
         /** @var \iMSCP\Core\Plugin\PluginManager $pluginManager */
         $pluginManager = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('PluginManager');
         $bruteforce = new iMSCP\Core\Plugin\Bruteforce($pluginManager);
-        $bruteforce->register($pluginManager->getEventManager());
+        $bruteforce->attach($pluginManager->getEventManager());
     }
 
-    // Register default authentication handler with lower priority
-    $eventManager->attach(\iMSCP\Core\Events::onAuthentication, 'login_credentials', -99);
-    // Register listener that is responsible to check domain status and expire date
-    $eventManager->attach(\iMSCP\Core\Events::onBeforeSetIdentity, 'login_checkDomainAccount');
+    // Attach default authentication handler with lower priority
+    $eventManager->attach(\iMSCP\Core\Authentication\AuthenticationEvent::onAuthentication, 'login_credentials', -99);
+
+    // Attach listener that is responsible to check domain status and expire date
+    $eventManager->attach(\iMSCP\Core\Authentication\AuthenticationEvent::onBeforeSetIdentity, 'login_checkDomainAccount');
 }
 
 /**
  * Credentials authentication handler
  *
- * @param \Zend\EventManager\Event $event
- * @return \iMSCP\Core\Authentication\AuthenticationResult
+ * @param \iMSCP\Core\Authentication\AuthenticationEvent $event
  */
 function login_credentials($event)
 {
@@ -72,7 +72,7 @@ function login_credentials($event)
         );
 
         if (!$stmt->rowCount()) {
-            $result = new \iMSCP\Core\Authentication\AuthenticationResult(
+            $authResult = new \iMSCP\Core\Authentication\AuthenticationResult(
                 \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_IDENTITY_NOT_FOUND, null, tr('Unknown username.')
             );
         } else {
@@ -80,7 +80,7 @@ function login_credentials($event)
             $passwordHash = $identity->admin_pass;
 
             if (!\iMSCP\Core\Utils\Crypt::verify($password, $passwordHash)) {
-                $result = new \iMSCP\Core\Authentication\AuthenticationResult(
+                $authResult = new \iMSCP\Core\Authentication\AuthenticationResult(
                     \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_INVALID, null, tr('Bad password.')
                 );
             } else {
@@ -94,14 +94,14 @@ function login_credentials($event)
                     );
                 }
 
-                $result = new \iMSCP\Core\Authentication\AuthenticationResult(
+                $authResult = new \iMSCP\Core\Authentication\AuthenticationResult(
                     \iMSCP\Core\Authentication\AuthenticationResult::SUCCESS, $identity
                 );
                 $event->stopPropagation();
             }
         }
     } else {
-        $result = new \iMSCP\Core\Authentication\AuthenticationResult(
+        $authResult = new \iMSCP\Core\Authentication\AuthenticationResult(
             (count($message) == 2)
                 ? \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_EMPTY
                 : \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_INVALID
@@ -111,7 +111,7 @@ function login_credentials($event)
         );
     }
 
-    return $result;
+    $event->setAuthenticationResult($authResult);
 }
 
 /**
@@ -188,10 +188,11 @@ function check_login($userLevel = '', $preventExternalLogin = true)
 {
     do_session_timeout();
 
-    $auth = iMSCP\Core\Authentication\Authentication::getInstance();
+    /** @var \iMSCP\Core\Authentication\Authentication $authentication */
+    $authentication = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Authentication');
 
-    if (!$auth->hasIdentity()) {
-        $auth->unsetIdentity(); // Ensure deletion of all identity data
+    if (!$authentication->hasIdentity()) {
+        $authentication->unsetIdentity(); // Ensure deletion of all identity data
 
         if (is_xhr()) {
             header('Status: 401 Unauthorized');
@@ -203,12 +204,12 @@ function check_login($userLevel = '', $preventExternalLogin = true)
 
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-    $identity = $auth->getIdentity();
+    $identity = $authentication->getIdentity();
 
     if ($cfg['MAINTENANCEMODE'] && $identity->admin_type != 'admin' &&
         (!isset($_SESSION['logged_from_type']) || $_SESSION['logged_from_type'] != 'admin')
     ) {
-        $auth->unsetIdentity();
+        $authentication->unsetIdentity();
         redirectTo('/index.php');
     }
 
@@ -311,9 +312,10 @@ function change_user_interface($fromId, $toId)
         $toActionScript = ($toActionScript) ? $toActionScript : $fromToMap[$from->admin_type][$to->admin_type];
 
         // Set new identity
-        $auth = iMSCP\Core\Authentication\Authentication::getInstance();
-        $auth->unsetIdentity();
-        $auth->setIdentity($to);
+        /** @var \iMSCP\Core\Authentication\Authentication $authentication */
+        $authentication = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Authentication');
+        $authentication->unsetIdentity();
+        $authentication->setIdentity($to);
 
         if ($from->admin_type != 'user' && $to->admin_type != 'admin') {
             // Set additional data about user from wich we are logged from
@@ -346,10 +348,11 @@ function change_user_interface($fromId, $toId)
  */
 function redirectToUiLevel($actionScript = 'index.php')
 {
-    $auth = iMSCP\Core\Authentication\Authentication::getInstance();
+    /** @var \iMSCP\Core\Authentication\Authentication $authentication */
+    $authentication = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Authentication');
 
-    if ($auth->hasIdentity()) {
-        $userType = $auth->getIdentity()->admin_type;
+    if ($authentication->hasIdentity()) {
+        $userType = $authentication->getIdentity()->admin_type;
         switch ($userType) {
             case 'user':
             case 'admin':

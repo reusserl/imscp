@@ -303,7 +303,7 @@ function layout_init($event)
     }
 
     // Get user Identity
-    $identity = \iMSCP\Core\Authentication\Authentication::getInstance()->getIdentity();
+    $identity = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Authentication')->getIdentity();
 
     // Get user locale and language
     /** @var \Zend\I18n\Translator\Translator $translator */
