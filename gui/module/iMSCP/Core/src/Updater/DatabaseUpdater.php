@@ -207,8 +207,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     public function getDatabaseUpdatesDetails()
     {
-        $updatesDetails = array();
-
+        $updatesDetails = [];
         $reflection = new \ReflectionClass(__CLASS__);
 
         foreach (range($this->getNextUpdate(), $this->getLastUpdate()) as $revision) {
@@ -244,15 +243,13 @@ class DatabaseUpdater extends AbstractUpdater
      *
      * @param  string $updateMethod Database update method name
      * @param array $params Params
-     * @return null
+     * @return void
      */
     public function __call($updateMethod, $params)
     {
         if (!preg_match('/^r[0-9]+$/', $updateMethod)) {
             throw new \InvalidArgumentException(sprintf('%s is not a valid database update method', $updateMethod));
         }
-
-        return null;
     }
 
     /**
@@ -262,13 +259,11 @@ class DatabaseUpdater extends AbstractUpdater
      */
     public function r178()
     {
-        $sqlUdp = array();
-
+        $sqlUdp = [];
         $stmt = execute_query('SELECT cert_id, password, `key` FROM ssl_certs');
 
         if ($stmt->rowCount()) {
             while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
                 $certId = quoteValue($row['cert_id'], \PDO::PARAM_INT);
                 $privateKey = new \Crypt_RSA();
 
@@ -283,10 +278,8 @@ class DatabaseUpdater extends AbstractUpdater
 
                 // Clear out passphrase
                 $privateKey->setPassword();
-
                 // Get unencrypted private key
                 $privateKey = $privateKey->getPrivateKey();
-
                 $privateKey = quoteValue($privateKey);
                 $sqlUdp[] = "UPDATE ssl_certs SET `key` = $privateKey WHERE cert_id = $certId";
             }
@@ -368,15 +361,13 @@ class DatabaseUpdater extends AbstractUpdater
     /**
      * Adds i-MSCP daemon service properties in config table
      *
-     * @return null
+     * @return void
      */
     protected function r50()
     {
         /** @var $dbConfig DbConfigHandler */
         $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
         $dbConfig['PORT_IMSCP_DAEMON'] = '9876;tcp;i-MSCP-Daemon;1;0;127.0.0.1';
-
-        return null;
     }
 
     /**
@@ -418,22 +409,20 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r53()
     {
-        $sqlUpd = array();
-
+        $sqlUpd = [];
         /** @var \iMSCP\Core\Service\EncryptionDataService $encryptionDataService */
         $encryptionDataService = Application::getInstance()->getServiceManager()->get('ServiceLocator')->get('EncryptionDataService');
         $encryptionKey = $encryptionDataService->getKey();
         $encryptionIV = $encryptionDataService->getIv();
-
         $stmt = execute_query(
             "
-				SELECT
-					mail_id, mail_pass
-				FROM
-					mail_users
-				WHERE
-					mail_type RLIKE '^(normal_mail|alias_mail|subdom_mail|alssub_mail)'
-			"
+                SELECT
+                    mail_id, mail_pass
+                FROM
+                    mail_users
+                WHERE
+                    mail_type RLIKE '^(normal_mail|alias_mail|subdom_mail|alssub_mail)'
+            "
         );
 
         if ($stmt->rowCount()) {
@@ -479,8 +468,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r60()
     {
-        $sqlUpd = array();
-
+        $sqlUpd = [];
         /** @var Connection $db */
         $db = Application::getInstance()->getServiceManager()->get('ServiceLocator')->get('Database');
 
@@ -516,10 +504,9 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r67()
     {
-        $sqlUpd = array();
+        $sqlUpd = [];
 
         // First step: Update default language (new naming convention)
-
         /** @var $dbConfig DbConfigHandler */
         $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
@@ -528,7 +515,6 @@ class DatabaseUpdater extends AbstractUpdater
         }
 
         // Second step: Removing all database languages tables
-
         /** @var Connection $db */
         $db = Application::getInstance()->getServiceManager()->get('Database');
 
@@ -541,8 +527,7 @@ class DatabaseUpdater extends AbstractUpdater
         }
 
         // Third step: Update users language property
-
-        $languagesMap = array(
+        $languagesMap = [
             'Arabic' => 'ar', 'Azerbaijani' => 'az_AZ', 'BasqueSpain' => 'eu_ES',
             'Bulgarian' => 'bg_BG', 'Catalan' => 'ca_ES', 'ChineseChina' => 'zh_CN',
             'ChineseHongKong' => 'zh_HK', 'ChineseTaiwan' => 'zh_TW', 'Czech' => 'cs_CZ',
@@ -555,7 +540,7 @@ class DatabaseUpdater extends AbstractUpdater
             'Russian' => 'ru_RU', 'Slovak' => 'sk_SK', 'SpanishArgentina' => 'es_AR',
             'SpanishSpain' => 'es_ES', 'Swedish' => 'sv_SE', 'Thai' => 'th_TH',
             'Turkish' => 'tr_TR', 'Ukrainian' => 'uk_UA'
-        );
+        ];
 
         // Updates language property of each users by using new naming convention
         foreach ($languagesMap as $language => $locale) {
@@ -575,8 +560,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r68()
     {
-        $sqlUpd = array();
-
+        $sqlUpd = [];
         $stmt = exec_query('SELECT ip_id, ip_card FROM server_ips');
 
         if ($stmt->rowCount()) {
@@ -599,7 +583,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r69()
     {
-        return array(
+        return [
             $this->changeColumn('user_gui_props', 'user_id', 'user_id INT(10) UNSIGNED NOT NULL'),
             $this->changeColumn(
                 'user_gui_props',
@@ -615,7 +599,7 @@ class DatabaseUpdater extends AbstractUpdater
                 'user_gui_props', 'lang', 'lang VARCHAR(5) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL'
             ),
             "UPDATE user_gui_props SET logo = '' WHERE logo = '0'"
-        );
+        ];
     }
 
     /**
@@ -666,7 +650,6 @@ class DatabaseUpdater extends AbstractUpdater
         }
 
         $this->removeDuplicateRowsOnColumns('user_gui_props', 'user_id');
-
         return $this->addIndex('user_gui_props', 'user_id', 'UNIQUE', 'user_id');
     }
 
@@ -681,8 +664,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function dropIndexByColumn($table, $column)
     {
-        $sqlUpd = array();
-
+        $sqlUpd = [];
         $table = quoteIdentifier($table);
         $stmt = exec_query("SHOW INDEX FROM $table WHERE column_name = ?", $column);
 
@@ -716,11 +698,11 @@ class DatabaseUpdater extends AbstractUpdater
 
         exec_query(
             "
-				CREATE TABLE $tmpTable AS SELECT * FROM $table GROUP BY $columns;
-				DELETE FROM $table;
-				INSERT INTO $table SELECT * FROM $tmpTable;
-				DROP TABLE $tmpTable;
-			"
+                CREATE TABLE $tmpTable AS SELECT * FROM $table GROUP BY $columns;
+                DELETE FROM $table;
+                INSERT INTO $table SELECT * FROM $tmpTable;
+                DROP TABLE $tmpTable;
+            "
         );
     }
 
@@ -798,82 +780,82 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r78()
     {
-        return array(
+        return [
             "
-				REPLACE INTO mail_users (
-					mail_id, mail_acc, mail_pass, mail_forward, domain_id, mail_type, sub_id, status, mail_auto_respond,
-					mail_auto_respond_text, quota, mail_addr
-				) SELECT
-					mail_id, mail_acc, mail_pass, mail_forward, t1.domain_id, mail_type, sub_id, status,
-					mail_auto_respond, mail_auto_respond_text, quota, CONCAT(mail_acc, '@', domain_name) AS mail_addr
-				FROM
-					mail_users AS t1
-				LEFT JOIN
-					domain AS t2 ON (t1.domain_id = t2.domain_id)
-				WHERE
-					t1.mail_type = 'normal_forward'
-				AND
-					t1.mail_addr = ''
-			",
+                REPLACE INTO mail_users (
+                    mail_id, mail_acc, mail_pass, mail_forward, domain_id, mail_type, sub_id, status, mail_auto_respond,
+                    mail_auto_respond_text, quota, mail_addr
+                ) SELECT
+                    mail_id, mail_acc, mail_pass, mail_forward, t1.domain_id, mail_type, sub_id, status,
+                    mail_auto_respond, mail_auto_respond_text, quota, CONCAT(mail_acc, '@', domain_name) AS mail_addr
+                FROM
+                    mail_users AS t1
+                LEFT JOIN
+                    domain AS t2 ON (t1.domain_id = t2.domain_id)
+                WHERE
+                    t1.mail_type = 'normal_forward'
+                AND
+                    t1.mail_addr = ''
+            ",
             "
-				REPLACE INTO mail_users(
-					mail_id, mail_acc, mail_pass, mail_forward, domain_id, mail_type, sub_id, status, mail_auto_respond,
-					mail_auto_respond_text, quota, mail_addr
-				) SELECT
-					mail_id, mail_acc, mail_pass, mail_forward, t1.domain_id, mail_type, sub_id, status,
-					mail_auto_respond, mail_auto_respond_text, quota, CONCAT(mail_acc, '@', alias_name) AS mail_addr
-				FROM
-					mail_users AS t1
-				LEFT JOIN
-					domain_aliasses AS t2 ON (t1.sub_id = t2.alias_id)
-				WHERE
-					t1.mail_type = 'alias_forward'
-				AND
-					t1.mail_addr = ''
-			",
+                REPLACE INTO mail_users(
+                    mail_id, mail_acc, mail_pass, mail_forward, domain_id, mail_type, sub_id, status, mail_auto_respond,
+                    mail_auto_respond_text, quota, mail_addr
+                ) SELECT
+                    mail_id, mail_acc, mail_pass, mail_forward, t1.domain_id, mail_type, sub_id, status,
+                    mail_auto_respond, mail_auto_respond_text, quota, CONCAT(mail_acc, '@', alias_name) AS mail_addr
+                FROM
+                    mail_users AS t1
+                LEFT JOIN
+                    domain_aliasses AS t2 ON (t1.sub_id = t2.alias_id)
+                WHERE
+                    t1.mail_type = 'alias_forward'
+                AND
+                    t1.mail_addr = ''
+            ",
             "
-				REPLACE INTO mail_users (
-					mail_id, mail_acc, mail_pass, mail_forward, domain_id, mail_type, sub_id, status, mail_auto_respond,
-					mail_auto_respond_text, quota, mail_addr
-				) SELECT
-					mail_id, mail_acc, mail_pass, mail_forward, t1.domain_id, mail_type, sub_id, status,
-					mail_auto_respond, mail_auto_respond_text, quota,
-					CONCAT(mail_acc, '@', subdomain_alias_name, '.', alias_name) AS mail_addr
-				FROM
-					mail_users AS t1
-				LEFT JOIN
-					subdomain_alias AS t2 ON (t1.sub_id = t2.subdomain_alias_id)
-				LEFT JOIN
-					domain_aliasses AS t3 ON (t2.alias_id = t3.alias_id)
-				WHERE
-					t1.mail_type = 'alssub_forward'
-				AND
-					t1.mail_addr = ''
-			",
+                REPLACE INTO mail_users (
+                    mail_id, mail_acc, mail_pass, mail_forward, domain_id, mail_type, sub_id, status, mail_auto_respond,
+                    mail_auto_respond_text, quota, mail_addr
+                ) SELECT
+                    mail_id, mail_acc, mail_pass, mail_forward, t1.domain_id, mail_type, sub_id, status,
+                    mail_auto_respond, mail_auto_respond_text, quota,
+                    CONCAT(mail_acc, '@', subdomain_alias_name, '.', alias_name) AS mail_addr
+                FROM
+                    mail_users AS t1
+                LEFT JOIN
+                    subdomain_alias AS t2 ON (t1.sub_id = t2.subdomain_alias_id)
+                LEFT JOIN
+                    domain_aliasses AS t3 ON (t2.alias_id = t3.alias_id)
+                WHERE
+                    t1.mail_type = 'alssub_forward'
+                AND
+                    t1.mail_addr = ''
+            ",
             "
-				REPLACE INTO mail_users(
-					mail_id, mail_acc, mail_pass, mail_forward, domain_id, mail_type, sub_id, status, mail_auto_respond,
-					mail_auto_respond_text, quota, mail_addr
-				) SELECT
-					mail_id, mail_acc, mail_pass, mail_forward, t1.domain_id, mail_type, sub_id, status,
-					mail_auto_respond, mail_auto_respond_text, quota,
-					CONCAT(mail_acc, '@', subdomain_name, '.', domain_name) AS mail_addr
-				FROM
-					mail_users AS t1
-				LEFT JOIN
-					subdomain AS t2 ON (t1.sub_id = t2.subdomain_id)
-				LEFT JOIN
-					domain AS t3 ON (t2.domain_id = t3.domain_id)
-				WHERE
-					t1.mail_type = 'subdom_forward' AND t1.mail_addr = ''
-			"
-        );
+                REPLACE INTO mail_users(
+                    mail_id, mail_acc, mail_pass, mail_forward, domain_id, mail_type, sub_id, status, mail_auto_respond,
+                    mail_auto_respond_text, quota, mail_addr
+                ) SELECT
+                    mail_id, mail_acc, mail_pass, mail_forward, t1.domain_id, mail_type, sub_id, status,
+                    mail_auto_respond, mail_auto_respond_text, quota,
+                    CONCAT(mail_acc, '@', subdomain_name, '.', domain_name) AS mail_addr
+                FROM
+                    mail_users AS t1
+                LEFT JOIN
+                    subdomain AS t2 ON (t1.sub_id = t2.subdomain_id)
+                LEFT JOIN
+                    domain AS t3 ON (t2.domain_id = t3.domain_id)
+                WHERE
+                    t1.mail_type = 'subdom_forward' AND t1.mail_addr = ''
+            "
+        ];
     }
 
     /**
      * #15: Feature - PHP Editor -  Add/Update system wide values
      *
-     * @return null
+     * @return void
      */
     protected function r84()
     {
@@ -889,7 +871,6 @@ class DatabaseUpdater extends AbstractUpdater
         $dbConfig['PHPINI_MAX_EXECUTION_TIME'] = '30';
         $dbConfig['PHPINI_ERROR_REPORTING'] = 'E_ALL & ~E_NOTICE';
         $dbConfig['PHPINI_DISABLE_FUNCTIONS'] = 'show_source,system,shell_exec,passthru,exec,phpinfo,shell,symlink';
-        return null;
     }
 
     /**
@@ -900,7 +881,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r85()
     {
-        return array(
+        return [
             // Reseller permissions columns for PHP directives
             $this->addColumn(
                 'reseller_props', 'php_ini_system', "VARCHAR(15) NOT NULL DEFAULT 'no' AFTER reseller_ips"
@@ -977,7 +958,7 @@ class DatabaseUpdater extends AbstractUpdater
                 'phpini_perm_disable_functions',
                 "VARCHAR(15) NOT NULL DEFAULT 'no' AFTER phpini_perm_allow_url_fopen"
             )
-        );
+        ];
     }
 
     /**
@@ -990,22 +971,22 @@ class DatabaseUpdater extends AbstractUpdater
         return
             // php_ini table for custom PHP directives (per domain)
             "CREATE TABLE IF NOT EXISTS php_ini (
-				id INT(11) NOT NULL AUTO_INCREMENT,
-				domain_id INT(10) NOT NULL,
-				status VARCHAR(55) COLLATE utf8_unicode_ci NOT NULL,
-				disable_functions VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'show_source,system,shell_exec,passthru,exec,phpinfo,shell,symlink',
-				allow_url_fopen VARCHAR(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'off',
-				register_globals VARCHAR(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'off',
-				display_errors VARCHAR(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'off',
-				error_reporting VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'E_ALL & ~E_NOTICE',
-				post_max_size INT(11) NOT NULL DEFAULT '8',
-				upload_max_filesize INT(11) NOT NULL DEFAULT '2',
-				max_execution_time INT(11) NOT NULL DEFAULT '30',
-				max_input_time INT(11) NOT NULL DEFAULT '60',
-				memory_limit INT(11) NOT NULL DEFAULT '64',
-				PRIMARY KEY (ID)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-		";
+                id INT(11) NOT NULL AUTO_INCREMENT,
+                domain_id INT(10) NOT NULL,
+                status VARCHAR(55) COLLATE utf8_unicode_ci NOT NULL,
+                disable_functions VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'show_source,system,shell_exec,passthru,exec,phpinfo,shell,symlink',
+                allow_url_fopen VARCHAR(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'off',
+                register_globals VARCHAR(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'off',
+                display_errors VARCHAR(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'off',
+                error_reporting VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'E_ALL & ~E_NOTICE',
+                post_max_size INT(11) NOT NULL DEFAULT '8',
+                upload_max_filesize INT(11) NOT NULL DEFAULT '2',
+                max_execution_time INT(11) NOT NULL DEFAULT '30',
+                max_input_time INT(11) NOT NULL DEFAULT '60',
+                memory_limit INT(11) NOT NULL DEFAULT '64',
+                PRIMARY KEY (ID)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+        ";
     }
 
     /**
@@ -1017,27 +998,27 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r88()
     {
-        $sqlUpd = array();
+        $sqlUpd = [];
 
         // Reset reseller permissions
         foreach (
-            array(
+            [
                 'php_ini_system', 'php_ini_al_disable_functions', 'php_ini_al_allow_url_fopen',
                 'php_ini_al_register_globals', 'php_ini_al_display_errors'
-            ) as $permission
+            ] as $permission
         ) {
             $sqlUpd[] = "UPDATE reseller_props SET $permission = 'no'";
         }
 
         // Reset reseller default values for PHP directives (To default system wide value)
         foreach (
-            array(
+            [
                 'post_max_size' => '8',
                 'upload_max_filesize' => '2',
                 'max_execution_time' => '30',
                 'max_input_time' => '60',
                 'memory_limit' => '64'
-            ) as $directive => $defaultValue
+            ] as $directive => $defaultValue
         ) {
             $sqlUpd[] = "UPDATE reseller_props SET php_ini_max_{$directive} = '$defaultValue'";
         }
@@ -1053,10 +1034,8 @@ class DatabaseUpdater extends AbstractUpdater
     protected function r89()
     {
         $sqlupd = 'TRUNCATE TABLE php_ini';
-
         // Schedule backend process in case user do update from frontend
         $this->_daemonRequest = true;
-
         return $sqlupd;
     }
 
@@ -1097,7 +1076,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r95()
     {
-        return array(
+        return [
             $this->addIndex('domain', 'domain_id'), // Add PRIMARY KEY
             $this->dropIndexByName('domain', 'domain_id'), // Remove UNIQUE index
 
@@ -1127,7 +1106,7 @@ class DatabaseUpdater extends AbstractUpdater
 
             $this->addIndex('sql_user', 'sqlu_id'), // Add PRIMARY KEY
             $this->dropIndexByName('sql_user', 'sqlu_id') // Remove UNIQUE index
-        );
+        ];
     }
 
     /**
@@ -1187,12 +1166,12 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r98()
     {
-        return array(
+        return [
             "UPDATE custom_menus SET menu_level = 'A' WHERE menu_level = 'admin'",
             "UPDATE custom_menus SET menu_level = 'R' WHERE menu_level = 'reseller'",
             "UPDATE custom_menus SET menu_level = 'C' WHERE menu_level = 'user'",
             "UPDATE custom_menus SET menu_level = 'RC' WHERE menu_level = 'all'"
-        );
+        ];
     }
 
     /**
@@ -1204,18 +1183,18 @@ class DatabaseUpdater extends AbstractUpdater
     {
         return
             "CREATE TABLE IF NOT EXISTS ssl_certs (
-				cert_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-				id INT(10) NOT NULL,
-				`type` ENUM('dmn','als','sub','alssub') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'dmn',
-				password VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
-				`key` TEXT COLLATE utf8_unicode_ci NOT NULL,
-				cert TEXT COLLATE utf8_unicode_ci NOT NULL,
-				ca_cert TEXT COLLATE utf8_unicode_ci,
-				status VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
-				PRIMARY KEY (cert_id),
-				KEY id (id)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-		";
+                cert_id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+                id INT(10) NOT NULL,
+                `type` ENUM('dmn','als','sub','alssub') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'dmn',
+                password VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+                `key` TEXT COLLATE utf8_unicode_ci NOT NULL,
+                cert TEXT COLLATE utf8_unicode_ci NOT NULL,
+                ca_cert TEXT COLLATE utf8_unicode_ci,
+                status VARCHAR(255) COLLATE utf8_unicode_ci NOT NULL,
+                PRIMARY KEY (cert_id),
+                KEY id (id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+        ";
     }
 
     /**
@@ -1240,17 +1219,17 @@ class DatabaseUpdater extends AbstractUpdater
     protected function r103()
     {
         return "
-			CREATE TABLE IF NOT EXISTS plugin (
-				plugin_id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-				plugin_name VARCHAR(50) COLLATE utf8_unicode_ci NOT NULL,
-				plugin_type VARCHAR(20) COLLATE utf8_unicode_ci NOT NULL,
-				plugin_info TEXT COLLATE utf8_unicode_ci NOT NULL,
-				plugin_config TEXT COLLATE utf8_unicode_ci DEFAULT NULL,
-				plugin_status VARCHAR(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'disabled',
-				PRIMARY KEY (plugin_id),
-				UNIQUE KEY name (plugin_name)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-		";
+            CREATE TABLE IF NOT EXISTS plugin (
+                plugin_id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+                plugin_name VARCHAR(50) COLLATE utf8_unicode_ci NOT NULL,
+                plugin_type VARCHAR(20) COLLATE utf8_unicode_ci NOT NULL,
+                plugin_info TEXT COLLATE utf8_unicode_ci NOT NULL,
+                plugin_config TEXT COLLATE utf8_unicode_ci DEFAULT NULL,
+                plugin_status VARCHAR(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'disabled',
+                PRIMARY KEY (plugin_id),
+                UNIQUE KEY name (plugin_name)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+        ";
     }
 
     /**
@@ -1260,7 +1239,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r104()
     {
-        return array(
+        return [
             // change to allows forward mail list
             $this->changeColumn(
                 'mail_users', 'mail_acc', 'mail_acc TEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL'
@@ -1270,13 +1249,13 @@ class DatabaseUpdater extends AbstractUpdater
                 'mail_addr',
                 'mail_addr VARCHAR(254) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL'
             )
-        );
+        ];
     }
 
     /**
      * Added parameter to allow the admin to append some paths to the default PHP open_basedir directive of customers
      *
-     * @return null
+     * @return void
      */
     protected function r105()
     {
@@ -1286,8 +1265,6 @@ class DatabaseUpdater extends AbstractUpdater
         if (!isset($dbConfig['PHPINI_OPEN_BASEDIR'])) {
             $dbConfig['PHPINI_OPEN_BASEDIR'] = '';
         }
-
-        return null;
     }
 
     /**
@@ -1297,7 +1274,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r106()
     {
-        return array(
+        return [
             $this->addIndex('admin', 'created_by', 'INDEX', 'created_by'),
             $this->addIndex('domain_aliasses', 'domain_id', 'INDEX', 'domain_id'),
             $this->addIndex('mail_users', 'domain_id', 'INDEX', 'domain_id'),
@@ -1306,7 +1283,7 @@ class DatabaseUpdater extends AbstractUpdater
             $this->addIndex('sql_user', 'sqld_id', 'INDEX', 'sqld_id'),
             $this->addIndex('subdomain', 'domain_id', 'INDEX', 'domain_id'),
             $this->addIndex('subdomain_alias', 'alias_id', 'INDEX', 'alias_id')
-        );
+        ];
     }
 
     /**
@@ -1333,13 +1310,13 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r109()
     {
-        return array(
+        return [
             $this->addColumn('domain', 'domain_external_mail', "VARCHAR(15) NOT NULL DEFAULT 'no'"),
             $this->addColumn('domain', 'external_mail', "VARCHAR(15) NOT NULL DEFAULT 'off'"),
             $this->addColumn('domain', 'external_mail_dns_ids', "VARCHAR(255) NOT NULL"),
             $this->addColumn('domain_aliasses', 'external_mail', "VARCHAR(15) NOT NULL DEFAULT 'off'"),
             $this->addColumn('domain_aliasses', 'external_mail_dns_ids', "VARCHAR(255) NOT NULL")
-        );
+        ];
     }
 
     /**
@@ -1349,10 +1326,10 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r110()
     {
-        return array(
+        return [
             $this->dropColumn('domain', 'external_mail_status'),
             $this->dropColumn('domain_aliasses', 'external_mail_status'),
-        );
+        ];
     }
 
     /**
@@ -1362,7 +1339,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r112()
     {
-        return array(
+        return [
             $this->changeColumn(
                 'quotalimits',
                 'name',
@@ -1373,7 +1350,7 @@ class DatabaseUpdater extends AbstractUpdater
                 'name',
                 "name VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT ''"
             )
-        );
+        ];
     }
 
     /**
@@ -1390,11 +1367,11 @@ class DatabaseUpdater extends AbstractUpdater
             unset($dbConfig['PHPINI_REGISTER_GLOBALS']);
         }
 
-        return array(
+        return [
             $this->dropColumn('domain', 'phpini_perm_register_globals'),
             $this->dropColumn('reseller_props', 'php_ini_al_register_globals'),
             $this->dropColumn('php_ini', 'register_globals')
-        );
+        ];
     }
 
     /**
@@ -1404,7 +1381,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r114()
     {
-        return array(
+        return [
             // domain_dns.domain_id field should never be set to zero
             "
                 UPDATE
@@ -1524,7 +1501,7 @@ class DatabaseUpdater extends AbstractUpdater
             // Custom DNS CNAME record set via external mail feature are no longer allowed (User will have to re-add them)
             // via the custom DNS interface (easy update way)
             "DELETE FROM domain_dns WHERE domain_type = 'CNAME' AND protected = 'yes'"
-        );
+        ];
     }
 
     /**
@@ -1536,15 +1513,14 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r115()
     {
-        $sqlUpd = array();
-
-        $tablesToForeignKey = array(
+        $sqlUpd = [];
+        $tablesToForeignKey = [
             'email_tpls' => 'owner_id',
             'hosting_plans' => 'reseller_id',
             'reseller_props' => 'reseller_id',
-            'tickets' => array('ticket_to', 'ticket_from'),
+            'tickets' => ['ticket_to', 'ticket_from'],
             'user_gui_props' => 'user_id'
-        );
+        ];
 
         $stmt = execute_query('SELECT admin_id FROM admin');
         $usersIds = implode(',', $stmt->fetchall(\PDO::FETCH_COLUMN));
@@ -1569,11 +1545,11 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r116()
     {
-        return array(
+        return [
             $this->addColumn('domain', 'domain_disk_file', 'bigint(20) unsigned default NULL AFTER domain_disk_usage'),
             $this->addColumn('domain', 'domain_disk_mail', 'bigint(20) unsigned default NULL AFTER domain_disk_file'),
             $this->addColumn('domain', 'domain_disk_sql', 'bigint(20) unsigned default NULL AFTER domain_disk_mail')
-        );
+        ];
     }
 
     /**
@@ -1583,7 +1559,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r117()
     {
-        return array(
+        return [
             $this->dropTable('roundcube_session'),
             $this->dropTable('roundcube_searches'),
             $this->dropTable('roundcube_identities'),
@@ -1596,7 +1572,7 @@ class DatabaseUpdater extends AbstractUpdater
             $this->dropTable('roundcube_cache_index'),
             $this->dropTable('roundcube_cache'),
             $this->dropTable('roundcube_users')
-        );
+        ];
     }
 
     /**
@@ -1621,12 +1597,12 @@ class DatabaseUpdater extends AbstractUpdater
         $dbConfig['PHPINI_ALLOW_URL_FOPEN'] = 'off';
         $dbConfig['PHPINI_DISPLAY_ERRORS'] = 'off';
 
-        return array(
+        return [
             "UPDATE php_ini SET allow_url_fopen = 'on' WHERE allow_url_fopen = 'On'",
             "UPDATE php_ini SET allow_url_fopen = 'off' WHERE allow_url_fopen = 'Off'",
             "UPDATE php_ini SET display_errors = 'on' WHERE display_errors = 'On'",
             "UPDATE php_ini SET display_errors = 'off' WHERE display_errors = 'Off'"
-        );
+        ];
     }
 
     /**
@@ -1636,14 +1612,13 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r120()
     {
-        $sqlUpd = array();
-
-        $constantToInteger = array(
+        $sqlUpd = [];
+        $constantToInteger = [
             'E_ALL & ~E_NOTICE & ~E_WARNING' => '30711', // Switch to E_ALL & ~E_NOTICE
             'E_ALL & ~E_DEPRECATED' => '22527', // Production
             'E_ALL & ~E_NOTICE' => '30711', // Default
             'E_ALL | E_STRICT' => '32767' // Development
-        );
+        ];
 
         foreach ($constantToInteger as $c => $i) {
             $sqlUpd[] = "UPDATE config SET `value` = '$i' WHERE name = 'PHPINI_ERROR_REPORTING' AND `value` ='$c'";
@@ -1653,7 +1628,6 @@ class DatabaseUpdater extends AbstractUpdater
         /** @var $dbConfig DbConfigHandler */
         $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
         $dbConfig->refresh();
-
         return $sqlUpd;
     }
 
@@ -1664,7 +1638,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r122()
     {
-        return array(
+        return [
             "
                 ALTER TABLE
                     domain_aliasses CHANGE url_forward url_forward
@@ -1702,7 +1676,7 @@ class DatabaseUpdater extends AbstractUpdater
                 OR
                     subdomain_alias_url_forward = ''
             "
-        );
+        ];
     }
 
     /**
@@ -1726,10 +1700,10 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r124()
     {
-        return array(
+        return [
             $this->addColumn('admin', 'admin_sys_uid', "INT(10) UNSIGNED NOT NULL DEFAULT '0' AFTER admin_type"),
             $this->addColumn('admin', 'admin_sys_gid', "INT(10) UNSIGNED NOT NULL DEFAULT '0' AFTER admin_sys_uid")
-        );
+        ];
     }
 
     /**
@@ -1740,7 +1714,6 @@ class DatabaseUpdater extends AbstractUpdater
     protected function r125()
     {
         $sqlUpdt = '';
-
         $stmt = exec_query("SHOW COLUMNS FROM domain LIKE 'domain_uid'");
 
         if ($stmt->rowCount()) {
@@ -1765,10 +1738,10 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r126()
     {
-        return array(
+        return [
             $this->dropColumn('domain', 'domain_uid'),
             $this->dropColumn('domain', 'domain_gid')
-        );
+        ];
     }
 
     /**
@@ -1831,10 +1804,10 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r131()
     {
-        return array(
+        return [
             $this->dropTable('orders'),
             $this->dropTable('orders_settings')
-        );
+        ];
     }
 
     /**
@@ -1844,20 +1817,20 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r133()
     {
-        return array(
+        return [
             $this->dropColumn('hosting_plans', 'price'),
             $this->dropColumn('hosting_plans', 'setup_fee'),
             $this->dropColumn('hosting_plans', 'value'),
             $this->dropColumn('hosting_plans', 'vat'),
             $this->dropColumn('hosting_plans', 'payment'),
             $this->dropColumn('hosting_plans', 'tos')
-        );
+        ];
     }
 
     /**
      * Delete order component related parameters
      *
-     * @return null
+     * @return void
      */
     protected function r134()
     {
@@ -1871,8 +1844,6 @@ class DatabaseUpdater extends AbstractUpdater
         if (isset($dbConfig['ORDERS_EXPIRE_TIME'])) {
             unset($dbConfig['ORDERS_EXPIRE_TIME']);
         }
-
-        return null;
     }
 
     /**
@@ -1928,7 +1899,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r140()
     {
-        $map = array(
+        $map = [
             'ssl_certs' => 'status',
             'admin' => 'admin_status',
             'domain' => 'domain_status',
@@ -1939,10 +1910,9 @@ class DatabaseUpdater extends AbstractUpdater
             'htaccess' => 'status',
             'htaccess_groups' => 'status',
             'htaccess_users' => 'status'
-        );
+        ];
 
-        $sqlUpd = array();
-
+        $sqlUpd = [];
         $tochange = 'tochange';
         $todelete = 'todelete';
 
@@ -1961,7 +1931,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r141()
     {
-        $sqlUdp = array();
+        $sqlUdp = [];
 
         if (
             ($q = $this->addColumn(
@@ -1983,7 +1953,6 @@ class DatabaseUpdater extends AbstractUpdater
             $toenable = 'toenable';
             $todisable = 'todisable';
             $todelete = 'todelete';
-
             $sqlUdp[] = "
                 UPDATE
                     plugin AS t1
@@ -1998,7 +1967,6 @@ class DatabaseUpdater extends AbstractUpdater
                         '$todisable', '$todelete'
                     )
             ";
-
             $sqlUdp[] = "
                 ALTER TABLE
                     plugin
@@ -2014,7 +1982,7 @@ class DatabaseUpdater extends AbstractUpdater
     /**
      * Removes ports entries for unsupported services
      *
-     * @return null|string
+     * @return void
      */
     protected function r142()
     {
@@ -2028,8 +1996,6 @@ class DatabaseUpdater extends AbstractUpdater
         if (isset($dbConfig['PORT_SPAMASSASSIN'])) {
             unset($dbConfig['PORT_SPAMASSASSIN']);
         }
-
-        return null;
     }
 
     /**
@@ -2053,8 +2019,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r145()
     {
-        $sqlUdp = array();
-
+        $sqlUdp = [];
         $stmt = execute_query('SELECT plugin_id, plugin_info, plugin_config FROM plugin');
 
         if ($stmt->rowCount()) {
@@ -2096,7 +2061,6 @@ class DatabaseUpdater extends AbstractUpdater
     protected function r148()
     {
         $this->removeDuplicateRowsOnColumns('server_ips', 'ip_number');
-
         return $this->addIndex('server_ips', 'ip_number', 'UNIQUE', 'ip_number');
     }
 
@@ -2139,8 +2103,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r151()
     {
-        $sqlUpd = array();
-
+        $sqlUpd = [];
         $stmt = exec_query("SHOW COLUMNS FROM domain_dns LIKE 'protected'");
 
         if ($stmt->rowCount()) {
@@ -2158,7 +2121,6 @@ class DatabaseUpdater extends AbstractUpdater
 
         $sqlUpd[] = "UPDATE domain_dns SET owned_by = 'custom_dns_feature' WHERE owned_by = 'no'";
         $sqlUpd[] = "UPDATE domain_dns SET owned_by = 'ext_mail_feature' WHERE domain_type = 'MX' AND owned_by = 'yes'";
-
         return $sqlUpd;
     }
 
@@ -2219,7 +2181,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r165()
     {
-        return array(
+        return [
             '
                 UPDATE
                     domain AS t1
@@ -2256,13 +2218,13 @@ class DatabaseUpdater extends AbstractUpdater
                 AND
                     t1.mail_quota < t2.nb_mailboxes
             '
-        );
+        ];
     }
 
     /**
      * Synchronize mailboxes quota
      *
-     * @return null
+     * @return void
      */
     protected function r166()
     {
@@ -2271,8 +2233,6 @@ class DatabaseUpdater extends AbstractUpdater
         while ($data = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             sync_mailboxes_quota($data['domain_id'], $data['mail_quota']);
         }
-
-        return null;
     }
 
     /**
@@ -2288,7 +2248,7 @@ class DatabaseUpdater extends AbstractUpdater
     /**
      * Remove deprecated Domain name parameters
      *
-     * @return null
+     * @return void
      */
     protected function r168()
     {
@@ -2310,14 +2270,12 @@ class DatabaseUpdater extends AbstractUpdater
         if (isset($dbConfig['MAX_SUBDNAMES_LABELS'])) {
             unset($dbConfig['MAX_SUBDNAMES_LABELS']);
         }
-
-        return null;
     }
 
     /**
      * Update service ports
      *
-     * @return null
+     * @return void
      */
     protected function r169()
     {
@@ -2325,12 +2283,9 @@ class DatabaseUpdater extends AbstractUpdater
         $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
 
         # Retrieve service ports
-        $services = array_filter(
-            array_keys($dbConfig->toArray()),
-            function ($name) {
-                return (strlen($name) > 5 && substr($name, 0, 5) == 'PORT_');
-            }
-        );
+        $services = array_filter(array_keys($dbConfig->toArray()), function ($name) {
+            return (strlen($name) > 5 && substr($name, 0, 5) == 'PORT_');
+        });
 
         foreach ($services as $name) {
             $values = explode(';', $dbConfig[$name]);
@@ -2341,12 +2296,9 @@ class DatabaseUpdater extends AbstractUpdater
                 }
 
                 unset($values[4]); // All port are now editable - We remove custom port field
-
                 $dbConfig[$name] = implode(';', $values);
             }
         }
-
-        return null;
     }
 
     /**
@@ -2356,10 +2308,10 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r170()
     {
-        return array(
+        return [
             "UPDATE domain SET external_mail = 'domain' WHERE external_mail = 'on'",
             "UPDATE domain_aliasses SET external_mail = 'domain' WHERE external_mail = 'on'"
-        );
+        ];
     }
 
     /**
@@ -2379,27 +2331,30 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function  r172()
     {
-        if (getmyuid() === 0) {
-            $sqlUdp = array(
-                $this->addColumn(
-                    'admin', 'admin_sys_name', 'varchar(16) collate utf8_unicode_ci DEFAULT NULL AFTER admin_type'
-                ),
-                $this->addColumn(
-                    'admin', 'admin_sys_gname', 'varchar(32) collate utf8_unicode_ci DEFAULT NULL AFTER admin_sys_uid'
-                )
+        if (getmyuid() !== 0) {
+            throw new \RuntimeException(
+                'Database update 172 require root user privileges. Please run the i-MSCP installer.'
             );
+        }
 
-            $stmt = exec_query("SELECT admin_id, admin_sys_uid FROM admin WHERE admin_type in('admin', 'user')");
+        $sqlUdp = [
+            $this->addColumn(
+                'admin', 'admin_sys_name', 'varchar(16) collate utf8_unicode_ci DEFAULT NULL AFTER admin_type'
+            ),
+            $this->addColumn(
+                'admin', 'admin_sys_gname', 'varchar(32) collate utf8_unicode_ci DEFAULT NULL AFTER admin_sys_uid'
+            )
+        ];
 
-            while ($data = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-                if ($data['admin_sys_uid']) {
-                    $adminSysPwUid = posix_getpwuid($data['admin_sys_uid']);
-                    $adminSysGrUid = posix_getgrgid($adminSysPwUid['gid']);
+        $stmt = exec_query("SELECT admin_id, admin_sys_uid FROM admin WHERE admin_type in('admin', 'user')");
 
-                    $adminSysName = quoteValue($adminSysPwUid['name']);
-                    $adminSysGname = quoteValue($adminSysGrUid['name']);
-
-                    $sqlUdp[] = "
+        while ($data = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            if ($data['admin_sys_uid']) {
+                $adminSysPwUid = posix_getpwuid($data['admin_sys_uid']);
+                $adminSysGrUid = posix_getgrgid($adminSysPwUid['gid']);
+                $adminSysName = quoteValue($adminSysPwUid['name']);
+                $adminSysGname = quoteValue($adminSysGrUid['name']);
+                $sqlUdp[] = "
                         UPDATE
                             admin
                         SET
@@ -2407,15 +2362,10 @@ class DatabaseUpdater extends AbstractUpdater
                         WHERE
                             admin_id = {$data['admin_id']}
                     ";
-                }
             }
-
-            return $sqlUdp;
-        } else {
-            throw new \RuntimeException(
-                'Database update 172 require root user privileges. Please run the i-MSCP installer.'
-            );
         }
+
+        return $sqlUdp;
     }
 
     /**
@@ -2425,11 +2375,11 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r173()
     {
-        return array(
+        return [
             $this->dropColumn('server_ips', 'ip_domain'),
             $this->dropColumn('server_ips', 'ip_alias'),
             $this->dropColumn('server_ips', 'ip_ssl_domain_id')
-        );
+        ];
     }
 
     /**
@@ -2449,7 +2399,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r176()
     {
-        return array(
+        return [
             // sql_database table update
             $this->changeColumn('sql_database', 'domain_id', 'domain_id INT(10) UNSIGNED NOT NULL'),
             $this->changeColumn(
@@ -2470,7 +2420,7 @@ class DatabaseUpdater extends AbstractUpdater
             ),
             $this->addIndex('sql_user', 'sqlu_name', 'INDEX', 'sqlu_name'),
             $this->addIndex('sql_user', 'sqlu_host', 'INDEX', 'sqlu_host')
-        );
+        ];
     }
 
     /**
@@ -2480,8 +2430,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r177()
     {
-        $sqlUdp = array();
-
+        $sqlUdp = [];
         $config = Application::getInstance()->getConfig();
         $sqlUserHost = $config['DATABASE_USER_HOST'];
 
@@ -2490,13 +2439,11 @@ class DatabaseUpdater extends AbstractUpdater
         }
 
         $sqlUserHost = quoteValue($sqlUserHost);
-
         $stmt = exec_query('SELECT DISTINCT sqlu_name FROM sql_user');
 
         if ($stmt->rowCount()) {
             while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
                 $sqlUser = quoteValue($row['sqlu_name']);
-
                 $sqlUdp[] = "
                     UPDATE
                         mysql.user
@@ -2614,7 +2561,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r186()
     {
-        return $this->addIndex('ssl_certs', array('domain_id', 'domain_type'), 'UNIQUE', 'domain_id_domain_type');
+        return $this->addIndex('ssl_certs', ['domain_id', 'domain_type'], 'UNIQUE', 'domain_id_domain_type');
     }
 
     /**
@@ -2624,19 +2571,16 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r189()
     {
-        $sqlUdp = array();
-
+        $sqlUdp = [];
         $stmt = execute_query('SELECT cert_id, private_key, certificate, ca_bundle FROM ssl_certs');
 
         if ($stmt->rowCount()) {
             while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
                 $certificateId = quoteValue($row['cert_id'], \PDO::PARAM_INT);
-
                 // Data normalization
                 $privateKey = quoteValue(str_replace("\r\n", "\n", trim($row['private_key'])) . PHP_EOL);
                 $certificate = quoteValue(str_replace("\r\n", "\n", trim($row['certificate'])) . PHP_EOL);
                 $caBundle = quoteValue(str_replace("\r\n", "\n", trim($row['ca_bundle'])));
-
                 $sqlUdp[] = "
                     UPDATE
                         ssl_certs
@@ -2654,7 +2598,7 @@ class DatabaseUpdater extends AbstractUpdater
     /**
      * Delete deprecated Web folder protection parameter
      *
-     * @return null
+     * @return void
      */
     protected function r190()
     {
@@ -2664,8 +2608,6 @@ class DatabaseUpdater extends AbstractUpdater
         if (isset($dbConfig['WEB_FOLDER_PROTECTION'])) {
             unset($dbConfig['WEB_FOLDER_PROTECTION']);
         }
-
-        return null;
     }
 
     /**
@@ -2706,11 +2648,11 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r193()
     {
-        return array(
+        return [
             $this->addIndex('mail_users', 'mail_addr', 'INDEX', 'mail_addr'),
             $this->addIndex('mail_users', 'status', 'INDEX', 'status'),
             $this->addIndex('mail_users', 'po_active', 'INDEX', 'po_active')
-        );
+        ];
     }
 
     /**
@@ -2720,10 +2662,10 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r194()
     {
-        return array(
+        return [
             $this->addColumn('plugin', 'plugin_priority', "INT(11) UNSIGNED NOT NULL DEFAULT '0' AFTER plugin_config"),
             $this->addIndex('plugin', 'plugin_priority', 'INDEX', 'plugin_priority')
-        );
+        ];
     }
 
     /**
@@ -2803,7 +2745,7 @@ class DatabaseUpdater extends AbstractUpdater
         );
 
         if ($sql !== null) {
-            return array($sql, 'UPDATE plugin SET plugin_config_prev = plugin_config');
+            return [$sql, 'UPDATE plugin SET plugin_config_prev = plugin_config'];
         }
 
         return null;
@@ -2816,14 +2758,14 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r201()
     {
-        return array(
+        return [
             $this->changeColumn(
                 'plugin',
                 'plugin_config_prev',
                 'plugin_config_prev TEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL'
             ),
             'UPDATE plugin SET plugin_config_prev = plugin_config'
-        );
+        ];
     }
 
     /**
@@ -2838,7 +2780,6 @@ class DatabaseUpdater extends AbstractUpdater
         }
 
         $this->removeDuplicateRowsOnColumns('mail_users', 'mail_addr');
-
         return $this->addIndex('mail_users', 'mail_addr', 'UNIQUE', 'mail_addr');
     }
 
@@ -2849,7 +2790,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r203()
     {
-        return array(
+        return [
             $this->changeColumn(
                 'domain',
                 'allowbackup',
@@ -2857,7 +2798,7 @@ class DatabaseUpdater extends AbstractUpdater
             ),
             "UPDATE domain SET allowbackup = REPLACE(allowbackup, 'full', 'dmn|sql|mail')",
             "UPDATE domain SET allowbackup = REPLACE(allowbackup, 'no', '')"
-        );
+        ];
     }
 
     /**
@@ -2919,7 +2860,6 @@ class DatabaseUpdater extends AbstractUpdater
             $uri = new Uri($row['url_forward']);
             $uriPath = rtrim(preg_replace('#/+#', '/', $uri->getPath()), '/') . '/';
             $uri->setPath($uriPath);
-
             exec_query('UPDATE domain_aliasses SET url_forward = ? WHERE alias_id = ?', [$uri, $row['alias_id']]);
         }
 
@@ -2931,10 +2871,9 @@ class DatabaseUpdater extends AbstractUpdater
             $uri = new Uri($row['subdomain_url_forward']);
             $uriPath = rtrim(preg_replace('#/+#', '/', $uri->getPath()), '/') . '/';
             $uri->setPath($uriPath);
-
-            exec_query(
-                'UPDATE subdomain SET subdomain_url_forward = ? WHERE subdomain_id = ?', [$uri, $row['subdomain_id']]
-            );
+            exec_query('UPDATE subdomain SET subdomain_url_forward = ? WHERE subdomain_id = ?', [
+                $uri, $row['subdomain_id']
+            ]);
         }
 
         $stmt = exec_query(
@@ -2949,14 +2888,11 @@ class DatabaseUpdater extends AbstractUpdater
         );
         while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $uri = new Uri($row['subdomain_alias_url_forward']);
-
             $uriPath = rtrim(preg_replace('#/+#', '/', $uri->getPath()), '/') . '/';
             $uri->setPath($uriPath);
-
-            exec_query(
-                'UPDATE subdomain_alias SET subdomain_alias_url_forward = ? WHERE subdomain_alias_id = ?',
-                [$uri, $row['subdomain_alias_id']]
-            );
+            exec_query('UPDATE subdomain_alias SET subdomain_alias_url_forward = ? WHERE subdomain_alias_id = ?', [
+                $uri, $row['subdomain_alias_id']
+            ]);
         }
     }
 
@@ -2968,7 +2904,6 @@ class DatabaseUpdater extends AbstractUpdater
     protected function r213()
     {
         $sqlUpd = [];
-
         $sql = $this->addColumn(
             'domain_aliasses',
             'type_forward',
@@ -3065,23 +3000,18 @@ class DatabaseUpdater extends AbstractUpdater
     /**
      * Encrypt all mail user passwords using SHA512-crypt algorithm
      *
-     * @return null
+     * @return void
      */
     protected function r219()
     {
-        $stmt = exec_query(
-            "SELECT mail_id, mail_pass FROM mail_users WHERE mail_pass <> ? AND mail_pass NOT LIKE ?",
-            array('_no_', '$6$%')
-        );
+        $stmt = exec_query("SELECT mail_id, mail_pass FROM mail_users WHERE mail_pass <> ? AND mail_pass NOT LIKE ?", [
+            '_no_', '$6$%'
+        ]);
 
         while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $row['mail_pass'] = Crypt::sha512($row['mail_pass']);
-            exec_query(
-                'UPDATE mail_users SET mail_pass = ? WHERE mail_id = ?', array($row['mail_pass'], $row['mail_id'])
-            );
+            exec_query('UPDATE mail_users SET mail_pass = ? WHERE mail_id = ?', [$row['mail_pass'], $row['mail_id']]);
         }
-
-        return null;
     }
 
     /**
@@ -3091,7 +3021,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r220()
     {
-        return array(
+        return [
             $this->dropTable('web_software'),
             $this->dropTable('web_software_depot'),
             $this->dropTable('web_software_inst'),
@@ -3100,7 +3030,7 @@ class DatabaseUpdater extends AbstractUpdater
             $this->dropColumn('reseller_props', 'software_allowed'),
             $this->dropColumn('reseller_props', 'softwaredepot_allowed'),
             $this->dropColumn('reseller_props', 'websoftwaredepot_allowed')
-        );
+        ];
     }
 
     /**
@@ -3120,7 +3050,7 @@ class DatabaseUpdater extends AbstractUpdater
      */
     protected function r222()
     {
-        return array(
+        return [
             $this->addColumn(
                 'ssl_certs',
                 'hsts_max_age',
@@ -3131,7 +3061,7 @@ class DatabaseUpdater extends AbstractUpdater
                 'hsts_include_subdomains',
                 "VARCHAR(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'off' AFTER hsts_max_age"
             )
-        );
+        ];
     }
 
     /**
@@ -3179,7 +3109,6 @@ class DatabaseUpdater extends AbstractUpdater
             $indexName = quoteIdentifier($indexName);
             $newIndexName = quoteIdentifier(($row['key_name'] == 'PRIMARY') ? $column : $row['key_name']);
             $column = quoteIdentifier($column);
-
             return sprintf(
                 'ALTER TABLE %s DROP INDEX %s, ADD %s %s (%s)', $table, $indexName, $newIndexType, $newIndexName, $column
             );
