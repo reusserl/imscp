@@ -49,6 +49,6 @@ class PluginManagerFactory implements FactoryInterface
         $pluginManager = new  PluginManager($config['GUI_ROOT_DIR'] . '/plugins', $eventManager);
         $pluginManager->setEvent($pluginEvent);
 
-        return $pluginEvent;
+        return $pluginManager;
     }
 }
