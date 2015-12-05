@@ -35,7 +35,8 @@ class PluginManagerFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator = null)
     {
+        $config = $serviceLocator->get('Config');
         $eventManager = $serviceLocator->get('EventManager');
-        return new PluginManager($eventManager);
+        return new PluginManager($config['GUI_ROOT_DIR'] . '/plugins', $eventManager);
     }
 }
