@@ -27,20 +27,9 @@ namespace iMSCP\Core;
 class Events
 {
     /**
-     * The onAfterInitialize event is triggered after i-MSCP has been fully initialized.
-     *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
-     *
-     * - context: iMSCP_Initializer instance
-     *
-     * @const string
-     */
-    const onAfterInitialize = 'onAfterInitialize';
-
-    /**
      * The onLoginScriptStart event is triggered at the very beginning of Login script.
      *
-     * The listeners receive an iMSCP_Events_Event object.
+     * The listeners receive an Zend\EventManager\Event object.
      *
      * @const string
      */
@@ -49,7 +38,7 @@ class Events
     /**
      * The onLoginScriptEnd event is triggered at the end of Login script.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - templateEngine: TemplateEngine instance
      *
@@ -60,7 +49,7 @@ class Events
     /**
      * The onLostPasswordScriptStart event is triggered at the very beginning of the LostPassword script.
      *
-     * The listeners receive an iMSCP_Events_Event object.
+     * The listeners receive a Zend\EventManager\Event object.
      *
      * @const string
      */
@@ -69,7 +58,7 @@ class Events
     /**
      * The onLostPasswordScriptEnd event is triggered at the end of the LostPassword script.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - templateEngine: TemplateEngine instance
      *
@@ -80,7 +69,7 @@ class Events
     /**
      * The onAdminScriptStart event is triggered at the very beginning of admin scripts.
      *
-     * The listeners receive an iMSCP_Events_Event object.
+     * The listeners receive a Zend\EventManager\Event object.
      *
      * @const string
      */
@@ -89,7 +78,7 @@ class Events
     /**
      * The onAdminScriptEnd event is triggered at the end of admin scripts.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - templateEngine: TemplateEngine instance
      *
@@ -100,7 +89,7 @@ class Events
     /**
      * The onResellerScriptStart event is triggered at the very beginning of reseller scripts.
      *
-     * The listeners receive an iMSCP_Events_Event object.
+     * The listeners receive a Zend\EventManager\Event object.
      *
      * @const string
      */
@@ -109,7 +98,7 @@ class Events
     /**
      * The onResellerScriptEnd event is triggered at the end of reseller scripts.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - templateEngine: TemplateEngine instance
      *
@@ -120,7 +109,7 @@ class Events
     /**
      * The onClientScriptStart event is triggered at the very beginning of client scripts.
      *
-     * The listeners receive an iMSCP_Events_Event instance.
+     * The listeners receive a Zend\EventManager\Event instance.
      *
      * @const string
      */
@@ -129,7 +118,7 @@ class Events
     /**
      * The onClientScriptEnd event is triggered at the end of client scripts.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - templateEngine: TemplateEngine instance
      *
@@ -140,9 +129,9 @@ class Events
     /**
      * The onExceptioToBrowserStart event is triggered before of exception browser write process.
      *
-     * The listeners receive an iMSCP_Envents_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
-     * - context: iMSCP_Exception_Writer_Browser instance
+     * - context: iMSCP\Exception\BrowserExceptionWriter instance
      *
      * @deprecated This event is deprecated and no longer triggered
      * @const string
@@ -152,9 +141,9 @@ class Events
     /**
      * The onExceptionToBrowserEnd event is triggered at the end of exception browser write process.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
-     * - context: iMSCP_Exception_Writer_Browser instance
+     * - context: iMSCP\Exception\BrowserExceptionWriter instance
      * - templateEngine: TemplateEngine instance
      *
      * @deprecated This event is deprecated and no longer triggered
@@ -165,9 +154,9 @@ class Events
     /**
      * The onBeforeAuthentication event is triggered before the authentication process.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
-     * - context: iMSCP_Authentication instance
+     * - context: iMSCP\Core\Authentication instance
      *
      * @const string
      */
@@ -176,9 +165,9 @@ class Events
     /**
      * The onAuthentication event is triggered on authentication process.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
-     * - context: iMSCP_Authentication instance
+     * - context: iMSCP\Core\Authentication instance
      * - username: (string) Username
      * - password: (string) Password
      *
@@ -189,10 +178,10 @@ class Events
     /**
      * The onBeforeAuthentication event is triggered after the authentication process.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
-     * - context: iMSCP_Authentication instance
-     * - authResult: iMSCP_Authentication_Result instance
+     * - context: iMSCP\Core\Authentication instance
+     * - authResult: iMSCP\Core\Authentication\AuthenticationResult instance
      *
      * @const string
      */
@@ -201,9 +190,9 @@ class Events
     /**
      * The onBeforeSetIdentity event is triggered before a user identity is set (logged on).
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
-     * - context: iMSCP_Authentication instance
+     * - context: iMSCP\Core\Authentication instance
      * - identity: Identity object
      *
      * @const string
@@ -213,9 +202,9 @@ class Events
     /**
      * The onAfterSetIdentity event is triggered after a user identity is set (logged on).
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
-     * - context: iMSCP_Authentication instance
+     * - context: iMSCP\Core\Authentication instance
      *
      * @const string
      */
@@ -224,9 +213,9 @@ class Events
     /**
      * The onBeforeUnsetIdentity event is triggered before a user identity is unset (logout).
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
-     * - context: iMSCP_Authentication instance
+     * - context: iMSCP\Core\Authentication instance
      *
      * @const string
      */
@@ -235,9 +224,9 @@ class Events
     /**
      * The onAfterUnsetIdentity event is triggered after a user identity is unset (logged on).
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
-     * - context: iMSCP_Authentication instance
+     * - context: iMSCP\Core\Authentication instance
      *
      * @const string
      */
@@ -246,7 +235,7 @@ class Events
     /**
      * The onBeforeEditAdminGeneralSettings event is triggered before the admin general settings are edited.
      *
-     * The listeners receive an iMSCP_Events_Event object.
+     * The listeners receive a Zend\EventManager\Event object.
      *
      * @const string
      */
@@ -255,7 +244,7 @@ class Events
     /**
      * The onAfterEditAdminGeneralSettings event is triggered after the admin general settings are edited.
      *
-     * The listeners receive an iMSCP_Events_Event object.
+     * The listeners receive a Zend\EventManager\Event object.
      *
      * @const string
      */
@@ -264,7 +253,7 @@ class Events
     /**
      * The onBeforeAddUser event is triggered before an user is created.
      *
-     * The listeners receive an iMSCP_Events_Event object.
+     * The listeners receive a Zend\EventManager\Event object.
      *
      * @const string
      */
@@ -273,7 +262,7 @@ class Events
     /**
      * The onAfterAddUser event is triggered after an user is created.
      *
-     * The listeners receive an iMSCP_Events_Event object.
+     * The listeners receive a Zend\EventManager\Event object.
      *
      * @const string
      */
@@ -282,7 +271,7 @@ class Events
     /**
      * The onBeforeEditUser event is triggered before an user is edited.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - userId: (int) User identifier
      *
@@ -293,7 +282,7 @@ class Events
     /**
      * The onAfterEditUser event is triggered after an user is edited.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - userId: (int) User identifier
      *
@@ -304,7 +293,7 @@ class Events
     /**
      * The onBeforeDeleteUser event is triggered before an user is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - userId: (int) User identifier
      *
@@ -315,7 +304,7 @@ class Events
     /**
      * The onAfterDeleteUser event is triggered after an user is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - userId: (int) User identifier
      *
@@ -326,7 +315,7 @@ class Events
     /**
      * The onBeforeDeleteDomain event is triggered before a customer account is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - customerId: (int) Customer identifier
      * - customerName: (string) Customer name
@@ -338,7 +327,7 @@ class Events
     /**
      * The onAfterDeleteCustomer event is triggered after a customer account is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - customerId: (int) Customer identifier
      * - customerName: (string) Customer name
@@ -350,7 +339,7 @@ class Events
     /**
      * The onBeforeAddFtp event is triggered after an Ftp account is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - ftpUserId: (string) FTP user identifier
      * - ftpPassword: (string) FTP user password
@@ -366,7 +355,7 @@ class Events
     /**
      * The onAfterAddFtp event is triggered after an Ftp account is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - ftpUserId: (string) FTP user identifier
      * - ftpPassword: (string) FTP user password
@@ -382,7 +371,7 @@ class Events
     /**
      * The onBeforeEditFtp event is triggered before an Ftp account is edited.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - ftpUserId: (string) FTP user identifier
      * - ftpPassword: (string) FTP user password
@@ -394,7 +383,7 @@ class Events
     /**
      * The onAfterEditFtp event is triggered after an Ftp account is edited.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - ftpUserId: (string) FTP user identifier
      * - ftpPassword: (string) FTP user password
@@ -406,7 +395,7 @@ class Events
     /**
      * The onBeforeDeleteFtp event is triggered before an Ftp account is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - ftpUserId: (string) FTP user identifier
      *
@@ -417,7 +406,7 @@ class Events
     /**
      * The onAfterDeleteFtp event is triggered after an Ftp account is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - ftpUserId: (string) FTP user identifier
      *
@@ -428,7 +417,7 @@ class Events
     /**
      * The onBeforeAddSqlUser event is triggered before an Sql user is created.
      *
-     * The listeners receive an iMSCP_Events_Event object.
+     * The listeners receive a Zend\EventManager\Event object.
      *
      * @const string
      */
@@ -437,7 +426,7 @@ class Events
     /**
      * The onAfterAddSqlUser event is triggered after an Sql user is created.
      *
-     * The listeners receive an iMSCP_Events_Event object.
+     * The listeners receive a Zend\EventManager\Event object.
      *
      * @const string
      */
@@ -446,7 +435,7 @@ class Events
     /**
      * The onBeforeEditSqlUser event is triggered before an Sql user is edited.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - sqlUserId: (int) SQL user identifier
      *
@@ -457,7 +446,7 @@ class Events
     /**
      * The onAfterEditSqlUser event is triggered after an Sql user is edited.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - sqlUserId: (int) SQL user identifier
      *
@@ -468,7 +457,7 @@ class Events
     /**
      * The onBeforeDeleteSqlUser event is triggered before an Sql user is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - sqlUserId: (int) SQL user identifier
      * - sqlUserNale (string) SQL user name
@@ -480,7 +469,7 @@ class Events
     /**
      * The onAfterDeleteSqlUser event is triggered after an Sql user is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - sqlUserId: (int) SQL user identifier
      * - sqlUserNale (string) SQL user name
@@ -492,7 +481,7 @@ class Events
     /**
      * The onBeforeAddSqlDb event is triggered before an Sql database is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - dbName: (string) SQL database name
      *
@@ -503,7 +492,7 @@ class Events
     /**
      * The onAfterAddSqlDb event is triggered after an Sql database is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - dbName: (string) SQL database name
      *
@@ -514,7 +503,7 @@ class Events
     /**
      * The onBeforeDeleteSqlDb event is triggered before an Sql database is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - sqlDbId: (int) SQL database identifier
      * - sqlDbName: (string) SQL database name
@@ -526,7 +515,7 @@ class Events
     /**
      * The onAfterDeleteSqlDb event is triggered after an Sql database is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - sqlDbId: (int) SQL database identifier
      * - sqlDbName: (string) SQL database name
@@ -538,7 +527,7 @@ class Events
     /**
      * The onBeforeAddDomain event is triggered before a domain is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - domainName: (string) Domain anme
      * - createdBy: (int) Reseller identifier
@@ -552,7 +541,7 @@ class Events
     /**
      * The onAfterAddDomain event is triggered after a domain is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - domainName: (string) Domain name
      * - createdBy: (int) Reseller identifier
@@ -567,7 +556,7 @@ class Events
     /**
      * The onBeforeEditDomain event is triggered before a domain is edited.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - domainId: (int) Domain identifier
      *
@@ -578,7 +567,7 @@ class Events
     /**
      * The onAfterEditDomain event is triggered agfter a domain is edited.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive an Zend\EventManager\Event object with the following parameter:
      *
      * - domainId: (int) Domain identifier
      *
@@ -589,7 +578,7 @@ class Events
     /**
      * The onBeforeAddSubdomain event is triggered after a subdomain is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - subdomainName: (string) Subdomain nanme
      * - subdomainType: (string) Subdomain type (als|dmn)
@@ -605,7 +594,7 @@ class Events
     /**
      * The onAfterAddSubdomain event is triggered after a subdomain is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - subdomainName: (string) Subdomain nanme
      * - subdomainType: (string) Subdomain type (als|dmn)
@@ -622,7 +611,7 @@ class Events
     /**
      * The onBeforeEditSubdomain event is triggered after a subdomain is edited.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - subdomainId: (int) Subdomain identifier
      * - subdomainName: (string) Subdomain name
@@ -635,7 +624,7 @@ class Events
     /**
      * The onAfterEditSubdomain event is triggered after a subdomain is edited.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - subdomainId: (int) Subdomain identifier
      * - subdomainName: (string) Subdomain name
@@ -648,7 +637,7 @@ class Events
     /**
      * The onBeforeDeleteSubdomain event is triggered before a subdomain is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - subdomainId: (int) Subdomain identifier
      * - subdomainName: (string) Subdomain name
@@ -661,7 +650,7 @@ class Events
     /**
      * The onAfterDeleteSubdomain event is triggered after a subdomain is delteded.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - subdomainId: (int) Subdomain identifier
      * - subdomainName: (string) Subdomain name
@@ -674,7 +663,7 @@ class Events
     /**
      * The onBeforeAddDomainAlias event is triggered before a domain alias is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - domainId: (int) Domain alias identifier
      * - domainAliasName: (string) Domain alias name
@@ -686,7 +675,7 @@ class Events
     /**
      * The onAfterAddDomainAlias event is triggered after a domain alias is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - domainId: (int) Domain alias identifier
      * - domainAliasName: (string) Domain alias name
@@ -699,7 +688,7 @@ class Events
     /**
      * The onBeforeEditDomainAlias event is triggered before a domain alias is edited.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - domainAliasId: (int) Domain alias identifier
      * - domainAliasName: (string) Domain alias name
@@ -711,7 +700,7 @@ class Events
     /**
      * The onAfterEditDomainALias event is triggered after a domain alias is edited.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - domainAliasId: (int) Domain alias identifier
      * - domainAliasName: (string) Domain alias name
@@ -723,7 +712,7 @@ class Events
     /**
      * The onBeforeDeleteDomainAlias event is triggered before a domain alias is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - domainAliasId: (int) Domain alias identifier
      * - domainAliasName: (string) Domain alias name
@@ -735,7 +724,7 @@ class Events
     /**
      * The onAfterDeleteDomainAlias event is triggered after a domain alias is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - domainAliasId: (int) Domain alias identifier
      * - domainAliasName: (string) Domain alias name
@@ -747,7 +736,7 @@ class Events
     /**
      * The onBeforeAddMail event is triggered after a mail account is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - mailUsername: (string) Mail username
      * - mailAddress: (string) Mail address
@@ -759,7 +748,7 @@ class Events
     /**
      * The onAfterAddMail event is triggered after a mail account is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - mailUsername: (string) Mail username
      * - mailAddress: (string) Mail address
@@ -772,7 +761,7 @@ class Events
     /**
      * The onBeforeEditMail event is triggered before a mail account is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - mailId: (int) Mail identifier
      *
@@ -783,7 +772,7 @@ class Events
     /**
      * The onAfterEditMail event is triggered after a mail account is edited.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - mailId: (int) Mail identifier
      *
@@ -794,7 +783,7 @@ class Events
     /**
      * The onBeforeDeleteMail event is triggered before a mail account is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - mailId: (int) Mail identifier
      *
@@ -805,7 +794,7 @@ class Events
     /**
      * The onAfterDeleteMail event is triggered after a mail account is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - mailId: (int) Mail identifier
      *
@@ -816,7 +805,7 @@ class Events
     /**
      * The onBeforeAddMailCatchall event is triggered after a mail catchall is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - mailCatchall: (string) Mail catchall
      * - mailForwardList: (array) Mail forward list
@@ -828,7 +817,7 @@ class Events
     /**
      * The onAfterAddMailCatchall event is triggered after a mail catchall is created.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - mailCatchallId: (int) Mail catchall identifier
      * - mailCatchall: (string) Mail catchall
@@ -841,7 +830,7 @@ class Events
     /**
      * The onBeforeDeleteMailCatchall event is triggered before a mail catchall is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - mailCatchallId: (int) Mail catchall identifier
      *
@@ -852,7 +841,7 @@ class Events
     /**
      * The onAfterDeleteMail event is triggered after a mail account is deleted.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - mailCatchallId: (int) Mail catchall identifier
      *
@@ -861,65 +850,9 @@ class Events
     const onafterDeleteMailCatchall = 'onafterDeleteMailCatchall';
 
     /**
-     * The onBeforeQueryPrepare event is triggered before an SQL statement is prepared for execution.
-     *
-     * The listeners receive an iMSCP_Database_Events_Database instance with the following parameters:
-     *
-     * - context: iMSCP_Database instance
-     * - query: (string) SQL statement
-     *
-     * @const string
-     */
-    const onBeforeQueryPrepare = 'onBeforeQueryPrepare';
-
-    /**
-     * The onAfterQueryPrepare event occurs after a SQL statement has been prepared for execution.
-     *
-     * The listeners receive an iMSCP_Database_Events_Statement instance with the following parameters:
-     *
-     * - context: iMSCP_Database instance
-     * - statement: PDOStatement object
-     *
-     * @const string
-     */
-    const onAfterQueryPrepare = 'onAfterQueryPrepare';
-
-    /**
-     * The onBeforeQueryExecute event is triggered before a prepared SQL statement is executed.
-     *
-     * The listeners receive either :
-     *
-     *  an iMSCP_Database_Events_Statement instance with the following parameters:
-     *
-     *   - context: iMSCP_Database instance
-     *   - statement: PDOStatement object
-     * Or
-     *
-     *  an iMSCP_Database_Events_Database instance with the following arguments:
-     *
-     *   - context: iMSCP_Database instance
-     *   - query: (string) SQL statement
-     *
-     * @const string
-     */
-    const onBeforeQueryExecute = 'onBeforeQueryExecute';
-
-    /**
-     * The onAfterQueryExecute event is triggered after a prepared SQL statement has been executed.
-     *
-     * The listeners receive an iMSCP_Database_Events_Statement instance with the following parameters:
-     *
-     * - context: iMSCP_Database instance
-     * - statement: PDOStatement object
-     *
-     * @const string
-     */
-    const onAfterQueryExecute = 'onAfterQueryExecute';
-
-    /**
      * The onBeforeAssembleTemplateFiles event is triggered before the first parent template is loaded.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - context: TemplateEngine instance
      * - templatePath: (string) Template file path
@@ -931,7 +864,7 @@ class Events
     /**
      * The onAfterAssembleTemplateFiles event is triggered after the first parent template is loaded.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - context: TemplateEngine instance
      * - templateContent: (string) Template content
@@ -943,7 +876,7 @@ class Events
     /**
      * The onBeforeLoadTemplateFile event is triggered before a template is loaded.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - context: TemplateEngine instance
      * - templatePath: (string) Template file path
@@ -955,7 +888,7 @@ class Events
     /**
      * The onAfterLoadTemplateFile event is triggered after the loading of a template file.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - context: TemplateEngine instance
      * - templateContent: (string) Template content
@@ -967,7 +900,7 @@ class Events
     /**
      * The onBeforeGenerateNavigation event is triggeed before the navigation is generated.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - templateEngine: TemplateEngine instance
      *
@@ -978,7 +911,7 @@ class Events
     /**
      * The onAfterGenerateNavigation event is triggered after the navigation is generated.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - templateEngine: TemplateEngine instance
      *
@@ -990,7 +923,7 @@ class Events
     /**
      * The onBeforeAddExternalMailServer event is triggered before addition of external mail server entries in database.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - externalMailServerEntries: (array) External mail server entries
      *
@@ -1001,7 +934,7 @@ class Events
     /**
      * The onAfterAddExternalMailServer event is triggered after addition of external mail server entries in database.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameter:
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
      *
      * - externalMailServerEntries: (array) External mail server entries
      *
@@ -1012,7 +945,7 @@ class Events
     /**
      * The onBeforeChangeDomainStatus event is triggered before an user account is being activated or deactivated.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - customerId: (int) Customer identifier
      * - action: (string) Action
@@ -1024,7 +957,7 @@ class Events
     /**
      * The onAfterChangeDomainStatus event is triggered before an user account get activated or deactivated.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - customerId: (int) Customer identifier
      * - action: (string) Action
@@ -1036,7 +969,7 @@ class Events
     /**
      * The onBeforeSendCircular event is triggered before an admin or reseller send a circular.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - sender_name: (string) Sender name
      * - sender_email: (string) Sender email
@@ -1049,7 +982,7 @@ class Events
     /**
      * The onAfterSendCircular event is triggered after an admin or reseller has sent a circular.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - sender_name: (string) Sender name
      * - sender_email: (string) Sender email
@@ -1062,7 +995,7 @@ class Events
     /**
      * The onGetJsTranslations event is triggered by the i18n_getJsTranslations() function.
      *
-     * The listeners receive an iMSCP_Events_Event object with the following parameters:
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
      *
      * - translations An ArrayObject which allows the plugins to add their own JS translations
      *
