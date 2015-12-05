@@ -114,8 +114,6 @@ class PluginManager implements EventManagerAwareInterface
         $this->pluginSetDirectory($pluginRootDir);
         $this->pluginLoadData();
 
-        spl_autoload_register([$this, '_autoload']);
-
         if ($eventManager instanceof $eventManager) {
             $this->setEventManager($eventManager);
         }
@@ -130,22 +128,6 @@ class PluginManager implements EventManagerAwareInterface
     {
         if ($this->backendRequest) {
             send_request();
-        }
-    }
-
-    /**
-     * Autoloader for plugin classes
-     *
-     * @param string $className Plugin class to load
-     * @return void
-     */
-    public function _autoload($className)
-    {
-        // Do not try to load class outside the plugin namespace
-        if (strpos($className, 'iMSCP_Plugin_', 0) === 0) {
-            $basename = substr($className, 13);
-            $filePath = $this->pluginGetDirectory() . "/$basename/$basename.php";
-            @include_once $filePath;
         }
     }
 
@@ -249,12 +231,9 @@ class PluginManager implements EventManagerAwareInterface
     {
         if ($type == 'all') {
             return array_keys(
-                $enabledOnly ? array_filter(
-                    $this->pluginData,
-                    function ($pluginData) {
-                        return ($pluginData['status'] == 'enabled');
-                    }
-                ) : $this->pluginData
+                $enabledOnly ? array_filter($this->pluginData, function ($pluginData) {
+                    return ($pluginData['status'] == 'enabled');
+                }) : $this->pluginData
             );
         }
 
@@ -262,12 +241,9 @@ class PluginManager implements EventManagerAwareInterface
             $pluginData = &$this->pluginData;
 
             return $enabledOnly
-                ? array_filter(
-                    $this->pluginsByType[$type],
-                    function ($pluginName) use ($pluginData) {
-                        return ($pluginData[$pluginName]['status'] == 'enabled');
-                    }
-                ) : $this->pluginsByType[$type];
+                ? array_filter($this->pluginsByType[$type], function ($pluginName) use ($pluginData) {
+                    return ($pluginData[$pluginName]['status'] == 'enabled');
+                }) : $this->pluginsByType[$type];
         }
 
         return [];
@@ -276,27 +252,34 @@ class PluginManager implements EventManagerAwareInterface
     /**
      * Loads the given plugin
      *
-     * @param string $name Plugin name
-     * @return false|ActionPlugin Plugin instance, FALSE if plugin class is not found
+     * @throws \RuntimeException if the plugin can't be resolved
+     * @param PluginEvent $event
+     * @return AbstractPlugin
      */
-    public function pluginLoad($name)
+    public function pluginLoad(PluginEvent $event)
     {
-        if (!$this->pluginIsLoaded($name)) {
-            $className = "iMSCP_Plugin_$name";
+        $pluginName = $event->getPluginName();
 
-            if (!class_exists($className, true)) {
-                write_log(sprintf('Plugin Manager: Unable to load %s plugin - Class %s not found.', $name, $className), E_USER_ERROR);
-                return false;
+        if (!$this->pluginIsLoaded($pluginName)) {
+            $result = $this->getEventManager()->trigger(PluginEvent::onLoadPluginResolve, $this, $event, function ($r) {
+                return $r !== false;
+            });
+
+            $pluginClass = $result->last();
+            if ($pluginClass === false) {
+                throw new \RuntimeException(sprintf('Plugin (%s) could not be resolved.', $event->getPluginName()));
             }
 
-            $this->loadedPlugins[$name] = new $className($this);
+            $plugin = new $pluginClass;
 
-            if ($this->loadedPlugins[$name] instanceof ListenerAggregateInterface) {
-                $this->loadedPlugins[$name]->attach($this->getEventManager());
+            if ($this->loadedPlugins[$pluginName] instanceof ListenerAggregateInterface) {
+                $this->loadedPlugins[$pluginName]->attach($this->getEventManager());
             }
+
+            $this->loadedPlugins[$pluginName] = $plugin;
         }
 
-        return $this->loadedPlugins[$name];
+        return $this->loadedPlugins[$pluginName];
     }
 
     /**
@@ -491,11 +474,10 @@ class PluginManager implements EventManagerAwareInterface
 
         if (!$this->pluginIsLocked($name)) {
             $event = clone $this->getEvent();
-            $event
-                ->setPluginName($name)
-                ->setPlugin($this->pluginLoad($name));
-
-            $responses = $this->events->trigger(PluginEvent::onBeforeInstallPlugin, $this, $event);
+            $event->setPluginName($name);
+            $pluginInstance = $this->pluginLoad($event);
+            $event->setPlugin($pluginInstance);
+            $responses = $this->getEventManager()->trigger(PluginEvent::onBeforeInstallPlugin, $this, $event);
 
             if (!$responses->stopped()) {
                 exec_query('UPDATE plugin SET plugin_locked = ? WHERE plugin_name = ?', [1, $name]);
@@ -519,11 +501,10 @@ class PluginManager implements EventManagerAwareInterface
 
         if ($this->pluginIsLocked($name)) {
             $event = clone $this->getEvent();
-            $event
-                ->setPluginName($name)
-                ->setPlugin($this->pluginLoad($name));
-
-            $responses = $this->events->trigger(PluginEvent::onBeforeInstallPlugin, $this, $event);
+            $event->setPluginName($name);
+            $pluginInstance = $this->pluginLoad($event);
+            $event->setPlugin($pluginInstance);
+            $responses = $this->getEventManager()->trigger(PluginEvent::onBeforeInstallPlugin, $this, $event);
 
             if (!$responses->stopped()) {
                 exec_query('UPDATE plugin SET plugin_locked = ? WHERE plugin_name = ?', [0, $name]);
@@ -551,7 +532,9 @@ class PluginManager implements EventManagerAwareInterface
             return $info['__installable__'];
         }
 
-        $pluginInstance = $this->pluginLoad($name);
+        $event = clone $this->getEvent();
+        $event->setPluginName($name);
+        $pluginInstance = $this->pluginLoad($event);
         $rMethod = new \ReflectionMethod($pluginInstance, 'install');
         return ('iMSCP_Plugin' !== $rMethod->getDeclaringClass()->getName());
     }
@@ -586,21 +569,17 @@ class PluginManager implements EventManagerAwareInterface
 
             if (in_array($pluginStatus, ['toinstall', 'uninstalled'])) {
                 try {
-                    $pluginInstance = $this->pluginLoad($name);
-
+                    $event = clone $this->getEvent();
+                    $event->setPluginName($name);
+                    $pluginInstance = $this->pluginLoad($event);
+                    $event->setPlugin($pluginInstance);
                     $this->pluginSetStatus($name, 'toinstall');
                     $this->pluginSetError($name, null);
-
-                    $event = clone $this->getEvent();
-                    $event
-                        ->setPluginName($name)
-                        ->setPlugin($pluginInstance);
-
-                    $responses = $this->events->trigger(PluginEvent::onBeforeInstallPlugin, $this, $event);
+                    $responses = $this->getEventManager()->trigger(PluginEvent::onBeforeInstallPlugin, $this, $event);
 
                     if (!$responses->stopped()) {
                         $pluginInstance->install($this);
-                        $this->events->trigger(PluginEvent::onAfterInstallPlugin, $this, $event);
+                        $this->getEventManager()->trigger(PluginEvent::onAfterInstallPlugin, $this, $event);
                         $ret = $this->pluginEnable($name, true);
 
                         if ($ret == self::ACTION_SUCCESS) {
@@ -649,7 +628,9 @@ class PluginManager implements EventManagerAwareInterface
             return $info['__uninstallable__'];
         }
 
-        $pluginInstance = $this->pluginLoad($name);
+        $event = clone $this->getEvent();
+        $event->setPluginName($name);
+        $pluginInstance = $this->pluginLoad($event);
         $rMethod = new \ReflectionMethod($pluginInstance, 'uninstall');
         return ('iMSCP_Plugin' != $rMethod->getDeclaringClass()->getName());
     }
@@ -684,21 +665,17 @@ class PluginManager implements EventManagerAwareInterface
             if (in_array($pluginStatus, ['touninstall', 'disabled'])) {
                 if (!$this->pluginIsLocked($name)) {
                     try {
-                        $pluginInstance = $this->pluginLoad($name);
-
+                        $event = clone $this->getEvent();
+                        $event->setPluginName($name);
+                        $pluginInstance = $this->pluginLoad($event);
                         $this->pluginSetStatus($name, 'touninstall');
                         $this->pluginSetError($name, null);
-
-                        $event = clone $this->getEvent();
-                        $event
-                            ->setPluginName($name)
-                            ->setPlugin($pluginInstance);
-
-                        $responses = $this->events->trigger(PluginEvent::onBeforeUninstallPlugin, $this, $event);
+                        $event->setPlugin($pluginInstance);
+                        $responses = $this->getEventManager()->trigger(PluginEvent::onBeforeUninstallPlugin, $this, $event);
 
                         if (!$responses->stopped()) {
                             $pluginInstance->uninstall($this);
-                            $this->events->trigger(PluginEvent::onAfterUninstallPlugin, $this, $event);
+                            $this->getEventManager()->trigger(PluginEvent::onAfterUninstallPlugin, $this, $event);
 
                             if ($this->pluginHasBackend($name)) {
                                 $this->backendRequest = true;
@@ -755,7 +732,9 @@ class PluginManager implements EventManagerAwareInterface
 
             if ($isSubaction || in_array($pluginStatus, ['toenable', 'disabled'])) {
                 try {
-                    $pluginInstance = $this->pluginLoad($name);
+                    $event = clone $this->getEvent();
+                    $event->setPluginName($name);
+                    $pluginInstance = $this->pluginLoad($event);
 
                     if (!$isSubaction) {
                         $pluginInfo = $this->pluginGetInfo($name);
@@ -772,17 +751,12 @@ class PluginManager implements EventManagerAwareInterface
                     }
 
                     $this->pluginSetError($name, null);
-
-                    $event = clone $this->getEvent();
-                    $event
-                        ->setPluginName($name)
-                        ->setPlugin($pluginInstance);
-
-                    $responses = $this->events->trigger(PluginEvent::onBeforeEnablePlugin, $this, $event);
+                    $event->setPlugin($pluginInstance);
+                    $responses = $this->getEventManager()->trigger(PluginEvent::onBeforeEnablePlugin, $this, $event);
 
                     if (!$responses->stopped()) {
                         $pluginInstance->enable($this);
-                        $this->events->trigger(PluginEvent::onAfterEnablePlugin, $this, $event);
+                        $this->getEventManager()->trigger(PluginEvent::onAfterEnablePlugin, $this, $event);
 
                         if ($this->pluginHasBackend($name)) {
                             $this->backendRequest = true;
@@ -836,24 +810,21 @@ class PluginManager implements EventManagerAwareInterface
 
             if ($isSubaction || in_array($pluginStatus, ['todisable', 'enabled'])) {
                 try {
-                    $pluginInstance = $this->pluginLoad($name);
+                    $event = clone $this->getEvent();
+                    $event->setPluginName($name);
+                    $pluginInstance = $this->pluginLoad($event);
 
                     if (!$isSubaction) {
                         $this->pluginSetStatus($name, 'todisable');
                     }
 
+                    $event->setPlugin($pluginInstance);
                     $this->pluginSetError($name, null);
-
-                    $event = clone $this->getEvent();
-                    $event
-                        ->setPluginName($name)
-                        ->setPlugin($pluginInstance);
-
-                    $responses = $this->events->trigger(PluginEvent::onBeforeDisablePlugin, $this, $event);
+                    $responses = $this->getEventManager()->trigger(PluginEvent::onBeforeDisablePlugin, $this, $event);
 
                     if (!$responses->stopped()) {
                         $pluginInstance->disable($this);
-                        $this->events->trigger(PluginEvent::onAfterDisablePlugin, $this, $event);
+                        $this->getEventManager()->trigger(PluginEvent::onAfterDisablePlugin, $this, $event);
 
                         if ($this->pluginHasBackend($name)) {
                             $this->backendRequest = true;
@@ -951,7 +922,9 @@ class PluginManager implements EventManagerAwareInterface
 
             if (in_array($pluginStatus, ['toupdate', 'enabled'])) {
                 try {
-                    $pluginInstance = $this->pluginLoad($name);
+                    $event = clone $this->getEvent();
+                    $event->setPluginName($name);
+                    $pluginInstance = $this->pluginLoad($event);
 
                     $this->pluginSetStatus($name, 'toupdate');
                     $this->pluginSetError($name, null);
@@ -960,19 +933,16 @@ class PluginManager implements EventManagerAwareInterface
 
                     if ($ret == self::ACTION_SUCCESS) {
                         $pluginInfo = $this->pluginGetInfo($name);
-
-                        $event = clone $this->getEvent();
                         $event
-                            ->setPluginName($name)
                             ->setPlugin($pluginInstance)
                             ->setParam('fromVersion', $pluginInfo['version'])
                             ->setParam('toVersion', $pluginInfo['__nversion__']);
 
-                        $responses = $this->events->trigger(PluginEvent::onBeforeUpdatePlugin, $this, $event);
+                        $responses = $this->getEventManager()->trigger(PluginEvent::onBeforeUpdatePlugin, $this, $event);
 
                         if (!$responses->stopped()) {
                             $pluginInstance->update($this, $pluginInfo['version'], $pluginInfo['__nversion__']);
-                            $this->events->trigger(PluginEvent::onAfterUpdatePlugin, $this, $event);
+                            $this->getEventManager()->trigger(PluginEvent::onAfterUpdatePlugin, $this, $event);
                             $ret = $this->pluginEnable($name, true);
 
                             if ($ret == self::ACTION_SUCCESS) {
@@ -1019,17 +989,13 @@ class PluginManager implements EventManagerAwareInterface
 
             if (in_array($pluginStatus, ['todelete', 'uninstalled', 'disabled'])) {
                 try {
-                    $pluginInstance = $this->pluginLoad($name);
-
+                    $event = clone $this->getEvent();
+                    $event->setPluginName($name);
+                    $pluginInstance = $this->pluginLoad($event);
+                    $event->setPlugin($pluginInstance);
                     $this->pluginSetStatus($name, 'todelete');
                     $this->pluginSetError($name, null);
-
-                    $event = clone $this->getEvent();
-                    $event
-                        ->setPluginName($name)
-                        ->setPlugin($pluginInstance);
-
-                    $responses = $this->events->trigger(PluginEvent::onBeforeDeletePlugin, $this, $event);
+                    $responses = $this->getEventManager()->trigger(PluginEvent::onBeforeDeletePlugin, $this, $event);
 
                     if (!$responses->stopped()) {
                         $pluginInstance->delete($this);
@@ -1043,7 +1009,7 @@ class PluginManager implements EventManagerAwareInterface
                             }
                         }
 
-                        $this->events->trigger(PluginEvent::onAfterDeletePlugin, $this, $event);
+                        $this->getEventManager()->trigger(PluginEvent::onAfterDeletePlugin, $this, $event);
                         return self::ACTION_SUCCESS;
                     }
 
@@ -1097,11 +1063,11 @@ class PluginManager implements EventManagerAwareInterface
     {
         if ($this->pluginIsEnabled($name) && !$this->pluginIsProtected($name)) {
             $event = clone $this->getEvent();
-            $event
-                ->setPluginName($name)
-                ->setPlugin($this->pluginLoad($name));
+            $event->setPluginName($name);
+            $pluginInstance = $this->pluginLoad($event);
+            $event->setPlugin($pluginInstance);
 
-            $responses = $this->events->trigger(PluginEvent::onBeforeProtectPlugin, $this, $event);
+            $responses = $this->getEventManager()->trigger(PluginEvent::onBeforeProtectPlugin, $this, $event);
 
             if ($responses->stopped()) {
                 return self::ACTION_STOPPED;
@@ -1111,7 +1077,7 @@ class PluginManager implements EventManagerAwareInterface
             $this->protectedPlugins[] = $name;
 
             if ($this->pluginUpdateProtectedFile()) {
-                $this->events->trigger(PluginEvent::onAfterProtectPlugin, $this, $event);
+                $this->getEventManager()->trigger(PluginEvent::onAfterProtectPlugin, $this, $event);
                 return self::ACTION_SUCCESS;
             }
 
@@ -1190,7 +1156,12 @@ class PluginManager implements EventManagerAwareInterface
             if ($file->isDir() && $file->isReadable()) {
                 $name = $file->getBasename();
 
-                if (($plugin = $this->pluginLoad($name))) {
+                $event = clone $this->getEvent();
+                $event->setPluginName($name);
+
+                $plugin = $this->pluginLoad($event);
+
+                if ($plugin) {
                     $seenPlugins[] = $name;
 
                     $info = $plugin->getInfo();
