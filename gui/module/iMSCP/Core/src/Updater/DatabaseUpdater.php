@@ -24,7 +24,6 @@ use Doctrine\DBAL\Connection;
 use iMSCP\Core\Application;
 use iMSCP\Core\Config\DbConfigHandler;
 use iMSCP\Core\Utils\Crypt;
-use iMSCP\Core\Utils\OpcodeCache;
 use Zend\Uri\Uri;
 
 /**
@@ -3227,7 +3226,5 @@ class DatabaseUpdater extends AbstractUpdater
         /** @var \iMSCP\Core\Config\DbConfigHandler $dbConfig */
         $dbConfig = Application::getInstance()->getServiceManager()->get('DbConfig');
         unset($dbConfig['COMPRESS_OUTPUT'], $dbConfig['SHOW_COMPRESSION_SIZE']);
-        @unlink('data/cache/module-config-cache.imscp.php');
-        OpcodeCache::clearAllActive('data/cache/module-config-cache.imscp.php');
     }
 }
