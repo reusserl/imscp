@@ -20,6 +20,8 @@
 
 namespace iMSCP\Core\Service;
 
+use iMSCP\Core\Plugin\Listener\DefaultListenerAggregate;
+use iMSCP\Core\Plugin\PluginEvent;
 use iMSCP\Core\Plugin\PluginManager;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
@@ -36,7 +38,17 @@ class PluginManagerFactory implements FactoryInterface
     public function createService(ServiceLocatorInterface $serviceLocator = null)
     {
         $config = $serviceLocator->get('Config');
+        $defaultListeners = new DefaultListenerAggregate();
+
         $eventManager = $serviceLocator->get('EventManager');
-        return new PluginManager($config['GUI_ROOT_DIR'] . '/plugins', $eventManager);
+        $eventManager->attach($defaultListeners);
+
+        $pluginEvent = new PluginEvent();
+        $pluginEvent->setParam('ServiceManager', $serviceLocator);
+
+        $pluginManager = new  PluginManager($config['GUI_ROOT_DIR'] . '/plugins', $eventManager);
+        $pluginManager->setEvent($pluginEvent);
+
+        return $pluginEvent;
     }
 }

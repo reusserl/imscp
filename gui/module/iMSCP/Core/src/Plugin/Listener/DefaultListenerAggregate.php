@@ -18,10 +18,30 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-/**
- * Class iMSCP_Plugin_Exception
- */
-class iMSCP_Plugin_Exception extends iMSCP_Exception
-{
+namespace iMSCP\Core\Plugin\Listener;
 
+use iMSCP\Core\Plugin\PluginEvent;
+use Zend\EventManager\EventManagerInterface;
+use Zend\EventManager\ListenerAggregateInterface;
+use Zend\EventManager\ListenerAggregateTrait;
+
+/**
+ * Class DefaultListenerAggregate
+ * @package iMSCP\Core\Plugin\Listener
+ */
+class DefaultListenerAggregate implements ListenerAggregateInterface
+{
+    use ListenerAggregateTrait;
+
+    /**
+     * Attach one or more listeners
+     *
+     * @param EventManagerInterface $events
+     * @return DefaultListenerAggregate
+     */
+    public function attach(EventManagerInterface $events)
+    {
+        $this->listeners[] = $events->attach(PluginEvent::onLoadPluginResolve, new PluginResolverListener());
+        return $this;
+    }
 }
