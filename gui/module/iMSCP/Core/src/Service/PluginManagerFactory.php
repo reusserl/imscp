@@ -18,10 +18,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-/**
- * Class iMSCP_Events_Listener_Exception
- */
-class iMSCP_Events_Listener_Exception extends iMSCP_Events_Exception
-{
+namespace iMSCP\Core\Service;
 
+use iMSCP\Core\Plugin\PluginManager;
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
+
+/**
+ * Class PluginManagerFactory
+ * @package iMSCP\Core\Service
+ */
+class PluginManagerFactory implements FactoryInterface
+{
+    /**
+     * {@inheritdoc}
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator = null)
+    {
+        $eventManager = $serviceLocator->get('EventManager');
+        return new PluginManager($eventManager);
+    }
 }
