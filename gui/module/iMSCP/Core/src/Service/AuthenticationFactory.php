@@ -18,10 +18,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-/**
- * Class iMSCP_Events_Manager_Exception
- */
-class iMSCP_Events_Manager_Exception extends iMSCP_Events_Exception
-{
+namespace iMSCP\Core\Service;
 
+use iMSCP\Core\Authentication\Authentication;
+use Zend\ServiceManager\FactoryInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
+
+/**
+ * Class AuthenticationServiceFactory
+ * @package iMSCP\Core\Service
+ */
+class AuthenticationFactory implements FactoryInterface
+{
+    /**
+     * {@inheritdoc}
+     */
+    public function createService(ServiceLocatorInterface $serviceLocator = null)
+    {
+        $eventManager = $serviceLocator->get('EventManager');
+        return new Authentication($eventManager);
+    }
 }

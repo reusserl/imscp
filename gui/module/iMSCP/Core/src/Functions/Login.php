@@ -38,80 +38,8 @@ function init_login($eventManager)
         $bruteforce->attach($pluginManager->getEventManager());
     }
 
-    // Attach default authentication handler with lower priority
-    $eventManager->attach(\iMSCP\Core\Authentication\AuthenticationEvent::onAuthentication, 'login_credentials', -99);
-
     // Attach listener that is responsible to check domain status and expire date
     $eventManager->attach(\iMSCP\Core\Authentication\AuthenticationEvent::onBeforeSetIdentity, 'login_checkDomainAccount');
-}
-
-/**
- * Credentials authentication handler
- *
- * @param \iMSCP\Core\Authentication\AuthenticationEvent $event
- */
-function login_credentials($event)
-{
-    $username = (!empty($_POST['uname'])) ? encode_idna(clean_input($_POST['uname'])) : '';
-    $password = (!empty($_POST['upass'])) ? clean_input($_POST['upass']) : '';
-
-    if (empty($username) || empty($password)) {
-        if (empty($username)) {
-            $message[] = tr('The username field is empty.');
-        }
-
-        if (empty($password)) {
-            $message[] = tr('The password field is empty.');
-        }
-    }
-
-    if (!isset($message)) {
-        $stmt = exec_query(
-            'SELECT admin_id, admin_name, admin_pass, admin_type, email, created_by FROM admin WHERE admin_name = ?',
-            $username
-        );
-
-        if (!$stmt->rowCount()) {
-            $authResult = new \iMSCP\Core\Authentication\AuthenticationResult(
-                \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_IDENTITY_NOT_FOUND, null, tr('Unknown username.')
-            );
-        } else {
-            $identity = $stmt->fetch(PDO::FETCH_OBJ);
-            $passwordHash = $identity->admin_pass;
-
-            if (!\iMSCP\Core\Utils\Crypt::verify($password, $passwordHash)) {
-                $authResult = new \iMSCP\Core\Authentication\AuthenticationResult(
-                    \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_INVALID, null, tr('Bad password.')
-                );
-            } else {
-                if (strpos($passwordHash, '$2a$') !== 0) { # Not a password encrypted with Bcrypt, then re-encrypt it
-                    exec_query('UPDATE admin SET admin_pass = ? WHERE admin_id = ?', [
-                        \iMSCP\Core\Utils\Crypt::bcrypt($password), $identity->admin_id
-                    ]);
-                    write_log(
-                        sprintf('Info: Password for user %s has been re-encrypted using bcrypt', $identity->admin_name),
-                        E_USER_NOTICE
-                    );
-                }
-
-                $authResult = new \iMSCP\Core\Authentication\AuthenticationResult(
-                    \iMSCP\Core\Authentication\AuthenticationResult::SUCCESS, $identity
-                );
-                $event->stopPropagation();
-            }
-        }
-    } else {
-        $authResult = new \iMSCP\Core\Authentication\AuthenticationResult(
-            (count($message) == 2)
-                ? \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_EMPTY
-                : \iMSCP\Core\Authentication\AuthenticationResult::FAILURE_CREDENTIAL_INVALID
-            ,
-            null,
-            $message
-        );
-    }
-
-    $event->setAuthenticationResult($authResult);
 }
 
 /**
@@ -173,9 +101,7 @@ function do_session_timeout()
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
     // We must not remove bruteforce plugin data (AND `user_name` IS NOT NULL)
-    exec_query(
-        'DELETE FROM login WHERE lastaccess < ? AND user_name IS NOT NULL', time() - $cfg['SESSION_TIMEOUT'] * 60
-    );
+    exec_query('DELETE FROM login WHERE lastaccess < ? AND user_name IS NOT NULL', time() - $cfg['SESSION_TIMEOUT'] * 60);
 }
 
 /**

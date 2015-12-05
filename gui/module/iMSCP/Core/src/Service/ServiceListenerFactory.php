@@ -53,6 +53,7 @@ class ServiceListenerFactory implements FactoryInterface
         'invokables' => [
         ],
         'factories' => [
+            'Authentication' => 'iMSCP\Core\Service\AuthenticationFactory',
             'Application' => 'iMSCP\Core\Service\ApplicationFactory',
             'Config' => 'iMSCP\Core\Service\ConfigFactory',
             'DBALConnection' => 'iMSCP\Core\Service\DBALConnectionFactory',
@@ -60,6 +61,7 @@ class ServiceListenerFactory implements FactoryInterface
             'EncryptionDataService' => 'iMSCP\Core\Service\EncryptionDataService',
             'ORM' => 'iMSCP\Core\Service\ORMServiceFactory',
             'ManagerRegistry' => 'iMSCP\Core\Service\ManagerRegistryFactory',
+            'navigation' => 'iMSCP\Core\ServiceNavigationFactory',
             'Request' => 'iMSCP\Core\Service\HttpRequestServiceFactory',
             'Response' => 'iMSCP\Core\Service\HttpResponseServiceFactory',
             'Serializer' => 'iMSCP\Core\Service\SerializerServiceFactory',

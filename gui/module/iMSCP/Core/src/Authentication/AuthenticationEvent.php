@@ -36,21 +36,21 @@ class AuthenticationEvent extends Event
     const onAfterUnsetIdentity = 'onAfterUnsetIdentity';
 
     /**
-     * Set authentication result
+     * Set authentication result object
      *
      * @param AuthenticationResult $authResult
      */
-    public function setAuthenticationResult(AuthenticationResult $authResult)
+    public function setAuthResult(AuthenticationResult $authResult)
     {
         $this->setParam('authResult', $authResult);
     }
 
     /**
-     * Get authentication result
+     * Get authentication result object
      *
      * @return AuthenticationResult
      */
-    public function getAuthenticationResult()
+    public function getAuthResult()
     {
         return $this->getParam('authResult');
     }
