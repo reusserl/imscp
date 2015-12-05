@@ -490,7 +490,12 @@ class PluginManager implements EventManagerAwareInterface
         }
 
         if (!$this->pluginIsLocked($name)) {
-            $responses = $this->events->trigger(PluginEvent::onBeforeInstallPlugin, $this, $this->getEvent());
+            $event = clone $this->getEvent();
+            $event
+                ->setPluginName($name)
+                ->setPlugin($this->pluginLoad($name));
+
+            $responses = $this->events->trigger(PluginEvent::onBeforeInstallPlugin, $this, $event);
 
             if (!$responses->stopped()) {
                 exec_query('UPDATE plugin SET plugin_locked = ? WHERE plugin_name = ?', [1, $name]);
@@ -513,7 +518,12 @@ class PluginManager implements EventManagerAwareInterface
         }
 
         if ($this->pluginIsLocked($name)) {
-            $responses = $this->events->trigger(PluginEvent::onBeforeInstallPlugin, $this, $this->getEvent());
+            $event = clone $this->getEvent();
+            $event
+                ->setPluginName($name)
+                ->setPlugin($this->pluginLoad($name));
+
+            $responses = $this->events->trigger(PluginEvent::onBeforeInstallPlugin, $this, $event);
 
             if (!$responses->stopped()) {
                 exec_query('UPDATE plugin SET plugin_locked = ? WHERE plugin_name = ?', [0, $name]);
@@ -581,13 +591,16 @@ class PluginManager implements EventManagerAwareInterface
                     $this->pluginSetStatus($name, 'toinstall');
                     $this->pluginSetError($name, null);
 
-                    $responses = $this->events->trigger(PluginEvent::onBeforeInstallPlugin, $this, $this->getEvent());
+                    $event = clone $this->getEvent();
+                    $event
+                        ->setPluginName($name)
+                        ->setPlugin($pluginInstance);
+
+                    $responses = $this->events->trigger(PluginEvent::onBeforeInstallPlugin, $this, $event);
 
                     if (!$responses->stopped()) {
                         $pluginInstance->install($this);
-
-                        $this->events->trigger(PluginEvent::onAfterInstallPlugin, $this, $this->getEvent());
-
+                        $this->events->trigger(PluginEvent::onAfterInstallPlugin, $this, $event);
                         $ret = $this->pluginEnable($name, true);
 
                         if ($ret == self::ACTION_SUCCESS) {
@@ -676,12 +689,16 @@ class PluginManager implements EventManagerAwareInterface
                         $this->pluginSetStatus($name, 'touninstall');
                         $this->pluginSetError($name, null);
 
-                        $responses = $this->events->trigger(PluginEvent::onBeforeUninstallPlugin, $this, $this->getEvent());
+                        $event = clone $this->getEvent();
+                        $event
+                            ->setPluginName($name)
+                            ->setPlugin($pluginInstance);
+
+                        $responses = $this->events->trigger(PluginEvent::onBeforeUninstallPlugin, $this, $event);
 
                         if (!$responses->stopped()) {
                             $pluginInstance->uninstall($this);
-
-                            $this->events->trigger(PluginEvent::onAfterUninstallPlugin, $this, $this->getEvent());
+                            $this->events->trigger(PluginEvent::onAfterUninstallPlugin, $this, $event);
 
                             if ($this->pluginHasBackend($name)) {
                                 $this->backendRequest = true;
@@ -756,12 +773,16 @@ class PluginManager implements EventManagerAwareInterface
 
                     $this->pluginSetError($name, null);
 
-                    $responses = $this->events->trigger(PluginEvent::onBeforeEnablePlugin, $this, $this->getEvent());
+                    $event = clone $this->getEvent();
+                    $event
+                        ->setPluginName($name)
+                        ->setPlugin($pluginInstance);
+
+                    $responses = $this->events->trigger(PluginEvent::onBeforeEnablePlugin, $this, $event);
 
                     if (!$responses->stopped()) {
                         $pluginInstance->enable($this);
-
-                        $this->events->trigger(PluginEvent::onAfterEnablePlugin, $this, $this->getEvent());
+                        $this->events->trigger(PluginEvent::onAfterEnablePlugin, $this, $event);
 
                         if ($this->pluginHasBackend($name)) {
                             $this->backendRequest = true;
@@ -823,12 +844,16 @@ class PluginManager implements EventManagerAwareInterface
 
                     $this->pluginSetError($name, null);
 
-                    $responses = $this->events->trigger(PluginEvent::onBeforeDisablePlugin, $this, $this->getEvent());
+                    $event = clone $this->getEvent();
+                    $event
+                        ->setPluginName($name)
+                        ->setPlugin($pluginInstance);
+
+                    $responses = $this->events->trigger(PluginEvent::onBeforeDisablePlugin, $this, $event);
 
                     if (!$responses->stopped()) {
                         $pluginInstance->disable($this);
-
-                        $this->events->trigger(PluginEvent::onAfterDisablePlugin, $this, $this->getEvent());
+                        $this->events->trigger(PluginEvent::onAfterDisablePlugin, $this, $event);
 
                         if ($this->pluginHasBackend($name)) {
                             $this->backendRequest = true;
@@ -869,7 +894,6 @@ class PluginManager implements EventManagerAwareInterface
                 try {
                     $this->pluginSetStatus($name, 'tochange');
                     $this->pluginSetError($name, null);
-
                     $ret = $this->pluginDisable($name, true);
 
                     if ($ret == self::ACTION_SUCCESS) {
@@ -937,25 +961,18 @@ class PluginManager implements EventManagerAwareInterface
                     if ($ret == self::ACTION_SUCCESS) {
                         $pluginInfo = $this->pluginGetInfo($name);
 
-                        // FIXME Pass event as param and pass params as event params
-                        $responses = $this->events->trigger(PluginEvent::onBeforeUpdatePlugin, $this, [
-                            'pluginManager' => $this,
-                            'pluginName' => $name,
-                            'fromVersion' => $pluginInfo['version'],
-                            'toVersion' => $pluginInfo['__nversion__']
-                        ]);
+                        $event = clone $this->getEvent();
+                        $event
+                            ->setPluginName($name)
+                            ->setPlugin($pluginInstance)
+                            ->setParam('fromVersion', $pluginInfo['version'])
+                            ->setParam('toVersion', $pluginInfo['__nversion__']);
+
+                        $responses = $this->events->trigger(PluginEvent::onBeforeUpdatePlugin, $this, $event);
 
                         if (!$responses->stopped()) {
                             $pluginInstance->update($this, $pluginInfo['version'], $pluginInfo['__nversion__']);
-
-                            // FIXME Pass event as param and pass params as event params
-                            $this->events->trigger(PluginEvent::onAfterUpdatePlugin, [
-                                'pluginManager' => $this,
-                                'pluginName' => $name,
-                                'fromVersion' => $pluginInfo['version'],
-                                'toVersion' => $pluginInfo['__nversion__']
-                            ]);
-
+                            $this->events->trigger(PluginEvent::onAfterUpdatePlugin, $this, $event);
                             $ret = $this->pluginEnable($name, true);
 
                             if ($ret == self::ACTION_SUCCESS) {
@@ -1007,13 +1024,16 @@ class PluginManager implements EventManagerAwareInterface
                     $this->pluginSetStatus($name, 'todelete');
                     $this->pluginSetError($name, null);
 
-                    $responses = $this->events->trigger(PluginEvent::onBeforeDeletePlugin, $this, $this->getEvent());
+                    $event = clone $this->getEvent();
+                    $event
+                        ->setPluginName($name)
+                        ->setPlugin($pluginInstance);
+
+                    $responses = $this->events->trigger(PluginEvent::onBeforeDeletePlugin, $this, $event);
 
                     if (!$responses->stopped()) {
                         $pluginInstance->delete($this);
-
                         $this->pluginDeleteData($name);
-
                         $pluginDir = $this->pluginsDirectory . '/' . $name;
 
                         if (is_dir($pluginDir)) {
@@ -1023,8 +1043,7 @@ class PluginManager implements EventManagerAwareInterface
                             }
                         }
 
-                        $this->events->trigger(PluginEvent::onAfterDeletePlugin, $this, $this->getEvent());
-
+                        $this->events->trigger(PluginEvent::onAfterDeletePlugin, $this, $event);
                         return self::ACTION_SUCCESS;
                     }
 
@@ -1077,7 +1096,12 @@ class PluginManager implements EventManagerAwareInterface
     public function pluginProtect($name)
     {
         if ($this->pluginIsEnabled($name) && !$this->pluginIsProtected($name)) {
-            $responses = $this->events->trigger(PluginEvent::onBeforeProtectPlugin, $this, $this->getEvent());
+            $event = clone $this->getEvent();
+            $event
+                ->setPluginName($name)
+                ->setPlugin($this->pluginLoad($name));
+
+            $responses = $this->events->trigger(PluginEvent::onBeforeProtectPlugin, $this, $event);
 
             if ($responses->stopped()) {
                 return self::ACTION_STOPPED;
@@ -1087,7 +1111,7 @@ class PluginManager implements EventManagerAwareInterface
             $this->protectedPlugins[] = $name;
 
             if ($this->pluginUpdateProtectedFile()) {
-                $this->events->trigger(PluginEvent::onAfterProtectPlugin, $this, $this->getEvent());
+                $this->events->trigger(PluginEvent::onAfterProtectPlugin, $this, $event);
                 return self::ACTION_SUCCESS;
             }
 
