@@ -18,30 +18,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Events;
-
-use iMSCP_Events_Manager_Interface as EventManagerInterface;
+namespace iMSCP\Core\Plugin\Feature;
 
 /**
- * Interface EventManagerAwareInterface
- * @package iMSCP\Events
+ * Interface RoutesProviderInterface
+ * @package iMSCP\Core\Plugin\Feature
  */
-interface EventManagerAwareInterface
+interface RoutesProviderInterface
 {
-	/**
-	 * Inject an EventManager instance
-	 *
-	 * @param EventManagerInterface $eventManager
-	 * @return void
-	 */
-	public function setEventManager(EventManagerInterface $eventManager);
-
-	/**
-	 * Retrieve the event manager
-	 *
-	 * Lazy-loads an EventManager instance if none registered.
-	 *
-	 * @return EventManagerInterface
-	 */
-	public function getEventManager();
+    /**
+     * Routes provider
+     *
+     * This method allow the plugin to provide its routes. For instance:
+     *
+     * <code>
+     * $pluginDir = $this->getPluginManager()->pluginGetDirectory() . '/' . $this->getName();
+     *
+     * return array(
+     *  '/admin/mailgraph.php' => $pluginDir . '/frontend/mailgraph.php',
+     *    '/admin/mailgraphics.php' => $pluginDir . '/frontend/mailgraphics.php'
+     * );
+     * </code>
+     *
+     * @return array An array containing action script paths
+     */
+    public function getRoutes();
 }
