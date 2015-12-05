@@ -18,27 +18,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-/**
- * Class iMSCP_Events_Listener_SplPriorityQueue
- *
- * Allows to keep order for listeners with same priority (FIFO order).
- */
-class iMSCP_Events_Listener_SplPriorityQueue extends SplPriorityQueue
-{
-	/**
-	 * @var int Seed used to ensure queue order for listeners whith same priority
-	 */
-	protected $seed = PHP_INT_MAX;
+namespace iMSCP\Core\Plugin\Listener;
 
-	/**
-	 * Insert a value with a given priority
-	 *
-	 * @param mixed $listener Listener to insert in the queue
-	 * @param mixed $priority Item priority
-	 * @return void
-	 */
-	public function insert($listener, $priority)
-	{
-		parent::insert($listener, array($priority, $this->seed--));
-	}
+use iMSCP\Core\Plugin\PluginEvent;
+
+/**
+ * Class PluginResolverListener
+ *
+ * This is the default plugin resolver listener which assumes that the plugins are in the iMSCP\Plugin namespace.
+ * It is possible to provide any other resolver logic by providing your own plugin resolver listener.
+ *
+ * @package iMSCP\Core\Plugin\Listener
+ */
+class PluginResolverListener
+{
+    /**
+     * Resolve a plugin
+     *
+     * @param pluginEvent $event
+     * @return string|false FALSE if the plugin class does not exist
+     */
+    public function __invoke(PluginEvent $event)
+    {
+        $class = 'iMSCP\\Plugin\\' . $event->getPluginName();
+
+        if (!class_exists($class)) {
+            return false;
+        }
+
+        return $class;
+    }
 }
