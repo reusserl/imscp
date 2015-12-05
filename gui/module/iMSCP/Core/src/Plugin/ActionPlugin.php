@@ -29,7 +29,7 @@ use Zend\EventManager\ListenerAggregateTrait;
  */
 abstract class ActionPlugin extends AbstractPlugin implements ListenerAggregateInterface
 {
-    use ListenerAggregateTrait
+    use ListenerAggregateTrait;
 
     /**
      * Get routes
