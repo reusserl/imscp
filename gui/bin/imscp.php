@@ -18,17 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-use iMSCP_Registry as Registry;
-use iMSCP_Events as Events;
-use iMSCP_Events_Aggregator as EventManager;
-use iMSCP\Tools\Console\ConsoleEvent;
-use iMSCP\Tools\Console\ConsoleRunner;
-
 chdir(__DIR__);
 
-require_once '../library/imscp-lib.php';
+require_once '../application.php';
 
-$consoleEvent = new ConsoleEvent(Events::onBeforeCreateConsoleApplication);
-EventManager::getInstance()->dispatch($consoleEvent);
-$cli = ConsoleRunner::createApplication(ConsoleRunner::createHelperSet(Registry::get('ServiceManager')), $consoleEvent->getCommands());
+$application = \iMSCP\Core\Application::getInstance();
+$consoleEvent = new \iMSCP\Core\Console\ConsoleEvent(\iMSCP\Core\Events::onBeforeCreateConsoleApplication);
+$application->getEventManager()->trigger($consoleEvent);
+$cli = \iMSCP\Core\Console\ConsoleRunner::createApplication(\iMSCP\Core\Console\ConsoleRunner::createHelperSet(
+	$application->getServiceManager()), $consoleEvent->getCommands()
+);
 $cli->run();
