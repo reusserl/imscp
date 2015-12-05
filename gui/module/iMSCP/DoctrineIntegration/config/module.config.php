@@ -18,4 +18,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-return [];
+return [
+    'service_manager' => [
+        'factories' => [
+            'DBALConnection' => 'iMSCP\DoctrineIntegration\Service\DBALConnectionFactory',
+            'ManagerRegistry' => 'iMSCP\DoctrineIntegration\Service\ManagerRegistryFactory',
+            'ORM' => 'iMSCP\DoctrineIntegration\Service\ORMFactory'
+        ],
+        'aliases' => [
+            'Database' => 'DBALConnection',
+            'doctrine' => 'ManagerRegistry',
+            'default_connection' => 'DBALConnection',
+            'default_manager' => 'ORM',
+            'EntityManager' => 'ORM'
+        ]
+    ]
+];

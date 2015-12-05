@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Service;
+namespace iMSCP\DoctrineIntegration\Service;
 
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\CachedReader;
@@ -35,7 +35,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  * Class ORMServiceFactory
  * @package iMSCP\Core\Service
  */
-class ORMServiceFactory implements FactoryInterface
+class ORMFactory implements FactoryInterface
 {
     const ARRAY_CACHE_DRIVER_CLASS = 'Doctrine\Common\Cache\ArrayCache';
     const APC_CACHE_DRIVER_CLASS = 'Doctrine\Common\Cache\ApcCache';

@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Doctrine\Serializer\Construction;
+namespace iMSCP\DoctrineIntegration\Serializer\Construction;
 
 use Doctrine\Common\Persistence\ManagerRegistry;
 use Doctrine\ORM\EntityManagerInterface;
@@ -36,7 +36,7 @@ use JMS\Serializer\VisitorInterface;
  * Note: Used in place of JMS DoctrineObjectConstructors as long the bug described by
  * https://github.com/schmittjoh/serializer/pull/299 is not fixed.
  *
- * @package iMSCP\Core\Doctrine\Serializer\Construction
+ * @package iMSCP\DoctrineIntegration\Serializer\Construction
  */
 class DoctrineObjectConstructor implements ObjectConstructorInterface
 {

@@ -22,41 +22,31 @@ namespace iMSCP\DoctrineIntegration;
 
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
-use Zend\ModuleManager\Feature\DependencyIndicatorInterface;
 use Zend\ModuleManager\Feature\InitProviderInterface;
 use Zend\ModuleManager\ModuleManagerInterface;
-use Zend\Stdlib\ArrayUtils;
 
 /**
  * Class Module
- * @package iMSCP\Core
+ * @package iMSCP\DoctrineIntegration
  */
-class Module implements InitProviderInterface, ConfigProviderInterface, DependencyIndicatorInterface
+class Module implements InitProviderInterface, ConfigProviderInterface
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	public function init(ModuleManagerInterface $manager)
-	{
-		// Registers an autoloading callable for annotations
-		AnnotationRegistry::registerLoader(function ($className) {
-			return class_exists($className);
-		});
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function init(ModuleManagerInterface $manager)
+    {
+        // Registers an autoloading callable for annotations
+        AnnotationRegistry::registerLoader(function ($className) {
+            return class_exists($className);
+        });
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getConfig()
-	{
-		return include __DIR__ . '/config/module.config.php';
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getModuleDependencies()
-	{
-		return ['iMSCP\Core'];
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function getConfig()
+    {
+        return include __DIR__ . '/config/module.config.php';
+    }
 }

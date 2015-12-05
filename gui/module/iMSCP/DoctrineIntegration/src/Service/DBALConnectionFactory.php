@@ -18,17 +18,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Service;
+namespace iMSCP\DoctrineIntegration\Service;
 
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\Configuration;
+use iMSCP\Core\Service\EncryptionDataService;
 use iMSCP\Core\Utils\Crypt;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Class DBALConnectionFactory
- * @package iMSCP\Core\Service
+ * @package iMSCP\DoctrineIntegration\Service
  */
 class DBALConnectionFactory implements FactoryInterface
 {

@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Doctrine\Persistence;
+namespace iMSCP\DoctrineIntegration\Persistence;
 
 use Doctrine\Common\Persistence\AbstractManagerRegistry;
 use Doctrine\ORM\EntityManager;
@@ -28,7 +28,7 @@ use Zend\ServiceManager\ServiceManagerAwareInterface;
 
 /**
  * Class ManagerRegistry
- * @package iMSCP\Core\Doctrine\Persistence
+ * @package iMSCP\DoctrineIntegration\Persistence
  */
 class ManagerRegistry extends AbstractManagerRegistry implements ServiceManagerAwareInterface
 {

@@ -18,15 +18,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Service;
+namespace iMSCP\DoctrineIntegration\Service;
 
-use iMSCP\Core\Doctrine\Persistence\ManagerRegistry;
+use iMSCP\DoctrineIntegration\Persistence\ManagerRegistry;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Class ManagerRegistryFactory
- * @package iMSCP\Core\Service
+ * @package iMSCP\DoctrineIntegration\Service
+ *
  */
 class ManagerRegistryFactory implements FactoryInterface
 {
