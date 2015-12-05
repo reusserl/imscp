@@ -27,12 +27,14 @@ use Zend\EventManager\Event;
  * Composes Plugin objects
  *
  * @method PluginManager getTarget
+ * @package iMSCP\Core\Plugin
  */
 class PluginEvent extends Event
 {
     /**
      * Plugin events triggered by event manager
      */
+    const onLoadPluginResolve = 'onLoadPluginResolve';
     const onBeforeUpdatePluginList = 'onBeforeUpdatePluginList';
     const onAfterUpdatePluginList = 'onAfterUpdatePluginList';
     const onBeforeInstallPlugin = 'onBeforeInstallPlugin';
@@ -91,7 +93,6 @@ class PluginEvent extends Event
         }
 
         $this->pluginName = $pluginName;
-
         return $this;
     }
 
