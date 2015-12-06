@@ -271,24 +271,6 @@
 				</div>
 			</div>
 			<div class="odd">
-				<div class="left"><label for="compress_output">{TR_COMPRESS_OUTPUT}</label></div>
-				<div class="right">
-					<select name="compress_output" id="compress_output">
-						<option value="0" {COMPRESS_OUTPUT_OFF}>{TR_DISABLED}</option>
-						<option value="1" {COMPRESS_OUTPUT_ON}>{TR_ENABLED}</option>
-					</select>
-				</div>
-			</div>
-			<div class="even">
-				<div class="left"><label for="show_compression_size">{TR_SHOW_COMPRESSION_SIZE}</label></div>
-				<div class="right">
-					<select name="show_compression_size" id="show_compression_size">
-						<option value="0" {SHOW_COMPRESSION_SIZE_SELECTED_OFF}>{TR_DISABLED}</option>
-						<option value="1" {SHOW_COMPRESSION_SIZE_SELECTED_ON}>{TR_ENABLED}</option>
-					</select>
-				</div>
-			</div>
-			<div class="odd">
 				<div class="left"><label for="hosting_plan_level">{TR_HOSTING_PLANS_LEVEL}</label></div>
 				<div class="right">
 					<select name="hosting_plan_level" id="hosting_plan_level">
