@@ -61,7 +61,7 @@ function createImage($strSessionVar)
     $string = '';
     for ($i = 0; $i < $nbLetters; $i++) {
         $iRandVal = strRandom(1);
-        $fontFile = 'module/iMSCP/Core/src/Resources/Fonts/' .
+        $fontFile = 'module/iMSCP/Core/src/resources/fonts/' .
             $cfg['LOSTPASSWORD_CAPTCHA_FONTS'][mt_rand(0, count($cfg['LOSTPASSWORD_CAPTCHA_FONTS']) - 1)];
 
         imagettftext($image, 20, 0, $x, $y, $textColor, $fontFile, $iRandVal);

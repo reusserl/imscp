@@ -131,7 +131,7 @@ function _client_generateOpenSSLConfFile($data)
 {
     $config = \iMSCP\Core\Application::getInstance()->getConfig();
     $sslTpl = new \iMSCP\Core\Template\TemplateEngine();
-    $sslTpl->setTemplateRootDir($config['GUI_ROOT_DIR'] . '/module/Core/Resources/ssl');
+    $sslTpl->setTemplateRootDir($config['GUI_ROOT_DIR'] . '/module/Core/resources/ssl');
     $sslTpl->define('tpl', 'openssl.cnf.tpl');
     $sslTpl->assign([
         'DOMAIN_NAME' => $data['domain_name'],
