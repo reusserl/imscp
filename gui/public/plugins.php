@@ -22,6 +22,7 @@ require '../application.php';
 
 /** @var \iMSCP\Core\Plugin\PluginManager $pluginManager */
 $pluginManager = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('PluginManager');
+$pluginEvent =  new \iMSCP\Core\Plugin\PluginEvent();
 
 $plugins = $pluginManager->pluginGetLoaded('Action');
 $scriptPath = null;
@@ -30,9 +31,7 @@ if (!empty($plugins)) {
     $eventsManager = \iMSCP\Core\Application::getInstance()->getEventManager();
 
     if (($urlComponents = parse_url($_SERVER['REQUEST_URI'])) !== false) {
-        $responses = $eventsManager->trigger(\iMSCP\Core\Plugin\PluginEvent::onBeforePluginsRoute, [
-            'pluginManager' => $pluginManager
-        ]);
+        $responses = $eventsManager->trigger(\iMSCP\Core\Plugin\PluginEvent::onBeforePluginsRoute, $pluginManager);
 
         if (!$responses->stopped()) {
             foreach ($plugins as $plugin) {
@@ -57,8 +56,8 @@ if (!empty($plugins)) {
                 }
             }
 
-            $eventsManager->trigger(\iMSCP\Core\Plugin\PluginEvent::onAfterPluginsRoute, [
-                'pluginManager' => $pluginManager, 'scriptPath' => $scriptPath
+            $eventsManager->trigger(\iMSCP\Core\Plugin\PluginEvent::onAfterPluginsRoute, $pluginManager, [
+                'scriptPath' => $scriptPath
             ]);
 
             if ($scriptPath) {

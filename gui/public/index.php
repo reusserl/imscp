@@ -22,12 +22,16 @@ require '../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onLoginScriptStart);
 
-if (isset($_REQUEST['action'])) {
-    init_login($eventManager);
+/** @var \Zend\Http\PhpEnvironment\Request $request */
+$request = \iMSCP\Core\Application::getInstance()->getRequest();
+
+if (($action = $request->getPost('action'))) {
+    init_login(\iMSCP\Core\Application::getInstance()->getEventManager());
+
     /** @var \iMSCP\Core\Authentication\Authentication $authentication */
     $authentication = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Authentication');
 
-    switch ($_REQUEST['action']) {
+    switch ($action) {
         case 'logout':
             if ($authentication->hasIdentity()) {
                 $adminName = $authentication->getIdentity()->admin_name;
@@ -66,7 +70,7 @@ $tpl->assign([
 
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-if ($cfg['MAINTENANCEMODE'] && !isset($_GET['admin'])) {
+if ($cfg['MAINTENANCEMODE'] && !$request->getQuery('admin')) {
     $tpl->define_dynamic('page', 'message.tpl');
     $tpl->assign([
         'TR_PAGE_TITLE' => tr('i-MSCP - Multi Server Control Panel / Maintenance'),
@@ -88,7 +92,7 @@ if ($cfg['MAINTENANCEMODE'] && !isset($_GET['admin'])) {
         'TR_PAGE_TITLE' => tr('i-MSCP - Multi Server Control Panel / Login'),
         'TR_LOGIN' => tr('Login'),
         'TR_USERNAME' => tr('Username'),
-        'UNAME' => isset($_POST['uname']) ? tohtml($_POST['uname'], 'htmlAttr') : '',
+        'UNAME' => tohtml($request->getPost('uname', ''), 'htmlAttr'),
         'TR_PASSWORD' => tr('Password')
     ]);
 
@@ -99,12 +103,11 @@ if ($cfg['MAINTENANCEMODE'] && !isset($_GET['admin'])) {
         $isSecure = isSecureRequest() ? true : false;
         $uri = [
             ($isSecure) ? 'http://' : 'https://',
-            $_SERVER['SERVER_NAME'],
+            $request->getServer('SERVER_NAME'),
             ($isSecure)
                 ? (($cfg['BASE_SERVER_VHOST_HTTP_PORT'] == 80) ? '' : ':' . $cfg['BASE_SERVER_VHOST_HTTP_PORT'])
                 : (($cfg['BASE_SERVER_VHOST_HTTPS_PORT'] == 443) ? '' : ':' . $cfg['BASE_SERVER_VHOST_HTTPS_PORT'])
         ];
-
         $tpl->assign([
             'SSL_LINK' => tohtml(implode('', $uri), 'htmlAttr'),
             'SSL_IMAGE_CLASS' => ($isSecure) ? 'i_unlock' : 'i_lock',
@@ -127,7 +130,8 @@ if ($cfg['MAINTENANCEMODE'] && !isset($_GET['admin'])) {
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onLoginScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onLoginScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();
+

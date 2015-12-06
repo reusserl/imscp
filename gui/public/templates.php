@@ -18,19 +18,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP;
-
-use iMSCP_pTemplate as TemplateEngine;
-
-require_once 'imscp-lib.php';
+require '../application.php';
 
 check_login();
 
-if (isset($_GET['tpl'])) {
-	$tpl = clean_input($_GET['tpl']);
+/** @var \Zend\Http\PhpEnvironment\Request $request */
+$request = \iMSCP\Core\Application::getInstance()->getRequest();
+
+if (($tpl = $request->getQuery($_GET['tpl']))) {
+	$tpl = clean_input($tpl);
 
 	try {
-		$tplEngine = new TemplateEngine();
+		$tplEngine = new \iMSCP\Core\Template\TemplateEngine();
 		$tplEngine->define('template', $tpl);
 		$tplEngine->parse('TEMPLATE', 'template');
 		$tplEngine->prnt();
