@@ -29,29 +29,27 @@ require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
-// Check for login
 check_login('reseller');
 
-// Switch back to admin
 if (isset($_SESSION['logged_from']) && isset($_SESSION['logged_from_id']) && isset($_GET['action']) &&
-	$_GET['action'] == 'go_back'
+    $_GET['action'] == 'go_back'
 ) {
-	change_user_interface($_SESSION['user_id'], $_SESSION['logged_from_id']);
+    change_user_interface($_SESSION['user_id'], $_SESSION['logged_from_id']);
 } elseif (isset($_SESSION['user_id']) && isset($_GET['to_id'])) { // Switch to customer
-	$toUserId = intval($_GET['to_id']);
+    $toUserId = intval($_GET['to_id']);
 
-	// Admin logged as reseller:
-	if (isset($_SESSION['logged_from']) && isset($_SESSION['logged_from_id'])) {
-		$fromUserId = $_SESSION['logged_from_id'];
-	} else { // reseller to customer
-		$fromUserId = $_SESSION['user_id'];
+    // Admin logged as reseller:
+    if (isset($_SESSION['logged_from']) && isset($_SESSION['logged_from_id'])) {
+        $fromUserId = $_SESSION['logged_from_id'];
+    } else { // reseller to customer
+        $fromUserId = $_SESSION['user_id'];
 
-		if (who_owns_this($toUserId, 'client') != $fromUserId) {
-			showBadRequestErrorPage();
-		}
-	}
+        if (who_owns_this($toUserId, 'client') != $fromUserId) {
+            showBadRequestErrorPage();
+        }
+    }
 
-	change_user_interface($fromUserId, $toUserId);
+    change_user_interface($fromUserId, $toUserId);
 } else {
-	showBadRequestErrorPage();
+    showBadRequestErrorPage();
 }

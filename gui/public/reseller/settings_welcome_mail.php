@@ -25,69 +25,68 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
+/***********************************************************************************************************************
+ * Main
+ */
+
 require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
-$tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'reseller/settings_welcome_mail.tpl',
-		'page_message' => 'layout'));
-
-$user_id = $_SESSION['user_id'];
-$data = get_welcome_email($user_id, 'user');
+$data = get_welcome_email($_SESSION['user_id'], 'user');
 
 if (isset($_POST['uaction']) && $_POST['uaction'] == 'email_setup') {
-	$data['subject'] = clean_input($_POST['auto_subject']);
-	$data['message'] = clean_input($_POST['auto_message']);
+    $data['subject'] = clean_input($_POST['auto_subject']);
+    $data['message'] = clean_input($_POST['auto_message']);
 
-	if ($data['subject'] == '') {
-		set_page_message(tr('You must specify a subject.'), 'error');
-	} elseif ($data['message'] == '') {
-		set_page_message(tr('You must specify a message.'), 'error');
-	} else {
-		set_welcome_email($user_id, $data);
-		set_page_message (tr('Template for Auto email successfully updated.'), 'success');
-	}
+    if ($data['subject'] == '') {
+        set_page_message(tr('You must specify a subject.'), 'error');
+    } elseif ($data['message'] == '') {
+        set_page_message(tr('You must specify a message.'), 'error');
+    } else {
+        set_welcome_email($_SESSION['user_id'], $data);
+        set_page_message(tr('Template for Auto email successfully updated.'), 'success');
+    }
 }
 
-$tpl->assign('TR_PAGE_TITLE', tr('Reseller / Customers / Welcome Email'));
+
+$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl->define_dynamic([
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'reseller/settings_welcome_mail.tpl',
+    'page_message' => 'layout'
+]);
+$tpl->assign([
+    'TR_PAGE_TITLE', tr('Reseller / Customers / Welcome Email'),
+    'TR_MESSAGE_TEMPLATE_INFO' => tr('Message template info'),
+    'TR_USER_LOGIN_NAME' => tr('User login (system) name'),
+    'TR_USER_PASSWORD' => tr('User password'),
+    'TR_USER_REAL_NAME' => tr('User real (first and last) name'),
+    'TR_MESSAGE_TEMPLATE' => tr('Message template'),
+    'TR_SUBJECT' => tr('Subject'),
+    'TR_MESSAGE' => tr('Message'),
+    'TR_SENDER_EMAIL' => tr('Sender email'),
+    'TR_SENDER_NAME' => tr('Sender name'),
+    'TR_UPDATE' => tr('Update'),
+    'TR_USERTYPE' => tr('User type (admin, reseller, user)'),
+    'TR_BASE_SERVER_VHOST_PREFIX' => tr('URL protocol'),
+    'TR_BASE_SERVER_VHOST' => tr('URL to this admin panel'),
+    'TR_BASE_SERVER_VHOST_PORT' => tr('URL port'),
+    'SUBJECT_VALUE' => tohtml($data['subject']),
+    'MESSAGE_VALUE' => tohtml($data['message']),
+    'SENDER_EMAIL_VALUE' => tohtml($data['sender_email']),
+    'SENDER_NAME_VALUE' => tohtml(!empty($data['sender_name'])) ? $data['sender_name'] : tr('Unknown')
+]);
 
 generateNavigation($tpl);
-
-$tpl->assign(
-	array(
-		'TR_MESSAGE_TEMPLATE_INFO' => tr('Message template info'),
-		'TR_USER_LOGIN_NAME' => tr('User login (system) name'),
-		'TR_USER_PASSWORD' => tr('User password'),
-		'TR_USER_REAL_NAME' => tr('User real (first and last) name'),
-		'TR_MESSAGE_TEMPLATE' => tr('Message template'),
-		'TR_SUBJECT' => tr('Subject'),
-		'TR_MESSAGE' => tr('Message'),
-		'TR_SENDER_EMAIL' => tr('Sender email'),
-		'TR_SENDER_NAME' => tr('Sender name'),
-		'TR_UPDATE' => tr('Update'),
-		'TR_USERTYPE' => tr('User type (admin, reseller, user)'),
-		'TR_BASE_SERVER_VHOST_PREFIX' => tr('URL protocol'),
-		'TR_BASE_SERVER_VHOST' => tr('URL to this admin panel'),
-		'TR_BASE_SERVER_VHOST_PORT' => tr('URL port'),
-		'SUBJECT_VALUE' => tohtml($data['subject']),
-		'MESSAGE_VALUE' => tohtml($data['message']),
-		'SENDER_EMAIL_VALUE' => tohtml($data['sender_email']),
-		'SENDER_NAME_VALUE' => tohtml(!empty($data['sender_name'])) ? $data['sender_name'] : tr('Unknown')));
-
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

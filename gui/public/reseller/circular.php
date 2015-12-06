@@ -33,30 +33,28 @@
  */
 function reseller_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData)
 {
-	if ($rcptToData['email'] != '') {
-		$senderEmail = encode_idna($senderEmail);
+    if ($rcptToData['email'] != '') {
+        $senderEmail = encode_idna($senderEmail);
 
-		if (!empty($rcptToData['fname']) && !empty($rcptToData['lname'])) {
-			$to = $rcptToData['fname'] . ' ' . $rcptToData['lname'];
-		} elseif (!empty($rcptToData['fname'])) {
-			$to = $rcptToData['fname'];
-		} elseif (!empty($rcptToData['lname'])) {
-			$to = $rcptToData['lname'];
-		} else {
-			$to = $rcptToData['admin_name'];
-		}
+        if (!empty($rcptToData['fname']) && !empty($rcptToData['lname'])) {
+            $to = $rcptToData['fname'] . ' ' . $rcptToData['lname'];
+        } elseif (!empty($rcptToData['fname'])) {
+            $to = $rcptToData['fname'];
+        } elseif (!empty($rcptToData['lname'])) {
+            $to = $rcptToData['lname'];
+        } else {
+            $to = $rcptToData['admin_name'];
+        }
 
-		$from = encode_mime_header($senderName) .  " <$senderEmail>";
-		$to = encode_mime_header($to) . " <{$rcptToData['email']}>";
-
-		$headers = "From: $from\r\n";
-		$headers .= "MIME-Version: 1.0\r\n";
-		$headers .= "Content-Type: text/plain; charset=utf-8\r\n";
-		$headers .= "Content-Transfer-Encoding: 8bit\r\n";
-		$headers .= "X-Mailer: i-MSCP mailer";
-
-		mail($to, encode_mime_header($subject), $body, $headers, "-f $senderEmail");
-	}
+        $from = encode_mime_header($senderName) . " <$senderEmail>";
+        $to = encode_mime_header($to) . " <{$rcptToData['email']}>";
+        $headers = "From: $from\r\n";
+        $headers .= "MIME-Version: 1.0\r\n";
+        $headers .= "Content-Type: text/plain; charset=utf-8\r\n";
+        $headers .= "Content-Transfer-Encoding: 8bit\r\n";
+        $headers .= "X-Mailer: i-MSCP mailer";
+        mail($to, encode_mime_header($subject), $body, $headers, "-f $senderEmail");
+    }
 }
 
 /**
@@ -69,15 +67,15 @@ function reseller_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToD
  */
 function reseller_sendToCustomers($senderName, $senderEmail, $subject, $body)
 {
-	if (resellerHasCustomers()) {
-		$stmt = exec_query(
-			'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `created_by` = ?', $_SESSION['user_id']
-		);
+    if (resellerHasCustomers()) {
+        $stmt = exec_query(
+            'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `created_by` = ?', $_SESSION['user_id']
+        );
 
-		while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			reseller_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
-		}
-	}
+        while ($rcptToData = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            reseller_sendEmail($senderName, $senderEmail, $subject, $body, $rcptToData);
+        }
+    }
 }
 
 /**
@@ -91,32 +89,32 @@ function reseller_sendToCustomers($senderName, $senderEmail, $subject, $body)
  */
 function reseller_isValidCircular($senderName, $senderEmail, $subject, $body)
 {
-	$ret = true;
+    $ret = true;
 
-	if ($senderName == '') {
-		set_page_message(tr('Sender name is missing.'), 'error');
-		$ret = false;
-	}
+    if ($senderName == '') {
+        set_page_message(tr('Sender name is missing.'), 'error');
+        $ret = false;
+    }
 
-	if ($senderEmail == '') {
-		set_page_message(tr('Sender email is missing.'), 'error');
-		$ret = false;
-	} elseif (!chk_email($senderEmail)) {
-		set_page_message(tr("Incorrect email length or syntax."), 'error');
-		$ret = false;
-	}
+    if ($senderEmail == '') {
+        set_page_message(tr('Sender email is missing.'), 'error');
+        $ret = false;
+    } elseif (!chk_email($senderEmail)) {
+        set_page_message(tr("Incorrect email length or syntax."), 'error');
+        $ret = false;
+    }
 
-	if ($subject == '') {
-		set_page_message(tr('Subject is missing.'), 'error');
-		$ret = false;
-	}
+    if ($subject == '') {
+        set_page_message(tr('Subject is missing.'), 'error');
+        $ret = false;
+    }
 
-	if ($body == '') {
-		set_page_message(tr('Body is missing.'), 'error');
-		$ret = false;
-	}
+    if ($body == '') {
+        set_page_message(tr('Body is missing.'), 'error');
+        $ret = false;
+    }
 
-	return $ret;
+    return $ret;
 }
 
 /**
@@ -126,46 +124,42 @@ function reseller_isValidCircular($senderName, $senderEmail, $subject, $body)
  */
 function reseller_sendCircular()
 {
-	if (
-		isset($_POST['sender_name']) && isset($_POST['sender_email']) && isset($_POST['subject']) &&
-		isset($_POST['body'])
-	) {
-		$senderName = clean_input($_POST['sender_name']);
-		$senderEmail = clean_input($_POST['sender_email']);
-		$subject = clean_input($_POST['subject'], false);
-		$body = clean_input($_POST['body'], false);
+    if (
+        isset($_POST['sender_name']) && isset($_POST['sender_email']) && isset($_POST['subject']) &&
+        isset($_POST['body'])
+    ) {
+        $senderName = clean_input($_POST['sender_name']);
+        $senderEmail = clean_input($_POST['sender_email']);
+        $subject = clean_input($_POST['subject'], false);
+        $body = clean_input($_POST['body'], false);
 
-		if (reseller_isValidCircular($senderName, $senderEmail, $subject, $body)) {
-			$responses = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-				\iMSCP\Core\Events::onBeforeSendCircular,
-				array(
-					'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => 'customers',
-					'subject' => $subject, 'body' => $body
-				)
-			);
+        if (reseller_isValidCircular($senderName, $senderEmail, $subject, $body)) {
+            $responses = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                \iMSCP\Core\Events::onBeforeSendCircular, null, [
+                'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => 'customers',
+                'subject' => $subject, 'body' => $body
+            ]);
 
-			if (!$responses->stopped()) {
-				reseller_sendToCustomers($senderName, $senderEmail, $subject, $body);
+            if (!$responses->stopped()) {
+                reseller_sendToCustomers($senderName, $senderEmail, $subject, $body);
 
-				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-					\iMSCP\Core\Events::onAfterSendCircular,
-					array(
-						'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => 'customers',
-						'subject' => $subject, 'body' => $body
-					)
-				);
+                \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                    \iMSCP\Core\Events::onAfterSendCircular, null, [
+                    'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => 'customers',
+                    'subject' => $subject, 'body' => $body
+                ]);
 
-				set_page_message(tr('Circular successfully sent.'), 'success');
-				write_log('A circular has been sent by reseller: ' . tohtml("$senderName <$senderEmail>"), E_USER_NOTICE);
-			}
-		} else {
-			return false;
-		}
-	} else {
-		showBadRequestErrorPage();
-	}
+                set_page_message(tr('Circular successfully sent.'), 'success');
+                write_log('A circular has been sent by reseller: ' . tohtml("$senderName <$senderEmail>"), E_USER_NOTICE);
+            }
+        } else {
+            return false;
+        }
+    } else {
+        showBadRequestErrorPage();
+    }
 
-	return true;
+    return true;
 }
 
 /**
@@ -176,47 +170,43 @@ function reseller_sendCircular()
  */
 function reseller_generatePageData($tpl)
 {
-	$senderName = isset($_POST['sender_name']) ? $_POST['sender_name'] : '';
-	$senderEmail = isset($_POST['sender_email']) ? $_POST['sender_email'] : '';
-	$subject = isset($_POST['subject']) ? $_POST['subject'] : '';
-	$body = isset($_POST['body']) ? $_POST['body'] : '';
+    $senderName = isset($_POST['sender_name']) ? $_POST['sender_name'] : '';
+    $senderEmail = isset($_POST['sender_email']) ? $_POST['sender_email'] : '';
+    $subject = isset($_POST['subject']) ? $_POST['subject'] : '';
+    $body = isset($_POST['body']) ? $_POST['body'] : '';
 
-	if ($senderName == '' && $senderEmail == '') {
-		$query = 'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_id` = ?';
-		$stmt = exec_query($query, $_SESSION['user_id']);
-		$data = $stmt->fetch();
+    if ($senderName == '' && $senderEmail == '') {
+        $query = 'SELECT `admin_name`, `fname`, `lname`, `email` FROM `admin` WHERE `admin_id` = ?';
+        $stmt = exec_query($query, $_SESSION['user_id']);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-		if (!empty($data['fname']) && !empty($data['lname'])) {
-			$senderName = $data['fname'] . ' ' . $data['lname'];
-		} elseif (!empty($data['fname'])) {
-			$senderName = $stmt->fields['fname'];
-		} elseif (!empty($data['lname'])) {
-			$senderName = $stmt->fields['lname'];
-		} else {
-			$senderName = $data['admin_name'];
-		}
+        if (!empty($row['fname']) && !empty($row['lname'])) {
+            $senderName = $row['fname'] . ' ' . $row['lname'];
+        } elseif (!empty($row['fname'])) {
+            $senderName = $row['fname'];
+        } elseif (!empty($data['lname'])) {
+            $senderName = $row['lname'];
+        } else {
+            $senderName = $data['admin_name'];
+        }
 
-		if ($data['email'] != '') {
-			$senderEmail = $data['email'];
-		} else {
-			$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+        if ($row['email'] != '') {
+            $senderEmail = $row['email'];
+        } else {
+            if (isset($config['DEFAULT_ADMIN_ADDRESS']) && $config['DEFAULT_ADMIN_ADDRESS'] != '') {
+                $senderEmail = $config['DEFAULT_ADMIN_ADDRESS'];
+            } else {
+                $senderEmail = 'webmaster@' . $config['BASE_SERVER_VHOST'];
+            }
+        }
+    }
 
-			if (isset($config['DEFAULT_ADMIN_ADDRESS']) && $config['DEFAULT_ADMIN_ADDRESS'] != '') {
-				$senderEmail = $config['DEFAULT_ADMIN_ADDRESS'];
-			} else {
-				$senderEmail = 'webmaster@' . $config['BASE_SERVER_VHOST'];
-			}
-		}
-	}
-
-	$tpl->assign(
-		array(
-			'SENDER_NAME' => tohtml($senderName),
-			'SENDER_EMAIL' => tohtml($senderEmail),
-			'SUBJECT' => tohtml($subject),
-			'BODY' => tohtml($body)
-		)
-	);
+    $tpl->assign([
+        'SENDER_NAME' => tohtml($senderName),
+        'SENDER_EMAIL' => tohtml($senderEmail),
+        'SUBJECT' => tohtml($subject),
+        'BODY' => tohtml($body)
+    ]);
 }
 
 /***********************************************************************************************************************
@@ -230,44 +220,39 @@ require '../../application.php';
 check_login('reseller');
 
 if (!resellerHasCustomers()) {
-	showBadRequestErrorPage();
+    showBadRequestErrorPage();
 }
 
 if (!(!empty($_POST) && reseller_sendCircular())) {
-	$tpl = new \iMSCP\Core\Template\TemplateEngine();
-	$tpl->define_dynamic(
-		array(
-			'layout' => 'shared/layouts/ui.tpl',
-			'page' => 'reseller/circular.tpl',
-			'page_message' => 'layout'
-		)
-	);
+    $tpl = new \iMSCP\Core\Template\TemplateEngine();
+    $tpl->define_dynamic([
+        'layout' => 'shared/layouts/ui.tpl',
+        'page' => 'reseller/circular.tpl',
+        'page_message' => 'layout'
+    ]);
+    $tpl->assign([
+        'TR_PAGE_TITLE' => tr('Reseller / Customers / Circular'),
+        'TR_CIRCULAR' => tr('Circular'),
+        'TR_SEND_TO' => tr('Send to'),
+        'TR_SUBJECT' => tr('Subject'),
+        'TR_BODY' => tr('Body'),
+        'TR_SENDER_EMAIL' => tr('Sender email'),
+        'TR_SENDER_NAME' => tr('Sender name'),
+        'TR_SEND_CIRCULAR' => tr('Send circular'),
+        'TR_CANCEL' => tr('Cancel')
+    ]);
 
-	$tpl->assign(
-		array(
-			'TR_PAGE_TITLE' => tr('Reseller / Customers / Circular'),
-			'TR_CIRCULAR' => tr('Circular'),
-			'TR_SEND_TO' => tr('Send to'),
-			'TR_SUBJECT' => tr('Subject'),
-			'TR_BODY' => tr('Body'),
-			'TR_SENDER_EMAIL' => tr('Sender email'),
-			'TR_SENDER_NAME' => tr('Sender name'),
-			'TR_SEND_CIRCULAR' => tr('Send circular'),
-			'TR_CANCEL' => tr('Cancel')
-		)
-	);
+    generateNavigation($tpl);
+    generatePageMessage($tpl);
+    reseller_generatePageData($tpl);
 
-	generateNavigation($tpl);
-	generatePageMessage($tpl);
-	reseller_generatePageData($tpl);
+    $tpl->parse('LAYOUT_CONTENT', 'page');
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, null, [
+        'templateEngine' => $tpl
+    ]);
+    $tpl->prnt();
 
-	$tpl->parse('LAYOUT_CONTENT', 'page');
-
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
-
-	$tpl->prnt();
-
-	unsetMessages();
+    unsetMessages();
 } else {
-	redirectTo('users.php');
+    redirectTo('users.php');
 }

@@ -25,26 +25,19 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-/************************************************************************************
- * Main script
+/***********************************************************************************************************************
+ * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
-require_once LIBRARY_PATH . '/Functions/Tickets.php';
+require '../../application.php';
+require 'module/iMSCP/Core/src/Functions/Tickets.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
 
 check_login('reseller');
-
 resellerHasFeature('support') or showBadRequestErrorPage();
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
-$userId = $_SESSION['user_id'];
-
-// Checks if support ticket system is activated and if the reseller can access to it
-if (!hasTicketSystem($userId)) {
+if (!hasTicketSystem($_SESSION['user_id'])) {
     redirectTo('index.php');
 }
 
@@ -54,23 +47,25 @@ if (isset($_POST['uaction'])) {
     } elseif (empty($_POST['user_message'])) {
         set_page_message(tr('You must specify a message.'), 'error');
     } else {
-        createTicket($userId, $_SESSION['user_created_by'],
-                     $_POST['urgency'], $_POST['subject'], $_POST['user_message'], 2);
+        createTicket($_SESSION['user_id'], $_SESSION['user_created_by'], $_POST['urgency'], $_POST['subject'], $_POST['user_message'], 2);
         redirectTo('ticket_system.php');
     }
 }
 
-$userdata = array(
+$userdata = [
     'OPT_URGENCY_1' => '',
     'OPT_URGENCY_2' => '',
     'OPT_URGENCY_3' => '',
-    'OPT_URGENCY_4' => '');
+    'OPT_URGENCY_4' => ''
+];
 
 if (isset($_POST['urgency'])) {
     $userdata['URGENCY'] = intval($_POST['urgency']);
 } else {
     $userdata['URGENCY'] = 2;
 }
+
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 switch ($userdata['URGENCY']) {
     case 1:
@@ -91,27 +86,27 @@ $userdata['USER_MESSAGE'] = isset($_POST['user_message'])
     ? clean_input($_POST['user_message'], true) : '';
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'reseller/ticket_create.tpl',
-		'page_message' => 'layout'));
+$tpl->define_dynamic([
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'reseller/ticket_create.tpl',
+    'page_message' => 'layout'
+]);
 
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Reseller / Support / New Ticket'),
-		'TR_NEW_TICKET' => tr('New ticket'),
-		'TR_LOW' => tr('Low'),
-		'TR_MEDIUM' => tr('Medium'),
-		'TR_HIGH' => tr('High'),
-		'TR_VERY_HIGH' => tr('Very high'),
-		'TR_URGENCY' => tr('Priority'),
-		'TR_EMAIL' => tr('Email'),
-		'TR_SUBJECT' => tr('Subject'),
-		'TR_YOUR_MESSAGE' => tr('Message'),
-		'TR_CREATE' => tr('Create'),
-		'TR_OPEN_TICKETS' => tr('Open tickets'),
-		'TR_CLOSED_TICKETS' => tr('Closed tickets')));
+$tpl->assign([
+    'TR_PAGE_TITLE' => tr('Reseller / Support / New Ticket'),
+    'TR_NEW_TICKET' => tr('New ticket'),
+    'TR_LOW' => tr('Low'),
+    'TR_MEDIUM' => tr('Medium'),
+    'TR_HIGH' => tr('High'),
+    'TR_VERY_HIGH' => tr('Very high'),
+    'TR_URGENCY' => tr('Priority'),
+    'TR_EMAIL' => tr('Email'),
+    'TR_SUBJECT' => tr('Subject'),
+    'TR_YOUR_MESSAGE' => tr('Message'),
+    'TR_CREATE' => tr('Create'),
+    'TR_OPEN_TICKETS' => tr('Open tickets'),
+    'TR_CLOSED_TICKETS' => tr('Closed tickets')
+]);
 
 $tpl->assign($userdata);
 
@@ -120,7 +115,10 @@ generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
 
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 
 $tpl->prnt();
+
 unsetMessages();

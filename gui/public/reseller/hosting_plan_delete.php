@@ -37,17 +37,15 @@ check_login('reseller');
 
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-if (isset($_GET['id']) && $cfg['HOSTING_PLANS_LEVEL'] == 'reseller') {
+if (isset($_GET['id']) && $cfg['HOSTING_PLANS_LEVEL'] === 'reseller') {
+    $hostingPlanId = clean_input($_GET['id']);
+    $query = "DELETE FROM `hosting_plans` WHERE `id` = ? AND `reseller_id` = ?";
+    $stmt = exec_query($query, [$hostingPlanId, $_SESSION['user_id']]);
 
-	$hostingPlanId = clean_input($_GET['id']);
-
-	$query = "DELETE FROM `hosting_plans` WHERE `id` = ? AND `reseller_id` = ?";
-	$stmt = exec_query($query, array($hostingPlanId, $_SESSION['user_id']));
-
-	if($stmt->rowCount()) {
-		set_page_message(tr('Hosting plan has been successfully deleted.'), 'success');
-		redirectTo('hosting_plan.php');
-	}
+    if ($stmt->rowCount()) {
+        set_page_message(tr('Hosting plan has been successfully deleted.'), 'success');
+        redirectTo('hosting_plan.php');
+    }
 }
 
 showBadRequestErrorPage();

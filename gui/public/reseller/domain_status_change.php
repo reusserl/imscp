@@ -36,38 +36,37 @@ require '../../application.php';
 check_login('reseller');
 
 if (isset($_GET['domain_id'])) {
-	$domainId = intval($_GET['domain_id']);
-	$resellerId = intval($_SESSION['user_id']);
+    $domainId = intval($_GET['domain_id']);
+    $resellerId = intval($_SESSION['user_id']);
+    $stmt = exec_query(
+        '
+            SELECT
+                admin_id, created_by, domain_status
+            FROM
+                domain
+            INNER JOIN
+                admin ON(admin_id = domain_admin_id)
+            WHERE
+                domain_id = ?
+            AND
+                created_by = ?
+        ',
+        [$domainId, $resellerId]
+    );
 
-	$stmt = exec_query(
-		'
-			SELECT
-				admin_id, created_by, domain_status
-			FROM
-				domain
-			INNER JOIN
-				admin ON(admin_id = domain_admin_id)
-			WHERE
-				domain_id = ?
-			AND
-				created_by = ?
-		',
-		array($domainId, $resellerId)
-	);
+    if ($stmt->rowCount()) {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-	if ($stmt->rowCount()) {
-		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row['domain_status'] == 'ok') {
+            change_domain_status($row['admin_id'], 'deactivate');
+        } elseif ($row['domain_status'] == 'disabled') {
+            change_domain_status($row['admin_id'], 'activate');
+        } else {
+            showBadRequestErrorPage();
+        }
 
-		if ($row['domain_status'] == 'ok') {
-			change_domain_status($row['admin_id'], 'deactivate');
-		} elseif ($row['domain_status'] == 'disabled') {
-			change_domain_status($row['admin_id'], 'activate');
-		} else {
-			showBadRequestErrorPage();
-		}
-
-		redirectTo('users.php');
-	}
+        redirectTo('users.php');
+    }
 }
 
 showBadRequestErrorPage();

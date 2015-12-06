@@ -37,68 +37,66 @@
  */
 function client_generatePage($tpl)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $hostingPlanLevel = $cfg['HOSTING_PLANS_LEVEL'];
 
-	$hostingPlanLevel = $cfg['HOSTING_PLANS_LEVEL'];
+    if ($hostingPlanLevel != 'reseller') {
+        $query = "
+            SELECT
+                `t1`.`id`, `t1`.`name`, `t1`.`props`, `t1`.`status`
+            FROM
+                `hosting_plans` AS `t1`
+            LEFT JOIN
+                `admin` AS `t2` ON(`t2`.`admin_id` = `t1`.`reseller_id`)
+            WHERE
+                `t2`.`admin_type` = ?
+            ORDER BY
+                `t1`.`id`
+        ";
+        $stmt = exec_query($query, 'admin');
 
-	if ($hostingPlanLevel != 'reseller') {
-		$query = "
-			SELECT
-				`t1`.`id`, `t1`.`name`, `t1`.`props`, `t1`.`status`
-			FROM
-				`hosting_plans` AS `t1`
-			LEFT JOIN
-				`admin` AS `t2` ON(`t2`.`admin_id` = `t1`.`reseller_id`)
-			WHERE
-				`t2`.`admin_type` = ?
-			ORDER BY
-				`t1`.`id`
-		";
-		$stmt = exec_query($query, 'admin');
+        $trEdit = tr('View');
+    } else {
+        $query = "SELECT `id`, `name`, `props`, `status` FROM `hosting_plans` WHERE `reseller_id` = ? ORDER BY `id`";
+        $stmt = exec_query($query, $_SESSION['user_id']);
+        $trEdit = tr('Edit');
+    }
 
-		$trEdit = tr('View');
-	} else {
-		$query = "SELECT `id`, `name`, `props`, `status` FROM `hosting_plans` WHERE `reseller_id` = ? ORDER BY `id`";
-		$stmt = exec_query($query, $_SESSION['user_id']);
+    if (!$stmt->rowCount()) {
+        $tpl->assign([
+            'HOSTING_PLANS_JS' => '',
+            'HOSTING_PLANS' => ''
+        ]);
 
-		$trEdit = tr('Edit');
-	}
+        set_page_message(tr('No hosting plan available.'), 'static_info');
+    } else {
+        $tpl->assign([
+            'TR_NUMBER' => tr('No.'),
+            'TR_NAME' => tr('Name'),
+            'TR_STATUS' => tr('Status'),
+            'TR_EDIT' => $trEdit,
+            'TR_ACTION' => tr('Actions'),
+            'TR_DELETE' => tr('Delete'),
+            'TR_MESSAGE_DELETE' => tr('Are you sure you want to delete %s?', '%s')
+        ]);
 
-	if (!$stmt->rowCount()) {
-		$tpl->assign(array(
-			'HOSTING_PLANS_JS' => '',
-			'HOSTING_PLANS' => ''
-		));
+        $i = 1;
 
-		set_page_message(tr('No hosting plan available.'), 'static_info');
-	} else {
-		$tpl->assign(array(
-			'TR_NUMBER' => tr('No.'),
-			'TR_NAME' => tr('Name'),
-			'TR_STATUS' => tr('Status'),
-			'TR_EDIT' => $trEdit,
-			'TR_ACTION' => tr('Actions'),
-			'TR_DELETE' => tr('Delete'),
-			'TR_MESSAGE_DELETE' => tr('Are you sure you want to delete %s?', '%s')
-		));
+        while ($data = $stmt->fetch()) {
+            $tpl->assign([
+                'NUMBER' => $i++,
+                'NAME' => tohtml($data['name']),
+                'STATUS' => ($data['status']) ? tr('Available') : tr('Unavailable'),
+                'ID' => $data['id']
+            ]);
 
-		$i = 1;
+            if ($hostingPlanLevel != 'reseller') {
+                $tpl->assign('HOSTING_PLAN_DELETE', '');
+            }
 
-		while ($data = $stmt->fetch()) {
-			$tpl->assign(array(
-				'NUMBER' => $i++,
-				'NAME' => tohtml($data['name']),
-				'STATUS' => ($data['status']) ? tr('Available') : tr('Unavailable'),
-				'ID' => $data['id']
-			));
-
-			if ($hostingPlanLevel != 'reseller') {
-				$tpl->assign('HOSTING_PLAN_DELETE', '');
-			}
-
-			$tpl->parse('HOSTING_PLAN', '.hosting_plan');
-		}
-	}
+            $tpl->parse('HOSTING_PLAN', '.hosting_plan');
+        }
+    }
 }
 
 /***********************************************************************************************************************
@@ -111,20 +109,16 @@ require '../../application.php';
 
 check_login('reseller');
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'reseller/hosting_plan.tpl',
-		'page_message' => 'layout',
-		'hosting_plans_js' => 'page',
-		'hosting_plans' => 'page',
-		'hosting_plan' => 'hosting_plans',
-		'hosting_plan_delete' => 'hosting_plan'
-	)
-);
+$tpl->define_dynamic([
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'reseller/hosting_plan.tpl',
+    'page_message' => 'layout',
+    'hosting_plans_js' => 'page',
+    'hosting_plans' => 'page',
+    'hosting_plan' => 'hosting_plans',
+    'hosting_plan_delete' => 'hosting_plan'
+]);
 
 $tpl->assign('TR_PAGE_TITLE', tr('Reseller / Hosting Plans / Overview'));
 
@@ -133,9 +127,9 @@ client_generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

@@ -40,91 +40,86 @@ resellerHasFeature('domain_aliases') or showBadRequestErrorPage();
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if (isset($_GET['action']) && $_GET['action'] == "delete") {
+    if (isset($_GET['del_id'])) {
+        $alsId = clean_input($_GET['del_id']);
 
-	if (isset($_GET['del_id'])) {
-		$alsId = clean_input($_GET['del_id']);
+        $query = "DELETE FROM `domain_aliasses` WHERE `alias_id` = ? AND `alias_status` = ?";
+        $stmt = exec_query($query, [$alsId, 'ordered']);
 
-		$query = "DELETE FROM `domain_aliasses` WHERE `alias_id` = ? AND `alias_status` = ?";
-		$stmt = exec_query($query, array($alsId, 'ordered'));
-
-		if($stmt->rowCount()) {
-			set_page_message('Order successfully deleted.', 'success');
-			redirectTo('alias.php');
-		}
-	}
+        if ($stmt->rowCount()) {
+            set_page_message('Order successfully deleted.', 'success');
+            redirectTo('alias.php');
+        }
+    }
 } elseif (isset($_GET['action']) && $_GET['action'] == "activate") {
-	if (isset($_GET['act_id'])) {
-		$alsId = clean_input($_GET['act_id']);
+    if (isset($_GET['act_id'])) {
+        $alsId = clean_input($_GET['act_id']);
 
-		$query = "SELECT `alias_name`, `domain_id` FROM `domain_aliasses` WHERE `alias_id` = ? AND `alias_status` = ?";
-		$stmt = exec_query($query, array($alsId, 'ordered'));
+        $query = "SELECT `alias_name`, `domain_id` FROM `domain_aliasses` WHERE `alias_id` = ? AND `alias_status` = ?";
+        $stmt = exec_query($query, [$alsId, 'ordered']);
 
-		if ($stmt->rowCount()) {
-			$alsName = $stmt->fields['alias_name'];
-			$mainDmnId = $stmt->fields['domain_id'];
+        if ($stmt->rowCount()) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $alsName = $row['alias_name'];
+            $mainDmnId = $row['domain_id'];
 
-			/** @var \Doctrine\DBAL\Connection $db */
-			$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
+            /** @var \Doctrine\DBAL\Connection $db */
+            $db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
-			try {
-				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-					\iMSCP\Core\Events::onBeforeAddDomainAlias,
-					array(
-						'domainId' => $mainDmnId,
-						'domainAliasName' => $alsName
-					)
-				);
+            try {
+                \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                    \iMSCP\Core\Events::onBeforeAddDomainAlias, null, [
+                    'domainId' => $mainDmnId,
+                    'domainAliasName' => $alsName
+                ]);
 
-				$db->beginTransaction();
+                $db->beginTransaction();
 
-				$stmt = exec_query(
-					'UPDATE domain_aliasses SET alias_status = ? WHERE alias_id = ? AND alias_status = ?',
-					array('toadd', $alsId, 'ordered')
-				);
+                $stmt = exec_query(
+                    'UPDATE domain_aliasses SET alias_status = ? WHERE alias_id = ? AND alias_status = ?',
+                    ['toadd', $alsId, 'ordered']
+                );
 
-				if($stmt->rowCount()) {
-					// Create default email addresses if needed
-					if ($cfg['CREATE_DEFAULT_EMAIL_ADDRESSES']) {
-						$query = '
-							SELECT
-								email
-							FROM
-								admin
-							LEFT JOIN
-								domain ON(admin.admin_id = domain.domain_admin_id)
-							WHERE
-								domain.domain_id = ?
-						';
-						$stmt = exec_query($query, $mainDmnId);
+                if ($stmt->rowCount()) {
+                    // Create default email addresses if needed
+                    if ($cfg['CREATE_DEFAULT_EMAIL_ADDRESSES']) {
+                        $query = '
+                            SELECT
+                                email
+                            FROM
+                                admin
+                            LEFT JOIN
+                                domain ON(admin.admin_id = domain.domain_admin_id)
+                            WHERE
+                                domain.domain_id = ?
+                        ';
+                        $stmt = exec_query($query, $mainDmnId);
 
-						if ($stmt->rowCount()) {
-							client_mail_add_default_accounts(
-								$mainDmnId, $stmt->fields['email'], $alsName, 'alias', $alsId
-							);
-						}
-					}
-				}
+                        if ($stmt->rowCount()) {
+                            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                            client_mail_add_default_accounts($mainDmnId, $row['email'], $alsName, 'alias', $alsId);
+                        }
+                    }
+                }
 
-				$db->commit();
+                $db->commit();
 
-				\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-					\iMSCP\Core\Events::onAfterAddDomainAlias,
-					array(
-						'domainId' => $mainDmnId,
-						'domainAliasName' => $alsName,
-						'domainAliasId' => $alsId
-					)
-				);
-			
-				send_request();
-				set_page_message(tr('Order successfully processed.'), 'success');
-				redirectTo('alias.php');
-			} catch(PDOException $e) {
-				$db->rollBack();
-				throw $e;
-			}
-		}
-	}
+                \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                    \iMSCP\Core\Events::onAfterAddDomainAlias, null, [
+                    'domainId' => $mainDmnId,
+                    'domainAliasName' => $alsName,
+                    'domainAliasId' => $alsId
+                ]);
+
+                send_request();
+                set_page_message(tr('Order successfully processed.'), 'success');
+                redirectTo('alias.php');
+            } catch (PDOException $e) {
+                $db->rollBack();
+                throw $e;
+            }
+        }
+    }
 }
 
 showBadRequestErrorPage();

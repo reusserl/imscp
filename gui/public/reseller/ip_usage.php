@@ -18,7 +18,7 @@
  */
 
 /***********************************************************************************************************************
- * Script functions
+ * Functions
  */
 
 /**
@@ -29,70 +29,66 @@
  */
 function listIPDomains($tpl)
 {
-	$resellerId = $_SESSION['user_id'];
+    $resellerId = $_SESSION['user_id'];
+    $stmt = exec_query('SELECT reseller_ips FROM reseller_props WHERE reseller_id = ?', $resellerId);
+    $data = $stmt->fetch();
+    $resellerIps = explode(';', substr($data['reseller_ips'], 0, -1));
+    $stmt = execute_query('SELECT ip_id, ip_number FROM server_ips WHERE ip_id IN (' . implode(',', $resellerIps) . ')');
 
-	$stmt = exec_query('SELECT reseller_ips FROM reseller_props WHERE reseller_id = ?', $resellerId);
-	$data = $stmt->fetch();
-	$resellerIps = explode(';', substr($data['reseller_ips'], 0, -1));
+    while ($ip = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $stmt2 = exec_query(
+            '
+                SELECT
+                    domain_name
+                FROM
+                    domain
+                INNER JOIN
+                    admin ON(admin_id = domain_admin_id)
+                WHERE
+                    domain_ip_id = :ip_id
+                AND
+                    created_by = :reseller_id
+                UNION
+                SELECT
+                    alias_name AS domain_name
+                FROM
+                    domain_aliasses
+                INNER JOIN
+                    domain USING(domain_id)
+                INNER JOIN
+                    admin ON(admin_id = domain_admin_id)
+                WHERE
+                    alias_ip_id = :ip_id
+                AND
+                    created_by = :reseller_id
+            ',
+            ['ip_id' => $ip['ip_id'], 'reseller_id' => $resellerId]
+        );
 
-	$stmt = execute_query('SELECT ip_id, ip_number FROM server_ips WHERE ip_id IN (' . implode(',', $resellerIps) . ')');
+        $domainsCount = $stmt2->rowCount();
 
-	while ($ip = $stmt->fetch(PDO::FETCH_ASSOC)) {
-		$stmt2 = exec_query(
-			'
-				SELECT
-					domain_name
-				FROM
-					domain
-				INNER JOIN
-					admin ON(admin_id = domain_admin_id)
-				WHERE
-					domain_ip_id = :ip_id
-				AND
-					created_by = :reseller_id
-				UNION
-				SELECT
-					alias_name AS domain_name
-				FROM
-					domain_aliasses
-				INNER JOIN
-					domain USING(domain_id)
-				INNER JOIN
-					admin ON(admin_id = domain_admin_id)
-				WHERE
-					alias_ip_id = :ip_id
-				AND
-					created_by = :reseller_id
-			',
-			array('ip_id' => $ip['ip_id'], 'reseller_id' => $resellerId)
-		);
+        $tpl->assign([
+            'IP' => tohtml($ip['ip_number']),
+            'RECORD_COUNT' => tr('Total Domains') . ': ' . ($domainsCount)
+        ]);
 
-		$domainsCount = $stmt2->rowCount();
+        if ($domainsCount) {
+            while ($data = $stmt2->fetch(PDO::FETCH_ASSOC)) {
+                $tpl->assign('DOMAIN_NAME', tohtml(idn_to_utf8($data['domain_name'])));
+                $tpl->parse('DOMAIN_ROW', '.domain_row');
+            }
+        } else {
+            $tpl->assign('DOMAIN_NAME', tr('No used yet'));
+            $tpl->parse('DOMAIN_ROW', 'domain_row');
+        }
 
-		$tpl->assign(
-			array(
-				'IP' => tohtml($ip['ip_number']),
-				'RECORD_COUNT' => tr('Total Domains') . ': ' . ($domainsCount)
-			)
-		);
-
-		if ($domainsCount) {
-			while ($data = $stmt2->fetch(PDO::FETCH_ASSOC)) {
-				$tpl->assign('DOMAIN_NAME', tohtml(idn_to_utf8($data['domain_name'])));
-				$tpl->parse('DOMAIN_ROW', '.domain_row');
-			}
-		} else {
-			$tpl->assign('DOMAIN_NAME', tr('No used yet'));
-			$tpl->parse('DOMAIN_ROW', 'domain_row');
-		}
-
-		$tpl->parse('IP_ROW', '.ip_row');
-		$tpl->assign('DOMAIN_ROW', '');
-	}
+        $tpl->parse('IP_ROW', '.ip_row');
+        $tpl->assign('DOMAIN_ROW', '');
+    }
 }
 
 /***********************************************************************************************************************
- * Main script
+ * Main
  */
 
 require '../../application.php';
@@ -102,35 +98,32 @@ require '../../application.php';
 check_login('reseller');
 
 if (resellerHasCustomers()) {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-	$tpl = new \iMSCP\Core\Template\TemplateEngine();
+    $tpl = new \iMSCP\Core\Template\TemplateEngine();
+    $tpl->define_dynamic([
+        'layout' => 'shared/layouts/ui.tpl',
+        'page' => 'reseller/ip_usage.tpl',
+        'page_message' => 'layout',
+        'ip_row' => 'page',
+        'domain_row' => 'ip_row'
+    ]);
+    $tpl->assign([
+        'TR_PAGE_TITLE' => tr('Reseller / Statistics / IP Usage'),
+        'TR_DOMAIN_STATISTICS' => tr('Domain statistics'),
+        'TR_IP_RESELLER_USAGE_STATISTICS' => tr('Reseller/IP usage statistics'),
+        'TR_DOMAIN_NAME' => tr('Domain Name')
+    ]);
 
-	$tpl->define_dynamic(array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'reseller/ip_usage.tpl',
-		'page_message' => 'layout',
-		'ip_row' => 'page',
-		'domain_row' => 'ip_row'
-	));
+    generateNavigation($tpl);
+    generatePageMessage($tpl);
+    listIPDomains($tpl);
 
-	$reseller_id = $_SESSION['user_id'];
+    $tpl->parse('LAYOUT_CONTENT', 'page');
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, null, [
+        'templateEngine' => $tpl
+    ]);
+    $tpl->prnt();
 
-	$tpl->assign(array(
-		'TR_PAGE_TITLE' => tr('Reseller / Statistics / IP Usage'),
-		'TR_DOMAIN_STATISTICS' => tr('Domain statistics'),
-		'TR_IP_RESELLER_USAGE_STATISTICS' => tr('Reseller/IP usage statistics'),
-		'TR_DOMAIN_NAME' => tr('Domain Name')
-	));
-
-	generateNavigation($tpl);
-	generatePageMessage($tpl);
-	listIPDomains($tpl);
-
-	$tpl->parse('LAYOUT_CONTENT', 'page');
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, array('templateEngine' => $tpl));
-	$tpl->prnt();
-
-	unsetMessages();
+    unsetMessages();
 } else {
-	showBadRequestErrorPage();
+    showBadRequestErrorPage();
 }
