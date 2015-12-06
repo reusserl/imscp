@@ -296,7 +296,7 @@ if (isset($_POST['uaction']) && ($_POST['uaction'] === 'user_add3_nxt') && !isse
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'reseller/user_add3.tpl',
     'page_message' => 'layout',

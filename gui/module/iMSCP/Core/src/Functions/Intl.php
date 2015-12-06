@@ -352,7 +352,7 @@ function i18n_getJsTranslations()
         ArrayObject::ARRAY_AS_PROPS
     );
 
-    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger('onGetJsTranslations', [
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger('onGetJsTranslations', null, [
         'translations' => $translations
     ]);
 

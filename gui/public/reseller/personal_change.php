@@ -126,7 +126,7 @@ if (isset($_POST['uaction']) && $_POST['uaction'] === 'updt_data') {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'reseller/personal_change.tpl',
     'page_message' => 'layout'

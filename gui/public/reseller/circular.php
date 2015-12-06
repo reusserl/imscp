@@ -225,7 +225,7 @@ if (!resellerHasCustomers()) {
 
 if (!(!empty($_POST) && reseller_sendCircular())) {
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'reseller/circular.tpl',
         'page_message' => 'layout'

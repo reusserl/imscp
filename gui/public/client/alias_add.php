@@ -281,7 +281,7 @@ if ($mainDmnProps['domain_alias_limit'] != 0 && $domainAliasesCount >= $mainDmnP
     redirectTo('domains_manage.php');
 } else {
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'client/alias_add.tpl',
         'page_message' => 'layout',

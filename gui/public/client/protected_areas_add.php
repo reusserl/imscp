@@ -344,7 +344,7 @@ check_login('user');
 customerHasFeature('protected_areas') or showBadRequestErrorPage();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'client/protect_it.tpl',
     'page_message' => 'layout',

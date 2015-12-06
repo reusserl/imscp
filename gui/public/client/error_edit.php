@@ -73,7 +73,7 @@ if (!isset($_GET['eid'])) {
 $errorPageId = intval($_GET['eid']);
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'client/error_edit.tpl',
     'page_message' => 'layout'

@@ -330,7 +330,7 @@ if ($mainDmnProps['domain_subd_limit'] != 0 && $subdomainsCount >= $mainDmnProps
     redirectTo('domains_manage.php');
 } else {
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'client/subdomain_add.tpl',
         'page_message' => 'layout',

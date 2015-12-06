@@ -124,7 +124,7 @@ if (isset($_GET['reseller_id'])) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/reseller_user_statistics.tpl',
     'page_message' => 'layout',

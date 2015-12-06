@@ -182,7 +182,7 @@ if (isset($_GET['id'])) {
     }
 
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'client/ftp_edit.tpl',
         'page_message' => 'layout'

@@ -202,7 +202,7 @@ if (isset($_POST['uaction']) && $_POST['uaction'] === 'user_add_next') {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'reseller/user_add1.tpl',
     'page_message' => 'layout',

@@ -38,7 +38,7 @@ check_login('admin');
 $sysinfo = new \iMSCP\Core\SystemInfo();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/system_info.tpl',
     'page_message' => 'layout',

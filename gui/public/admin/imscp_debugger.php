@@ -678,7 +678,7 @@ if (isset($_GET['action'])) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/imscp_debugger.tpl',
     'page_message' => 'layout',

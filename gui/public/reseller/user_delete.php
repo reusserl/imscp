@@ -50,7 +50,7 @@ function reseller_generateCustomerAcountDeletionValidationPage($customerId)
     $adminName = decode_idna($row['admin_name']);
 
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'reseller/user_delete.tpl',
         'page_message' => 'layout',

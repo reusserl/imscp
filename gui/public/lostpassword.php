@@ -45,7 +45,7 @@ if (!check_gd()) {
 removeOldKeys($cfg['LOSTPASSWORD_TIMEOUT']);
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/simple.tpl',
     'page' => 'lostpassword.tpl',
     'page_message' => 'layout'

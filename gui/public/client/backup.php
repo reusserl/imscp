@@ -62,7 +62,7 @@ if (isset($_POST['uaction']) && $_POST['uaction'] == 'bk_restore') {
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'client/backup.tpl',
     'page_message' => 'layout'

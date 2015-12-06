@@ -110,7 +110,7 @@ require '../../application.php';
 check_login('reseller');
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'reseller/hosting_plan.tpl',
     'page_message' => 'layout',

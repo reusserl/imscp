@@ -187,7 +187,7 @@ if (systemHasCustomers()) {
     }
 
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'admin/reseller_user_statistics_details.tpl',
         'page_message' => 'layout',

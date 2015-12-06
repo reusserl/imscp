@@ -34,7 +34,7 @@ if (is_xhr()) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'assets/angular/aps-standard/aps-package/aps-packages.tpl',
     'page_message' => 'layout'

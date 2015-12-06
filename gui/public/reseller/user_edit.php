@@ -208,7 +208,7 @@ if (isset($_REQUEST['edit_id'])) {
     $adminId = intval($_GET['edit_id']);
 
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'reseller/user_edit.tpl',
         'page_message' => 'layout',

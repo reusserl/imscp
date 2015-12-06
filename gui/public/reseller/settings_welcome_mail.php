@@ -53,7 +53,7 @@ if (isset($_POST['uaction']) && $_POST['uaction'] == 'email_setup') {
 
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'reseller/settings_welcome_mail.tpl',
     'page_message' => 'layout'

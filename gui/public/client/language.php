@@ -38,8 +38,8 @@ check_login('user');
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic('layout', 'shared/layouts/ui.tpl');
-$tpl->define_dynamic([
+$tpl->defineDynamic('layout', 'shared/layouts/ui.tpl');
+$tpl->defineDynamic([
     'page' => 'client/language.tpl',
     'page_message' => 'layout',
     'languages_available' => 'page',

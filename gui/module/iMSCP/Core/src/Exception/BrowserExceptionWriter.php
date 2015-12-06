@@ -19,7 +19,7 @@
  */
 
 namespace iMSCP\Core\Exception;
-
+use iMSCP\Core\Application;
 use iMSCP\Core\Template\TemplateEngine;
 
 /**
@@ -59,37 +59,20 @@ class BrowserExceptionWriter extends AbstractExceptionWriter
      */
     public function onUncaughtException(ExceptionEvent $event)
     {
-        $exception = $event->getException();
+        $e = $event->getException();
 
-        if (iMSCP_Registry::isRegistered('config')) {
-            $debug = iMSCP_Registry::get('config')->DEBUG;
-        } else {
-            $debug = 1;
-        }
+        $config = Application::getInstance()->getConfig();
+        $debug = $config['DEBUG'];
 
         if ($debug) {
-            $exception = $event->getException();
-
             $this->message .= sprintf(
-                "An exception has been thrown in file %s at line %s:\n\n", $exception->getFile(), $exception->getLine()
+                "An exception has been thrown in file %s at line %s:\n\n", $e->getFile(), $e->getLine()
             );
 
-            $this->message .= preg_replace('#([\t\n]+|<br \/>)#', ' ', $exception->getMessage());
-            $this->message .= "\n\nTrace:\n\n" . $exception->getTraceAsString();
-
-
-            /*if($exception instanceof iMSCP_Exception_Database) {
-                $query = $exception->getQuery();
-
-                if($query !== '') {
-                    $this->message .= sprintf("<br><br><strong>Query was:</strong><br><br>%s", $exception->getQuery());
-                }
-            }
-            */
+            $this->message .= preg_replace('#([\t\n]+|<br \/>)#', ' ', $e->getMessage());
+            $this->message .= "\n\nTrace:\n\n" . $e->getTraceAsString();
         } else {
-            //$exception = new iMSCP_Exception_Production($exception->getMessage(), $exception->getCode(), $exception);
-            //throw new \Exception('An unexpected error occured. Please contact your administrator');
-            //$this->message = $exception->getMessage();
+            $this->message = 'An unexpected error occured. Please contact your administrator';
         }
 
         try {
@@ -151,32 +134,23 @@ HTML;
      */
     protected function render()
     {
-        $tpl = new \iMSCP\Core\Template\TemplateEngine();
-        $tpl->define_dynamic([
+        $tpl = new TemplateEngine();
+        $tpl->defineDynamic([
             'layout' => 'shared/layouts/simple.tpl',
             'page' => $this->templateFile,
             'page_message' => 'layout',
             'backlink_block' => 'page'
         ]);
-
-        if (iMSCP_Registry::isRegistered('backButtonDestination')) {
-            $backButtonDestination = iMSCP_Registry::get('backButtonDestination');
-        } else {
-            $backButtonDestination = 'javascript:history.go(-1)';
-        }
-
         $tpl->assign([
             'TR_PAGE_TITLE' => 'i-MSCP - internet Multi Server Control Panel - Fatal Error',
             'HEADER_BLOCK' => '',
             'BOX_MESSAGE_TITLE' => 'An unexpected error occurred',
             'PAGE_MESSAGE' => '',
             'BOX_MESSAGE' => $this->message,
-            'BACK_BUTTON_DESTINATION' => $backButtonDestination,
+            'BACK_BUTTON_DESTINATION' => 'javascript:history.go(-1)',
             'TR_BACK' => 'Back'
         ]);
-
         $tpl->parse('LAYOUT_CONTENT', 'page');
-
         $this->templateEngine = $tpl;
     }
 }

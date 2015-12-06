@@ -126,7 +126,7 @@ if (customerHasFeature('mail') && (isset($_REQUEST['mail_account_id']) && is_num
     if (client_checkMailAccountOwner($mailAccountId)) {
         if (!isset($_POST['mail_account_id'])) {
             $tpl = new \iMSCP\Core\Template\TemplateEngine();
-            $tpl->define_dynamic([
+            $tpl->defineDynamic([
                 'layout' => 'shared/layouts/ui.tpl',
                 'page' => 'client/mail_autoresponder.tpl',
                 'page_message' => 'layout'

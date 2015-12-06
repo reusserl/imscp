@@ -51,8 +51,8 @@ if (isset($_GET['psi'])) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic('layout', 'shared/layouts/ui.tpl');
-$tpl->define_dynamic([
+$tpl->defineDynamic('layout', 'shared/layouts/ui.tpl');
+$tpl->defineDynamic([
     'page' => 'client/ticket_closed.tpl',
     'page_message' => 'layout',
     'tickets_list' => 'page',

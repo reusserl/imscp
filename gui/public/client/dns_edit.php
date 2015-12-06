@@ -727,7 +727,7 @@ if (!empty($_POST)) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'client/dns_edit.tpl',
     'page_message' => 'layout',

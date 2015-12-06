@@ -29,14 +29,14 @@ function init_login($eventManager)
     // Purge expired sessions
     do_session_timeout();
 
-    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+//    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-    if ($cfg['BRUTEFORCE']) {
-        /** @var \iMSCP\Core\Plugin\PluginManager $pluginManager */
-        $pluginManager = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('PluginManager');
-        $bruteforce = new iMSCP\Core\Plugin\Bruteforce($pluginManager);
-        $bruteforce->attach($pluginManager->getEventManager());
-    }
+//    if ($cfg['BRUTEFORCE']) {
+//        /** @var \iMSCP\Core\Plugin\PluginManager $pluginManager */
+//        $pluginManager = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('PluginManager');
+//        $bruteforce = new iMSCP\Core\Plugin\Bruteforce($pluginManager);
+//        $bruteforce->attach($pluginManager->getEventManager());
+//    }
 
     // Attach listener that is responsible to check domain status and expire date
     $eventManager->attach(\iMSCP\Core\Authentication\AuthenticationEvent::onBeforeSetIdentity, 'login_checkDomainAccount');

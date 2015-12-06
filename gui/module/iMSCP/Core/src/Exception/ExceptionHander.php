@@ -35,8 +35,8 @@ class ExceptionHandler
      * @var array Exception writers class names
      */
     protected $writers = [
-        'iMSCP_Exception_Writer_Browser',
-        'iMSCP_Exception_Writer_Mail'
+        'iMSCP\Exception\BrowserExceptionWriter',
+        'iMSCP\Exception\MailExceptionWriter'
     ];
 
     /**

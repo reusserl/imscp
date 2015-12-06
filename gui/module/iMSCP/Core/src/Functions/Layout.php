@@ -26,18 +26,17 @@
  */
 
 /**
- * Must be documented
+ * Return user GUI properties
  *
- * @param  $user_id
+ * @param  $userId
  * @return array
  * @todo must be removed
  */
-function get_user_gui_props($user_id)
+function get_user_gui_props($userId)
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $stmt = exec_query('SELECT `lang`, `layout` FROM `user_gui_props` WHERE `user_id` = ?', $userId);
 
-    $query = "SELECT `lang`, `layout` FROM `user_gui_props` WHERE `user_id` = ?";
-    $stmt = exec_query($query, $user_id);
     if ($stmt->rowCount()) {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -608,7 +607,7 @@ function layout_LoadNavigation()
 
         // Set main menu labels visibility for the current environment
         \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-            \iMSCP\Core\Events::onBeforeGenerateNavigation, 'layout_setMainMenuLabelsVisibilityEvt'
+            \iMSCP\Core\Events::onBeforeGenerateNavigation, null, 'layout_setMainMenuLabelsVisibilityEvt'
         );
     }
 }

@@ -245,7 +245,7 @@ $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 check_login('reseller', $cfg['PREVENT_EXTERNAL_LOGIN_RESELLER']);
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'reseller/index.tpl',
     'page_message' => 'layout',

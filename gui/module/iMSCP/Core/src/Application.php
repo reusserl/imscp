@@ -20,11 +20,11 @@
 
 namespace iMSCP\Core;
 
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
 use Zend\ServiceManager\ServiceManager;
+use Zend\Stdlib\Request;
+use Zend\Stdlib\Response;
 
 /**
  * Class Application
@@ -78,11 +78,10 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
      */
     public function __construct($configuration, ServiceManager $serviceManager)
     {
+
         $this->configuration = $configuration;
         $this->serviceManager = $serviceManager;
-
         $this->setEventManager($serviceManager->get('EventManager'));
-
         $this->request = $serviceManager->get('Request');
         $this->response = $serviceManager->get('Response');
     }
@@ -233,7 +232,7 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
      * A transitional function allowing to retrieve the application instance in global functions.
      * That function will be removed in v2.0.0 when i-MSCP will be a full OOP application.
      *
-     * @return self
+     * @return Application
      */
     static public function getInstance()
     {

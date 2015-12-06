@@ -19,6 +19,7 @@
  */
 
 namespace iMSCP\Core\Updater;
+use iMSCP\Core\Application;
 
 /**
  * Class VersionUpdater
@@ -103,19 +104,19 @@ class VersionUpdater extends AbstractUpdater
                 clearstatcache();
 
                 $context = stream_context_create(
-                    array(
-                        'http' => array(
+                    [
+                        'http' => [
                             'method' => 'GET',
                             'protocol_version' => '1.1',
-                            'header' => array(
+                            'header' => [
                                 'Host: api.github.com',
                                 'Accept: application/vnd.github.v3+json',
                                 'User-Agent: i-MSCP',
                                 'Connection: close',
                                 'timeout' => 3
-                            )
-                        )
-                    )
+                            ]
+                        ]
+                    ]
                 );
 
                 if (!stream_context_set_option($context, 'ssl', 'verify_peer', false)) {
@@ -168,16 +169,14 @@ class VersionUpdater extends AbstractUpdater
     /**
      * Returns last applied update
      *
-     * @throws iMSCP_Update_Exception When unable to retrieve last applied update
      * @return string
      */
     protected function getLastAppliedUpdate()
     {
-        /** @var $cfg iMSCP_Config_Handler_File */
-        $cfg = iMSCP_Registry::get('config');
+        $config = Application::getInstance()->getConfig();
 
-        if (isset($cfg['Version']) && stripos($cfg['Version'], 'git') === false) {
-            return $cfg['Version'];
+        if (isset($config['Version']) && stripos($config['Version'], 'git') === false) {
+            return $config['Version'];
         }
 
         return '99'; // Case where the version in use has not been officially released (eg. git branch).

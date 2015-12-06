@@ -197,7 +197,7 @@ client_checkSqlDbLimit();
 client_addSqlDb($_SESSION['user_id']);
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'client/sql_database_add.tpl',
     'page_message' => 'layout',

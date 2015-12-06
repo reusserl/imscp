@@ -45,12 +45,9 @@ class SystemServices implements \iterator, \countable
         $values = Application::getInstance()->getServiceManager()->get('dbConfig')->toArray();
 
         // Gets list of services port names
-        $services = array_filter(
-            array_keys($values),
-            function ($name) {
-                return (strlen($name) > 5 && substr($name, 0, 5) == 'PORT_');
-            }
-        );
+        $services = array_filter(array_keys($values), function ($name) {
+            return (strlen($name) > 5 && substr($name, 0, 5) == 'PORT_');
+        });
 
         foreach ($services as $name) {
             $this->services[$name] = explode(';', $values[$name]);
@@ -148,11 +145,11 @@ class SystemServices implements \iterator, \countable
      */
     private function getProperty($index)
     {
-        if (!is_null($this->queriedService)) {
-            return $this->services[$this->queriedService][$index];
-        } else {
+        if (is_null($this->queriedService)) {
             throw new \RuntimeException('Name of service to query is not set');
         }
+
+        return $this->services[$this->queriedService][$index];
     }
 
     /**
@@ -162,7 +159,7 @@ class SystemServices implements \iterator, \countable
      */
     public function isDown()
     {
-        return (!($this->getStatus()));
+        return !($this->getStatus());
     }
 
     /**
@@ -173,7 +170,6 @@ class SystemServices implements \iterator, \countable
     public function current()
     {
         $this->setService($this->key(), false);
-
         return current($this->services);
     }
 
@@ -191,11 +187,11 @@ class SystemServices implements \iterator, \countable
             $serviceName = 'PORT_' . strtoupper($serviceName);
         }
 
-        if (array_key_exists($serviceName, $this->services)) {
-            $this->queriedService = $serviceName;
-        } else {
+        if (!array_key_exists($serviceName, $this->services)) {
             throw new \InvalidArgumentException("Unknown Service: $serviceName");
         }
+
+        $this->queriedService = $serviceName;
     }
 
     /**

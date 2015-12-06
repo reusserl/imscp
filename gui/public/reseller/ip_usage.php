@@ -99,7 +99,7 @@ check_login('reseller');
 
 if (resellerHasCustomers()) {
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'reseller/ip_usage.tpl',
         'page_message' => 'layout',

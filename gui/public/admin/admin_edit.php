@@ -172,7 +172,7 @@ if (!empty($_POST) && admin_isValidData()) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/admin_edit.tpl',
     'page_message' => 'layout',

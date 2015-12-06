@@ -626,7 +626,7 @@ if (!empty($_POST) || !empty($_GET) || !empty($_FILES)) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/settings_plugins.tpl',
     'page_message' => 'layout',

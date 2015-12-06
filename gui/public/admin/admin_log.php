@@ -288,7 +288,7 @@ if (isset($_REQUEST['action'])) {
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/admin_log.tpl',
     'page_message' => 'layout'

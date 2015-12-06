@@ -329,7 +329,7 @@ if (isset($_POST['uaction']) && $_POST['uaction'] != 'reset') {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/settings_ports.tpl',
     'page_message' => 'layout',

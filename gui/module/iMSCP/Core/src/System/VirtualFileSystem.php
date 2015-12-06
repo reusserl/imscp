@@ -64,12 +64,9 @@ class VirtualFileSystem
     public function __construct($domain)
     {
         $this->domain = (string)$domain;
-
         $cfg = Application::getInstance()->getConfig();
         defined('VFS_TMP_DIR') or define('VFS_TMP_DIR', $cfg['GUI_ROOT_DIR'] . '/data/tmp');
-
         $this->createFtpUser();
-
         $_ENV['PHP_TMPDIR'] = VFS_TMP_DIR;
         $_ENV['TMPDIR'] = VFS_TMP_DIR;
         putenv('PHP_TMPDIR=' . VFS_TMP_DIR);

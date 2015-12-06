@@ -36,7 +36,7 @@ if (customerHasFeature('aps_standard')) {
     }
 
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'assets/angular/aps-standard/aps-instance/aps-instances.tpl',
         'page_message' => 'layout'

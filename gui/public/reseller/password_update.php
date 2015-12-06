@@ -96,7 +96,7 @@ check_login('reseller');
 reseller_updatePassword();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'shared/partials/forms/password_update.tpl',
     'page_message' => 'layout'

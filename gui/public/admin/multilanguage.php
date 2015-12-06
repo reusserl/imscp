@@ -79,7 +79,7 @@ if (isset($_POST['uaction'])) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/multilanguage.tpl',
     'page_message' => 'layout',

@@ -86,7 +86,7 @@ if (isset($_POST['uaction']) && $_POST['uaction'] == 'update') {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/database_update.tpl',
     'page_message' => 'layout',

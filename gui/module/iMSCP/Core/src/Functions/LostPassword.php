@@ -61,7 +61,8 @@ function createImage($strSessionVar)
     $string = '';
     for ($i = 0; $i < $nbLetters; $i++) {
         $iRandVal = strRandom(1);
-        $fontFile = 'module/Core/src/Resources/Fonts/' . $cfg['LOSTPASSWORD_CAPTCHA_FONTS'][mt_rand(0, count($cfg['LOSTPASSWORD_CAPTCHA_FONTS']) - 1)];
+        $fontFile = 'module/iMSCP/Core/src/Resources/Fonts/' .
+            $cfg['LOSTPASSWORD_CAPTCHA_FONTS'][mt_rand(0, count($cfg['LOSTPASSWORD_CAPTCHA_FONTS']) - 1)];
 
         imagettftext($image, 20, 0, $x, $y, $textColor, $fontFile, $iRandVal);
 
@@ -89,12 +90,14 @@ function createImage($strSessionVar)
         imageline($image, $x1, $y1, $x2, $y2, $white);
     }
 
-    // send Header
-    header('Content-type: image/png');
-    // create and send PNG image
+
     imagepng($image);
-    // destroy image from server
     imagedestroy($image);
+
+    /** @var \Zend\Http\PhpEnvironment\Response $response */
+    $response = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Response');
+    $response->getHeaders()->addHeaderLine('Content-type', 'image/png');
+    $response->sendHeaders();
 }
 
 /**

@@ -276,9 +276,7 @@ class DbConfigHandler extends AbstractConfigHandler
     public function destroy()
     {
         if ($this->insertStmt || $this->updateStmt || $this->deleteStmt) {
-            // FIXME: filepath shouldn't be hardcoded
-            @unlink('cache/data/module-config-cache.imscp.php');
-            OpcodeCache::clearAllActive('cache/data/module-config-cache.imscp.php');
+            $this->clearCache();
         }
     }
 
@@ -302,5 +300,17 @@ class DbConfigHandler extends AbstractConfigHandler
                 sprintf('Could not load configuration from database: %s', $e->getMessage()), $e->getCode(), $e
             );
         }
+    }
+
+    /**
+     * Flush cached configuration
+     *
+     * @return void
+     */
+    protected function clearCache()
+    {
+        // FIXME: filepath shouldn't be hardcoded
+        @unlink('cache/data/module-config-cache.imscp.php');
+        OpcodeCache::clearAllActive('cache/data/module-config-cache.imscp.php');
     }
 }

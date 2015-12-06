@@ -96,7 +96,7 @@ check_login('admin');
 
 if ($cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'admin/hosting_plan.tpl',
         'page_message' => 'layout',

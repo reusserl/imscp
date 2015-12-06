@@ -154,7 +154,7 @@ check_login('admin');
 
 if (systemHasResellers()) {
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'admin/reseller_statistics.tpl',
         'page_message' => 'layout',

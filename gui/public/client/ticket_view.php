@@ -65,8 +65,8 @@ if (isset($_GET['ticket_id']) && !empty($_GET['ticket_id'])) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic('layout', 'shared/layouts/ui.tpl');
-$tpl->define_dynamic([
+$tpl->defineDynamic('layout', 'shared/layouts/ui.tpl');
+$tpl->defineDynamic([
     'page' => 'client/ticket_view.tpl',
     'page_message' => 'layout',
     'tickets_list' => 'page',

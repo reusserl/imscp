@@ -132,9 +132,9 @@ if (isset($_POST['uaction']) && $_POST['uaction'] === 'updt_data') {
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic('layout', 'shared/layouts/ui.tpl');
-$tpl->define_dynamic('page', 'client/personal_change.tpl');
-$tpl->define_dynamic('page_message', 'layout');
+$tpl->defineDynamic('layout', 'shared/layouts/ui.tpl');
+$tpl->defineDynamic('page', 'client/personal_change.tpl');
+$tpl->defineDynamic('page_message', 'layout');
 $tpl->assign([
     'TR_PAGE_TITLE' => tr('Client / Profile / Personal Data'),
     'TR_TITLE_CHANGE_PERSONAL_DATA' => tr('Change personal data'),

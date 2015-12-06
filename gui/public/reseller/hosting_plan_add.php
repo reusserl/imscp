@@ -482,7 +482,7 @@ $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] === 'reseller') {
 
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'shared/partials/forms/hosting_plan_add.tpl',
         'page_message' => 'layout',

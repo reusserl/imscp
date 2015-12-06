@@ -181,7 +181,7 @@ if (isset($_POST['uaction']) && $_POST['uaction'] == 'apply') {
 $coid = '';
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/settings.tpl',
     'page_message' => 'layout',

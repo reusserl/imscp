@@ -69,7 +69,7 @@ require '../../application.php';
 check_login('user');
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'client/profile.tpl',
     'page_message' => 'layout'

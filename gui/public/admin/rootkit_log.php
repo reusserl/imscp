@@ -39,7 +39,7 @@ systemHasAntiRootkits() or showBadRequestErrorPage();
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/rootkit_log.tpl',
     'page_message' => 'layout',

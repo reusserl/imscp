@@ -99,12 +99,64 @@ class SystemInfo
     {
         $this->os = php_uname('s');
         $this->cpu = $this->_getCPUInfo();
-        $this->filesystem = $this->_getFileSystemInfo();
-        $this->kernel = $this->_getKernelInfo();
-        $this->load = $this->_getLoadInfo();
-        $this->ram = $this->_getRAMInfo();
-        $this->swap = $this->_getSwapInfo();
-        $this->uptime = $this->_getUptime();
+        $this->filesystem = $this->getFileSystemInfo();
+        $this->kernel = $this->getKernelInfo();
+        $this->load = $this->getLoadInfo();
+        $this->ram = $this->getRAMInfo();
+        $this->swap = $this->getSwapInfo();
+        $this->uptime = $this->getUptime();
+    }
+
+    /**
+     * Return info about partition to which the given file belong
+     *
+     * @param string $file Absolute path to either a file or directory
+     * @return array
+     */
+    public static function getFilePartitionInfo($file)
+    {
+        $filePartitionInfo = [];
+        $descriptorSpec = [
+            0 => ['pipe', 'r'], // stdin is a pipe that the child will read from
+            1 => ['pipe', 'w'], // stdout is a pipe that the child will write to
+            2 => ['pipe', 'a'] // stderr is a pipe that he cild will write to
+        ];
+
+        $pipes = []; // satisfy warning
+        $proc = proc_open('df -TP ' . escapeshellarg($file), $descriptorSpec, $pipes);
+
+        if (is_resource($proc)) {
+            // Read data from stream (Pipe 1)
+            $stdout = stream_get_contents($pipes[1]);
+
+            // Close pipe and stream
+            fclose($pipes[1]);
+            proc_close($proc);
+
+            $filePartitionInfo = explode("\n", $stdout);
+
+            // Remove legend
+            array_shift($filePartitionInfo);
+
+            $filePartitionInfo = array_combine(
+                ['mount', 'fstype', 'size', 'used', 'free', 'percent', 'disk'],
+                preg_split('/\s+/', trim($filePartitionInfo[0]))
+            );
+
+            $filePartitionInfo['percent'] = str_replace('%', '', $filePartitionInfo['percent']);
+        }
+
+        return $filePartitionInfo;
+    }
+
+    /**
+     * Returns the latest error
+     *
+     * @return string Error
+     */
+    public function getError()
+    {
+        return $this->error;
     }
 
     /**
@@ -112,7 +164,7 @@ class SystemInfo
      *
      * @return array Cpu Information
      */
-    private function _getCPUInfo()
+    protected function _getCPUInfo()
     {
         $cpu = [
             'model' => tr('N/A'), 'cpus' => tr('N/A'), 'cpuspeed' => tr('N/A'), 'cache' => tr('N/A'),
@@ -129,7 +181,6 @@ class SystemInfo
 
             if ($cpu['model'] = $this->sysctl('hw.model')) {
                 $cpu["cpus"] = $this->sysctl('hw.ncpu');
-
                 // Read dmesg bot log on reboot
                 $dmesg = $this->read('/var/run/dmesg.boot');
 
@@ -150,7 +201,6 @@ class SystemInfo
             if (empty($this->error)) {
                 // parse line for line
                 $cpu_info = explode("\n", $cpuRaw);
-
                 // initialize Values:
                 $cpu['cpus'] = 0;
                 $cpu['bogomips'] = 0;
@@ -223,15 +273,13 @@ class SystemInfo
                 // sparc64 specific implementation
                 // Originally made by Sven Blumenstein <bazik@gentoo.org> in
                 // 2004 Modified by Tom Weustink <freshy98@gmx.net> in 2004
-                $sparclist = array(
+                $sparclist = [
                     'SUNW,UltraSPARC@0,0', 'SUNW,UltraSPARC-II@0,0', 'SUNW,UltraSPARC@1c,0', 'SUNW,UltraSPARC-IIi@1c,0',
                     'SUNW,UltraSPARC-II@1c,0', 'SUNW,UltraSPARC-IIe@0,0'
-                );
+                ];
 
                 foreach ($sparclist as $sparc) {
-                    $raw = $this->read(
-                        '/proc/openprom/' . $sparc . '/ecache-size'
-                    );
+                    $raw = $this->read('/proc/openprom/' . $sparc . '/ecache-size');
 
                     if (empty($this->error) && !empty($raw)) {
                         $cpu['cache'] = base_convert($raw, 16, 10) / 1024 . ' KB';
@@ -284,7 +332,7 @@ class SystemInfo
         ];
 
         $stdout = '';
-        $pipes = array(); // satisfy warning
+        $pipes = []; // satisfy warning
         $proc = proc_open('sysctl -n ' . $args, $descriptorSpec, $pipes);
 
         if (is_resource($proc)) {
@@ -310,16 +358,11 @@ class SystemInfo
         if (is_readable($filename)) {
             $result = file_get_contents($filename);
         } else {
-            $this->error = tr(
-                "File %s doesn't exist or cannot be reached!",
-                $filename
-            );
-
+            $this->error = tr("File %s doesn't exist or cannot be reached!", $filename);
             return false;
         }
 
         $this->error = '';
-
         return $result;
     }
 
@@ -328,7 +371,7 @@ class SystemInfo
      *
      * @return array File system information
      */
-    private function _getFileSystemInfo()
+    protected function getFileSystemInfo()
     {
         $filesystem = [];
         $descriptorSpec = [
@@ -342,7 +385,7 @@ class SystemInfo
          *	T: Show File System type
          *	P: Show in POSIX format
          */
-        $pipes = array(); // satisfy warning
+        $pipes = []; // satisfy warning
         $proc = proc_open('df -TP', $descriptorSpec, $pipes);
 
         if (is_resource($proc)) {
@@ -361,9 +404,7 @@ class SystemInfo
             foreach ($fs_info as $fs) {
                 if (!empty($fs)) {
                     $line = preg_split('/\s+/', trim($fs));
-
                     $i++;
-
                     $filesystem[$i]['mount'] = $line[0];
                     $filesystem[$i]['fstype'] = $line[1];
                     $filesystem[$i]['disk'] = $line[6];
@@ -384,7 +425,7 @@ class SystemInfo
      *
      * @return string Translated Kernel information
      */
-    private function _getKernelInfo()
+    protected function getKernelInfo()
     {
         $kernel = tr('N/A');
 
@@ -415,7 +456,7 @@ class SystemInfo
      *
      * @return array Load average
      */
-    private function _getLoadInfo()
+    protected function getLoadInfo()
     {
         $load = [tr('N/A'), tr('N/A'), tr('N/A')];
 
@@ -448,9 +489,9 @@ class SystemInfo
      *
      * @return array Memory information
      */
-    private function _getRAMInfo()
+    protected function getRAMInfo()
     {
-        $ram = array('total' => 0, 'free' => 0, 'used' => 0);
+        $ram = ['total' => 0, 'free' => 0, 'used' => 0];
 
         if ($this->os == 'FreeBSD' || $this->os == 'OpenBSD' || $this->os == 'NetBSD') {
             if ($ramRaw = $this->sysctl("hw.physmem")) {
@@ -525,9 +566,9 @@ class SystemInfo
      *
      * @return array Swap information
      */
-    private function _getSwapInfo()
+    protected function getSwapInfo()
     {
-        $swap = array('total' => 0, 'free' => 0, 'used' => 0);
+        $swap = ['total' => 0, 'free' => 0, 'used' => 0];
 
         if ($this->os == 'FreeBSD' || $this->os == 'OpenBSD' || $this->os == 'NetBSD') {
             $descriptorSpec = [
@@ -602,7 +643,7 @@ class SystemInfo
      *
      * @return string Translated Uptime information
      */
-    private function _getUptime()
+    protected function getUptime()
     {
         $uptime = 0;
 
@@ -625,7 +666,6 @@ class SystemInfo
 
             if (empty($this->error)) {
                 $uptime = explode(' ', $stdout);
-
                 // $uptime[0] - Total System Uptime
                 // $uptime[1] - System Idle Time
                 $uptime = trim($uptime[0]);
@@ -658,57 +698,5 @@ class SystemInfo
         }
 
         return $uptimeStr;
-    }
-
-    /**
-     * Return info about partition to which the given file belong
-     *
-     * @param string $file Absolute path to either a file or directory
-     * @return array
-     */
-    public static function getFilePartitionInfo($file)
-    {
-        $filePartitionInfo = [];
-        $descriptorSpec = [
-            0 => ['pipe', 'r'], // stdin is a pipe that the child will read from
-            1 => ['pipe', 'w'], // stdout is a pipe that the child will write to
-            2 => ['pipe', 'a'] // stderr is a pipe that he cild will write to
-        ];
-
-        $pipes = []; // satisfy warning
-        $proc = proc_open('df -TP ' . escapeshellarg($file), $descriptorSpec, $pipes);
-
-        if (is_resource($proc)) {
-            // Read data from stream (Pipe 1)
-            $stdout = stream_get_contents($pipes[1]);
-
-            // Close pipe and stream
-            fclose($pipes[1]);
-            proc_close($proc);
-
-            $filePartitionInfo = explode("\n", $stdout);
-
-            // Remove legend
-            array_shift($filePartitionInfo);
-
-            $filePartitionInfo = array_combine(
-                ['mount', 'fstype', 'size', 'used', 'free', 'percent', 'disk'],
-                preg_split('/\s+/', trim($filePartitionInfo[0]))
-            );
-
-            $filePartitionInfo['percent'] = str_replace('%', '', $filePartitionInfo['percent']);
-        }
-
-        return $filePartitionInfo;
-    }
-
-    /**
-     * Returns the latest error
-     *
-     * @return string Error
-     */
-    public function getError()
-    {
-        return $this->error;
     }
 }

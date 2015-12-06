@@ -148,7 +148,7 @@ check_login('user');
 
 if (customerHasFeature('external_mail')) {
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'client/mail_external.tpl',
         'page_message' => 'layout',

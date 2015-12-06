@@ -295,9 +295,6 @@ class Initializer
             'save_path' => $sessionDir
         ));
         SessionHandler::start();
-
-        session_save_path();
-        session_cache_expire()
 	}
 
     /**

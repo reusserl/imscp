@@ -20,9 +20,8 @@
 
 namespace iMSCP\Core\Service;
 
-use Symfony\Component\HttpFoundation\JsonResponse as JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Zend\Http\PhpEnvironment\Request;
+use Zend\Http\PhpEnvironment\Response;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -39,13 +38,12 @@ class ResponseFactory implements FactoryInterface
     {
         /** @var Request $request */
         $request = $serviceLocator->get('Request');
+        $response = new Response();
 
-        if ($request->headers->has('XMLHttpRequest')) {
-            $response = new JsonResponse();
-            $response->headers->set('Content-Type', 'application/json');
-            return $response;
+        if($request->isXmlHttpRequest()) {
+            $response->getHeaders()->addHeaderLine('Content-Type', 'application/json');
         }
 
-        return new Response();
+        return $response;
     }
 }

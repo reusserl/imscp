@@ -98,7 +98,7 @@ check_login('admin');
 
 if (systemHasCustomers()) {
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'admin/ip_usage.tpl',
         'ip_row' => 'page',

@@ -199,7 +199,7 @@ require '../../application.php';
 check_login('admin');
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/admin_add.tpl',
     'page_message' => 'layout'

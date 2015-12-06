@@ -128,7 +128,7 @@ class GettextParser
     /**
      * Parse a machine object file
      *
-     * @param int $part iMSCP_I18n_Parser_Gettext::HEADERS|iMSCP_I18n_Parser_Gettext::TRANSLATION_TABLE
+     * @param int $part GettextParser::HEADERS|GettextParser::TRANSLATION_TABLE
      * @return array|string An array of pairs key/value where the keys are the original strings (msgid) and the values,
      *                      the translated strings (msgstr) or a string that contains headers, eachof them separated by
      *                      EOL.
@@ -165,15 +165,12 @@ class GettextParser
             $this->nbStrings = $this->readInteger(); // Number of strings
             $msgidtableOffset = $this->readInteger(); // Offset of table with original strings
             $msgstrTableOffset = $this->readInteger(); // Offset of table with translation strings
-
             // Getting index of original strings
             fseek($this->fh, $msgidtableOffset);
             $this->msgidIndexTable = $this->readIntegerList(2 * $this->nbStrings);
-
             // Getting index of translated strings
             fseek($this->fh, $msgstrTableOffset);
             $this->msgstrIndexTable = $this->readIntegerList(2 * $this->nbStrings);
-
             $this->isLoaded = true;
         }
 
@@ -184,13 +181,12 @@ class GettextParser
                 break;
             case self::TRANSLATION_TABLE:
                 $nbString = $this->nbStrings;
-                $parseResult = array();
+                $parseResult = [];
 
                 for ($index = 1; $index < $nbString; $index++) {
                     // Getting msgid
                     fseek($this->fh, $this->msgidIndexTable[$index * 2 + 2]);
                     $msgid = fread($this->fh, $this->msgidIndexTable[$index * 2 + 1]);
-
                     // Getting msgstr
                     fseek($this->fh, $this->msgstrIndexTable[$index * 2 + 2]);
 
@@ -204,7 +200,6 @@ class GettextParser
                 }
 
                 return $parseResult;
-                break;
             default:
                 throw new \InvalidArgumentException('Unknown part type to parse');
         }
@@ -262,7 +257,6 @@ class GettextParser
         $headers = $this->getHeaders();
         $header = str_replace(chr(13), '', substr($headers, strpos($headers, $header)));
         $header = substr($header, ($start = strpos($header, ':') + 2), (strpos($header, chr(10)) - $start));
-
         return (!empty($header)) ? $header : '';
     }
 

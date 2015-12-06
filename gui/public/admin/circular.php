@@ -321,7 +321,7 @@ if (!systemHasAdminsOrResellersOrCustomers()) {
 
 if (!(!empty($_POST) && admin_sendCircular())) {
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'admin/circular.tpl',
         'page_message' => 'layout',

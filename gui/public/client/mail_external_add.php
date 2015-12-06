@@ -354,7 +354,7 @@ check_login('user');
 if (customerHasFeature('external_mail')) {
     if (isset($_REQUEST['item']) && count($item = explode(';', $_REQUEST['item'], 2)) == 2) {
         $tpl = new \iMSCP\Core\Template\TemplateEngine();
-        $tpl->define_dynamic([
+        $tpl->defineDynamic([
             'layout' => 'shared/layouts/ui.tpl',
             'page' => 'client/mail_external_add.tpl',
             'page_message' => 'layout',

@@ -406,7 +406,7 @@ if (is_xhr() && isset($_POST['domain_type'])) {
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'client/ftp_add.tpl',
     'page_message' => 'layout',

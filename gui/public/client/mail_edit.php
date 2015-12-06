@@ -297,7 +297,7 @@ if (isset($_GET['id']) && customerHasFeature('mail')) {
     }
 
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'client/mail_edit.tpl',
         'page_message' => 'layout'

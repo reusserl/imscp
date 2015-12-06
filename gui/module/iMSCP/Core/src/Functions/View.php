@@ -71,7 +71,7 @@ function gen_domain_details($tpl, $domainId)
  */
 function generateLoggedFrom($tpl)
 {
-    $tpl->define_dynamic('logged_from', 'layout');
+    $tpl->defineDynamic('logged_from', 'layout');
 
     if (isset($_SESSION['logged_from']) && isset($_SESSION['logged_from_id'])) {
         $tpl->assign([
@@ -174,12 +174,13 @@ function generateMonthsAndYearsHtmlList($tpl, $fromMonth = null, $fromYear = nul
  */
 function generateNavigation($tpl)
 {
-    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeGenerateNavigation, [
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+        \iMSCP\Core\Events::onBeforeGenerateNavigation, null, [
         'templateEngine' => $tpl
     ]);
 
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'main_menu' => 'layout',
         'main_menu_block' => 'main_menu',
         'menu' => 'layout',
@@ -377,7 +378,7 @@ function generateNavigation($tpl)
     ]);
 
     \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-        \iMSCP\Core\Events::onAfterGenerateNavigation, ['templateEngine' => $tpl]
+        \iMSCP\Core\Events::onAfterGenerateNavigation, null, ['templateEngine' => $tpl]
     );
 }
 

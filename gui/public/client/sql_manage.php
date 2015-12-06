@@ -108,7 +108,7 @@ check_login('user');
 customerHasFeature('sql') or showBadRequestErrorPage();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'client/sql_manage.tpl',
     'page_message' => 'layout',

@@ -1085,7 +1085,7 @@ $errFieldsStack = [];
 $data =& admin_getData($domainId);
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'shared/partials/forms/domain_edit.tpl',
     'page_message' => 'layout',

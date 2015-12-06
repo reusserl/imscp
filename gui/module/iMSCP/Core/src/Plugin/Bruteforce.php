@@ -303,9 +303,11 @@ class Bruteforce extends ActionPlugin
                 SET
                     lastaccess = UNIX_TIMESTAMP(), {$this->type}_count = {$this->type}_count + 1
                 WHERE
-                    ipaddr= ? AND user_name IS NULL
+                    ipaddr= ?
+                AND
+                    user_name IS NULL
             ",
-            ($this->ipAddr)
+            $this->ipAddr
         );
     }
 

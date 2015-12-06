@@ -20,9 +20,9 @@
 
 namespace iMSCP\Core\Service;
 
-use Symfony\Component\HttpFoundation\Request;
 use Zend\Cache\Storage\Adapter\Filesystem;
 use Zend\Cache\StorageFactory;
+use Zend\Http\PhpEnvironment\Request;
 use Zend\I18n\Translator\Translator;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
@@ -38,7 +38,7 @@ class TranslatorFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $systemConfig = $serviceLocator->get('SystemConfig');
+        $config = $serviceLocator->get('Config');
 
         /** @var Request $request */
         //$request = $serviceLocator->get('Request');
@@ -79,7 +79,7 @@ class TranslatorFactory implements FactoryInterface
         /** @var Filesystem $cache */
         $cache = StorageFactory::factory([
             'adapter' => [
-                'name' => $systemConfig['DEVMODE'] ? 'Filesystem' : 'Apc', // TODO only if available
+                'name' => $config['DEVMODE'] ? 'Filesystem' : 'Apc', // TODO only if available
                 'options' => [
                     'cache_dir' => 'data/cache/translations',
                     'ttl' => 0, // Translation cache is never flushed automatically
@@ -99,17 +99,20 @@ class TranslatorFactory implements FactoryInterface
 
         // Setup primary translator for iMSCP core translations
         $translator = Translator::factory([
-            'locale' => '',
+            'locale' => 'en_GB',
+
             'translation_file_patterns' => [
-                'type' => 'gettext',
-                'base_dir' => $systemConfig['GUI_ROOT_DIR'] . '/i18n/locales',
-                'pattern' => '%s/LC_MESSAGES/%s.mo',
-                'text_domain' => 'iMSCP'
+                'default' => [
+                    'type' => 'gettext',
+                    'base_dir' => $config['GUI_ROOT_DIR'] . '/i18n/locales',
+                    'pattern' => '%s/LC_MESSAGES/%s.mo',
+                    'text_domain' => 'iMSCP',
+                ]
             ],
 
         ]);
 
-        if ($systemConfig['DEBUG']) {
+        if ($config['DEBUG']) {
             $cache->clearByNamespace('translations');
         } else {
             $translator->setCache($cache);

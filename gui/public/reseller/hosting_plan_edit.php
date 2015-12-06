@@ -504,7 +504,7 @@ check_login('reseller');
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'shared/partials/forms/hosting_plan_edit.tpl',
     'page_message' => 'layout',

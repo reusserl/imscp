@@ -85,7 +85,7 @@ customerHasFeature('ftp') or showBadRequestErrorPage();
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'client/ftp_accounts.tpl',
     'page_message' => 'layout',

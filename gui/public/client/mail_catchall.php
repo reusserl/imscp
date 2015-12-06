@@ -279,7 +279,7 @@ customerHasFeature('mail') or showBadRequestErrorPage();
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'client/mail_catchall.tpl',
     'page_message' => 'layout',

@@ -338,7 +338,7 @@ $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 check_login('user', $cfg['PREVENT_EXTERNAL_LOGIN_CLIENT']);
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'client/index.tpl',
     'page_message' => 'layout',

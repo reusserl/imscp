@@ -56,7 +56,7 @@ if (($action = $request->getPost('action'))) {
 redirectToUiLevel();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/simple.tpl',
     'page_message' => 'layout',
     'lostpwd_button' => 'page'
@@ -71,7 +71,7 @@ $tpl->assign([
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if ($cfg['MAINTENANCEMODE'] && !$request->getQuery('admin')) {
-    $tpl->define_dynamic('page', 'message.tpl');
+    $tpl->defineDynamic('page', 'message.tpl');
     $tpl->assign([
         'TR_PAGE_TITLE' => tr('i-MSCP - Multi Server Control Panel / Maintenance'),
         'HEADER_BLOCK' => '',
@@ -83,7 +83,7 @@ if ($cfg['MAINTENANCEMODE'] && !$request->getQuery('admin')) {
         'BACK_BUTTON_DESTINATION' => '/index.php?admin=1'
     ]);
 } else {
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'page' => 'index.tpl',
         'lost_password_support' => 'page',
         'ssl_support' => 'page'

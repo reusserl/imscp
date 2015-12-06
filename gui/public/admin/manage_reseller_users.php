@@ -446,7 +446,7 @@ if (isset($_POST['uaction']) && $_POST['uaction'] === 'move_user' && check_user_
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/manage_reseller_users.tpl',
     'page_message' => 'layout',

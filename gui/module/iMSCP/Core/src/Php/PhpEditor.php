@@ -29,73 +29,77 @@ use iMSCP\Core\Config\FileConfigHandler;
 class PhpEditor
 {
     /**
-     * iMSCP_PHPini instance.
+     * iMSCP_PHPini instance
      *
      * @var PhpEditor
      */
     static protected $instance;
+
     /**
-     * Flag that is set to TRUE if an error occurs at {link setData()}.
+     * Flag that is set to TRUE if an error occurs at {link setData()}
      *
      * @var bool
      */
     public $flagValueError = false;
+
     /**
      * Flag that is sets to TRUE if the loaded data are customized
      *
      * @var bool
      */
     public $flagCustomIni;
+
     /**
-     *  Flag that is sets to TRUE if an error occurs at setClPerm().
+     *  Flag that is sets to TRUE if an error occurs at setClPerm()
      *
      * @var bool
      */
     public $flagValueClError = false;
+
     /**
-     * Associative array that contains php.ini data.
+     * Associative array that contains php.ini data
      *
      * @var array
      */
     protected $phpiniData = [];
+
     /**
-     * Associative array that contains the reseller's permissions, including its max values for PHP directives.
+     * Associative array that contains the reseller's permissions, including its max values for PHP directives
      *
      * @var array
      */
     protected $phpiniRePerm = [];
+
     /**
-     * Associative array that contains client permissions.
+     * Associative array that contains client permissions
      *
      * @var array
      */
     protected $phpiniClPerm = [];
+
     /**
      * @var FileConfigHandler
      */
     protected $cfg;
 
     /**
-     * Singleton object - Make new unavailable.
+     * Singleton object - Make new unavailable
      */
     private function __construct()
     {
         $this->cfg = Application::getInstance()->getServiceManager()->get('config');
-
         // Populate $_phpiniData with default data.
         // Default data are those set by admin via the admin/settings.php page
         $this->loadDefaultData();
-
         // Populate $_phpiniRePerm with default reseller permissions, including
         // its max values for the PHP directives. Max values are those set by admin via the admin/settings.php page
         $this->loadReDefaultPerm();
-
         // Populate $_phpiniClPerm with default customer permissions
         $this->loadClDefaultPerm();
     }
 
     /**
-     * Load default PHP directive values (like set at system wide).
+     * Load default PHP directive values (like set at system wide)
      *
      * @return void
      * @TODO do not use system wide values as default values if reseller values are smaller
@@ -109,19 +113,17 @@ class PhpEditor
         $this->phpiniData['phpiniDisplayErrors'] = $this->cfg->PHPINI_DISPLAY_ERRORS;
         $this->phpiniData['phpiniErrorReporting'] = $this->cfg->PHPINI_ERROR_REPORTING;
         $this->phpiniData['phpiniDisableFunctions'] = $this->cfg->PHPINI_DISABLE_FUNCTIONS;
-
         // Default value for PHP directives
         $this->phpiniData['phpiniPostMaxSize'] = $this->cfg->PHPINI_POST_MAX_SIZE;
         $this->phpiniData['phpiniUploadMaxFileSize'] = $this->cfg->PHPINI_UPLOAD_MAX_FILESIZE;
         $this->phpiniData['phpiniMaxExecutionTime'] = $this->cfg->PHPINI_MAX_EXECUTION_TIME;
         $this->phpiniData['phpiniMaxInputTime'] = $this->cfg->PHPINI_MAX_INPUT_TIME;
         $this->phpiniData['phpiniMemoryLimit'] = $this->cfg->PHPINI_MEMORY_LIMIT;
-
         $this->flagCustomIni = false;
     }
 
     /**
-     * Load default permissions and max values for reseller.
+     * Load default permissions and max values for reseller
      *
      * @return void
      */
@@ -132,7 +134,6 @@ class PhpEditor
         $this->phpiniRePerm['phpiniAllowUrlFopen'] = 'no';
         $this->phpiniRePerm['phpiniDisplayErrors'] = 'no';
         $this->phpiniRePerm['phpiniDisableFunctions'] = 'no';
-
         // Default reseller max value for PHP directives (based on system wide values)
         $this->phpiniRePerm['phpiniPostMaxSize'] = $this->cfg->PHPINI_POST_MAX_SIZE;
         $this->phpiniRePerm['phpiniUploadMaxFileSize'] = $this->cfg->PHPINI_UPLOAD_MAX_FILESIZE;
@@ -142,7 +143,7 @@ class PhpEditor
     }
 
     /**
-     * Load default PHP editor permissions.
+     * Load default PHP editor permissions
      *
      * @return void
      */
@@ -155,7 +156,7 @@ class PhpEditor
     }
 
     /**
-     * Implements singleton design pattern.
+     * Implements singleton design pattern
      *
      * @static
      * @return PhpEditor
@@ -170,15 +171,14 @@ class PhpEditor
     }
 
     /**
-     * Load custom PHP directive values for the given domain (customer).
+     * Load custom PHP directive values for the given domain (customer)
      *
      * @param int $domainId Domain unique identifier
      * @return bool FALSE if data are not found, TRUE otherwise
      */
     public function loadCustomPHPini($domainId)
     {
-        $query = "SELECT * FROM `php_ini` WHERE `domain_id` = ?";
-        $stmt = exec_query($query, (int)$domainId);
+        $stmt = exec_query('SELECT * FROM `php_ini` WHERE `domain_id` = ?', (int)$domainId);
 
         if ($stmt->rowCount()) {
             $row = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -199,7 +199,7 @@ class PhpEditor
     }
 
     /**
-     * Load permissions and max PHP directive values for the given reseller.
+     * Load permissions and max PHP directive values for the given reseller
      *
      * @param int $resellerId Reseller unique identifier
      * @return bool FALSE if $resellerId doesn't exist, TRUE otherwise
@@ -207,7 +207,6 @@ class PhpEditor
     public function loadRePerm($resellerId)
     {
         $resellerId = (int)$resellerId;
-
         $query = "
             SELECT
                 `php_ini_system`, `php_ini_al_disable_functions`, `php_ini_al_allow_url_fopen`,
@@ -220,7 +219,6 @@ class PhpEditor
         ";
         $stmt = exec_query($query, $resellerId);
 
-
         if ($stmt->rowCount()) {
             $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
@@ -230,14 +228,12 @@ class PhpEditor
                 $this->phpiniRePerm['phpiniAllowUrlFopen'] = $row['php_ini_al_allow_url_fopen'];
                 $this->phpiniRePerm['phpiniDisplayErrors'] = $row['php_ini_al_display_errors'];
                 $this->phpiniRePerm['phpiniDisableFunctions'] = $row['php_ini_al_disable_functions'];
-
                 // Max values for PHP directives
                 $this->phpiniRePerm['phpiniPostMaxSize'] = $row['php_ini_max_post_max_size'];
                 $this->phpiniRePerm['phpiniUploadMaxFileSize'] = $row['php_ini_max_upload_max_filesize'];
                 $this->phpiniRePerm['phpiniMaxExecutionTime'] = $row['php_ini_max_max_execution_time'];
                 $this->phpiniRePerm['phpiniMaxInputTime'] = $row['php_ini_max_max_input_time'];
                 $this->phpiniRePerm['phpiniMemoryLimit'] = $row['php_ini_max_memory_limit'];
-
                 return true;
             }
         }
@@ -246,7 +242,7 @@ class PhpEditor
     }
 
     /**
-     * Sets value for the given PHP directive.
+     * Sets value for the given PHP directive
      *
      * @see rawCheckData()
      * @param string $key PHP data key name
@@ -275,7 +271,6 @@ class PhpEditor
         }
 
         $this->flagValueError = true;
-
         return false;
     }
 
@@ -305,7 +300,7 @@ class PhpEditor
     }
 
     /**
-     * Checks value for the given PHP data.
+     * Checks value for the given PHP data
      *
      * @param string $key PHP data key name
      * @param string $value PHP data value
@@ -359,7 +354,7 @@ class PhpEditor
     }
 
     /**
-     * Checks value for the PHP disable_functions directive.
+     * Checks value for the PHP disable_functions directive
      *
      * Note: $disabledFunctions can be an array where each value is a function name, or a string where function names
      * are comma separated. An empty array or an empty string is also valid.
@@ -390,7 +385,7 @@ class PhpEditor
     }
 
     /**
-     * Sets value for the given customer permission.
+     * Sets value for the given customer permission
      *
      * @param string $key Permission key name
      * @param string $value Permission value (yes|no)
@@ -436,7 +431,7 @@ class PhpEditor
     }
 
     /**
-     * Sets a PHP data.
+     * Sets a PHP data
      *
      * @param string $key PHP data key name
      * @param string $value PHP data value
@@ -457,7 +452,7 @@ class PhpEditor
     }
 
     /**
-     * Checks if a reseller has permission on the given item.
+     * Checks if a reseller has permission on the given item
      *
      * @param string $key Permission key name
      * @return bool TRUE if $key is a known item and reseller has permission on it.
@@ -467,7 +462,7 @@ class PhpEditor
         if ($this->phpiniRePerm['phpiniSystem'] == 'yes') {
             if (
                 $key == 'phpiniSystem' || in_array(
-                    $key, array('phpiniAllowUrlFopen', 'phpiniDisplayErrors', 'phpiniDisableFunctions')
+                    $key, ['phpiniAllowUrlFopen', 'phpiniDisplayErrors', 'phpiniDisableFunctions']
                 ) && $this->phpiniRePerm[$key] == 'yes'
             ) {
                 return true;
@@ -489,10 +484,10 @@ class PhpEditor
         if ($this->phpiniRePerm['phpiniSystem'] == 'yes') {
             if (
                 in_array($key, [
-                        'phpiniPostMaxSize', 'phpiniUploadMaxFileSize',
-                        'phpiniMaxExecutionTime', 'phpiniMaxInputTime',
-                        'phpiniMemoryLimit', '']
-                ) && $value <= $this->phpiniRePerm[$key]
+                    'phpiniPostMaxSize', 'phpiniUploadMaxFileSize',
+                    'phpiniMaxExecutionTime', 'phpiniMaxInputTime',
+                    'phpiniMemoryLimit', ''
+                ]) && $value <= $this->phpiniRePerm[$key]
             ) {
                 return true;
             }
@@ -502,7 +497,7 @@ class PhpEditor
     }
 
     /**
-     * Sets value for the given reseller permission.
+     * Sets value for the given reseller permission
      *
      * @param string $key Permission key name
      * @param string $value Permission value
@@ -514,7 +509,9 @@ class PhpEditor
         if (!$withCheck) {
             $this->phpiniRePerm[$key] = $value;
             return true;
-        } elseif ($this->rawCheckRePermData($key, $value)) {
+        }
+
+        if ($this->rawCheckRePermData($key, $value)) {
             $this->phpiniRePerm[$key] = $value;
             return true;
         }
@@ -524,7 +521,7 @@ class PhpEditor
     }
 
     /**
-     * Checks value for the given reseller PHP data.
+     * Checks value for the given reseller PHP data
      *
      * @param string $key PHP data key name
      * @param string $value PHP data value
@@ -574,7 +571,7 @@ class PhpEditor
     }
 
     /**
-     * Assemble disable_functions parameter from its parts.
+     * Assemble disable_functions parameter from its parts
      *
      * @param array $disabledFunctions
      * @return string
@@ -591,7 +588,7 @@ class PhpEditor
     }
 
     /**
-     * Saves custom PHP directives values into database.
+     * Saves custom PHP directives values into database
      *
      * @param int $domainId Domain unique identifier
      * @return void
@@ -636,7 +633,7 @@ class PhpEditor
     }
 
     /**
-     * Checks if custom PHP directives exists for the given domain (customer).
+     * Checks if custom PHP directives exists for the given domain (customer)
      *
      * @param int $domainId Domain unique identifier
      * @return bool TRUE custom PHP directive are found for $domainId, FALSE otherwise
@@ -646,6 +643,7 @@ class PhpEditor
         $query = 'SELECT COUNT(`domain_id`) `cnt` FROM `php_ini` WHERE `domain_id` = ?';
         $stmt = exec_query($query, (int)$domainId);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
         if ($row['cnt'] > 0) {
             return true;
         }
@@ -654,7 +652,7 @@ class PhpEditor
     }
 
     /**
-     * Update domain table status and send request to the daemon.
+     * Update domain table status and send request to the daemon
      *
      * @param int $domainId Domain unique identifier
      * @return void
@@ -667,7 +665,7 @@ class PhpEditor
     }
 
     /**
-     * Deletes custom PHP directive values for the given domain (customer).
+     * Deletes custom PHP directive values for the given domain (customer)
      *
      * @param int $domainId Domain unique identifier
      * @return void
@@ -681,7 +679,7 @@ class PhpEditor
     }
 
     /**
-     * Saves PHP editor permissions for the given (customer).
+     * Saves PHP editor permissions for the given (customer)
      *
      * @param int $domainId Domain unique identifier
      * @return void
@@ -705,7 +703,7 @@ class PhpEditor
     }
 
     /**
-     * Returns the PHP data as currently set.
+     * Returns the PHP data as currently set
      *
      * @return array
      */
@@ -715,7 +713,7 @@ class PhpEditor
     }
 
     /**
-     * Returns reseller permissions like currently set in this object.
+     * Returns reseller permissions like currently set in this object
      *
      * @return array
      */
@@ -725,7 +723,7 @@ class PhpEditor
     }
 
     /**
-     * Returns default value for the giver reseller permission.
+     * Returns default value for the giver reseller permission
      *
      * @param string $key Permissions key name
      * @return string Permissions value
@@ -736,7 +734,7 @@ class PhpEditor
     }
 
     /**
-     * Returns value for the given reseller permission.
+     * Returns value for the given reseller permission
      *
      * @param string $key Permission key name
      * @return string Permissions value
@@ -747,7 +745,7 @@ class PhpEditor
     }
 
     /**
-     * Returns value for the given PHP data.
+     * Returns value for the given PHP data
      *
      * @param string $key PHP data key name
      * @return string PHP data value
@@ -758,7 +756,7 @@ class PhpEditor
     }
 
     /**
-     * Returns customer permissions like currently set in this object.
+     * Returns customer permissions like currently set in this object
      *
      * @return array
      */
@@ -768,7 +766,7 @@ class PhpEditor
     }
 
     /**
-     * Returns value for the given customer permission.
+     * Returns value for the given customer permission
      *
      * @param string $key Permissions key name
      * @return string Permission value
@@ -779,7 +777,7 @@ class PhpEditor
     }
 
     /**
-     * Returns default value for the given PHP directive.
+     * Returns default value for the given PHP directive
      *
      * @param string $key PHP data key name
      * @returns string PHP data value
@@ -800,7 +798,7 @@ class PhpEditor
     }
 
     /**
-     * Load PHP editor permissions for the given domain (customer).
+     * Load PHP editor permissions for the given domain (customer)
      *
      * @param int $domainId Domain unique identifier
      * @return bool FALSE if there no data for $domainId
@@ -824,7 +822,6 @@ class PhpEditor
             $this->phpiniClPerm['phpiniAllowUrlFopen'] = $row['phpini_perm_allow_url_fopen'];
             $this->phpiniClPerm['phpiniDisplayErrors'] = $row['phpini_perm_display_errors'];
             $this->phpiniClPerm['phpiniDisableFunctions'] = $row['phpini_perm_disable_functions'];
-
             return true;
         }
 
@@ -832,30 +829,33 @@ class PhpEditor
     }
 
     /**
-     * Returns domain unique identifier for the given customer identifier.
+     * Returns domain unique identifier for the given customer identifier
      *
      * @param int $customerId Customer unique identifier
      * @return mixed
      */
     public function getDomId($customerId)
     {
-        $query = "SELECT `domain_id` FROM `domain` WHERE `domain_admin_id` = ?";
-        $stmt = exec_query($query, $customerId);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-        return $row['domain_id'];
+        return exec_query(
+            'SELECT `domain_id` FROM `domain` WHERE `domain_admin_id` = ?', $customerId
+        )->fetch(
+            \PDO::FETCH_ASSOC
+        )['domain_id'];
     }
 
     /**
-     * Tells whether or not the status is ok for the given domain.
+     * Tells whether or not the status is ok for the given domain
      *
      * @param int $domainId Domain unique identifier
      * @return bool TRUE if domain status is 'ok', FALSE otherwise
      */
     public function getDomStatus($domainId)
     {
-        $query = "SELECT `domain_status` FROM `domain` WHERE `domain_id` = ?";
-        $stmt = exec_query($query, $domainId);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $row = exec_query(
+            'SELECT `domain_status` FROM `domain` WHERE `domain_id` = ?', $domainId
+        )->fetch(
+            \PDO::FETCH_ASSOC
+        );
 
         if ($row['domain_status'] == 'ok') {
             return true;
@@ -892,7 +892,7 @@ class PhpEditor
     }
 
     /**
-     * Singleton obect - Make clone unavailable.
+     * Singleton obect - Make clone unavailable
      *
      * @return void
      */

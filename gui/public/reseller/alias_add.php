@@ -402,7 +402,7 @@ if ($resellerProps['max_als_cnt'] != 0 && $resellerProps['current_als_cnt'] >= $
     redirectTo('alias.php');
 } else {
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'reseller/alias_add.tpl',
         'page_message' => 'layout',

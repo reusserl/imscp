@@ -291,7 +291,7 @@ check_login('user');
 
 if (customerHasMailOrExtMailFeatures()) {
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'client/mail_accounts.tpl',
         'page_message' => 'layout',

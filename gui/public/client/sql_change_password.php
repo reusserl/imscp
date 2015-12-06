@@ -133,7 +133,7 @@ if (isset($_REQUEST['id'])) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'client/sql_change_password.tpl',
     'page_message' => 'layout'

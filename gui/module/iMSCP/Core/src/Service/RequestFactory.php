@@ -20,7 +20,7 @@
 
 namespace iMSCP\Core\Service;
 
-use Symfony\Component\HttpFoundation\Request;
+use Zend\Http\PhpEnvironment\Request;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -35,6 +35,6 @@ class RequestFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        return Request::createFromGlobals();
+        return new Request();
     }
 }

@@ -356,7 +356,7 @@ if (!isset($_REQUEST['id'])) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'client/sql_user_add.tpl',
     'page_message' => 'layout',

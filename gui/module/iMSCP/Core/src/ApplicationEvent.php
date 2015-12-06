@@ -2,9 +2,9 @@
 
 namespace iMSCP\Core;
 
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Zend\EventManager\Event;
+use Zend\Stdlib\RequestInterface;
+use Zend\Stdlib\ResponseInterface;
 
 /**
  * Class ApplicationEvent
@@ -20,12 +20,12 @@ class ApplicationEvent extends Event
     protected $application;
 
     /**
-     * @var Request
+     * @var RequestInterface
      */
     protected $request;
 
     /**
-     * @var Response
+     * @var ResponseInterface
      */
     protected $response;
 
@@ -60,10 +60,10 @@ class ApplicationEvent extends Event
     /**
      * Set request Object
      *
-     * @param Request $request
+     * @param RequestInterface$request
      * @return $this
      */
-    public function setRequest(Request $request)
+    public function setRequest(RequestInterface $request)
     {
         $this->setParam('request', $request);
         $this->request = $request;
@@ -73,7 +73,7 @@ class ApplicationEvent extends Event
     /**
      * Get request object
      *
-     * @return Request
+     * @return RequestInterface
      */
     public function getRequest()
     {
@@ -83,10 +83,10 @@ class ApplicationEvent extends Event
     /**
      * Get response object
      *
-     * @param Response $response
+     * @param ResponseInterface $response
      * @return $this
      */
-    public function setResponse(Response $response)
+    public function setResponse(ResponseInterface $response)
     {
         $this->setParam('response', $response);
         $this->response = $response;
@@ -96,7 +96,7 @@ class ApplicationEvent extends Event
     /**
      * Get response object
      *
-     * @return Response
+     * @return ResponseInterface
      */
     public function getResponse()
     {

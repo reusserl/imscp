@@ -20,9 +20,9 @@
 
 namespace iMSCP\Core;
 
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\Stdlib\RequestInterface;
+use Zend\Stdlib\ResponseInterface;
 
 /**
  * Interface ApplicationInterface
@@ -40,14 +40,14 @@ interface ApplicationInterface
     /**
      * Get request object
      *
-     * @return Request
+     * @return RequestInterface
      */
     public function getRequest();
 
     /**
      * Get response object
      *
-     * @return Response
+     * @return ResponseInterface
      */
     public function getResponse();
 

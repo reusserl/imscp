@@ -219,7 +219,7 @@ if (!empty($_POST)) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/ip_manage.tpl',
     'page_message' => 'layout',

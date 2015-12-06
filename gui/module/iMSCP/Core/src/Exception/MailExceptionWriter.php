@@ -20,6 +20,7 @@
 
 namespace iMSCP\Core\Exception;
 
+use iMSCP\Core\Application;
 use iMSCP\Core\Utils\OpcodeCache;
 
 /**
@@ -43,12 +44,8 @@ class MailExceptionWriter extends AbstractExceptionWriter
      */
     public function onUncaughtException(ExceptionEvent $event)
     {
-        if (iMSCP_Registry::isRegistered('config')) {
-            $debug = iMSCP_Registry::get('config')->DEBUG;
-        } else {
-            $debug = 1;
-        }
-
+        $config = Application::getInstance()->getConfig();
+        $debug = $config['DEBUG'];
         $mail = $this->prepareMail($event->getException());
 
         if (!empty($mail)) {
@@ -99,92 +96,80 @@ class MailExceptionWriter extends AbstractExceptionWriter
     /**
      * Prepare the mail to be send
      *
-     * @param Exception $exception An exception object
+     * @param \Exception $exception An exception object
      * @return array Array containing mail parts
      */
     protected function prepareMail($exception)
     {
+        $config = Application::getInstance()->getConfig();
         $mail = [];
 
-        if (iMSCP_Registry::isRegistered('config')) {
-            /** @var iMSCP_Config_Handler_File $config */
-            $config = iMSCP_Registry::get('config');
+        if (isset($config['DEFAULT_ADMIN_ADDRESS'])) {
+            $rcptTo = $config['DEFAULT_ADMIN_ADDRESS'];
+            $sender = 'webmaster@' . $config['BASE_SERVER_VHOST'];
 
-            if (isset($config['DEFAULT_ADMIN_ADDRESS'])) {
-                $rcptTo = $config['DEFAULT_ADMIN_ADDRESS'];
-                $sender = 'webmaster@' . $config['BASE_SERVER_VHOST'];
+            if (filter_var($rcptTo, FILTER_VALIDATE_EMAIL) !== false) {
+                $mail['rcptTo'] = $rcptTo;
+                $message = preg_replace('#([\t\n]+|<br \/>)#', ' ', $exception->getMessage());
 
-                if (filter_var($rcptTo, FILTER_VALIDATE_EMAIL) !== false) {
-                    $mail['rcptTo'] = $rcptTo;
-                    $message = preg_replace('#([\t\n]+|<br \/>)#', ' ', $exception->getMessage());
+                // Header
+                $mail['header'] = 'From: "' . self::NAME . "\" <$sender>\n";
+                $mail['header'] .= "MIME-Version: 1.0\n";
+                $mail['header'] .= "Content-Type: text/plain; charset=utf-8\n";
+                $mail['header'] .= "Content-Transfer-Encoding: 8bit\n";
+                $mail['header'] .= 'X-Mailer: ' . self::NAME;
+                // Subject
+                $mail['subject'] = self::NAME . ' - An exception has been thrown';
+                // Body
+                $mail['body'] = "Dear admin,\n\n";
+                $mail['body'] .= sprintf(
+                    "An exception has been thrown in file %s at line %s:\n\n",
+                    $exception->getFile(),
+                    $exception->getLine()
+                );
+                $mail['body'] .= str_repeat('=', 65) . "\n\n";
+                $mail['body'] .= "$message\n\n";
+                $mail['body'] .= str_repeat('=', 65) . "\n\n";
+                $mail['body'] .= "Debug backtrace:\n";
+                $mail['body'] .= str_repeat('-', 15) . "\n\n";
 
-                    /** @var $exception iMSCP_Exception_Database */
-                    if ($exception instanceof iMSCP_Exception_Database) {
-                        $message .= "\n\nQuery was:\n\n" . $exception->getQuery();
+                if (($traces = $exception->getTrace())) {
+                    foreach ($traces as $trace) {
+                        if (isset($trace['file'])) {
+                            $mail['body'] .= sprintf("File: %s at line %s\n", $trace['file'], $trace['line']);
+                        }
+
+                        if (isset($trace['class'])) {
+                            $mail['body'] .= sprintf(
+                                "Method: %s\n", $trace['class'] . '::' . $trace['function'] . '()'
+                            );
+                        } elseif (isset($trace['function'])) {
+                            $mail['body'] .= sprintf("Function: %s\n", $trace['function'] . '()');
+                        }
                     }
-
-                    // Header
-                    $mail['header'] = 'From: "' . self::NAME . "\" <$sender>\n";
-                    $mail['header'] .= "MIME-Version: 1.0\n";
-                    $mail['header'] .= "Content-Type: text/plain; charset=utf-8\n";
-                    $mail['header'] .= "Content-Transfer-Encoding: 8bit\n";
-                    $mail['header'] .= 'X-Mailer: ' . self::NAME;
-
-                    // Subject
-                    $mail['subject'] = self::NAME . ' - An exception has been thrown';
-
-                    // Body
-                    $mail['body'] = "Dear admin,\n\n";
+                } else {
                     $mail['body'] .= sprintf(
-                        "An exception has been thrown in file %s at line %s:\n\n",
-                        $exception->getFile(),
-                        $exception->getLine()
+                        "File: %s at line %s\n", $exception->getFile(), $exception->getLine()
                     );
-                    $mail['body'] .= str_repeat('=', 65) . "\n\n";
-                    $mail['body'] .= "$message\n\n";
-                    $mail['body'] .= str_repeat('=', 65) . "\n\n";
-                    $mail['body'] .= "Debug backtrace:\n";
-                    $mail['body'] .= str_repeat('-', 15) . "\n\n";
-
-                    if (($traces = $exception->getTrace())) {
-                        foreach ($traces as $trace) {
-                            if (isset($trace['file'])) {
-                                $mail['body'] .= sprintf("File: %s at line %s\n", $trace['file'], $trace['line']);
-                            }
-
-                            if (isset($trace['class'])) {
-                                $mail['body'] .= sprintf(
-                                    "Method: %s\n", $trace['class'] . '::' . $trace['function'] . '()'
-                                );
-                            } elseif (isset($trace['function'])) {
-                                $mail['body'] .= sprintf("Function: %s\n", $trace['function'] . '()');
-                            }
-                        }
-                    } else {
-                        $mail['body'] .= sprintf(
-                            "File: %s at line %s\n", $exception->getFile(), $exception->getLine()
-                        );
-                        $mail['body'] .= "Function: main()\n";
-                    }
-
-                    // Generate mail footprint using static part of mail body
-                    $mail['footprint'] = md5($mail['body']);
-
-                    // Additional information
-                    $mail['body'] .= "\nAdditional information:\n";
-                    $mail['body'] .= str_repeat('-', 22) . "\n\n";
-
-                    foreach (array('HTTP_USER_AGENT', 'REQUEST_URI', 'HTTP_REFERER', 'REMOTE_ADDR', 'X-FORWARDED-FOR', 'SERVER_ADDR') as $key) {
-                        if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
-                            $mail['body'] .= ucwords(strtolower(str_replace('_', ' ', $key))) . ": {$_SERVER["$key"]}\n";
-                        }
-                    }
-
-                    $mail['body'] .= "\n" . str_repeat('_', 60) . "\n";
-                    $mail['body'] .= self::NAME . "\n";
-                    $mail['body'] .= "\n\nNote: You will not receive further emails for such exception in the next 24 hours.\n";
-                    $mail['body'] = wordwrap($mail['body'], 70, "\n");
+                    $mail['body'] .= "Function: main()\n";
                 }
+
+                // Generate mail footprint using static part of mail body
+                $mail['footprint'] = md5($mail['body']);
+                // Additional information
+                $mail['body'] .= "\nAdditional information:\n";
+                $mail['body'] .= str_repeat('-', 22) . "\n\n";
+
+                foreach (['HTTP_USER_AGENT', 'REQUEST_URI', 'HTTP_REFERER', 'REMOTE_ADDR', 'X-FORWARDED-FOR', 'SERVER_ADDR'] as $key) {
+                    if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+                        $mail['body'] .= ucwords(strtolower(str_replace('_', ' ', $key))) . ": {$_SERVER["$key"]}\n";
+                    }
+                }
+
+                $mail['body'] .= "\n" . str_repeat('_', 60) . "\n";
+                $mail['body'] .= self::NAME . "\n";
+                $mail['body'] .= "\n\nNote: You will not receive further emails for such exception in the next 24 hours.\n";
+                $mail['body'] = wordwrap($mail['body'], 70, "\n");
             }
         }
 

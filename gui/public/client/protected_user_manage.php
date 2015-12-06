@@ -161,8 +161,8 @@ check_login('user');
 customerHasFeature('protected_areas') or showBadRequestErrorPage();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic('layout', 'shared/layouts/ui.tpl');
-$tpl->define_dynamic([
+$tpl->defineDynamic('layout', 'shared/layouts/ui.tpl');
+$tpl->defineDynamic([
     'page' => 'client/puser_manage.tpl',
     'page_message' => 'layout',
     'users_message_block' => 'page',

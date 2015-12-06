@@ -74,10 +74,10 @@ class OpcodeCache
         $apcVersion = phpversion('apc');
         $xcVersion = phpversion('xcache');
 
-        static::$supportedCaches = array(
+        static::$supportedCaches = [
             // The ZendOpcache aka OPcache since PHP 5.5
             // http://php.net/manual/de/book.opcache.php
-            'OPcache' => array(
+            'OPcache' => [
                 'active' => extension_loaded('Zend OPcache') && ini_get('opcache.enable') === '1',
                 'version' => phpversion('Zend OPcache'),
                 'canReset' => true, // opcache_reset() ... it seems that it doesn't reset for current run.
@@ -93,11 +93,11 @@ class OpcodeCache
                         opcache_reset();
                     }
                 }
-            ),
+            ],
 
             // The Alternative PHP Cache aka APC
             // http://www.php.net/manual/de/book.apc.php
-            'APC' => array(
+            'APC' => [
                 // Currently APCu identifies itself both as "apcu" and "apc" (for compatibility) although it doesn't
                 // provide the APC-opcache functionality
                 //'active' => extension_loaded('apc') && !extension_loaded('apcu') && ini_get('apc.enabled') === '1',
@@ -118,7 +118,7 @@ class OpcodeCache
                         apc_clear_cache('opcode');
                     }
                 }
-            ),
+            ],
 
             // http://www.php.net/manual/de/book.wincache.php
             /*'WinCache' => array(
@@ -139,7 +139,7 @@ class OpcodeCache
             */
 
             // http://xcache.lighttpd.net/
-            'XCache' => array(
+            'XCache' => [
                 'active' => extension_loaded('xcache'),
                 'version' => $xcVersion,
                 'canReset' => true, // xcache_clear_cache()
@@ -162,14 +162,14 @@ class OpcodeCache
                         }
                     }
                 )
-            ),
+            ],
 
             // https://github.com/eaccelerator/eaccelerator
             //
             // @see https://github.com/eaccelerator/eaccelerator/blob/master/doc/php/info.php
             // Only possible if we are in eaccelerator.admin_allowed_path and we can only remove data
             // "that isn't used in the current requests"
-            'eAccelerator' => array(
+            'eAccelerator' => [
                 'active' => extension_loaded('eAccelerator'),
                 'version' => phpversion('eaccelerator'),
                 'canReset' => false,
@@ -178,11 +178,11 @@ class OpcodeCache
                 'clearCallback' => function () {
                     eaccelerator_clear();
                 }
-            ),
+            ],
 
             // https://github.com/zendtech/ZendOptimizerPlus
             // http://files.zend.com/help/Zend-Server/zend-server.htm#zendoptimizerplus.html
-            'ZendOptimizerPlus' => array(
+            'ZendOptimizerPlus' => [
                 'active' => extension_loaded('Zend Optimizer+') && ini_get('zend_optimizerplus.enable') === '1',
                 'version' => phpversion('Zend Optimizer+'),
                 'canReset' => true, // accelerator_reset()
@@ -191,10 +191,10 @@ class OpcodeCache
                 'clearCallback' => function () {
                     accelerator_reset();
                 }
-            ),
-        );
+            ],
+        ];
 
-        static::$activeCaches = array();
+        static::$activeCaches = [];
 
         // Cache the active ones
         foreach (static::$supportedCaches as $opcodeCache => $properties) {

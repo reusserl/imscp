@@ -463,7 +463,7 @@ $phpini = \iMSCP\Core\Php\PhpEditor::getInstance();
 $phpini->loadRePerm($_SESSION['user_id']);
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'reseller/user_add2.tpl',
     'page_message' => 'layout',

@@ -28,14 +28,13 @@ use Zend\EventManager\EventManagerInterface;
 /**
  * Class Authentication
  *
- * This class is responsible to authenticate users using authentication handlers. An authentication handler is an
- * event listener which listen to the onAuthenticate event that is triggered when the authentication process occurs.
+ * This component is responsible to authenticate users through authentication handlers. An authentication handler is a
+ * listener that listen on the iMSCP\Core\Plugin\PluginEvent::onAuthenticate event which is triggered during
+ * authentication process.
  *
- * An authentication handler which was successful, must short-circuit the execution of any other authentication handlers
- * by stopping the AutthenticationEvent::onAuthentication event propagation.
- *
- * In any case, all authentication handler must set an AuthenticationResult object onto the event. That allows the
- * authentication component to known if the authentication process was successful.
+ * Any authentication handlers must return an iMSCP\Core\Authentication\AuthenticationResult object that specify whether
+ * or not the authentication is successfull. In case of a successfull authentication, all other authentication handlers
+ * are skipped.
  *
  * @package iMSCP\Core\Authentication
  */
@@ -78,20 +77,19 @@ class Authentication implements EventManagerAwareInterface
      */
     public function onAuthentication(AuthenticationEvent $event)
     {
+        $messages = [];
         $username = (!empty($_POST['uname'])) ? encode_idna(clean_input($_POST['uname'])) : '';
         $password = (!empty($_POST['upass'])) ? clean_input($_POST['upass']) : '';
 
-        if (empty($username) || empty($password)) {
-            if (empty($username)) {
-                $message[] = tr('The username field is empty.');
-            }
-
-            if (empty($password)) {
-                $message[] = tr('The password field is empty.');
-            }
+        if (empty($username)) {
+            $messages[] = tr('The username field is empty.');
         }
 
-        if (!isset($message)) {
+        if (empty($password)) {
+            $messages[] = tr('The password field is empty.');
+        }
+
+        if (empty($messages)) {
             $stmt = exec_query(
                 'SELECT admin_id, admin_name, admin_pass, admin_type, email, created_by FROM admin WHERE admin_name = ?',
                 $username
@@ -99,33 +97,34 @@ class Authentication implements EventManagerAwareInterface
 
             if (!$stmt->rowCount()) {
                 $authResult = new AuthenticationResult(
-                    AuthenticationResult::FAILURE_IDENTITY_NOT_FOUND, null, tr('Unknown username.')
+                    AuthenticationResult::FAILURE_IDENTITY_NOT_FOUND, [], tr('Supplied credential is invalid.')
                 );
             } else {
-                $identity = $stmt->fetch(\PDO::FETCH_OBJ);
-                $passwordHash = $identity->admin_pass;
+                $identity = $stmt->fetch(\PDO::FETCH_ASSOC);
+                $passwordHash = $identity['admin_pass'];
 
                 if (!Crypt::verify($password, $passwordHash)) {
                     $authResult = new AuthenticationResult(
-                        AuthenticationResult::FAILURE_CREDENTIAL_INVALID, null, tr('Bad password.')
+                        AuthenticationResult::FAILURE_CREDENTIAL_INVALID, [], tr('Supplied credential is invalid.')
                     );
                 } else {
                     if (strpos($passwordHash, '$2a$') !== 0) { # Not a password encrypted with Bcrypt, then re-encrypt it
                         exec_query('UPDATE admin SET admin_pass = ? WHERE admin_id = ?', [
-                            Crypt::bcrypt($password), $identity->admin_id
+                            Crypt::bcrypt($password), $identity['admin_id']
                         ]);
-                        write_log(sprintf('Info: Password for user %s has been re-encrypted using bcrypt', $identity->admin_name), E_USER_NOTICE);
                     }
 
-                    $authResult = new AuthenticationResult(AuthenticationResult::SUCCESS, $identity);
-                    $event->stopPropagation();
+                    $authResult = new AuthenticationResult(
+                        AuthenticationResult::SUCCESS, $identity, 'Authentication successful.'
+                    );
                 }
             }
         } else {
             $authResult = new AuthenticationResult(
-                (count($message) == 2) ? AuthenticationResult::FAILURE_CREDENTIAL_EMPTY : AuthenticationResult::FAILURE_CREDENTIAL_INVALID,
-                null,
-                $message
+                (count($messages) == 2)
+                    ? AuthenticationResult::FAILURE_CREDENTIAL_EMPTY : AuthenticationResult::FAILURE_CREDENTIAL_INVALID,
+                [],
+                $messages
             );
         }
 
@@ -166,11 +165,11 @@ class Authentication implements EventManagerAwareInterface
      */
     public function setEventManager(EventManagerInterface $events)
     {
-        $events->setIdentifiers(array(
+        $events->setIdentifiers([
             __CLASS__,
             get_class($this),
             'authentication_service',
-        ));
+        ]);
         $this->events = $events;
         $this->attachDefaultListeners();
         return $this;
@@ -202,30 +201,36 @@ class Authentication implements EventManagerAwareInterface
      */
     public function authenticate()
     {
-        $em = $this->getEventManager();
-        $response = $em->trigger(AuthenticationEvent::onBeforeAuthentication, $this, $this->getEvent());
+        $events = $this->getEventManager();
+        $response = $events->trigger(AuthenticationEvent::onBeforeAuthentication, $this, $this->getEvent());
 
         if (!$response->stopped()) {
-            // Process authentication through attached handlers
-            $em->trigger(AuthenticationEvent::onAuthentication, $this, $this->getEvent());
-            $authResult = $this->getEvent()->getAuthResult();
+            $result = $events->trigger(AuthenticationEvent::onAuthentication, $this, $this->getEvent(), function ($r) {
+                return $r instanceof AuthenticationResult && $r->isValid();
+            });
+
+            $authResult = $result->last();
 
             if (!$authResult instanceof AuthenticationResult) {
-                $authResult = new AuthenticationResult(AuthenticationResult::FAILURE_UNCATEGORIZED, tr('Unknown reason.'));
-                $this->getEvent()->setAuthResult($authResult);
+                $authResult = new AuthenticationResult(
+                    AuthenticationResult::FAILURE_UNCATEGORIZED, tr('Could not authenticate.')
+                );
             }
 
             if ($authResult->isValid()) {
                 $this->unsetIdentity(); // Prevent multiple successive calls from storing inconsistent results
                 $this->setIdentity($authResult->getIdentity());
             }
+
+            $this->getEvent()->setAuthResult($authResult);
         } else {
-            $authResult = new AuthenticationResult(AuthenticationResult::FAILURE_UNCATEGORIZED, null, $response->last());
+            $authResult = new AuthenticationResult(
+                AuthenticationResult::FAILURE_UNCATEGORIZED, null, tr('Authentication process has been interrupted.')
+            );
             $this->getEvent()->setAuthResult($authResult);
         }
 
-        $em->trigger(AuthenticationEvent::onAfterAuthentication, $this, $this->getEvent());
-
+        $events->trigger(AuthenticationEvent::onAfterAuthentication, $this, $this->getEvent());
         return $authResult;
     }
 
@@ -238,7 +243,8 @@ class Authentication implements EventManagerAwareInterface
     {
         if (isset($_SESSION['user_id'])) {
             $stmt = exec_query('SELECT COUNT(session_id) AS cnt FROM login WHERE session_id = ? AND ipaddr = ?', [
-                session_id(), getipaddr()
+                session_id(),
+                getipaddr()
             ]);
 
             $row = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -291,20 +297,20 @@ class Authentication implements EventManagerAwareInterface
      */
     public function setIdentity($identity)
     {
-        $this->getEventManager()->trigger(AuthenticationEvent::onBeforeSetIdentity, $this->getEvent());
+        $this->getEventManager()->trigger(AuthenticationEvent::onBeforeSetIdentity, $this, $this->getEvent());
 
         session_regenerate_id();
         $lastAccess = time();
 
         exec_query('INSERT INTO login (session_id, ipaddr, lastaccess, user_name) VALUES (?, ?, ?, ?)', [
-            session_id(), getIpAddr(), $lastAccess, $identity->admin_name
+            session_id(), getIpAddr(), $lastAccess, $identity['admin_name']
         ]);
 
-        $_SESSION['user_logged'] = $identity->admin_name;
-        $_SESSION['user_type'] = $identity->admin_type;
-        $_SESSION['user_id'] = $identity->admin_id;
-        $_SESSION['user_email'] = $identity->email;
-        $_SESSION['user_created_by'] = $identity->created_by;
+        $_SESSION['user_logged'] = $identity['admin_name'];
+        $_SESSION['user_type'] = $identity['admin_type'];
+        $_SESSION['user_id'] = $identity['admin_id'];
+        $_SESSION['user_email'] = $identity['email'];
+        $_SESSION['user_created_by'] = $identity['created_by'];
         $_SESSION['user_login_time'] = $lastAccess;
         $_SESSION['user_identity'] = $identity;
 
@@ -325,7 +331,6 @@ class Authentication implements EventManagerAwareInterface
         exec_query('DELETE FROM login WHERE session_id = ?', session_id());
 
         $preserveList = ['user_def_lang', 'user_theme', 'user_theme_color', 'show_main_menu_labels', 'pageMessages'];
-
         foreach (array_keys($_SESSION) as $sessionVariable) {
             if (!in_array($sessionVariable, $preserveList)) {
                 unset($_SESSION[$sessionVariable]);
@@ -344,6 +349,6 @@ class Authentication implements EventManagerAwareInterface
     protected function attachDefaultListeners()
     {
         $events = $this->getEventManager();
-        $events->attach(AuthenticationEvent::onAuthentication, [$this, 'onAuthentication']);
+        $events->attach(AuthenticationEvent::onAuthentication, [$this, 'onAuthentication'], 99);
     }
 }

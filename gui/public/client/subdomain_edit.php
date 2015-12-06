@@ -264,7 +264,7 @@ if (!empty($_POST) && client_editSubdomain()) {
     redirectTo('domains_manage.php');
 } else {
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'client/subdomain_edit.tpl',
         'page_message' => 'layout'

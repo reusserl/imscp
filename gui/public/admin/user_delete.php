@@ -196,7 +196,7 @@ function admin_generateCustomerAcountDeletionValidationPage($userId)
     $adminName = decode_idna($row['admin_name']);
 
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
-    $tpl->define_dynamic([
+    $tpl->defineDynamic([
         'layout' => 'shared/layouts/ui.tpl',
         'page' => 'admin/user_delete.tpl',
         'page_message' => 'layout',

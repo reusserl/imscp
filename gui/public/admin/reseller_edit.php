@@ -793,7 +793,7 @@ $errFieldsStack = [];
 $data =& admin_getData($resellerId);
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic([
+$tpl->defineDynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/reseller_edit.tpl',
     'page_message' => 'layout',
