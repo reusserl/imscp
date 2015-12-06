@@ -43,7 +43,7 @@ if (!hasTicketSystem()) {
 }
 
 if (isset($_GET['psi'])) {
-    $start = $_GET['psi'];
+    $start = intval($_GET['psi']);
 } else {
     $start = 0;
 }
@@ -60,7 +60,6 @@ $tpl->define_dynamic([
     'scroll_next_gray' => 'page',
     'scroll_next' => 'page'
 ]);
-
 $tpl->assign([
     'TR_PAGE_TITLE' => tr(' Admin / Support / Open Tickets'),
     'TR_TICKET_STATUS' => tr('Status'),
@@ -88,7 +87,7 @@ generateTicketList($tpl, $_SESSION['user_id'], $start, $cfg['DOMAIN_ROWS_PER_PAG
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

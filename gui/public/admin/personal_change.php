@@ -75,7 +75,7 @@ function gen_admin_personal_data(&$tpl, $user_id)
  */
 function update_admin_personal_data($user_id)
 {
-    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditUser, [
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditUser, null, [
         'userId' => $user_id
     ]);
 
@@ -92,7 +92,6 @@ function update_admin_personal_data($user_id)
     $email = clean_input($_POST['email']);
     $phone = clean_input($_POST['phone']);
     $fax = clean_input($_POST['fax']);
-
     $query = "
         UPDATE
             `admin`
@@ -107,7 +106,7 @@ function update_admin_personal_data($user_id)
         $fname, $lname, $firm, $zip, $city, $state, $country, $street1, $street2, $email, $phone, $fax, $gender, $user_id
     ]);
 
-    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditUser, [
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditUser, null, [
         'userId' => $user_id
     ]);
 
@@ -162,7 +161,7 @@ generatePageMessage($tpl);
 gen_admin_personal_data($tpl, $_SESSION['user_id']);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

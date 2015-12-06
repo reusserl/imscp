@@ -105,11 +105,9 @@ function admin_generatePage($tpl, $phpini)
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
     $checked = $cfg['HTML_CHECKED'];
-
     $tpl->assign([
         'HP_NAME_VALUE' => '',
         'HP_DESCRIPTION_VALUE' => '',
-
         'HP_MAX_SUB_LIMITS' => '0',
         'HP_MAX_ALS_VALUES' => '0',
         'HP_MAIL_VALUE' => '0',
@@ -119,7 +117,6 @@ function admin_generatePage($tpl, $phpini)
         'HP_SQL_USER_VALUE' => '0',
         'HP_TRAFF_VALUE' => '0',
         'HP_DISK_VALUE' => '0',
-
         'TR_PHP_YES' => '',
         'TR_PHP_NO' => $checked,
         'TR_CGI_YES' => '',
@@ -132,7 +129,6 @@ function admin_generatePage($tpl, $phpini)
         'TR_EXTMAIL_NO' => $checked,
         'TR_PROTECT_WEB_FOLDERS_YES' => $checked,
         'TR_PROTECT_WEB_FOLDERS_NO' => '',
-
         'TR_STATUS_YES' => $checked,
         'TR_STATUS_NO' => '',
     ]);
@@ -172,7 +168,6 @@ function admin_generateErrorPage($tpl, $phpini)
     $tpl->assign([
         'HP_NAME_VALUE' => tohtml($name),
         'HP_DESCRIPTION_VALUE' => tohtml($description),
-
         'HP_MAX_SUB_LIMITS' => tohtml($sub),
         'HP_MAX_ALS_VALUES' => tohtml($als),
         'HP_MAIL_VALUE' => tohtml($mail),
@@ -182,7 +177,6 @@ function admin_generateErrorPage($tpl, $phpini)
         'HP_SQL_USER_VALUE' => tohtml($sqlu),
         'HP_TRAFF_VALUE' => tohtml($traffic),
         'HP_DISK_VALUE' => tohtml($diskSpace),
-
         'TR_PHP_YES' => ($php == '_yes_') ? $checked : '',
         'TR_PHP_NO' => ($php == '_no_') ? $cfg['HTML_CHECKED'] : '',
         'TR_CGI_YES' => ($cgi == '_yes_') ? $checked : '',
@@ -195,7 +189,6 @@ function admin_generateErrorPage($tpl, $phpini)
         'TR_EXTMAIL_NO' => ($extMail == '_no_') ? $checked : '',
         'TR_PROTECT_WEB_FOLDERS_YES' => ($webFolderProtection == '_yes_') ? $checked : '',
         'TR_PROTECT_WEB_FOLDERS_NO' => ($webFolderProtection == '_no_') ? $checked : '',
-
         'TR_STATUS_YES' => ($status) ? $checked : '',
         'TR_STATUS_NO' => (!$status) ? $checked : ''
     ]);
@@ -232,7 +225,6 @@ function admin_checkData($phpini)
 
     $name = isset($_POST['hp_name']) ? clean_input($_POST['hp_name']) : '';
     $description = isset($_POST['hp_description']) ? clean_input($_POST['hp_description']) : '';
-
     $sub = isset($_POST['hp_sub']) ? clean_input($_POST['hp_sub']) : '-1';
     $als = isset($_POST['hp_als']) ? clean_input($_POST['hp_als']) : '-1';
     $mail = isset($_POST['hp_mail']) ? clean_input($_POST['hp_mail']) : '-1';
@@ -242,19 +234,15 @@ function admin_checkData($phpini)
     $sqlu = isset($_POST['hp_sql_user']) ? clean_input($_POST['hp_sql_user']) : '-1';
     $traffic = isset($_POST['hp_traff']) ? clean_input($_POST['hp_traff']) : '';
     $diskSpace = isset($_POST['hp_disk']) ? clean_input($_POST['hp_disk']) : '';
-
     $php = isset($_POST['hp_php']) ? clean_input($_POST['hp_php']) : '_no_';
     $cgi = isset($_POST['hp_cgi']) ? clean_input($_POST['hp_cgi']) : '_no_';
     $dns = isset($_POST['hp_dns']) ? clean_input($_POST['hp_dns']) : '_no_';
     $backup = isset($_POST['hp_backup']) && is_array($_POST['hp_backup']) ? $_POST['hp_backup'] : [];
     $apsStandard = isset($_POST['hp_aps_standard']) ? clean_input($_POST['hp_aps_standard']) : '_no_';
     $extMail = isset($_POST['hp_external_mail']) ? clean_input($_POST['hp_external_mail']) : '_no_';
-
     $webFolderProtection = isset($_POST['hp_protected_webfolders'])
         ? clean_input($_POST['hp_protected_webfolders']) : '_no_';
-
     $status = isset($_POST['hp_status']) ? clean_input($_POST['hp_status']) : '0';
-
     $php = ($php == '_yes_') ? '_yes_' : '_no_';
     $cgi = ($cgi == '_yes_') ? '_yes_' : '_no_';
     $dns = ($dns == '_yes_') ? '_yes_' : '_no_';
@@ -263,8 +251,13 @@ function admin_checkData($phpini)
     $extMail = ($extMail == '_yes_') ? '_yes_' : '_no_';
     $webFolderProtection = ($webFolderProtection == '_yes_') ? '_yes_' : '_no_';
 
-    if ($name == '') set_page_message(tr('Name cannot be empty.'), 'error');
-    if ($description == '') set_page_message(tr('Description cannot be empty.'), 'error');
+    if ($name == '') {
+        set_page_message(tr('Name cannot be empty.'), 'error');
+    }
+
+    if ($description == '') {
+        set_page_message(tr('Description cannot be empty.'), 'error');
+    }
 
     if (!imscp_limit_check($sub, -1)) {
         set_page_message(tr('Incorrect subdomain limit.'), 'error');
@@ -416,7 +409,6 @@ function admin_addHostingPlan($adminId, $phpini)
 
     $query = "INSERT INTO `hosting_plans`(`reseller_id`, `name`, `description`, `props`, `status`) VALUES (?, ?, ?, ?, ?)";
     exec_query($query, [$adminId, $name, $description, $hpProps, $status]);
-
     return true;
 }
 
@@ -433,7 +425,6 @@ check_login('admin');
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
-
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
     $tpl->define_dynamic([
         'layout' => 'shared/layouts/ui.tpl',
@@ -495,7 +486,7 @@ if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] == 'admin'
     generatePageMessage($tpl);
 
     $tpl->parse('LAYOUT_CONTENT', 'page');
-    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
         'templateEngine' => $tpl
     ]);
     $tpl->prnt();

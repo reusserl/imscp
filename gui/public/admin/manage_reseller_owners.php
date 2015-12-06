@@ -87,9 +87,9 @@ function gen_reseller_table($tpl)
         ORDER BY
             `admin_name`
     ";
-    $rs = execute_query($query);
+    $stmt = execute_query($query);
 
-    while ($row = $rs->fetch(PDO::FETCH_ASSOC)) {
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         if ((isset($_POST['uaction']) && $_POST['uaction'] === 'reseller_owner') && (isset($_POST['dest_admin']) &&
                 $_POST['dest_admin'] == $row['admin_id'])
         ) {
@@ -129,16 +129,16 @@ function update_reseller_owner()
             ORDER BY
                 `admin_name`
         ";
-        $rs = execute_query($query);
+        $stmt = execute_query($query);
 
-        while ($row = $rs->fetch(PDO::FETCH_ASSOC)) {
-            $admin_id = $row['admin_id'];
-            $admin_id_var_name = "admin_id_$admin_id";
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $adminId = $row['admin_id'];
+            $adminIdVarname = "admin_id_$adminId";
 
-            if (isset($_POST[$admin_id_var_name]) && $_POST[$admin_id_var_name] === 'on') {
+            if (isset($_POST[$adminIdVarname]) && $_POST[$adminIdVarname] === 'on') {
                 $dest_admin = $_POST['dest_admin'];
                 $query = "UPDATE `admin` SET `created_by` = ? WHERE `admin_id` = ?";
-                exec_query($query, [$dest_admin, $admin_id]);
+                exec_query($query, [$dest_admin, $adminId]);
             }
         }
     }
@@ -182,7 +182,7 @@ update_reseller_owner();
 gen_reseller_table($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

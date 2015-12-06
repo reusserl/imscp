@@ -34,7 +34,6 @@ require '../../application.php';
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
-
 systemHasAntiRootkits() or showBadRequestErrorPage();
 
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
@@ -146,7 +145,7 @@ generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

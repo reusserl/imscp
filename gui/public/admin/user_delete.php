@@ -36,11 +36,9 @@
  */
 function admin_deleteUser($userId)
 {
-    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeDeleteUser, [
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeDeleteUser, null, [
         'userId' => $userId
     ]);
-
-    $userId = (int)$userId;
 
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
@@ -80,7 +78,6 @@ function admin_deleteUser($userId)
     if ($userType == 'reseller') {
         // Getting custom reseller isp logo if set
         $resellerLogo = $row['logo'];
-
         // Add specific reseller items to remove
         $itemsToDelete = array_merge(
             [
@@ -128,7 +125,7 @@ function admin_deleteUser($userId)
         throw $e;
     }
 
-    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterDeleteUser, [
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterDeleteUser, null, [
         'userId' => $userId
     ]);
 
@@ -143,8 +140,6 @@ function admin_deleteUser($userId)
  */
 function admin_validateUserDeletion($userId)
 {
-    $userId = (int)$userId;
-
     // User is super admin
     if ($userId == 1) {
         showBadRequestErrorPage();
@@ -191,7 +186,6 @@ function admin_validateUserDeletion($userId)
 function admin_generateCustomerAcountDeletionValidationPage($userId)
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
     $stmt = exec_query('SELECT admin_name FROM admin WHERE admin_id = ?', $userId);
 
     if (!$stmt->rowCount()) {
@@ -396,15 +390,15 @@ check_login('admin');
 
 if (isset($_GET['delete_id']) && !empty($_GET['delete_id'])) { # admin/reseller deletion
     if (admin_validateUserDeletion($_GET['delete_id'])) {
-        admin_deleteUser($_GET['delete_id']);
+        admin_deleteUser(intval($_GET['delete_id']));
     }
 
     redirectTo('manage_users.php');
 
 } elseif (isset($_GET['user_id'])) { # customer deletion validation page
-    $tpl = admin_generateCustomerAcountDeletionValidationPage($_GET['user_id']);
+    $tpl = admin_generateCustomerAcountDeletionValidationPage(intval($_GET['user_id']));
 } elseif (isset($_POST['user_id']) && isset($_POST['delete']) && $_POST['delete'] == 1) { # Customer deletion
-    $userId = clean_input($_POST['user_id']);
+    $userId = intval($_POST['user_id']);
 
     try {
         if (!deleteCustomer($userId)) {
@@ -433,7 +427,7 @@ if (isset($_GET['delete_id']) && !empty($_GET['delete_id'])) { # admin/reseller 
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

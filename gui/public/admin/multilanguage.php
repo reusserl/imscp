@@ -42,7 +42,6 @@ function admin_generateLanguagesList($tpl)
                 'LOCALE_CHECKED' => ($languageDefinition['locale'] == $defaultLanguage) ? 'checked' : '',
                 'LOCALE' => tohtml($languageDefinition['locale'], 'htmlAttr')
             ]);
-
             $tpl->parse('LANGUAGE_BLOCK', '.language_block');
         }
     } else {
@@ -59,8 +58,6 @@ require '../../application.php';
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
 check_login('admin');
-
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if (isset($_POST['uaction'])) {
     if ($_POST['uaction'] == 'uploadLanguage') {
@@ -104,7 +101,7 @@ $tpl->assign([
     'TR_IMPORT' => tohtml(tr('Import'), 'htmlAttr')
 ]);
 
-$eventManager->attach('onGetJsTranslations', function ($e) {
+\iMSCP\Core\Application::getInstance()->getEventManager()->attach('onGetJsTranslations', function ($e) {
     /* @var $e \Zend\EventManager\Event */
     $e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations();
 });
@@ -114,7 +111,7 @@ admin_generateLanguagesList($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

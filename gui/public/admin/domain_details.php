@@ -96,16 +96,16 @@ function admin_generatePage($tpl, $domainId)
 
     // Get total domain traffic usage in bytes
     $query = "
-		SELECT
-			IFNULL(SUM(dtraff_web), 0) AS dtraff_web, IFNULL(SUM(dtraff_ftp), 0) AS dtraff_ftp,
-			IFNULL(SUM(dtraff_mail), 0) AS dtraff_mail, IFNULL(SUM(dtraff_pop), 0) AS dtraff_pop
-		FROM
-			domain_traffic
-		WHERE
-			domain_id = ?
-		AND
-			dtraff_time BETWEEN ? AND ?
-	";
+        SELECT
+            IFNULL(SUM(dtraff_web), 0) AS dtraff_web, IFNULL(SUM(dtraff_ftp), 0) AS dtraff_ftp,
+            IFNULL(SUM(dtraff_mail), 0) AS dtraff_mail, IFNULL(SUM(dtraff_pop), 0) AS dtraff_pop
+        FROM
+            domain_traffic
+        WHERE
+            domain_id = ?
+        AND
+            dtraff_time BETWEEN ? AND ?
+    ";
     $stmt = exec_query($query, [$domainProperties['domain_id'], getFirstDayOfMonth(), getLastDayOfMonth()]);
 
     if ($stmt->rowCount()) {
@@ -177,15 +177,12 @@ if (!isset($_GET['domain_id'])) {
     redirectTo('manage_users.php');
 }
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/domain_details.tpl',
     'page_messages' => 'layout',
 ]);
-
 $tpl->assign([
     'TR_PAGE_TITLE' => tr('Admin / Users / Overview / Domain Details'),
     'TR_DOMAIN_DETAILS' => tr('Domain details'),
@@ -220,7 +217,7 @@ admin_generatePage($tpl, intval($_GET['domain_id']));
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

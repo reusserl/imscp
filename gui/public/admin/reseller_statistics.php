@@ -45,7 +45,6 @@ function _generateResellerStatistics($tpl, $resellerId, $resellerName)
     $diskspaceUsageBytes = $resellerProps['current_disk_amnt'] * 1048576;
     $trafficUsagePercent = make_usage_vals($trafficUsageBytes, $trafficLimitBytes);
     $diskspaceUsagePercent = make_usage_vals($diskspaceUsageBytes, $diskspaceLimitBytes);
-
     $tpl->assign([
         'RESELLER_NAME' => tohtml($resellerName),
         'RESELLER_ID' => tohtml($resellerId),
@@ -161,7 +160,6 @@ if (systemHasResellers()) {
         'page_message' => 'layout',
         'reseller_statistics_block' => 'page'
     ]);
-
     $tpl->assign([
         'TR_PAGE_TITLE' => tohtml(tr('Admin / Statistics / Reseller Statistics')),
         'TR_RESELLER_NAME' => tohtml(tr('Reseller')),
@@ -187,7 +185,7 @@ if (systemHasResellers()) {
     generatePageMessage($tpl);
 
     $tpl->parse('LAYOUT_CONTENT', 'page');
-    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
         'templateEngine' => $tpl
     ]);
     $tpl->prnt();

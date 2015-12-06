@@ -85,8 +85,6 @@ require '../../application.php';
 
 check_login('admin');
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
     'layout' => 'shared/layouts/ui.tpl',
@@ -94,7 +92,6 @@ $tpl->define_dynamic([
     'page_message' => 'layout',
     'update_info' => 'page'
 ]);
-
 $tpl->assign('TR_PAGE_TITLE', tr('Admin / System Tools / i-MSCP Updates'));
 
 generateNavigation($tpl);
@@ -102,7 +99,7 @@ admin_generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

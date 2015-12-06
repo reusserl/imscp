@@ -134,7 +134,6 @@ $tpl->define_dynamic([
     'page_message' => 'layout',
     'user_session' => 'page'
 ]);
-
 $tpl->assign([
     'TR_PAGE_TITLE' => tr('Admin / Users / Sessions'),
     'TR_USERNAME' => tr('Username'),
@@ -151,7 +150,9 @@ client_generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, ['templateEngine' => $tpl]);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

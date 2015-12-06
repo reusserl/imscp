@@ -184,7 +184,6 @@ function _admin_generateAccountForm($tpl, &$data)
 function _admin_generateIpListForm($tpl, &$data)
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
     $htmlChecked = $cfg['HTML_CHECKED'];
     $htmlDisabled = "{$cfg['HTML_READONLY']} title=\"" . tr("You cannot unassign an IP address already in use.") . '"';
     $assignedTranslation = tr("Already in use");
@@ -260,7 +259,6 @@ function _admin_generateFeaturesForm($tpl, &$data)
     $htmlChecked = $cfg['HTML_CHECKED'];
     $tpl->assign([
         'TR_FEATURES' => tr('Features'),
-
         'TR_SETTINGS' => tr('Settings'),
         'TR_PHP_EDITOR' => tr('PHP Editor'),
         'TR_PHP_EDITOR_SETTINGS' => tr('PHP Editor Settings'),
@@ -269,45 +267,33 @@ function _admin_generateFeaturesForm($tpl, &$data)
         'TR_FIELDS_OK' => tr('All fields seem to be valid.'),
         'TR_VALUE_ERROR' => tr('Value for the PHP <strong>%%s</strong> directive must be between %%d and %%d.'),
         'TR_CLOSE' => tr('Close'),
-
         'PHP_INI_SYSTEM_YES' => ($data['php_ini_system'] == 'yes') ? $htmlChecked : '',
         'PHP_INI_SYSTEM_NO' => ($data['php_ini_system'] != 'yes') ? $htmlChecked : '',
-
         'TR_PHP_INI_AL_ALLOW_URL_FOPEN' => tr('Can edit the PHP %s directive', '<b>allow_url_fopen</b>'),
         'PHP_INI_AL_ALLOW_URL_FOPEN_YES' => ($data['php_ini_al_allow_url_fopen'] == 'yes') ? $htmlChecked : '',
         'PHP_INI_AL_ALLOW_URL_FOPEN_NO' => ($data['php_ini_al_allow_url_fopen'] != 'yes') ? $htmlChecked : '',
-
         'TR_PHP_INI_AL_DISPLAY_ERRORS' => tr('Can edit the PHP %s directive', '<b>display_errors</b>'),
         'PHP_INI_AL_DISPLAY_ERRORS_YES' => ($data['php_ini_al_display_errors'] == 'yes') ? $htmlChecked : '',
         'PHP_INI_AL_DISPLAY_ERRORS_NO' => ($data['php_ini_al_display_errors'] != 'yes') ? $htmlChecked : '',
-
         'TR_PHP_INI_AL_DISABLE_FUNCTIONS' => tr('Can edit the PHP %s directive', '<b>disable_functions</b>'),
         'PHP_INI_AL_DISABLE_FUNCTIONS_YES' => ($data['php_ini_al_disable_functions'] == 'yes') ? $htmlChecked : '',
         'PHP_INI_AL_DISABLE_FUNCTIONS_NO' => ($data['php_ini_al_disable_functions'] != 'yes') ? $htmlChecked : '',
-
         'TR_PHP_INI_MAX_MEMORY_LIMIT' => tr('Max value for the %s PHP directive', '<b>memory_limit</b>'),
         'PHP_INI_MAX_MEMORY_LIMIT' => tohtml($data['php_ini_max_memory_limit']),
-
         'TR_PHP_INI_MAX_UPLOAD_MAX_FILESIZE' => tr('Max value for the %s PHP directive', '<b>upload_max_filesize</b>'),
         'PHP_INI_MAX_UPLOAD_MAX_FILESIZE' => tohtml($data['php_ini_max_upload_max_filesize']),
-
         'TR_PHP_INI_MAX_POST_MAX_SIZE' => tr('Max value for the %s PHP directive', '<b>post_max_size</b>'),
         'PHP_INI_MAX_POST_MAX_SIZE' => tohtml($data['php_ini_max_post_max_size']),
-
         'TR_PHP_INI_MAX_MAX_EXECUTION_TIME' => tr('Max value for the %s PHP directive', '<b>max_execution_time</b>'),
         'PHP_INI_MAX_MAX_EXECUTION_TIME' => tohtml($data['php_ini_max_max_execution_time']),
-
         'TR_PHP_INI_MAX_MAX_INPUT_TIME' => tr('Max value for the %s PHP directive', '<b>max_input_time</b>'),
         'PHP_INI_MAX_MAX_INPUT_TIME' => tohtml($data['php_ini_max_max_input_time']),
-
         'TR_APS_STANDARD' => tr('APS Standard'),
         'APS_STANDARD_YES' => ($data['aps_standard'] == 'yes') ? $htmlChecked : '',
         'APS_STANDARD_NO' => ($data['aps_standard'] != 'yes') ? $htmlChecked : '',
-
         'TR_SUPPORT_SYSTEM' => tr('Support system'),
         'SUPPORT_SYSTEM_YES' => ($data['support_system'] == 'yes') ? $htmlChecked : '',
         'SUPPORT_SYSTEM_NO' => ($data['support_system'] != 'yes') ? $htmlChecked : '',
-
         'TR_PHP_INI_PERMISSION_HELP' => tr('Yes means that the reseller can allow his customers to edit this directive'),
         'TR_YES' => tr('Yes'),
         'TR_NO' => tr('No'),
@@ -401,11 +387,9 @@ function admin_checkAndUpdateData($resellerId)
 
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditUser, [
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditUser, null, [
         'userId' => $resellerId
     ]);
-
-    $errFieldsStack = [];
 
     // Get needed data
     $data =& admin_getData($resellerId, true);
@@ -460,7 +444,9 @@ function admin_checkAndUpdateData($resellerId)
             $rs = false;
         }
 
-        if (!$rs) $errFieldsStack[] = 'max_dmn_cnt';
+        if (!$rs) {
+            $errFieldsStack[] = 'max_dmn_cnt';
+        }
 
         // Check for max subdomains limit
         if (imscp_limit_check($data['max_sub_cnt'])) {
@@ -473,7 +459,9 @@ function admin_checkAndUpdateData($resellerId)
             $rs = false;
         }
 
-        if (!$rs) $errFieldsStack[] = 'max_sub_cnt';
+        if (!$rs) {
+            $errFieldsStack[] = 'max_sub_cnt';
+        }
 
         // check for max domain aliases limit
         if (imscp_limit_check($data['max_als_cnt'])) {
@@ -486,7 +474,9 @@ function admin_checkAndUpdateData($resellerId)
             $rs = false;
         }
 
-        if (!$rs) $errFieldsStack[] = 'max_als_cnt';
+        if (!$rs) {
+            $errFieldsStack[] = 'max_als_cnt';
+        }
 
         // Check for max mail accounts limit
         if (imscp_limit_check($data['max_mail_cnt'])) {
@@ -499,7 +489,9 @@ function admin_checkAndUpdateData($resellerId)
             $rs = false;
         }
 
-        if (!$rs) $errFieldsStack[] = 'max_mail_cnt';
+        if (!$rs) {
+            $errFieldsStack[] = 'max_mail_cnt';
+        }
 
         // Check for max ftp accounts limit
         if (imscp_limit_check($data['max_ftp_cnt'])) {
@@ -512,7 +504,9 @@ function admin_checkAndUpdateData($resellerId)
             $rs = false;
         }
 
-        if (!$rs) $errFieldsStack[] = 'max_ftp_cnt';
+        if (!$rs) {
+            $errFieldsStack[] = 'max_ftp_cnt';
+        }
 
         // Check for max Sql databases limit
         if (!$rs = imscp_limit_check($data['max_sql_db_cnt'])) {
@@ -527,7 +521,9 @@ function admin_checkAndUpdateData($resellerId)
             );
         }
 
-        if (!$rs) $errFieldsStack[] = 'max_sql_db_cnt';
+        if (!$rs) {
+            $errFieldsStack[] = 'max_sql_db_cnt';
+        }
 
         // Check for max Sql users limit
         if (!$rs = imscp_limit_check($data['max_sql_user_cnt'])) {
@@ -657,7 +653,6 @@ function admin_checkAndUpdateData($resellerId)
             exec_query($query, $bindParams);
 
             // Update reseller properties
-
             $query = '
                 UPDATE
                     `reseller_props`
@@ -701,7 +696,7 @@ function admin_checkAndUpdateData($resellerId)
 
             $db->commit();
 
-            \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditUser, [
+            \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditUser, null, [
                 'userId' => $resellerId
             ]);
 
@@ -779,8 +774,6 @@ require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 check_login('admin');
 
 if (!isset($_GET['edit_id'])) {
@@ -824,7 +817,7 @@ admin_generateForm($tpl, $data);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

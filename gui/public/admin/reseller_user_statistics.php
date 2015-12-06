@@ -91,6 +91,7 @@ function _generateUserStatistics($tpl, $adminId)
 function generatePage($tpl, $resellerId)
 {
     $stmt = exec_query('SELECT admin_id FROM admin WHERE created_by = ?', $resellerId);
+
     if ($stmt->rowCount()) {
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             _generateUserStatistics($tpl, $row['admin_id']);
@@ -157,7 +158,7 @@ generatePage($tpl, $resellerId);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

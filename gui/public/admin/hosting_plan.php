@@ -94,8 +94,6 @@ require '../../application.php';
 
 check_login('admin');
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 if ($cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
     $tpl->define_dynamic([
@@ -105,7 +103,6 @@ if ($cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
         'hosting_plans' => 'page',
         'hosting_plan' => 'hosting_plans'
     ]);
-
     $tpl->assign('TR_PAGE_TITLE', tr('Admin / Hosting Plans / Overview'));
 
     generateNavigation($tpl);
@@ -113,7 +110,7 @@ if ($cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
     generatePageMessage($tpl);
 
     $tpl->parse('LAYOUT_CONTENT', 'page');
-    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
         'templateEngine' => $tpl
     ]);
     $tpl->prnt();

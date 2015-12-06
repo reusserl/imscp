@@ -34,16 +34,16 @@ function _getUserTraffic($domainId, $beginTime, $endTime)
 {
     $stmt = exec_query(
         '
-			SELECT
-				IFNULL(SUM(dtraff_web), 0) AS web_traffic, IFNULL(SUM(dtraff_ftp), 0) AS ftp_traffic,
-				IFNULL(SUM(dtraff_mail), 0) AS mail_traffic, IFNULL(SUM(dtraff_pop), 0) AS pop_traffic
-			FROM
-				domain_traffic
-			WHERE
-				domain_id = ?
-			AND
-				dtraff_time BETWEEN ? AND ?
-		',
+            SELECT
+                IFNULL(SUM(dtraff_web), 0) AS web_traffic, IFNULL(SUM(dtraff_ftp), 0) AS ftp_traffic,
+                IFNULL(SUM(dtraff_mail), 0) AS mail_traffic, IFNULL(SUM(dtraff_pop), 0) AS pop_traffic
+            FROM
+                domain_traffic
+            WHERE
+                domain_id = ?
+            AND
+                dtraff_time BETWEEN ? AND ?
+        ',
         [$domainId, $beginTime, $endTime]
     );
 
@@ -215,7 +215,7 @@ if (systemHasCustomers()) {
     generatePageMessage($tpl);
 
     $tpl->parse('LAYOUT_CONTENT', 'page');
-    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
         'templateEngine' => $tpl
     ]);
     $tpl->prnt();

@@ -308,8 +308,6 @@ if (isset($_POST['uaction'])) {
     admin_deleteMenu($_GET['delete_id']);
 }
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
     'layout' => 'shared/layouts/ui.tpl',
@@ -323,7 +321,6 @@ $tpl->define_dynamic([
     'add_menu' => 'page',
     'edit_menu' => 'page'
 ]);
-
 $tpl->assign([
     'TR_PAGE_TITLE' => tr('Admin / Settings / {TR_DYNAMIC_TITLE}'),
     'TR_CUSTOM_MENU_PROPERTIES' => tr('Custom menu properties'),
@@ -355,7 +352,7 @@ admin_generateForm($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

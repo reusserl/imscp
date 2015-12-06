@@ -145,9 +145,7 @@ function _admin_generateAccountForm($tpl, &$data)
 function _admin_generateIpListForm($tpl, &$data)
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
     $htmlChecked = $cfg['HTML_CHECKED'];
-
     $tpl->assign([
         'TR_IP_ADDRESS' => tr('IP address'),
         'TR_IP_LABEL' => tr('Label'),
@@ -165,7 +163,6 @@ function _admin_generateIpListForm($tpl, &$data)
             'IP_NUMBER' => tohtml($ipData['ip_number']),
             'IP_ASSIGNED' => in_array($ipData['ip_id'], $data['reseller_ips']) ? $htmlChecked : ''
         ]);
-
         $tpl->parse('IP_BLOCK', '.ip_block');
     }
 }
@@ -215,7 +212,6 @@ function _admin_generateFeaturesForm($tpl, &$data)
     $htmlChecked = $cfg['HTML_CHECKED'];
     $tpl->assign([
         'TR_FEATURES' => tr('Features'),
-
         'TR_SETTINGS' => tr('Settings'),
         'TR_PHP_EDITOR' => tr('PHP Editor'),
         'TR_PHP_EDITOR_SETTINGS' => tr('PHP Editor Settings'),
@@ -224,41 +220,30 @@ function _admin_generateFeaturesForm($tpl, &$data)
         'TR_FIELDS_OK' => tr('All fields seem to be valid.'),
         'TR_VALUE_ERROR' => tr('Value for the PHP <strong>%%s</strong> directive must be between %%d and %%d.'),
         'TR_CLOSE' => tr('Close'),
-
         'PHP_INI_SYSTEM_YES' => ($data['php_ini_system'] == 'yes') ? $htmlChecked : '',
         'PHP_INI_SYSTEM_NO' => ($data['php_ini_system'] != 'yes') ? $htmlChecked : '',
-
         'TR_PHP_INI_AL_ALLOW_URL_FOPEN' => tr('Can edit the PHP %s directive', '<b>allow_url_fopen</b>'),
         'PHP_INI_AL_ALLOW_URL_FOPEN_YES' => ($data['php_ini_al_allow_url_fopen'] == 'yes') ? $htmlChecked : '',
         'PHP_INI_AL_ALLOW_URL_FOPEN_NO' => ($data['php_ini_al_allow_url_fopen'] != 'yes') ? $htmlChecked : '',
-
         'TR_PHP_INI_AL_DISPLAY_ERRORS' => tr('Can edit the PHP %s directive', '<b>display_errors</b>'),
         'PHP_INI_AL_DISPLAY_ERRORS_YES' => ($data['php_ini_al_display_errors'] == 'yes') ? $htmlChecked : '',
         'PHP_INI_AL_DISPLAY_ERRORS_NO' => ($data['php_ini_al_display_errors'] != 'yes') ? $htmlChecked : '',
-
         'TR_PHP_INI_MAX_MEMORY_LIMIT' => tr('Max value for the %s PHP directive', '<b>memory_limit</b>'),
         'PHP_INI_MAX_MEMORY_LIMIT' => tohtml($data['php_ini_max_memory_limit']),
-
         'TR_PHP_INI_MAX_UPLOAD_MAX_FILESIZE' => tr('Max value for the %s PHP directive', '<b>upload_max_filesize</b>'),
         'PHP_INI_MAX_UPLOAD_MAX_FILESIZE' => tohtml($data['php_ini_max_upload_max_filesize']),
-
         'TR_PHP_INI_MAX_POST_MAX_SIZE' => tr('Max value for the %s PHP directive', '<b>post_max_size</b>'),
         'PHP_INI_MAX_POST_MAX_SIZE' => tohtml($data['php_ini_max_post_max_size']),
-
         'TR_PHP_INI_MAX_MAX_EXECUTION_TIME' => tr('Max value for the %s PHP directive', '<b>max_execution_time</b>'),
         'PHP_INI_MAX_MAX_EXECUTION_TIME' => tohtml($data['php_ini_max_max_execution_time']),
-
         'TR_PHP_INI_MAX_MAX_INPUT_TIME' => tr('Max value for the %s PHP directive', '<b>max_input_time</b>'),
         'PHP_INI_MAX_MAX_INPUT_TIME' => tohtml($data['php_ini_max_max_input_time']),
-
         'TR_APS_STANDARD' => tr('APS Standard'),
         'APS_STANDARD_YES' => ($data['aps_standard'] == 'yes') ? $htmlChecked : '',
         'APS_STANDARD_NO' => ($data['aps_standard'] != 'yes') ? $htmlChecked : '',
-
         'TR_SUPPORT_SYSTEM' => tr('Support system'),
         'SUPPORT_SYSTEM_YES' => ($data['support_system'] == 'yes') ? $htmlChecked : '',
         'SUPPORT_SYSTEM_NO' => ($data['support_system'] != 'yes') ? $htmlChecked : '',
-
         'TR_PHP_INI_PERMISSION_HELP' => tr('Yes means that the reseller can allow his customers to edit this directive'),
         'TR_YES' => tr('Yes'),
         'TR_NO' => tr('No'),
@@ -354,10 +339,8 @@ function admin_checkAndCreateResellerAccount()
 
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
     $errFieldsStack = [];
-
     // Get needed data
     $data =& admin_getData();
-
     /** @var \Doctrine\DBAL\Connection $db */
     $db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
@@ -365,7 +348,6 @@ function admin_checkAndCreateResellerAccount()
         $db->beginTransaction();
 
         // Check for reseller name
-
         $query = "SELECT COUNT(`admin_id`) `usernameExist` FROM `admin` WHERE `admin_name` = ? LIMIT 1";
         $stmt = exec_query($query, $data['admin_name']);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -379,7 +361,6 @@ function admin_checkAndCreateResellerAccount()
         }
 
         // check for password
-
         if (empty($data['password'])) {
             set_page_message(tr('You must provide a password.'), 'error');
             $errFieldsStack[] = 'password';
@@ -394,7 +375,6 @@ function admin_checkAndCreateResellerAccount()
         }
 
         // Check for email address
-
         if (!chk_email($data['email'])) {
             set_page_message(tr('Incorrect syntax for email address.'), 'error');
             $errFieldsStack[] = 'email';
@@ -505,7 +485,6 @@ function admin_checkAndCreateResellerAccount()
 
         if (empty($errFieldsStack) && !isset($_SESSION['pageMessages'])) { // Update process begin here
             // Insert reseller personal data into database
-
             $query = "
                 INSERT INTO `admin` (
                     `admin_name`, `admin_pass`, `admin_type`, `domain_created`,
@@ -526,7 +505,6 @@ function admin_checkAndCreateResellerAccount()
             $resellerId = $db->lastInsertId();
 
             // Insert reseller GUI properties into database
-
             $query = 'REPLACE INTO `user_gui_props` (`user_id`, `lang`, `layout`) VALUES (?, ?, ?)';
             exec_query($query, [$resellerId, $cfg['USER_INITIAL_LANG'], $cfg['USER_INITIAL_THEME']]);
 
@@ -589,8 +567,6 @@ require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 check_login('admin');
 
 if (!empty($_POST) && admin_checkAndCreateResellerAccount()) {
@@ -627,7 +603,7 @@ admin_generateForm($tpl, $data);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

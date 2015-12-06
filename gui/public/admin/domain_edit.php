@@ -890,7 +890,7 @@ function admin_checkAndUpdateData($domainId)
             }
 
             \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-                \iMSCP\Core\Events::onBeforeEditDomain, ['domainId' => $domainId]
+                \iMSCP\Core\Events::onBeforeEditDomain, null, ['domainId' => $domainId]
             );
 
             // Start transaction
@@ -997,8 +997,8 @@ function admin_checkAndUpdateData($domainId)
 
             $db->commit();
 
-            \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditDomain, [
-                'domainId' => $domainId
+            \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                \iMSCP\Core\Events::onAfterEditDomain, null, ['domainId' => $domainId
             ]);
 
             if ($daemonRequest) {
@@ -1141,7 +1141,7 @@ admin_generateForm($tpl, $data);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

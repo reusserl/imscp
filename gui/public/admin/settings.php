@@ -116,7 +116,6 @@ if (isset($_POST['uaction']) && $_POST['uaction'] == 'apply') {
     } else {
         /** @var \iMSCP\Core\Config\DbConfigHandler $dbConfig */
         $dbCfg = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('DbConfig');
-
         $dbCfg['LOSTPASSWORD'] = $lostPasswd;
         $dbCfg['LOSTPASSWORD_TIMEOUT'] = $lostPasswdTimeout;
         $dbCfg['PASSWD_CHARS'] = $passwdChars;
@@ -567,7 +566,7 @@ gen_def_language($tpl, $cfg['USER_INITIAL_LANG']);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

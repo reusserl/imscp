@@ -35,8 +35,6 @@ require '../../application.php';
 
 check_login('admin');
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
     'layout' => 'shared/layouts/ui.tpl',
@@ -47,7 +45,6 @@ $tpl->define_dynamic([
 if (isset($_POST['uaction']) and $_POST['uaction'] == 'apply') {
     $maintenancemode = $_POST['maintenancemode'];
     $maintenancemode_message = clean_input($_POST['maintenancemode_message']);
-
     /** @var \iMSCP\Core\Config\DbConfigHandler $dbConfig */
     $dbConfig = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('DbConfig');
     $dbConfig['MAINTENANCEMODE'] = $maintenancemode;
@@ -58,6 +55,8 @@ if (isset($_POST['uaction']) and $_POST['uaction'] == 'apply') {
 
 $selectedOn = '';
 $selectedOff = '';
+
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 if ($cfg['MAINTENANCEMODE']) {
     $selectedOn = $cfg['HTML_SELECTED'];
@@ -86,7 +85,7 @@ generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

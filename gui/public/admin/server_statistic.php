@@ -19,7 +19,7 @@
  */
 
 /***********************************************************************************************************************
- * functions
+ * Functions
  */
 
 /**
@@ -182,7 +182,6 @@ $tpl->define_dynamic([
     'server_statistics_block' => 'page',
     'day_server_statistics_block' => 'server_statistics_block'
 ]);
-
 $tpl->assign([
     'TR_PAGE_TITLE' => tohtml(tr('Admin / Statistics / Server Statistics')),
     'TR_MONTH' => tohtml(tr('Month')),
@@ -207,7 +206,7 @@ generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

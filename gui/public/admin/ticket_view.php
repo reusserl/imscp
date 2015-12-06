@@ -42,7 +42,7 @@ if (!hasTicketSystem()) {
 
 if (isset($_GET['ticket_id']) && !empty($_GET['ticket_id'])) {
     $userId = $_SESSION['user_id'];
-    $ticketId = (int)$_GET['ticket_id'];
+    $ticketId = intval($_GET['ticket_id']);
     $status = getTicketStatus($ticketId);
 
     if ($status == 1 || $status == 4) {
@@ -98,7 +98,7 @@ showTicketContent($tpl, $ticketId, $userId);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

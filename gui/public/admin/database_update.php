@@ -74,13 +74,11 @@ require '../../application.php';
 
 check_login('admin');
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
-$dbUpdate = \iMSCP\Core\Updater\DatabaseUpdater::getInstance();
+$dbUpdater = \iMSCP\Core\Updater\DatabaseUpdater::getInstance();
 
 if (isset($_POST['uaction']) && $_POST['uaction'] == 'update') {
-    if (!$dbUpdate->applyUpdates()) {
-        throw new Exception($dbUpdate->getError());
+    if (!$dbUpdater->applyUpdates()) {
+        throw new Exception($dbUpdater->getError());
     }
 
     set_page_message('Database update successfully applied.', 'success');
@@ -100,7 +98,7 @@ $tpl->assign('TR_PAGE_TITLE', tr('Admin / System Tools / Database Update'));
 
 generateNavigation($tpl);
 
-if ($dbUpdate->isAvailableUpdate()) {
+if ($dbUpdater->isAvailableUpdate()) {
     set_page_message(tr('One or more database updates are now available. See the details below.'), 'static_info');
     admin_generateDatabaseUpdateDetail($tpl);
 
@@ -117,7 +115,7 @@ if ($dbUpdate->isAvailableUpdate()) {
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

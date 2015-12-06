@@ -39,13 +39,13 @@ $tpl->define_dynamic([
     'page' => 'assets/angular/aps-standard/aps-package/aps-packages.tpl',
     'page_message' => 'layout'
 ]);
-$tpl->assign(['TR_PAGE_TITLE' => tohtml(tr('Admin / APS Standard / Packages'), 'htmlAttr')]);
+$tpl->assign('TR_PAGE_TITLE', tohtml(tr('Admin / APS Standard / Packages'), 'htmlAttr'));
 
 generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

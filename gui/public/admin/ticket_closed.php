@@ -41,11 +41,11 @@ $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 if (!hasTicketSystem()) {
     redirectTo('index.php');
 } elseif (isset($_GET['ticket_id']) && !empty($_GET['ticket_id'])) {
-    reopenTicket((int)$_GET['ticket_id']);
+    reopenTicket(intval($_GET['ticket_id']));
 }
 
 if (isset($_GET['psi'])) {
-    $start = $_GET['psi'];
+    $start = intval($_GET['psi']);
 } else {
     $start = 0;
 }
@@ -87,7 +87,7 @@ generateTicketList($tpl, $_SESSION['user_id'], $start, $cfg['DOMAIN_ROWS_PER_PAG
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

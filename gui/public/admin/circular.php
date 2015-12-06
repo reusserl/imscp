@@ -171,7 +171,7 @@ function admin_sendCircular()
 
         if (admin_isValidCircular($senderName, $senderEmail, $subject, $body)) {
             $responses = \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-                \iMSCP\Core\Events::onBeforeSendCircular, [
+                \iMSCP\Core\Events::onBeforeSendCircular, null, [
                 'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => $rcptTo, 'subject' => $subject,
                 'body' => $body
             ]);
@@ -199,7 +199,7 @@ function admin_sendCircular()
                 }
 
                 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-                    \iMSCP\Core\Events::onAfterSendCircular, [
+                    \iMSCP\Core\Events::onAfterSendCircular, null, [
                     'sender_name' => $senderName, 'sender_email' => $senderEmail, 'rcpt_to' => $rcptTo,
                     'subject' => $subject, 'body' => $body
                 ]);
@@ -345,7 +345,7 @@ if (!(!empty($_POST) && admin_sendCircular())) {
     admin_generatePageData($tpl);
 
     $tpl->parse('LAYOUT_CONTENT', 'page');
-    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
         'templateEngine' => $tpl
     ]);
     $tpl->prnt();

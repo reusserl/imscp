@@ -114,7 +114,6 @@ $trafficLimit = $trafficWarning = 0;
 if (!empty($_POST)) {
     $trafficLimit = !isset($_POST['max_traffic']) ?: clean_input($_POST['max_traffic']);
     $trafficWarning = !isset($_POST['traffic_warning']) ?: clean_input($_POST['traffic_warning']);
-
     admin_updateServerTrafficSettings($trafficLimit, $trafficWarning);
 }
 
@@ -125,7 +124,6 @@ $tpl->define_dynamic([
     'page_message' => 'layout',
     'hosting_plans' => 'page'
 ]);
-
 $tpl->assign([
     'TR_PAGE_TITLE' => tr('Admin / Settings / Server Traffic'),
     'TR_SET_SERVER_TRAFFIC_SETTINGS' => tr('Server traffic settings'),
@@ -140,7 +138,7 @@ admin_generatePage($tpl, $trafficLimit, $trafficWarning);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

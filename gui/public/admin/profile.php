@@ -57,7 +57,6 @@ $tpl->define_dynamic([
     'page' => 'admin/profile.tpl',
     'page_message' => 'layout'
 ]);
-
 $tpl->assign('TR_PAGE_TITLE', tr('Admin / Profile / Account Summary'));
 
 generateNavigation($tpl);
@@ -65,7 +64,7 @@ admin_generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

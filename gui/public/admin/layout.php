@@ -108,18 +108,17 @@ if (isset($_POST['uaction'])) {
     }
 }
 
-$html_selected = $cfg['HTML_SELECTED'];
-$userId = $_SESSION['user_id'];
+$htmlSelected = $cfg['HTML_SELECTED'];
 
 if ($_SESSION['show_main_menu_labels']) {
     $tpl->assign([
-        'MAIN_MENU_SHOW_LABELS_ON' => $html_selected,
+        'MAIN_MENU_SHOW_LABELS_ON' => $htmlSelected,
         'MAIN_MENU_SHOW_LABELS_OFF' => ''
     ]);
 } else {
     $tpl->assign([
         'MAIN_MENU_SHOW_LABELS_ON' => '',
-        'MAIN_MENU_SHOW_LABELS_OFF' => $html_selected
+        'MAIN_MENU_SHOW_LABELS_OFF' => $htmlSelected
     ]);
 }
 
@@ -153,7 +152,7 @@ admin_generateLayoutColorForm($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

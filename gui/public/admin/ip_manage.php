@@ -57,7 +57,6 @@ function client_generatePage($tpl)
 function _client_generateIpsList($tpl)
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
     $query = "SELECT * FROM `server_ips`";
     $stmt = execute_query($query);
 
@@ -95,15 +94,21 @@ function _client_generateIpAction($ipId, $status)
 {
     if ($status == 'ok') {
         return [tr('Remove IP'), 'ip_delete.php?delete_id=' . $ipId];
-    } elseif ($status == 'todelete') {
-        return [translate_dmn_status('todelete'), '#'];
-    } elseif ($status == 'toadd') {
-        return [translate_dmn_status('toadd'), '#'];
-    } elseif (!in_array($status, ['toadd', 'tochange', 'ok', 'todelete'])) {
-        return [tr('Unknown Error'), '#'];
-    } else {
-        return [tr('N/A'), '#'];
     }
+
+    if ($status == 'todelete') {
+        return [translate_dmn_status('todelete'), '#'];
+    }
+
+    if ($status == 'toadd') {
+        return [translate_dmn_status('toadd'), '#'];
+    }
+
+    if (!in_array($status, ['toadd', 'tochange', 'ok', 'todelete'])) {
+        return [tr('Unknown Error'), '#'];
+    }
+
+    return [tr('N/A'), '#'];
 }
 
 /**
@@ -122,7 +127,6 @@ function _client_generateNetcardsList($tpl)
     }
 
     $networkCards = $networkCardObject->getAvailableInterface();
-
     sort($networkCards);
 
     if (!empty($networkCards)) {
@@ -199,6 +203,7 @@ require '../../application.php';
 
 check_login('admin');
 
+// Initialize network card object
 $networkCardObject = new \iMSCP\Core\NetworkCard();
 
 // Initialize field error stack
@@ -214,7 +219,6 @@ if (!empty($_POST)) {
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-
 $tpl->define_dynamic([
     'layout' => 'shared/layouts/ui.tpl',
     'page' => 'admin/ip_manage.tpl',
@@ -224,7 +228,6 @@ $tpl->define_dynamic([
     'ip_address_form_block' => 'page',
     'network_card_block' => 'ip_address_form_block'
 ]);
-
 $tpl->assign([
     'TR_PAGE_TITLE' => tr('Admin / Settings / IP Addresses Management'),
     'TR_IP' => tr('IP Address'),
@@ -251,7 +254,7 @@ client_generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

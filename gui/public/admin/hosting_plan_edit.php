@@ -41,7 +41,6 @@ function _admin_generatePhpBlock($tpl, $phpini)
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
     $checked = $cfg['HTML_CHECKED'];
     $tplVars = [];
-
     $tplVars['PHP_EDITOR_YES'] = ($phpini->getClPermVal('phpiniSystem') == 'yes') ? $checked : '';
     $tplVars['PHP_EDITOR_NO'] = ($phpini->getClPermVal('phpiniSystem') != 'yes') ? $checked : '';
     $tplVars['TR_PHP_EDITOR'] = tr('PHP Editor');
@@ -82,7 +81,6 @@ function _admin_generatePhpBlock($tpl, $phpini)
     $tplVars['MAX_EXECUTION_TIME'] = $phpini->getDataVal('phpiniMaxExecutionTime');
     $tplVars['MAX_INPUT_TIME'] = $phpini->getDataVal('phpiniMaxInputTime');
     $tplVars['MEMORY_LIMIT'] = $phpini->getDataVal('phpiniMemoryLimit');
-
     $tplVars['PHP_DIRECTIVES_MAX_VALUES'] = json_encode([
         'post_max_size' => 10000,
         'upload_max_filesize' => 10000,
@@ -90,7 +88,6 @@ function _admin_generatePhpBlock($tpl, $phpini)
         'max_input_time' => 10000,
         'memory_limit' => 10000
     ]);
-
     $tpl->assign($tplVars);
 }
 
@@ -105,7 +102,6 @@ function _admin_generatePhpBlock($tpl, $phpini)
 function admin_generatePage($tpl, $id, $phpini)
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
     $query = "
         SELECT
             *
@@ -123,10 +119,8 @@ function admin_generatePage($tpl, $id, $phpini)
     }
 
     $data = $stmt->fetch();
-
     $description = $data['description'];
     $status = $data['status'];
-
 
     list(
         $php, $cgi, $sub, $als, $mail, $ftp, $sqld, $sqlu, $monthlyTraffic, $diskspace, $backup, $dns, $phpEditor,
@@ -142,7 +136,6 @@ function admin_generatePage($tpl, $id, $phpini)
     $phpini->setClPerm('phpiniAllowUrlFopen', $phpAllowUrlFopenPerm);
     $phpini->setClPerm('phpiniDisplayErrors', $phpDisplayErrorsPerm);
     $phpini->setClPerm('phpiniDisableFunctions', $phpDisableFunctionsPerm);
-
     $phpini->setData('phpiniPostMaxSize', $phpPostMaxSizeValue, false);
     $phpini->setData('phpiniUploadMaxFileSize', $phpUploadMaxFilesizeValue, false);
     $phpini->setData('phpiniMaxExecutionTime', $phpMaxExecutionTimeValue, false);
@@ -211,7 +204,6 @@ function admin_generateErrorPage($tpl, $phpini)
 
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
     $checked = $cfg['HTML_CHECKED'];
-
     $tpl->assign([
         'ID' => tohtml($id),
         'NAME' => tohtml($name),
@@ -273,7 +265,6 @@ function admin_checkData($phpini)
 
     $name = isset($_POST['hp_name']) ? clean_input($_POST['hp_name']) : '';
     $description = isset($_POST['hp_description']) ? clean_input($_POST['hp_description']) : '';
-
     $sub = isset($_POST['hp_sub']) ? clean_input($_POST['hp_sub']) : '-1';
     $als = isset($_POST['hp_als']) ? clean_input($_POST['hp_als']) : '-1';
     $mail = isset($_POST['hp_mail']) ? clean_input($_POST['hp_mail']) : '-1';
@@ -283,19 +274,14 @@ function admin_checkData($phpini)
     $sqlu = isset($_POST['hp_sql_user']) ? clean_input($_POST['hp_sql_user']) : '-1';
     $monthlyTraffic = isset($_POST['hp_traff']) ? clean_input($_POST['hp_traff']) : '';
     $diskspace = isset($_POST['hp_disk']) ? clean_input($_POST['hp_disk']) : '';
-
     $php = isset($_POST['hp_php']) ? clean_input($_POST['hp_php']) : '_no_';
     $cgi = isset($_POST['hp_cgi']) ? clean_input($_POST['hp_cgi']) : '_no_';
     $dns = isset($_POST['hp_dns']) ? clean_input($_POST['hp_dns']) : '_no_';
     $apsStandard = isset($_POST['hp_aps_standard']) ? clean_input($_POST['hp_aps_standard']) : '_no_';
     $backup = isset($_POST['hp_backup']) && is_array($_POST['hp_backup']) ? $_POST['hp_backup'] : [];
     $hpExtMail = isset($_POST['hp_external_mail']) ? clean_input($_POST['hp_external_mail']) : '_no_';
-
-    $hpProtectedWebFolders = isset($_POST['hp_external_mail'])
-        ? clean_input($_POST['hp_external_mail']) : '_no_';
-
+    $hpProtectedWebFolders = isset($_POST['hp_external_mail']) ? clean_input($_POST['hp_external_mail']) : '_no_';
     $status = isset($_POST['hp_status']) ? clean_input($_POST['hp_status']) : '0';
-
     $php = ($php == '_yes_') ? '_yes_' : '_no_';
     $cgi = ($cgi == '_yes_') ? '_yes_' : '_no_';
     $dns = ($dns == '_yes_') ? '_yes_' : '_no_';
@@ -478,7 +464,7 @@ check_login('admin');
 
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
+if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] === 'admin') {
     $tpl = new \iMSCP\Core\Template\TemplateEngine();
     $tpl->define_dynamic([
         'layout' => 'shared/layouts/ui.tpl',
@@ -492,7 +478,6 @@ if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] == 'admin'
     if (isset($_GET['id'])) {
         global $id;
         $id = clean_input($_GET['id']);
-
         $phpini = \iMSCP\Core\Php\PhpEditor::getInstance();
 
         if (!empty($_POST)) {
@@ -547,7 +532,8 @@ if (isset($cfg['HOSTING_PLANS_LEVEL']) && $cfg['HOSTING_PLANS_LEVEL'] == 'admin'
         generatePageMessage($tpl);
 
         $tpl->parse('LAYOUT_CONTENT', 'page');
-        \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptEnd, [
+        \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+            \iMSCP\Core\Events::onResellerScriptEnd, null, [
             'templateEngine' => $tpl
         ]);
         $tpl->prnt();

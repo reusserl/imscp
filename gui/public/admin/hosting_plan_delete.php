@@ -37,7 +37,7 @@ check_login('admin');
 
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-if (isset($_GET['id']) && $cfg['HOSTING_PLANS_LEVEL'] == 'admin') {
+if (isset($_GET['id']) && $cfg['HOSTING_PLANS_LEVEL'] === 'admin') {
     $stmt = exec_query('DELETE FROM `hosting_plans` WHERE `id` = ?', intval($_GET['id']));
     if ($stmt->rowCount()) {
         set_page_message(tr('Hosting plan has been successfully deleted.'), 'success');

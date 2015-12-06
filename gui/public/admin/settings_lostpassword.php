@@ -35,8 +35,6 @@ require '../../application.php';
 
 check_login('admin');
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
     'layout' => 'shared/layouts/ui.tpl',
@@ -46,31 +44,28 @@ $tpl->define_dynamic([
     'custom_buttons' => 'page'
 ]);
 
-$user_id = $_SESSION['user_id'];
-$selected_on = '';
-$selected_off = '';
-$data_1 = get_lostpassword_activation_email($user_id);
-$data_2 = get_lostpassword_password_email($user_id);
+$data1 = get_lostpassword_activation_email($_SESSION['user_id']);
+$data2 = get_lostpassword_password_email($_SESSION['user_id']);
 
 if (isset($_POST['uaction']) && $_POST['uaction'] == 'apply') {
-    $err_message = '';
-    $data_1['subject'] = clean_input($_POST['subject1'], false);
-    $data_1['message'] = clean_input($_POST['message1'], false);
-    $data_2['subject'] = clean_input($_POST['subject2'], false);
-    $data_2['message'] = clean_input($_POST['message2'], false);
+    $errMessages = '';
+    $data1['subject'] = clean_input($_POST['subject1'], false);
+    $data1['message'] = clean_input($_POST['message1'], false);
+    $data2['subject'] = clean_input($_POST['subject2'], false);
+    $data2['message'] = clean_input($_POST['message2'], false);
 
-    if (empty($data_1['subject']) || empty($data_2['subject'])) {
-        $err_message = tr('Please specify a message subject.');
+    if (empty($data1['subject']) || empty($data2['subject'])) {
+        $errMessages = tr('Please specify a message subject.');
     }
-    if (empty($data_1['message']) || empty($data_2['message'])) {
-        $err_message = tr('Please specify a message content.');
+    if (empty($data1['message']) || empty($data2['message'])) {
+        $errMessages = tr('Please specify a message content.');
     }
 
-    if (!empty($err_message)) {
-        set_page_message($err_message, 'error');
+    if (!empty($errMessages)) {
+        set_page_message($errMessages, 'error');
     } else {
-        set_lostpassword_activation_email($user_id, $data_1);
-        set_lostpassword_password_email($user_id, $data_2);
+        set_lostpassword_activation_email($_SESSION['user_id'], $data1);
+        set_lostpassword_password_email($_SESSION['user_id'], $data2);
         set_page_message(tr('Auto email template data updated!'), 'success');
     }
 }
@@ -80,12 +75,12 @@ $tpl->assign([
     'TR_LOSTPW_EMAIL' => tr('Lost password email'),
     'TR_MESSAGE_TEMPLATE_INFO' => tr('Message template info'),
     'TR_MESSAGE_TEMPLATE' => tr('Message template'),
-    'SUBJECT_VALUE1' => clean_input($data_1['subject'], true),
-    'MESSAGE_VALUE1' => tohtml($data_1['message']),
-    'SUBJECT_VALUE2' => clean_input($data_2['subject'], true),
-    'MESSAGE_VALUE2' => tohtml($data_2['message']),
+    'SUBJECT_VALUE1' => clean_input($data1['subject'], true),
+    'MESSAGE_VALUE1' => tohtml($data1['message']),
+    'SUBJECT_VALUE2' => clean_input($data2['subject'], true),
+    'MESSAGE_VALUE2' => tohtml($data2['message']),
     'SENDER_EMAIL_VALUE' => tohtml($data_1['sender_email']),
-    'SENDER_NAME_VALUE' => tohtml($data_1['sender_name']),
+    'SENDER_NAME_VALUE' => tohtml($data1['sender_name']),
     'TR_ACTIVATION_EMAIL' => tr('Activation email'),
     'TR_PASSWORD_EMAIL' => tr('Password email'),
     'TR_USER_LOGIN_NAME' => tr('User login (system) name'),
@@ -107,7 +102,7 @@ generateLoggedFrom($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

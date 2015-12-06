@@ -44,12 +44,10 @@ $tpl->define_dynamic([
     'def_language' => 'languages_available'
 ]);
 
-$adminCurrentLanguage = $_SESSION['user_def_lang'];
-
 if (!empty($_POST)) {
     $adminNewLanguage = clean_input($_POST['def_language']);
 
-    if ($adminCurrentLanguage != $adminNewLanguage) {
+    if ($_SESSION['user_def_lang'] != $adminNewLanguage) {
         $query = "UPDATE `user_gui_props` SET `lang` = ? WHERE `user_id` = ?";
         exec_query($query, [$adminNewLanguage, $_SESSION['user_id']]);
         $_SESSION['user_def_lang'] = $adminNewLanguage;
@@ -70,11 +68,11 @@ $tpl->assign([
 
 generateNavigation($tpl);
 generateLoggedFrom($tpl);
-gen_def_language($tpl, $adminCurrentLanguage);
+gen_def_language($tpl, $_SESSION['user_def_lang']);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

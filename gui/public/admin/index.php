@@ -114,7 +114,7 @@ function admin_getAdminGeneralInfo($tpl)
         'RESELLER_USERS' => records_count('admin', 'admin_type', 'reseller'),
         'NORMAL_USERS' => records_count('admin', 'admin_type', 'user'),
         'DOMAINS' => records_count('domain', '', ''),
-        'SUBDOMAINS' => records_count('subdomain', '', '') + records_count('subdomain_alias', 'subdomain_alias_id', '', ''),
+        'SUBDOMAINS' => records_count('subdomain', '', '') + records_count('subdomain_alias', 'subdomain_alias_id', ''),
         'DOMAINS_ALIASES' => records_count('domain_aliasses', '', ''),
         'MAIL_ACCOUNTS' => $showTotalMails,
         'FTP_ACCOUNTS' => records_count('ftp_users', '', ''),
@@ -132,7 +132,6 @@ function admin_getAdminGeneralInfo($tpl)
 function admin_generateServerTrafficInfo($tpl)
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
     $trafficLimitBytes = ($cfg['SERVER_TRAFFIC_LIMIT']) ? $cfg['SERVER_TRAFFIC_LIMIT'] * 1048576 : 0;
     $trafficWarningBytes = ($cfg['SERVER_TRAFFIC_WARN']) ? $cfg['SERVER_TRAFFIC_WARN'] * 1048576 : 0;
 
@@ -193,8 +192,6 @@ require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 check_login('admin', $cfg['PREVENT_EXTERNAL_LOGIN_ADMIN']);
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
@@ -204,7 +201,6 @@ $tpl->define_dynamic([
     'page_message' => 'layout',
     'traffic_warning_message' => 'page'
 ]);
-
 $tpl->assign([
     'TR_PAGE_TITLE' => tr('Admin / General / Overview'),
     'TR_PROPERTIES' => tr('Properties'),
@@ -231,7 +227,7 @@ admin_generateServerTrafficInfo($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

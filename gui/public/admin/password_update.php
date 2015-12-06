@@ -32,7 +32,7 @@ function admin_updatePassword()
     if (!empty($_POST)) {
         $userId = $_SESSION['user_id'];
 
-        \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditUser, [
+        \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditUser, null, [
             'userId' => $userId
         ]);
 
@@ -45,7 +45,8 @@ function admin_updatePassword()
         } elseif (checkPasswordSyntax($_POST['password'])) {
             $query = 'UPDATE `admin` SET `admin_pass` = ? WHERE `admin_id` = ?';
             exec_query($query, [\iMSCP\Core\Utils\Crypt::bcrypt($_POST['password']), $userId]);
-            \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditUser, [
+            \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                \iMSCP\Core\Events::onAfterEditUser, null, [
                 'userId' => $userId
             ]);
             write_log($_SESSION['user_logged'] . ': updated password.', E_USER_NOTICE);
@@ -89,8 +90,6 @@ require '../../application.php';
 check_login('admin');
 admin_updatePassword();
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
     'layout' => 'shared/layouts/ui.tpl',
@@ -110,7 +109,7 @@ generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

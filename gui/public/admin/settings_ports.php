@@ -92,7 +92,7 @@ function toSession($mode)
 }
 
 /**
- * Validates a service port and sets an appropriate message on error.
+ * Validates a service port and sets an appropriate message on error
  *
  * @param string $name Service name
  * @param string $ip Ip address
@@ -114,10 +114,7 @@ function admin_validatesService($name, $ip, $port, $protocol, $show, $index = ''
 
     // Check for service name syntax
     if (!is_basicString($name)) {
-        set_page_message(
-            tr("Error with '$name': Only letters, numbers, dash and underscore are allowed for services names."),
-            'error'
-        );
+        set_page_message(tr("Error with '$name': Only letters, numbers, dash and underscore are allowed for services names."), 'error');
         $errorFieldsIds[] = "name$index";
     }
 
@@ -220,22 +217,20 @@ function admin_showServices($tpl)
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
     if (isset($_SESSION['error_on_updt'])) {
-        $values = new iMSCP_Config_Handler($_SESSION['error_on_updt']);
+        $values = new \iMSCP\Core\Config\ArrayConfigHandler($_SESSION['error_on_updt']);
         unset($_SESSION['error_on_updt']);
         $services = array_keys($values->toArray());
     } else {
-        $values = iMSCP_Registry::get('dbConfig');
+        /** @var \iMSCP\Core\Config\DbConfigHandler $values */
+        $values = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('DbConfig');
 
         // Gets list of services port names
-        $services = array_filter(
-            array_keys($values->toArray()),
-            function ($name) {
-                return (strlen($name) > 5 && substr($name, 0, 5) == 'PORT_');
-            }
-        );
+        $services = array_filter(array_keys($values->toArray()), function ($name) {
+            return strlen($name) > 5 && substr($name, 0, 5) == 'PORT_';
+        });
 
         if (isset($_SESSION['errorOnAdd'])) {
-            $errorOnAdd = new iMSCP_Config_Handler($_SESSION['errorOnAdd']);
+            $errorOnAdd = new \iMSCP\Core\Config\ArrayConfigHandler($_SESSION['errorOnAdd']);
             unset($_SESSION['errorOnAdd']);
         }
     }
@@ -247,15 +242,12 @@ function admin_showServices($tpl)
         sort($services);
 
         foreach ($services as $index => $service) {
-            list($port, $protocol, $name, $status, $ip) = explode(';', $values->$service);
-
+            list($port, $protocol, $name, $status, $ip) = explode(';', $values[$service]);
             $htmlSelected = $cfg['HTML_SELECTED'];
-
             $selectedUdp = $protocol == 'udp' ? $htmlSelected : '';
             $selectedTcp = $protocol == 'udp' ? '' : $htmlSelected;
             $selectedOn = $status == '1' ? $htmlSelected : '';
             $selectedOff = $status == '1' ? '' : $htmlSelected;
-
             $tpl->assign([
                 'SERVICE' => '<input name="name[]" type="text" id="name' . $index .
                     '" value="' . tohtml($name) . '" class="textinput" maxlength="25" />',
@@ -265,9 +257,7 @@ function admin_showServices($tpl)
                 'URL_DELETE' => "?delete=$service",
                 'NUM' => $index
             ]);
-
             $tpl->parse('PORT_DELETE_LINK', 'port_delete_link');
-
             $tpl->assign([
                 'VAR_NAME' => tohtml($service),
                 'IP' => ($ip == 'localhost') ? '127.0.0.1' : (!$ip ? '0.0.0.0' : tohtml($ip)),
@@ -277,19 +267,16 @@ function admin_showServices($tpl)
                 'SELECTED_ON' => $selectedOn,
                 'SELECTED_OFF' => $selectedOff
             ]);
-
             $tpl->parse('SERVICE_PORTS', '.service_ports');
         }
 
         // Add fields
         $tpl->assign(
-            isset($errorOnAdd)
-                ? [
+            isset($errorOnAdd) ? [
                 'VAL_FOR_NAME_NEW' => $errorOnAdd['name_new'],
                 'VAL_FOR_IP_NEW' => $errorOnAdd['ip_new'],
                 'VAL_FOR_PORT_NEW' => $errorOnAdd['port_new']
-            ]
-                : [
+            ] : [
                 'VAL_FOR_NAME_NEW' => '',
                 'VAL_FOR_IP_NEW' => '',
                 'VAL_FOR_PORT_NEW' => ''
@@ -298,7 +285,6 @@ function admin_showServices($tpl)
 
         // Error fields ids
         $tpl->assign('ERROR_FIELDS_IDS', isset($_SESSION['errorFieldsIds']) ? $_SESSION['errorFieldsIds'] : '[]');
-
         unset($_SESSION['errorFieldsIds']);
     }
 }
@@ -342,8 +328,6 @@ if (isset($_POST['uaction']) && $_POST['uaction'] != 'reset') {
     deleteService(clean_input($_GET['delete']));
 }
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
     'layout' => 'shared/layouts/ui.tpl',
@@ -352,7 +336,6 @@ $tpl->define_dynamic([
     'service_ports' => 'page',
     'port_delete_link' => 'service_ports'
 ]);
-
 $tpl->assign([
     'TR_PAGE_TITLE' => tr('Admin / Settings / Service Ports'),
     'TR_ACTION' => tr('Action'),
@@ -384,7 +367,7 @@ admin_showServices($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

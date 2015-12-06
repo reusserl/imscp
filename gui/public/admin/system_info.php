@@ -35,7 +35,7 @@ require '../../application.php';
 
 check_login('admin');
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+$sysinfo = new \iMSCP\Core\SystemInfo();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic([
@@ -44,9 +44,6 @@ $tpl->define_dynamic([
     'page_message' => 'layout',
     'device_block' => 'page'
 ]);
-
-$sysinfo = new \iMSCP\Core\SystemInfo();
-
 $tpl->assign([
     'CPU_MODEL' => tohtml($sysinfo->cpu['model']),
     'CPU_CORES' => tohtml($sysinfo->cpu['cpus']),
@@ -76,7 +73,6 @@ foreach ($devices as $device) {
         'USED' => bytesHuman($device['used'] * 1024),
         'SIZE' => bytesHuman($device['size'] * 1024)
     ]);
-
     $tpl->parse('DEVICE_BLOCK', '.device_block');
 }
 
@@ -111,7 +107,7 @@ generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();

@@ -37,7 +37,6 @@
 function admin_generateCustomersTable($tpl)
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
     $query = 'SELECT `admin_id`, `admin_name` FROM `admin` WHERE `admin_type` = ? ORDER BY `admin_name`';
     $stmt = exec_query($query, 'reseller');
 
@@ -65,7 +64,6 @@ function admin_generateCustomersTable($tpl)
         }
 
         $allResellers[] = $row['admin_id'];
-
         $tpl->assign([
             'SRC_RSL_OPTION' => tohtml($row['admin_name']),
             'SRC_RSL_VALUE' => $row['admin_id'],
@@ -98,7 +96,6 @@ function admin_generateCustomersTable($tpl)
     if ($resellerId == 0) {
         /** @var \Doctrine\DBAL\Connection $db */
         $db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
-
         $query = '
             SELECT
                 `admin_id`, `admin_name`
@@ -170,7 +167,6 @@ function check_user_data()
     }
 
     $toReseller = intval($_POST['dst_reseller']);
-
     $stmt = exec_query('SELECT reseller_ips FROM reseller_props WHERE reseller_id = ?', $toReseller);
     $errorsStack = '_off_';
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -370,11 +366,9 @@ function calculate_reseller_dvals(&$to, $toMax, &$from, $fromMax, $uMax, &$error
                 $errorsStack = '';
             }
             $errorsStack .= tr('<b>%1$s</b> is exceeding limits for a <b>%2$s</b><br />service in destination reseller.<br />', $uName, $obj);
-
             $errorsStack .= tr('Moving aborted.');
         } else {
             $from -= $uMax;
-
             $to += $uMax;
         }
 
@@ -446,9 +440,7 @@ if (!systemHasResellers(2)) {
     showBadRequestErrorPage();
 }
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
-if (isset($_POST['uaction']) && $_POST['uaction'] == 'move_user' && check_user_data()) {
+if (isset($_POST['uaction']) && $_POST['uaction'] === 'move_user' && check_user_data()) {
     set_page_message(tr('Customer(s) successfully moved.'), 'success');
     redirectTo('manage_users.php');
 }
@@ -465,7 +457,6 @@ $tpl->define_dynamic([
     'dst_reseller' => 'page',
     'dst_reseller_option' => 'dst_reseller'
 ]);
-
 $tpl->assign([
     'TR_PAGE_TITLE' => tr('Admin / Users / Customers Assignment'),
     'TR_USER_ASSIGNMENT' => tr('User assignment'),
@@ -488,7 +479,7 @@ admin_generateCustomersTable($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, [
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptEnd, null, [
     'templateEngine' => $tpl
 ]);
 $tpl->prnt();
