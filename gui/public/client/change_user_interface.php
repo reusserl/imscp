@@ -25,17 +25,20 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+/***********************************************************************************************************************
+ * Main
+ */
+
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 if (isset($_SESSION['logged_from']) && isset($_SESSION['logged_from_id']) && isset($_GET['action']) &&
-	$_GET['action'] == 'go_back'
+    $_GET['action'] == 'go_back'
 ) {
-	change_user_interface($_SESSION['user_id'], $_SESSION['logged_from_id']);
+    change_user_interface($_SESSION['user_id'], $_SESSION['logged_from_id']);
 } else {
-	showBadRequestErrorPage();
+    showBadRequestErrorPage();
 }

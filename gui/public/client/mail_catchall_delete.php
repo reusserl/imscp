@@ -29,8 +29,7 @@
  * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
@@ -38,32 +37,31 @@ check_login('user');
 
 customerHasFeature('mail') or showBadRequestErrorPage();
 
-if(isset($_GET['id'])) {
-	$catchallId = intval($_GET['id']);
+if (isset($_GET['id'])) {
+    $catchallId = intval($_GET['id']);
+    $stmt = exec_query(
+        'SELECT mail_id FROM mail_users WHERE domain_id = ? AND mail_id = ?',
+        [get_user_domain_id($_SESSION['user_id']), $catchallId]
+    );
 
-	$stmt = exec_query(
-		'SELECT mail_id FROM mail_users WHERE domain_id = ? AND mail_id = ?',
-		array(get_user_domain_id($_SESSION['user_id']), $catchallId)
-	);
+    if (!$stmt->rowCount()) {
+        showBadRequestErrorPage();
+    }
 
-	if(!$stmt->rowCount()) {
-		showBadRequestErrorPage();
-	}
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+        \iMSCP\Core\Events::onBeforeDeleteMailCatchall, null, ['mailCatchallId' => $catchallId]
+    );
 
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-		\iMSCP\Core\Events::onBeforeDeleteMailCatchall, array('mailCatchallId' => $catchallId)
-	);
+    exec_query('UPDATE mail_users SET status = ? WHERE mail_id = ?', ['todelete', $catchallId]);
 
-	exec_query('UPDATE mail_users SET status = ? WHERE mail_id = ?', array('todelete', $catchallId));
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+        \iMSCP\Core\Events::onafterDeleteMailCatchall, null, ['mailCatchallId' => $catchallId]
+    );
 
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-		\iMSCP\Core\Events::onafterDeleteMailCatchall, array('mailCatchallId' => $catchallId)
-	);
-
-	send_request();
-	write_log($_SESSION['user_logged'] . ': deletes email catch all!', E_USER_NOTICE);
-	set_page_message(tr('Catch all successfully scheduled for deletion.'), 'success');
-	redirectTo('mail_catchall.php');
+    send_request();
+    write_log($_SESSION['user_logged'] . ': deletes email catch all!', E_USER_NOTICE);
+    set_page_message(tr('Catch all successfully scheduled for deletion.'), 'success');
+    redirectTo('mail_catchall.php');
 }
 
 showBadRequestErrorPage();

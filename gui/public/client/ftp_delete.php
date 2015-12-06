@@ -22,89 +22,93 @@
  * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 if (customerHasFeature('ftp') && isset($_GET['id'])) {
-	$ftpUserId = clean_input($_GET['id']);
+    $ftpUserId = clean_input($_GET['id']);
 
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeDeleteFtp, array('ftpUserId' => $ftpUserId));
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeDeleteFtp, null, [
+        'ftpUserId' => $ftpUserId
+    ]);
 
-	$query = "SELECT `gid` FROM `ftp_users` WHERE `userid` = ? AND `admin_id` = ?";
-	$stmt = exec_query($query, array($ftpUserId, $_SESSION['user_id']));
+    $query = "SELECT `gid` FROM `ftp_users` WHERE `userid` = ? AND `admin_id` = ?";
+    $stmt = exec_query($query, [$ftpUserId, $_SESSION['user_id']]);
 
-	if (!$stmt->rowCount()) {
-		showBadRequestErrorPage();
-	}
+    if (!$stmt->rowCount()) {
+        showBadRequestErrorPage();
+    }
 
-	$ftpUserGid = $stmt->fields['gid'];
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $ftpUserGid = $row['gid'];
 
-	/** @var \Doctrine\DBAL\Connection $db */
-	$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
+    /** @var \Doctrine\DBAL\Connection $db */
+    $db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
-	try {
-		$db->beginTransaction();
+    try {
+        $db->beginTransaction();
+        $stmt = exec_query("SELECT `groupname`, `members` FROM `ftp_group` WHERE `gid` = ?", $ftpUserGid);
 
-		$stmt = exec_query("SELECT `groupname`, `members` FROM `ftp_group` WHERE `gid` = ?", $ftpUserGid);
+        if ($stmt->rowCount()) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $groupName = $row['groupname'];
+            $members = preg_split('/,/', $row['members'], -1, PREG_SPLIT_NO_EMPTY);
+            $member = array_search($ftpUserId, $members);
 
-		if ($stmt->rowCount()) {
-			$groupName = $stmt->fields['groupname'];
-			$members = preg_split('/,/', $stmt->fields['members'], -1, PREG_SPLIT_NO_EMPTY);
-			$member = array_search($ftpUserId, $members);
+            if (false !== $member) {
+                unset($members[$member]);
 
-			if (false !== $member) {
-				unset($members[$member]);
+                if (!empty($members)) {
+                    exec_query(
+                        "UPDATE `ftp_group` SET `members` = ? WHERE `gid` = ?",
+                        [implode(',', $members), $ftpUserGid]
+                    );
+                } else {
+                    exec_query('DELETE FROM `ftp_group` WHERE `groupname` = ?', $groupName);
+                    exec_query('DELETE FROM `quotalimits` WHERE `name` = ?', $groupName);
+                    exec_query('DELETE FROM `quotatallies` WHERE `name` = ?', $groupName);
+                }
+            }
+        }
 
-				if (!empty($members)) {
-					exec_query(
-						"UPDATE `ftp_group` SET `members` = ? WHERE `gid` = ?",
-						array(implode(',', $members), $ftpUserGid)
-					);
-				} else {
-					exec_query('DELETE FROM `ftp_group` WHERE `groupname` = ?', $groupName);
-					exec_query('DELETE FROM `quotalimits` WHERE `name` = ?', $groupName);
-					exec_query('DELETE FROM `quotatallies` WHERE `name` = ?', $groupName);
-				}
-			}
-		}
+        $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+        if ($cfg['FTPD_SERVER'] == 'vsftpd') {
+            exec_query('UPDATE ftp_users SET status = ? WHERE userid = ?', ['todelete', $ftpUserId]);
+        } else {
+            exec_query('DELETE FROM ftp_users WHERE userid = ?', $ftpUserId);
+        }
 
-		if($cfg['FTPD_SERVER'] == 'vsftpd') {
-			exec_query('UPDATE ftp_users SET status = ? WHERE userid = ?', array('todelete', $ftpUserId));
-		} else {
-			exec_query('DELETE FROM ftp_users WHERE userid = ?', $ftpUserId);
-		}
+        if (isset($cfg['FILEMANAGER_PACKAGE']) && $cfg['FILEMANAGER_PACKAGE'] == 'Pydio') {
+            // Quick fix to delete FTP preferences directory as created by Pydio
+            // FIXME: Move this statement at engine level
+            $userPrefDir = $cfg['GUI_PUBLIC_DIR'] . '/tools/ftp/data/plugins/auth.serial/' . $ftpUserId;
+            if (is_dir($userPrefDir)) {
+                utils_removeDir($userPrefDir);
+            }
+        }
 
-		if(isset($cfg['FILEMANAGER_PACKAGE']) && $cfg['FILEMANAGER_PACKAGE'] == 'Pydio') {
-			// Quick fix to delete FTP preferences directory as created by Pydio
-			// FIXME: Move this statement at engine level
-			$userPrefDir = $cfg['GUI_PUBLIC_DIR'] . '/tools/ftp/data/plugins/auth.serial/' . $ftpUserId;
-			if(is_dir($userPrefDir)) {
-				utils_removeDir($userPrefDir);
-			}
-		}
+        $db->commit();
 
-		$db->commit();
+        \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterDeleteFtp, null, [
+            'ftpUserId' => $ftpUserId
+        ]);
 
-		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterDeleteFtp, array('ftpUserId' => $ftpUserId));
+        if ($cfg['FTPD_SERVER'] == 'vsftpd') {
+            send_request();
+        }
 
-		if($cfg['FTPD_SERVER'] == 'vsftpd') {
-			send_request();
-		}
+        write_log(sprintf("%s: deleted FTP account: %s", $_SESSION['user_logged'], $ftpUserId), E_USER_NOTICE);
+        set_page_message(tr('FTP account successfully deleted.'), 'success');
+    } catch (PDOException $e) {
+        $db->rollBack();
+        throw $e;
+    }
 
-		write_log(sprintf("%s: deleted FTP account: %s", $_SESSION['user_logged'], $ftpUserId), E_USER_NOTICE);
-		set_page_message(tr('FTP account successfully deleted.'), 'success');
-	} catch (PDOException $e) {
-		$db->rollBack();
-		throw $e;
-	}
-
-	redirectTo('ftp_accounts.php');
+    redirectTo('ftp_accounts.php');
 }
 
 showBadRequestErrorPage();

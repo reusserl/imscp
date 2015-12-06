@@ -38,47 +38,47 @@
  */
 function isAllowedDir($domainId, $directory)
 {
-	static $mountPoints = array();
+    static $mountPoints = [];
 
-	if (empty($mountPoints)) {
-		$query = "
-			SELECT
-				`subdomain_mount` AS `mount_point`
-			FROM
-				`subdomain`
-			WHERE
-				`domain_id` = ?
-			UNION
-			SELECT
-				`alias_mount` AS `mount_point`
-			FROM
-				`domain_aliasses`
-			WHERE
-				`domain_id` = ?
-			UNION
-			SELECT
-				`subdomain_alias_mount` AS `mount_point`
-			FROM
-				`subdomain_alias`
-			WHERE
-				`alias_id` IN(SELECT `alias_id` FROM `domain_aliasses` WHERE `domain_id` = ?)
-		";
-		$stmt = exec_query($query, array($domainId, $domainId, $domainId));
+    if (empty($mountPoints)) {
+        $query = "
+            SELECT
+                `subdomain_mount` AS `mount_point`
+            FROM
+                `subdomain`
+            WHERE
+                `domain_id` = ?
+            UNION
+            SELECT
+                `alias_mount` AS `mount_point`
+            FROM
+                `domain_aliasses`
+            WHERE
+                `domain_id` = ?
+            UNION
+            SELECT
+                `subdomain_alias_mount` AS `mount_point`
+            FROM
+                `subdomain_alias`
+            WHERE
+                `alias_id` IN(SELECT `alias_id` FROM `domain_aliasses` WHERE `domain_id` = ?)
+        ";
+        $stmt = exec_query($query, [$domainId, $domainId, $domainId]);
 
-		if ($stmt->rowCount()) {
-			$mountPoints = $stmt->fetchAll(PDO::FETCH_COLUMN);
-		}
+        if ($stmt->rowCount()) {
+            $mountPoints = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        }
 
-		$mountPoints[] = '/';
-	}
+        $mountPoints[] = '/';
+    }
 
-	foreach ($mountPoints as $mountPoint) {
-		if (preg_match("%^$mountPoint/?(?:disabled|errors|phptmp|statistics|domain_disable_page)$%", "$directory")) {
-			return false;
-		}
-	}
+    foreach ($mountPoints as $mountPoint) {
+        if (preg_match("%^$mountPoint/?(?:disabled|errors|phptmp|statistics|domain_disable_page)$%", "$directory")) {
+            return false;
+        }
+    }
 
-	return true;
+    return true;
 }
 
 /**
@@ -89,89 +89,90 @@ function isAllowedDir($domainId, $directory)
  */
 function client_generateDirectoriesList($tpl)
 {
-	$path = isset($_GET['cur_dir']) ? clean_input($_GET['cur_dir']) : '';
-	$domain = encode_idna($_SESSION['user_logged']);
+    $path = isset($_GET['cur_dir']) ? clean_input($_GET['cur_dir']) : '';
+    $domain = encode_idna($_SESSION['user_logged']);
 
-	$vfs = new \iMSCP\Core\VirtualFileSystem($domain);
-	$list = $vfs->ls($path);
+    $vfs = new \iMSCP\Core\VirtualFileSystem($domain);
+    $list = $vfs->ls($path);
 
-	if (!$list) {
-		set_page_message(tr('Unable to retrieve directories list for your domain. Please contact your reseller.'), 'error');
-		$tpl->assign('FTP_CHOOSER', '');
-		return;
-	}
+    if (!$list) {
+        set_page_message(tr('Unable to retrieve directories list for your domain. Please contact your reseller.'), 'error');
+        $tpl->assign('FTP_CHOOSER', '');
+        return;
+    }
 
-	$parent = explode('/', $path);
-	array_pop($parent);
-	$parent = implode('/', $parent);
+    $parent = explode('/', $path);
+    array_pop($parent);
+    $parent = implode('/', $parent);
 
-	$tpl->assign(array(
-		'ACTION_LINK' => '',
-		'ACTION' => '',
-		'ICON' => 'parent',
-		'DIR_NAME' => tr('Parent directory'),
-		'LINK' => tohtml("ftp_choose_dir.php?cur_dir=$parent", 'htmlAttr')
-	));
+    $tpl->assign([
+        'ACTION_LINK' => '',
+        'ACTION' => '',
+        'ICON' => 'parent',
+        'DIR_NAME' => tr('Parent directory'),
+        'LINK' => tohtml("ftp_choose_dir.php?cur_dir=$parent", 'htmlAttr')
+    ]);
 
-	$tpl->parse('DIR_ITEM', '.dir_item');
+    $tpl->parse('DIR_ITEM', '.dir_item');
 
-	foreach ($list as $entry) {
-		$directory = $path . '/' . $entry['file'];
+    foreach ($list as $entry) {
+        $directory = $path . '/' . $entry['file'];
 
-		if (
-			$entry['type'] != \iMSCP\Core\VirtualFileSystem::VFS_TYPE_DIR ||
-			($entry['file'] == '.' || $entry['file'] == '..') ||
-			!isAllowedDir(get_user_domain_id($_SESSION['user_id']), $directory)
-		) {
-			continue;
-		}
+        if (
+            $entry['type'] != \iMSCP\Core\VirtualFileSystem::VFS_TYPE_DIR ||
+            ($entry['file'] == '.' || $entry['file'] == '..') ||
+            !isAllowedDir(get_user_domain_id($_SESSION['user_id']), $directory)
+        ) {
+            continue;
+        }
 
-		$tpl->assign(array(
-			'DIR_NAME' => tohtml($entry['file']),
-			'DIRECTORY' => tohtml($directory, 'htmlAttr'),
-			'LINK' => tohtml('ftp_choose_dir.php?cur_dir=' . $directory, 'htmlAttr')
-		));
+        $tpl->assign([
+            'DIR_NAME' => tohtml($entry['file']),
+            'DIRECTORY' => tohtml($directory, 'htmlAttr'),
+            'LINK' => tohtml('ftp_choose_dir.php?cur_dir=' . $directory, 'htmlAttr')
+        ]);
 
-		$tpl->parse('ACTION_LINK', 'action_link');
-		$tpl->parse('DIR_ITEM', '.dir_item');
-	}
+        $tpl->parse('ACTION_LINK', 'action_link');
+        $tpl->parse('DIR_ITEM', '.dir_item');
+    }
 }
 
 /***********************************************************************************************************************
  * Main
  */
 
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 if (!customerHasFeature('ftp') && !customerHasFeature('protected_areas')) {
-	showBadRequestErrorPage();
+    showBadRequestErrorPage();
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(array(
-	'partial' => 'client/ftp_choose_dir.tpl',
-	'page_message' => 'partial',
-	'ftp_chooser' => 'partial',
-	'dir_item' => 'ftp_chooser',
-	'list_item' => 'dir_item',
-	'action_link' => 'list_item'
-));
-
-$tpl->assign(array(
-	'TR_DIRECTORY_TREE' => tr('Directory tree'),
-	'TR_DIRECTORIES' => tr('Directories'),
-	'CHOOSE' => tr('Choose')
-));
+$tpl->define_dynamic([
+    'partial' => 'client/ftp_choose_dir.tpl',
+    'page_message' => 'partial',
+    'ftp_chooser' => 'partial',
+    'dir_item' => 'ftp_chooser',
+    'list_item' => 'dir_item',
+    'action_link' => 'list_item'
+]);
+$tpl->assign([
+    'TR_DIRECTORY_TREE' => tr('Directory tree'),
+    'TR_DIRECTORIES' => tr('Directories'),
+    'CHOOSE' => tr('Choose')
+]);
 
 client_generateDirectoriesList($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('PARTIAL', 'partial');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

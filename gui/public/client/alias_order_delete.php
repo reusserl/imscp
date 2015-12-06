@@ -25,26 +25,24 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
-
 customerHasFeature('domain_aliases') or showBadRequestErrorPage();
 
 if (isset($_GET['del_id'])) {
-	$alsId = intval($_GET['del_id']);
+    $alsId = intval($_GET['del_id']);
+    $stmt = exec_query(
+        'DELETE FROM domain_aliasses WHERE alias_id = ? AND domain_id = ? AND alias_status = ?',
+        [$alsId, get_user_domain_id($_SESSION['user_id']), 'ordered']
+    );
 
-	$stmt = exec_query(
-		'DELETE FROM domain_aliasses WHERE alias_id = ? AND domain_id = ? AND alias_status = ?',
-		array($alsId, get_user_domain_id($_SESSION['user_id']), 'ordered'));
-
-	if($stmt->rowCount()) {
-		set_page_message(tr('Order successfully deleted.'), 'success');
-		redirectTo('domains_manage.php');
-	}
+    if ($stmt->rowCount()) {
+        set_page_message(tr('Order successfully deleted.'), 'success');
+        redirectTo('domains_manage.php');
+    }
 }
 
 showBadRequestErrorPage();

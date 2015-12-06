@@ -18,8 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 /***********************************************************************************************************************
  * Functions
@@ -35,27 +34,26 @@ require_once 'imscp-lib.php';
  */
 function generatePageData($tpl, $ftpUserId, $mainDomainName)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $query = "SELECT `homedir` FROM `ftp_users` WHERE `userid` = ?";
+    $stmt = exec_query($query, $ftpUserId);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $ftpHomeDir = $row['homedir'];
+    $customerHomeDir = $cfg['USER_WEB_DIR'] . '/' . $mainDomainName;
 
-	$query = "SELECT `homedir` FROM `ftp_users` WHERE `userid` = ?";
-	$stmt = exec_query($query, $ftpUserId);
+    if ($ftpHomeDir == $customerHomeDir) {
+        $customFtpHomeDir = '/';
+    } else {
+        $customFtpHomeDir = substr($ftpHomeDir, strlen($customerHomeDir));
+    }
 
-	$ftpHomeDir = $stmt->fields['homedir'];
-	$customerHomeDir = $cfg['USER_WEB_DIR'] . '/' . $mainDomainName;
-
-	if ($ftpHomeDir == $customerHomeDir) {
-		$customFtpHomeDir = '/';
-	} else {
-		$customFtpHomeDir = substr($ftpHomeDir, strlen($customerHomeDir));
-	}
-
-	$tpl->assign(
-		array(
-			'USERNAME' => tohtml($ftpUserId),
-			'HOME_DIR' => (isset($_POST['home_dir'])) ? tohtml($_POST['home_dir']) : tohtml($customFtpHomeDir),
-			'ID' => tohtml($ftpUserId),
-		)
-	);
+    $tpl->assign(
+        [
+            'USERNAME' => tohtml($ftpUserId),
+            'HOME_DIR' => (isset($_POST['home_dir'])) ? tohtml($_POST['home_dir']) : tohtml($customFtpHomeDir),
+            'ID' => tohtml($ftpUserId),
+        ]
+    );
 }
 
 /**
@@ -67,157 +65,153 @@ function generatePageData($tpl, $ftpUserId, $mainDomainName)
  */
 function updateFtpAccount($userid, $mainDomainName)
 {
-	$ret = true;
+    $ret = true;
 
-	if (!empty($_POST['password'])) {
-		if (empty($_POST['password_repeat']) || $_POST['password'] !== $_POST['password_repeat']) {
-			set_page_message(tr("Passwords do not match."), 'error');
-			$ret = false;
-		}
+    if (!empty($_POST['password'])) {
+        if (empty($_POST['password_repeat']) || $_POST['password'] !== $_POST['password_repeat']) {
+            set_page_message(tr("Passwords do not match."), 'error');
+            $ret = false;
+        }
 
-		if (!checkPasswordSyntax($_POST['password'])) {
-			$ret = false;
-		}
+        if (!checkPasswordSyntax($_POST['password'])) {
+            $ret = false;
+        }
 
-		$passwd = $_POST['password'];
-		$encPasswd = \iMSCP\Core\Utils\Crypt::sha512($passwd);
-	} else {
-		$passwd = null;
-		$encPasswd = null;
-	}
+        $passwd = $_POST['password'];
+        $encPasswd = \iMSCP\Core\Utils\Crypt::sha512($passwd);
+    } else {
+        $passwd = null;
+        $encPasswd = null;
+    }
 
-	if (isset($_POST['home_dir'])) {
-		$homeDir = clean_input($_POST['home_dir']);
+    if (isset($_POST['home_dir'])) {
+        $homeDir = clean_input($_POST['home_dir']);
 
-		if($homeDir != '/' && $homeDir != '') {
-			// Strip possible double-slashes
-			$homeDir = str_replace('//', '/', $homeDir);
+        if ($homeDir != '/' && $homeDir != '') {
+            // Strip possible double-slashes
+            $homeDir = str_replace('//', '/', $homeDir);
 
-			// Check for updirs '..'
-			if (strpos($homeDir, '..') !== false) {
-				set_page_message(tr('Invalid home directory.'), 'error');
-				$ret = false;
-			}
+            // Check for updirs '..'
+            if (strpos($homeDir, '..') !== false) {
+                set_page_message(tr('Invalid home directory.'), 'error');
+                $ret = false;
+            }
 
-			if($ret) {
-				$vfs = new \iMSCP\Core\VirtualFileSystem($mainDomainName);
+            if ($ret) {
+                $vfs = new \iMSCP\Core\VirtualFileSystem($mainDomainName);
 
-				// Check for directory existence
-				if (!$vfs->exists($homeDir)) {
-					set_page_message(tr("Home directory '%s' doesn't exist", $homeDir), 'error');
-					$ret = false;
-				}
-			}
-		}
-	} else {
-		showBadRequestErrorPage();
-		exit;
-	}
+                // Check for directory existence
+                if (!$vfs->exists($homeDir)) {
+                    set_page_message(tr("Home directory '%s' doesn't exist", $homeDir), 'error');
+                    $ret = false;
+                }
+            }
+        }
+    } else {
+        showBadRequestErrorPage();
+        exit;
+    }
 
-	if($ret) {
-		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditFtp, array(
-			'ftpUserId' => $userid,
-			'ftpPassword' => $passwd
-		));
+    if ($ret) {
+        \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditFtp, null, [
+            'ftpUserId' => $userid,
+            'ftpPassword' => $passwd
+        ]);
 
-		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-		$homeDir = rtrim(str_replace('//', '/', $cfg['USER_WEB_DIR'] . '/' . $mainDomainName . '/' . $homeDir), '/');
+        $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+        $homeDir = rtrim(str_replace('//', '/', $cfg['USER_WEB_DIR'] . '/' . $mainDomainName . '/' . $homeDir), '/');
 
-		if($cfg['FTPD_SERVER'] == 'vsftpd') {
-			if (isset($encPasswd) && isset($homeDir)) {
-				$query = "UPDATE `ftp_users` SET `passwd` = ?, `homedir` = ?, `status` = ? WHERE `userid` = ?";
-				exec_query($query, array($encPasswd, $homeDir, 'tochange', $userid));
-			} else {
-				$query = "UPDATE `ftp_users` SET `homedir` = ?, `status` = ? WHERE `userid` = ?";
-				exec_query($query, array($homeDir, 'tochange', $userid));
-			}
-		} else {
-			if (isset($encPasswd) && isset($homeDir)) {
-				$query = "UPDATE `ftp_users` SET `passwd` = ?, `homedir` = ? WHERE `userid` = ?";
-				exec_query($query, array($encPasswd, $homeDir, $userid));
-			} else {
-				$query = "UPDATE `ftp_users` SET `homedir` = ? WHERE `userid` = ?";
-				exec_query($query, array($homeDir, $userid));
-			}
-		}
+        if ($cfg['FTPD_SERVER'] == 'vsftpd') {
+            if (isset($encPasswd) && isset($homeDir)) {
+                $query = "UPDATE `ftp_users` SET `passwd` = ?, `homedir` = ?, `status` = ? WHERE `userid` = ?";
+                exec_query($query, [$encPasswd, $homeDir, 'tochange', $userid]);
+            } else {
+                $query = "UPDATE `ftp_users` SET `homedir` = ?, `status` = ? WHERE `userid` = ?";
+                exec_query($query, [$homeDir, 'tochange', $userid]);
+            }
+        } else {
+            if (isset($encPasswd) && isset($homeDir)) {
+                $query = "UPDATE `ftp_users` SET `passwd` = ?, `homedir` = ? WHERE `userid` = ?";
+                exec_query($query, [$encPasswd, $homeDir, $userid]);
+            } else {
+                $query = "UPDATE `ftp_users` SET `homedir` = ? WHERE `userid` = ?";
+                exec_query($query, [$homeDir, $userid]);
+            }
+        }
 
-		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditFtp, array(
-			'ftpUserId' => $userid,
-			'ftpPassword' => $passwd
-		));
+        \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditFtp, null, [
+            'ftpUserId' => $userid,
+            'ftpPassword' => $passwd
+        ]);
 
-		if($cfg['FTPD_SERVER'] == 'vsftpd') {
-			send_request();
-		}
+        if ($cfg['FTPD_SERVER'] == 'vsftpd') {
+            send_request();
+        }
 
-		write_log(sprintf("%s updated FTP account: %s", $_SESSION['user_logged'], $userid), E_USER_NOTICE);
-		set_page_message(tr('FTP account successfully updated.'), 'success');
-	}
+        write_log(sprintf("%s updated FTP account: %s", $_SESSION['user_logged'], $userid), E_USER_NOTICE);
+        set_page_message(tr('FTP account successfully updated.'), 'success');
+    }
 
-	return $ret;
+    return $ret;
 }
 
 /***********************************************************************************************************************
  * Main
  */
+
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
-
 customerHasFeature('ftp') or showBadRequestErrorPage();
 
 if (isset($_GET['id'])) {
-	$userid = clean_input($_GET['id']);
+    $userid = clean_input($_GET['id']);
 
-	if (who_owns_this($userid, 'ftpuser') != $_SESSION['user_id']) {
-		showBadRequestErrorPage();
-	}
+    if (who_owns_this($userid, 'ftpuser') != $_SESSION['user_id']) {
+        showBadRequestErrorPage();
+    }
 
-	$stmt = exec_query("SELECT `domain_name` FROM `domain` WHERE`domain_admin_id` = ?", $_SESSION['user_id']);
-	$mainDomainName = $stmt->fields['domain_name'];
+    $stmt = exec_query("SELECT `domain_name` FROM `domain` WHERE`domain_admin_id` = ?", $_SESSION['user_id']);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $mainDomainName = $row['domain_name'];
 
-	if (!empty($_POST)) {
-		if(updateFtpAccount($userid, $mainDomainName)) {
-			redirectTo('ftp_accounts.php');
-		}
-	}
+    if (!empty($_POST)) {
+        if (updateFtpAccount($userid, $mainDomainName)) {
+            redirectTo('ftp_accounts.php');
+        }
+    }
 
-	$tpl = new \iMSCP\Core\Template\TemplateEngine();
-	$tpl->define_dynamic(
-		array(
-			'layout' => 'shared/layouts/ui.tpl',
-			'page' => 'client/ftp_edit.tpl',
-			'page_message' => 'layout'
-		)
-	);
+    $tpl = new \iMSCP\Core\Template\TemplateEngine();
+    $tpl->define_dynamic([
+        'layout' => 'shared/layouts/ui.tpl',
+        'page' => 'client/ftp_edit.tpl',
+        'page_message' => 'layout'
+    ]);
+    $tpl->assign([
+        'TR_PAGE_TITLE' => tr('Client / FTP / Overview / Edit FTP Account'),
+        'TR_FTP_DIRECTORIES' => tojs(('FTP directories')),
+        'TR_CLOSE' => tojs(tr('Close')),
+        'TR_FTP_USER_DATA' => tr('FTP account data'),
+        'TR_USERNAME' => tr('Username'),
+        'TR_PASSWORD' => tr('Password'),
+        'TR_PASSWORD_REPEAT' => tr('Repeat password'),
+        'TR_HOME_DIR' => tr('Home directory'),
+        'CHOOSE_DIR' => tr('Choose dir'),
+        'TR_CHANGE' => tr('Update'),
+        'TR_CANCEL' => tr('Cancel')
+    ]);
 
-	$tpl->assign(
-		array(
-			'TR_PAGE_TITLE' => tr('Client / FTP / Overview / Edit FTP Account'),
-			'TR_FTP_DIRECTORIES' => tojs(('FTP directories')),
-			'TR_CLOSE' => tojs(tr('Close')),
-			'TR_FTP_USER_DATA' => tr('FTP account data'),
-			'TR_USERNAME' => tr('Username'),
-			'TR_PASSWORD' => tr('Password'),
-			'TR_PASSWORD_REPEAT' => tr('Repeat password'),
-			'TR_HOME_DIR' => tr('Home directory'),
-			'CHOOSE_DIR' => tr('Choose dir'),
-			'TR_CHANGE' => tr('Update'),
-			'TR_CANCEL' => tr('Cancel')
-		)
-	);
+    generatePageData($tpl, $userid, $mainDomainName);
+    generateNavigation($tpl);
+    generatePageMessage($tpl);
 
-	generatePageData($tpl, $userid, $mainDomainName);
-	generateNavigation($tpl);
-	generatePageMessage($tpl);
+    $tpl->parse('LAYOUT_CONTENT', 'page');
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+        'templateEngine' => $tpl
+    ]);
+    $tpl->prnt();
 
-	$tpl->parse('LAYOUT_CONTENT', 'page');
-
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-
-	$tpl->prnt();
-
-	unsetMessages();
+    unsetMessages();
 } else {
-	showBadRequestErrorPage();
+    showBadRequestErrorPage();
 }

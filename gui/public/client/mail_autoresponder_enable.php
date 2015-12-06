@@ -37,27 +37,24 @@
  */
 function client_checkMailAccountOwner($mailAccountId)
 {
-	$domainProps = get_domain_default_props($_SESSION['user_id']);
-
-	$query = '
-		SELECT
-			`t1`.*, `t2`.`domain_id`, `t2`.`domain_name`
-		FROM
-			`mail_users` AS `t1`, `domain` AS `t2`
-		WHERE
-			`t1`.`mail_id` = ?
-		AND
-			`t2`.`domain_id` = `t1`.`domain_id`
-		AND
-			`t2`.`domain_id` = ?
-		AND
-			`t1`.`mail_auto_respond` = ?
-		AND
-			`t1`.`status` = ?
+    $domainProps = get_domain_default_props($_SESSION['user_id']);
+    $query = '
+        SELECT
+            `t1`.*, `t2`.`domain_id`, `t2`.`domain_name`
+        FROM
+            `mail_users` AS `t1`, `domain` AS `t2`
+        WHERE
+            `t1`.`mail_id` = ?
+        AND
+            `t2`.`domain_id` = `t1`.`domain_id`
+        AND
+            `t2`.`domain_id` = ?
+        AND
+            `t1`.`mail_auto_respond` = ?
+        AND
+            `t1`.`status` = ?
     ';
-	$stmt = exec_query($query, array($mailAccountId, $domainProps['domain_id'], 0, 'ok'));
-
-	return (bool)$stmt->rowCount();
+    return (bool)exec_query($query, [$mailAccountId, $domainProps['domain_id'], 0, 'ok'])->rowCount();
 }
 
 /**
@@ -69,52 +66,35 @@ function client_checkMailAccountOwner($mailAccountId)
  */
 function client_ActivateAutoresponder($mailAccountId, $autoresponderMessage)
 {
-	$autoresponderMessage = clean_input($autoresponderMessage);
+    $autoresponderMessage = clean_input($autoresponderMessage);
 
-	if ($autoresponderMessage == '') {
-		set_page_message(tr('Auto-responder message cannot be empty.'), 'error');
-		redirectTo("mail_autoresponder_enable.php?mail_account_id=$mailAccountId");
-	} else {
-		/** @var \Doctrine\DBAL\Connection $db */
-		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
+    if ($autoresponderMessage == '') {
+        set_page_message(tr('Auto-responder message cannot be empty.'), 'error');
+        redirectTo("mail_autoresponder_enable.php?mail_account_id=$mailAccountId");
+    } else {
+        /** @var \Doctrine\DBAL\Connection $db */
+        $db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
-		try {
-			$db->beginTransaction();
-
-			$query = "SELECT `mail_addr` FROM `mail_users` WHERE `mail_id` = ?";
-			$stmt = exec_query($query, $mailAccountId);
-
-			$query = '
-				UPDATE
-					`mail_users`
-				SET
-					`status` = ?, `mail_auto_respond` = ?, `mail_auto_respond_text` = ?
-				WHERE
-					`mail_id` = ?
-			';
-			exec_query($query, array('tochange', 1, $autoresponderMessage, $mailAccountId));
-
-			// Purge autoreplies log entries
-			delete_autoreplies_log_entries();
-
-			$db->commit();
-
-			send_request();
-
-			write_log(
-				sprintf(
-					"%s: activated auto-responder for the '%s' mail account",
-					$_SESSION['user_logged'],
-					$stmt->fields['mail_addr']
-				),
-				E_USER_NOTICE
-			);
-			set_page_message(tr('Auto-responder successfully scheduled for activation.'), 'success');
-		} catch (PDOException $e) {
-			$db->rollBack();
-			throw $e;
-		}
-	}
+        try {
+            $db->beginTransaction();
+            $query = '
+                UPDATE
+                    `mail_users`
+                SET
+                    `status` = ?, `mail_auto_respond` = ?, `mail_auto_respond_text` = ?
+                WHERE
+                    `mail_id` = ?
+            ';
+            exec_query($query, ['tochange', 1, $autoresponderMessage, $mailAccountId]);
+            delete_autoreplies_log_entries();
+            $db->commit();
+            send_request();
+            set_page_message(tr('Auto-responder successfully scheduled for activation.'), 'success');
+        } catch (PDOException $e) {
+            $db->rollBack();
+            throw $e;
+        }
+    }
 }
 
 /**
@@ -126,68 +106,72 @@ function client_ActivateAutoresponder($mailAccountId, $autoresponderMessage)
  */
 function client_generatePage($tpl, $mailAccountId)
 {
-	$query = "SELECT `mail_auto_respond_text`, `mail_acc` FROM `mail_users` WHERE `mail_id` = ?";
-	$stmt = exec_query($query, $mailAccountId);
-	$tpl->assign('AUTORESPONDER_MESSAGE', tohtml($stmt->fields['mail_auto_respond_text']));
+    $query = "SELECT `mail_auto_respond_text`, `mail_acc` FROM `mail_users` WHERE `mail_id` = ?";
+    $stmt = exec_query($query, $mailAccountId);
+
+    if (!$stmt->rowCount()) {
+        showBadRequestErrorPage();
+    }
+
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $tpl->assign('AUTORESPONDER_MESSAGE', tohtml($row['mail_auto_respond_text']));
 }
 
 /***********************************************************************************************************************
  * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 if (customerHasFeature('mail') && (isset($_REQUEST['mail_account_id']) && is_numeric($_REQUEST['mail_account_id']))) {
-	$mailAccountId = intval($_REQUEST['mail_account_id']);
+    $mailAccountId = intval($_REQUEST['mail_account_id']);
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    if (client_checkMailAccountOwner($mailAccountId)) {
+        if (!isset($_POST['mail_account_id'])) {
+            $tpl = new \iMSCP\Core\Template\TemplateEngine();
+            $tpl->define_dynamic(
+                [
+                    'layout' => 'shared/layouts/ui.tpl',
+                    'page' => 'client/mail_autoresponder.tpl',
+                    'page_message' => 'layout'
+                ]
+            );
 
-	if (client_checkMailAccountOwner($mailAccountId)) {
-		if (!isset($_POST['mail_account_id'])) {
-			$tpl = new \iMSCP\Core\Template\TemplateEngine();
-			$tpl->define_dynamic(
-				array(
-					'layout' => 'shared/layouts/ui.tpl',
-					'page' => 'client/mail_autoresponder.tpl',
-					'page_message' => 'layout'
-				)
-			);
+            $tpl->assign(
+                [
+                    'TR_PAGE_TITLE' => tr('Client / Email / Overview / Enable Auto Responder'),
+                    'TR_AUTORESPONDER_MESSAGE' => tr('Please enter your auto-responder message below'),
+                    'TR_ACTION' => tr('Activate'),
+                    'TR_CANCEL' => tr('Cancel'),
+                    'MAIL_ACCOUNT_ID' => $mailAccountId
+                ]
+            );
 
-			$tpl->assign(
-				array(
-					'TR_PAGE_TITLE' => tr('Client / Email / Overview / Enable Auto Responder'),
-					'TR_AUTORESPONDER_MESSAGE' => tr('Please enter your auto-responder message below'),
-					'TR_ACTION' => tr('Activate'),
-					'TR_CANCEL' => tr('Cancel'),
-					'MAIL_ACCOUNT_ID' => $mailAccountId
-				)
-			);
+            generateNavigation($tpl);
+            client_generatePage($tpl, $mailAccountId);
+            generatePageMessage($tpl);
 
-			generateNavigation($tpl);
-			client_generatePage($tpl, $mailAccountId, !isset($_POST['uaction']));
-			generatePageMessage($tpl);
+            $tpl->parse('LAYOUT_CONTENT', 'page');
+            \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                \iMSCP\Core\Events::onClientScriptEnd, null, ['templateEngine' => $tpl]
+            );
+            $tpl->prnt();
 
-			$tpl->parse('LAYOUT_CONTENT', 'page');
-
-			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-
-			$tpl->prnt();
-
-			unsetMessages();
-		} elseif (isset($_POST['autoresponder_message'])) {
-			client_ActivateAutoresponder($mailAccountId, $_POST['autoresponder_message']);
-			redirectTo('mail_accounts.php');
-		} else {
-			showBadRequestErrorPage();
-		}
-	} else {
-		showBadRequestErrorPage();
-	}
+            unsetMessages();
+        } elseif (isset($_POST['autoresponder_message'])) {
+            client_ActivateAutoresponder($mailAccountId, $_POST['autoresponder_message']);
+            redirectTo('mail_accounts.php');
+        } else {
+            showBadRequestErrorPage();
+        }
+    } else {
+        showBadRequestErrorPage();
+    }
 } else {
-	showBadRequestErrorPage();
+    showBadRequestErrorPage();
 }

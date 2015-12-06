@@ -25,13 +25,15 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+/***********************************************************************************************************************
+ * Main
+ */
+
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
-
 customerHasFeature('protected_areas') or showBadRequestErrorPage();
 
 /**
@@ -39,42 +41,27 @@ customerHasFeature('protected_areas') or showBadRequestErrorPage();
  */
 
 if (isset($_GET['id']) && $_GET['id'] !== '') {
+    $id = intval($_GET['id']);
+    $domainId = get_user_domain_id($_SESSION['user_id']);
+    $stmt = exec_query('SELECT `status` FROM `htaccess` WHERE `id` = ? AND `dmn_id` = ?', [$id, $domainId]);
 
-	$id = $_GET['id'];
-	$delete_status = 'todelete';
-	$dmn_id = get_user_domain_id($_SESSION['user_id']);
+    if (!$stmt->rowCount()) {
+        showBadRequestErrorPage();
+    }
 
-	// let's see the status of this thing
-	$query = "SELECT `status` FROM `htaccess` WHERE `id` = ? AND `dmn_id` = ?";
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-	$rs = exec_query($query, array($id, $dmn_id));
-	$status = $rs->fields['status'];
-	$ok_status = 'ok';
+    if ($row['status'] !== 'ok') {
+        set_page_message(tr("Protected area status should be 'OK' if you want to delete it."), 'error');
+        redirectTo('protected_areas.php');
+    }
 
-	if ($status !== $ok_status) {
-		set_page_message(tr("Protected area status should be 'OK' if you want to delete it."), 'error');
-		redirectTo('protected_areas.php');
-	}
-
-	// TODO use prepared statement for $delete_status
-	$query = "
-        UPDATE
-            `htaccess`
-        SET
-            `status` = '$delete_status'
-        WHERE
-            `id` = ?
-        AND
-            `dmn_id` = ?
-    ";
-
-	$rs = exec_query($query, array($id, $dmn_id));
-	send_request();
-
-	write_log($_SESSION['user_logged'].": deleted protected area with ID: ".$_GET['id'], E_USER_NOTICE);
-	set_page_message(tr('Protected area successfully scheduled for deletion.'), 'success');
-	redirectTo('protected_areas.php');
-} else {
-	set_page_message(tr('You do not have sufficient permissions to perform this operation.'), 'error');
-	redirectTo('protected_areas.php');
+    exec_query("UPDATE `htaccess` SET `status` = 'todelete' WHERE `id` = ? AND `dmn_id` = ?", [$id, $domainId]);
+    send_request();
+    write_log($_SESSION['user_logged'] . ": deleted protected area with ID: " . $_GET['id'], E_USER_NOTICE);
+    set_page_message(tr('Protected area successfully scheduled for deletion.'), 'success');
+    redirectTo('protected_areas.php');
 }
+
+set_page_message(tr('You do not have sufficient permissions to perform this operation.'), 'error');
+redirectTo('protected_areas.php');

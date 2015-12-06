@@ -25,13 +25,12 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-/************************************************************************************
- * Main script
+/***********************************************************************************************************************
+ * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
-require_once LIBRARY_PATH . '/Functions/Tickets.php';
+require '../../application.php';
+require 'module/iMSCP/Core/src/Functions/Tickets.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
@@ -39,51 +38,50 @@ check_login('user');
 
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-// If the feature is disabled, redirects in silent way
 if (!customerHasFeature('support')) {
     showBadRequestErrorPage();
 } elseif (isset($_GET['ticket_id']) && !empty($_GET['ticket_id'])) {
-    closeTicket((int)$_GET['ticket_id']);
+    closeTicket(intval($_GET['ticket_id']));
 }
 
 if (isset($_GET['psi'])) {
-    $start = $_GET['psi'];
+    $start = intval($_GET['psi']);
 } else {
     $start = 0;
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
 $tpl->define_dynamic('layout', 'shared/layouts/ui.tpl');
-$tpl->define_dynamic(
-	array(
-		 'page' => 'client/ticket_system.tpl',
-		 'page_message' => 'layout',
-		 'tickets_list' => 'page',
-		 'tickets_item' => 'tickets_list',
-		 'scroll_prev_gray' => 'page',
-		 'scroll_prev' => 'page',
-		 'scroll_next_gray' => 'page',
-		 'scroll_next' => 'page'));
+$tpl->define_dynamic([
+    'page' => 'client/ticket_system.tpl',
+    'page_message' => 'layout',
+    'tickets_list' => 'page',
+    'tickets_item' => 'tickets_list',
+    'scroll_prev_gray' => 'page',
+    'scroll_prev' => 'page',
+    'scroll_next_gray' => 'page',
+    'scroll_next' => 'page'
+]);
 
-$tpl->assign(
-	array(
-		 'TR_PAGE_TITLE' => tr('Client / Support / Open Tickets'),
-		 'TR_TICKET_STATUS' => tr('Status'),
-		 'TR_TICKET_FROM' => tr('From'),
-		 'TR_TICKET_SUBJECT' => tr('Subject'),
-		 'TR_TICKET_URGENCY' => tr('Priority'),
-		 'TR_TICKET_LAST_ANSWER_DATE' => tr('Last reply date'),
-		 'TR_TICKET_ACTIONS' => tr('Actions'),
-		 'TR_TICKET_DELETE' => tr('Delete'),
-		 'TR_TICKET_CLOSE' => tr('Close'),
-		 'TR_TICKET_READ_LINK' => tr('Read ticket'),
-		 'TR_TICKET_DELETE_LINK' => tr('Delete ticket'),
-		 'TR_TICKET_CLOSE_LINK' => tr('Close ticket'),
-		 'TR_TICKET_DELETE_ALL' => tr('Delete all tickets'),
-		 'TR_TICKETS_DELETE_MESSAGE' => tr("Are you sure you want to delete the '%s' ticket?", '%s'),
-		 'TR_TICKETS_DELETE_ALL_MESSAGE' => tr('Are you sure you want to delete all tickets?'),
-		 'TR_PREVIOUS' => tr('Previous'),
-		 'TR_NEXT' => tr('Next')));
+$tpl->assign([
+    'TR_PAGE_TITLE' => tr('Client / Support / Open Tickets'),
+    'TR_TICKET_STATUS' => tr('Status'),
+    'TR_TICKET_FROM' => tr('From'),
+    'TR_TICKET_SUBJECT' => tr('Subject'),
+    'TR_TICKET_URGENCY' => tr('Priority'),
+    'TR_TICKET_LAST_ANSWER_DATE' => tr('Last reply date'),
+    'TR_TICKET_ACTIONS' => tr('Actions'),
+    'TR_TICKET_DELETE' => tr('Delete'),
+    'TR_TICKET_CLOSE' => tr('Close'),
+    'TR_TICKET_READ_LINK' => tr('Read ticket'),
+    'TR_TICKET_DELETE_LINK' => tr('Delete ticket'),
+    'TR_TICKET_CLOSE_LINK' => tr('Close ticket'),
+    'TR_TICKET_DELETE_ALL' => tr('Delete all tickets'),
+    'TR_TICKETS_DELETE_MESSAGE' => tr("Are you sure you want to delete the '%s' ticket?", '%s'),
+    'TR_TICKETS_DELETE_ALL_MESSAGE' => tr('Are you sure you want to delete all tickets?'),
+    'TR_PREVIOUS' => tr('Previous'),
+    'TR_NEXT' => tr('Next')
+]);
 
 
 generateNavigation($tpl);
@@ -91,7 +89,9 @@ generateTicketList($tpl, $_SESSION['user_id'], $start, $cfg['DOMAIN_ROWS_PER_PAG
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

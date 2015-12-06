@@ -25,104 +25,87 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+/***********************************************************************************************************************
+ * Functions
+ */
+
+/**
+ * Generate htaccess entries
+ *
+ * @param iMSCP\Core\Template\TemplateEngine $tpl
+ * @param int $domainId Customer main domain identifier
+ * @return void
+ */
+function gen_htaccess_entries($tpl, $domainId)
+{
+    $stmt = exec_query('SELECT * FROM `htaccess` WHERE `dmn_id` = ?', $domainId);
+
+    if (!$stmt->rowCount()) {
+        $tpl->assign('PROTECTED_AREAS', '');
+        set_page_message(tr('You do not have protected areas.'), 'static_info');
+        return;
+    }
+
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $tpl->assign([
+            'AREA_NAME' => tohtml($row['auth_name']),
+            'JS_AREA_NAME' => addslashes($row['auth_name']),
+            'AREA_PATH' => tohtml($row['path']),
+            'PID' => $row['id'],
+            'STATUS' => translate_dmn_status($row['status'])
+        ]);
+        $tpl->parse('DIR_ITEM', '.dir_item');
+    }
+}
+
+/***********************************************************************************************************************
+ * Main
+ */
+
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
-
 customerHasFeature('protected_areas') or showBadRequestErrorPage();
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'client/protected_areas.tpl',
-		'page_message' => 'layout',
-		'dir_item' => 'page',
-		'action_link' => 'page',
-		'protected_areas' => 'page'
-	)
-);
-
-$tpl->assign('TR_PAGE_TITLE', tr('Client / Webtools / Protected Areas'));
-
-/**
- * @param iMSCP\Core\Template\TemplateEngine $tpl
- * @param $dmn_id
- * @return void
- */
-function gen_htaccess_entries($tpl, &$dmn_id)
-{
-	$query = "SELECT * FROM `htaccess` WHERE `dmn_id` = ?";
-	$rs = exec_query($query, $dmn_id);
-
-	if (!$rs->rowCount()) {
-		$tpl->assign('PROTECTED_AREAS', '');
-		set_page_message(tr('You do not have protected areas.'), 'static_info');
-	} else {
-		$counter = 0;
-		while (!$rs->EOF) {
-			$tpl->assign('CLASS', ($counter % 2 == 0) ? 'content' : 'content2');
-
-			$id = $rs->fields['id'];
-			$user_id = $rs->fields['user_id'];
-			$group_id = $rs->fields['group_id'];
-			$status = $rs->fields['status'];
-			$path = $rs->fields['path'];
-			$auth_name = $rs->fields['auth_name'];
-
-			$tpl->assign(
-				array(
-					'AREA_NAME' => tohtml($auth_name),
-					'JS_AREA_NAME' => addslashes($auth_name),
-					'AREA_PATH' => tohtml($path),
-					'PID' => $id,
-					'STATUS' => translate_dmn_status($status)
-				)
-			);
-			$tpl->parse('DIR_ITEM', '.dir_item');
-			$rs->moveNext();
-			$counter++;
-		}
-	}
-}
+$tpl->define_dynamic([
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'client/protected_areas.tpl',
+    'page_message' => 'layout',
+    'dir_item' => 'page',
+    'action_link' => 'page',
+    'protected_areas' => 'page'
+]);
+$tpl->assign([
+    'TR_PAGE_TITLE' => tr('Client / Webtools / Protected Areas'),
+    'TR_HTACCESS' => tr('Protected areas'),
+    'TR_DIRECTORY_TREE' => tr('Directory tree'),
+    'TR_DIRS' => tr('Name'),
+    'TR__ACTION' => tr('Action'),
+    'TR_MANAGE_USRES' => tr('Manage users and groups'),
+    'TR_USERS' => tr('User'),
+    'TR_USERNAME' => tr('Username'),
+    'TR_ADD_USER' => tr('Add user'),
+    'TR_GROUPNAME' => tr('Group name'),
+    'TR_GROUP_MEMBERS' => tr('Group members'),
+    'TR_ADD_GROUP' => tr('Add group'),
+    'TR_EDIT' => tr('Edit'),
+    'TR_GROUP' => tr('Group'),
+    'TR_DELETE' => tr('Delete'),
+    'TR_MESSAGE_DELETE' => tr('Are you sure you want to delete %s?', '%s'),
+    'TR_STATUS' => tr('Status'),
+    'TR_ADD_AREA' => tr('Add new protected area')]);
 
 generateNavigation($tpl);
-
-$dmn_id = get_user_domain_id($_SESSION['user_id']);
-
-gen_htaccess_entries($tpl, $dmn_id);
-
-$tpl->assign(
-	array(
-		'TR_HTACCESS' => tr('Protected areas'),
-		'TR_DIRECTORY_TREE' => tr('Directory tree'),
-		'TR_DIRS' => tr('Name'),
-		'TR__ACTION' => tr('Action'),
-		'TR_MANAGE_USRES' => tr('Manage users and groups'),
-		'TR_USERS' => tr('User'),
-		'TR_USERNAME' => tr('Username'),
-		'TR_ADD_USER' => tr('Add user'),
-		'TR_GROUPNAME' => tr('Group name'),
-		'TR_GROUP_MEMBERS' => tr('Group members'),
-		'TR_ADD_GROUP' => tr('Add group'),
-		'TR_EDIT' => tr('Edit'),
-		'TR_GROUP' => tr('Group'),
-		'TR_DELETE' => tr('Delete'),
-		'TR_MESSAGE_DELETE' => tr('Are you sure you want to delete %s?', '%s'),
-		'TR_STATUS' => tr('Status'),
-		'TR_ADD_AREA' => tr('Add new protected area')));
-
+gen_htaccess_entries($tpl, get_user_domain_id($_SESSION['user_id']));
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

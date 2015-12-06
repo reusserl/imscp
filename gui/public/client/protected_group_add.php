@@ -25,110 +25,86 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-/******************************************************************
- * Script functions
+/***********************************************************************************************************************
+ * Functions
  */
 
 /**
- * Adds Htaccess group.
+ * Adds Htaccess group
  *
  * @param int $domainId Domain unique identifier
  * @çeturn void
  */
 function client_addHtaccessGroup($domainId)
 {
-	if (isset($_POST['uaction']) && $_POST['uaction'] == 'add_group') {
-		// we have to add the group
-		if (isset($_POST['groupname'])) {
-			if (!validates_username($_POST['groupname'])) {
-				set_page_message(tr('Invalid group name!'), 'error');
-				return;
-			}
+    if (isset($_POST['uaction']) && $_POST['uaction'] == 'add_group') {
+        if (isset($_POST['groupname'])) {
+            if (!validates_username($_POST['groupname'])) {
+                set_page_message(tr('Invalid group name.'), 'error');
+                return;
+            }
 
-			$groupname = $_POST['groupname'];
+            $groupname = clean_input($_POST['groupname']);
+            $stmt = exec_query('SELECT `id` FROM`htaccess_groups` WHERE `ugroup` = ? AND `dmn_id` = ?', [
+                $groupname, $domainId
+            ]);
 
-			$query = "
-				SELECT
-					`id`
-				FROM
-					`htaccess_groups`
-				WHERE
-					`ugroup` = ?
-				AND
-					`dmn_id` = ?
-			";
-			$rs = exec_query($query, array($groupname, $domainId));
+            if (!$stmt->rowCount()) {
+                exec_query('INSERT INTO `htaccess_groups` (`dmn_id`, `ugroup`, `status`) VALUES (?, ?, ?)', [
+                    $domainId, $groupname, 'toadd'
+                ]);
+                send_request();
+                set_page_message(tr('Htaccess group successfully scheduled for addition.'), 'success');
+                write_log("{$_SESSION['user_logged']}: added htaccess group: $groupname", E_USER_NOTICE);
+                redirectTo('protected_user_manage.php');
+            }
 
-			if ($rs->rowCount() == 0) {
-				$change_status = 'toadd';
+            set_page_message(tr('This htaccess group already exists.'), 'error');
+            return;
+        }
 
-				$query = "
-					INSERT INTO `htaccess_groups` (
-					    `dmn_id`, `ugroup`, `status`
-					) VALUES (
-					    ?, ?, ?
-					)
-				";
-				exec_query($query, array($domainId, $groupname, $change_status));
-
-				send_request();
-				set_page_message(tr('Htaccess group successfully scheduled for addition.'), 'success');
-
-				$admin_login = $_SESSION['user_logged'];
-				write_log("$admin_login: added htaccess group: $groupname", E_USER_NOTICE);
-				redirectTo('protected_user_manage.php');
-			} else {
-				set_page_message(tr('This htaccess group already exists.'), 'error');
-				return;
-			}
-		} else {
-			set_page_message(tr('Invalid htaccess group name.'), 'error');
-			return;
-		}
-	} else {
-		return;
-	}
+        set_page_message(tr('Invalid htaccess group name.'), 'error');
+        return;
+    }
 }
 
-/************************************************************************
- * Main script
+/***********************************************************************************************************************
+ * Main
  */
 
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
-
 customerHasFeature('protected_areas') or showBadRequestErrorPage();
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'client/puser_gadd.tpl',
-		'page_message' => 'layout',
-		'usr_msg' => 'page',
-		'grp_msg' => 'page',
-		'pusres' => 'page',
-		'pgroups' => 'page'));
-
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Client / Webtools / Protected Areas / Manage Users and Groups / Add Group'),
-		'TR_HTACCESS_GROUP' => tr('Htaccess group'),
-		'TR_GROUPNAME' => tr('Group name'),
-		'TR_ADD_GROUP' => tr('Add'),
-		'TR_CANCEL' => tr('Cancel')));
+$tpl->define_dynamic([
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'client/puser_gadd.tpl',
+    'page_message' => 'layout',
+    'usr_msg' => 'page',
+    'grp_msg' => 'page',
+    'pusres' => 'page',
+    'pgroups' => 'page'
+]);
+$tpl->assign([
+    'TR_PAGE_TITLE' => tr('Client / Webtools / Protected Areas / Manage Users and Groups / Add Group'),
+    'TR_HTACCESS_GROUP' => tr('Htaccess group'),
+    'TR_GROUPNAME' => tr('Group name'),
+    'TR_ADD_GROUP' => tr('Add'),
+    'TR_CANCEL' => tr('Cancel')
+]);
 
 generateNavigation($tpl);
 client_addHtaccessGroup(get_user_domain_id($_SESSION['user_id']));
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

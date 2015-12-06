@@ -25,8 +25,11 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+/***********************************************************************************************************************
+ * Main
+ */
+
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
@@ -35,30 +38,29 @@ check_login('user');
 customerHasFeature('custom_dns_records') or showBadRequestErrorPage();
 
 if (isset($_GET['id'])) {
-	$dnsRecordId = intval($_GET['id']);
+    $dnsRecordId = intval($_GET['id']);
+    $stmt = exec_query(
+        '
+            UPDATE
+                domain_dns
+            INNER JOIN
+                domain USING(domain_id)
+            SET
+                domain_dns_status = ?
+            WHERE
+                domain_dns_id = ?
+            AND
+                domain_admin_id = ?
+        ',
+        ['todelete', $dnsRecordId, $_SESSION['user_id']]
+    );
 
-	$stmt = exec_query(
-		'
-			UPDATE
-				domain_dns
-			INNER JOIN
-				domain USING(domain_id)
-			SET
-				domain_dns_status = ?
-			WHERE
-				domain_dns_id = ?
-			AND
-				domain_admin_id = ?
-		',
-		array('todelete', $dnsRecordId, $_SESSION['user_id'])
-	);
-
-	if($stmt->rowCount()) {
-		send_request();
-		write_log($_SESSION['user_logged'] . ": scheduled deletion of custom DNS record with ID $dnsRecordId", E_USER_NOTICE);
-		set_page_message(tr('Custom DNS record successfully scheduled for deletion.'), 'success');
-		redirectTo('domains_manage.php');
-	}
+    if ($stmt->rowCount()) {
+        send_request();
+        write_log($_SESSION['user_logged'] . ": scheduled deletion of custom DNS record with ID $dnsRecordId", E_USER_NOTICE);
+        set_page_message(tr('Custom DNS record successfully scheduled for deletion.'), 'success');
+        redirectTo('domains_manage.php');
+    }
 }
 
 showBadRequestErrorPage();

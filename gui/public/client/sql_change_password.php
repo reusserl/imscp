@@ -38,21 +38,20 @@
  */
 function client_generatePage($tpl, $sqlUserId)
 {
-	$stmt = exec_query('SELECT sqlu_name, sqlu_host FROM sql_user WHERE sqlu_id = ?', $sqlUserId);
+    $stmt = exec_query('SELECT sqlu_name, sqlu_host FROM sql_user WHERE sqlu_id = ?', $sqlUserId);
 
-	if($stmt->rowCount()) {
-		$row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($stmt->rowCount()) {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $tpl->assign([
+            'USER_NAME' => tohtml($row['sqlu_name']),
+            'ID' => $sqlUserId
+        ]);
 
-		$tpl->assign(array(
-			'USER_NAME' => tohtml($row['sqlu_name']),
-			'ID' => $sqlUserId
-		));
+        return [$row['sqlu_name'], $row['sqlu_host']];
+    }
 
-		return array($row['sqlu_name'], $row['sqlu_host']);
-	}
-
-	showBadRequestErrorPage();
-	exit;
+    showBadRequestErrorPage();
+    exit;
 }
 
 /**
@@ -66,84 +65,87 @@ function client_generatePage($tpl, $sqlUserId)
 function client_updateSqlUserPassword($sqlUserId, $sqlUserName, $sqlUserHost)
 {
 
-	if (!isset($_POST['uaction'])) {
-		return;
-	}
+    if (!isset($_POST['uaction'])) {
+        return;
+    }
 
-	if (empty($_POST['password'])) {
-		set_page_message(tr('Please enter a password.'), 'error');
-		return;
-	}
+    if (empty($_POST['password'])) {
+        set_page_message(tr('Please enter a password.'), 'error');
+        return;
+    }
 
-	if (empty($_POST['password_confirmation'])) {
-		set_page_message(tr('Please confirm the password.'), 'error');
-		return;
-	}
+    if (empty($_POST['password_confirmation'])) {
+        set_page_message(tr('Please confirm the password.'), 'error');
+        return;
+    }
 
-	$password = clean_input($_POST['password']);
-	$passwordConfirmation = clean_input($_POST['password_confirmation']);
+    $password = clean_input($_POST['password']);
+    $passwordConfirmation = clean_input($_POST['password_confirmation']);
 
-	if($password === '') {
-		set_page_message(tr("Password cannot be empty."), 'error');
-		return;
-	}
+    if ($password === '') {
+        set_page_message(tr("Password cannot be empty."), 'error');
+        return;
+    }
 
-	if ($password !== $passwordConfirmation) {
-		set_page_message(tr("Passwords do not match."), 'error');
-		return;
-	}
+    if ($password !== $passwordConfirmation) {
+        set_page_message(tr("Passwords do not match."), 'error');
+        return;
+    }
 
-	if (!checkPasswordSyntax($password)) {
-		return;
-	}
+    if (!checkPasswordSyntax($password)) {
+        return;
+    }
 
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditSqlUser, array('sqlUserId' => $sqlUserId));
-	exec_query('SET PASSWORD FOR ?@? = PASSWORD(?)', array($sqlUserName, $sqlUserHost, $password));
-	set_page_message(tr('SQL user password successfully updated.'), 'success');
-	write_log(
-		sprintf("%s updated %s@%s SQL user password.", $_SESSION['user_logged'], $sqlUserName, $sqlUserHost),
-		E_USER_NOTICE
-	);
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditSqlUser, array('sqlUserId' => $sqlUserId));
-	redirectTo('sql_manage.php');
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditSqlUser, null, [
+        'sqlUserId' => $sqlUserId
+    ]);
+
+    exec_query('SET PASSWORD FOR ?@? = PASSWORD(?)', [$sqlUserName, $sqlUserHost, $password]);
+    set_page_message(tr('SQL user password successfully updated.'), 'success');
+    write_log(sprintf("%s updated %s@%s SQL user password.", $_SESSION['user_logged'], $sqlUserName, $sqlUserHost), E_USER_NOTICE);
+
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditSqlUser, null, [
+        'sqlUserId' => $sqlUserId
+    ]);
+    redirectTo('sql_manage.php');
 }
 
 /***********************************************************************************************************************
  * Main
  */
 
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
+
 check_login('user');
 customerHasFeature('sql') or showBadRequestErrorPage();
 
 if (isset($_REQUEST['id'])) {
-	$sqlUserId = intval($_REQUEST['id']);
+    $sqlUserId = intval($_REQUEST['id']);
 
-	if(!check_user_sql_perms($sqlUserId))  {
-		showBadRequestErrorPage();
-	}
+    if (!check_user_sql_perms($sqlUserId)) {
+        showBadRequestErrorPage();
+    }
 } else {
-	showBadRequestErrorPage();
-	exit;
+    showBadRequestErrorPage();
+    exit;
 }
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(array(
-	'layout' => 'shared/layouts/ui.tpl',
-	'page' => 'client/sql_change_password.tpl',
-	'page_message' => 'layout'
-));
-
-$tpl->assign(array(
-	'TR_PAGE_TITLE' => tr('Client / Databases / Overview / Update SQL User Password'),
-	'TR_DB_USER' => tr('User'),
-	'TR_PASSWORD' => tr('Password'),
-	'TR_PASSWORD_CONFIRMATION' => tr('Password confirmation'),
-	'TR_CHANGE' => tr('Update'),
-	'TR_CANCEL' => tr('Cancel')
-));
+$tpl->define_dynamic([
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'client/sql_change_password.tpl',
+    'page_message' => 'layout'
+]);
+$tpl->assign([
+    'TR_PAGE_TITLE' => tr('Client / Databases / Overview / Update SQL User Password'),
+    'TR_DB_USER' => tr('User'),
+    'TR_PASSWORD' => tr('Password'),
+    'TR_PASSWORD_CONFIRMATION' => tr('Password confirmation'),
+    'TR_CHANGE' => tr('Update'),
+    'TR_CANCEL' => tr('Cancel')
+]);
 
 list($sqlUserName, $sqlUserhost) = client_generatePage($tpl, $sqlUserId);
 
@@ -152,6 +154,9 @@ generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();
+
 unsetMessages();

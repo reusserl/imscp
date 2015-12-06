@@ -31,35 +31,35 @@
  */
 function _client_getAliasData($domainAliasId)
 {
-	static $domainAliasData = null;
+    static $domainAliasData = null;
 
-	if (null === $domainAliasData) {
-		$mainDmnProps = get_domain_default_props($_SESSION['user_id']);
-		$domainId = $mainDmnProps['domain_id'];
+    if (null === $domainAliasData) {
+        $mainDmnProps = get_domain_default_props($_SESSION['user_id']);
+        $domainId = $mainDmnProps['domain_id'];
 
-		$query = "
-			SELECT
-				`alias_name`, `url_forward` AS `forward_url`, `type_forward` AS `forward_type`
-			FROM
-				`domain_aliasses`
-			WHERE
-				`alias_id` = ?
-			AND
-				`domain_id` = ?
-			AND
-				`alias_status` = ?
-		";
-		$stmt = exec_query($query, array($domainAliasId, $domainId, 'ok'));
+        $query = "
+            SELECT
+                `alias_name`, `url_forward` AS `forward_url`, `type_forward` AS `forward_type`
+            FROM
+                `domain_aliasses`
+            WHERE
+                `alias_id` = ?
+            AND
+                `domain_id` = ?
+            AND
+                `alias_status` = ?
+        ";
+        $stmt = exec_query($query, [$domainAliasId, $domainId, 'ok']);
 
-		if (!$stmt->rowCount()) {
-			return false;
-		}
+        if (!$stmt->rowCount()) {
+            return false;
+        }
 
-		$domainAliasData = $stmt->fetch(PDO::FETCH_ASSOC);
-		$domainAliasData['alias_name_utf8'] = decode_idna($domainAliasData['alias_name']);
-	}
+        $domainAliasData = $stmt->fetch(PDO::FETCH_ASSOC);
+        $domainAliasData['alias_name_utf8'] = decode_idna($domainAliasData['alias_name']);
+    }
 
-	return $domainAliasData;
+    return $domainAliasData;
 }
 
 /**
@@ -70,55 +70,54 @@ function _client_getAliasData($domainAliasId)
  */
 function client_generatePage($tpl)
 {
-	if (isset($_GET['id'])) {
-		$domainAliasId = clean_input($_GET['id']);
+    if (isset($_GET['id'])) {
+        $domainAliasId = clean_input($_GET['id']);
 
-		if (!($domainAliasData = _client_getAliasData($domainAliasId))) {
-			showBadRequestErrorPage();
-		}
+        if (!($domainAliasData = _client_getAliasData($domainAliasId))) {
+            showBadRequestErrorPage();
+        }
 
-		if (empty($_POST)) {
-			if ($domainAliasData['forward_url'] != 'no') {
-				$urlForwarding = true;
-				$uri = iMSCP_Uri_Redirect::fromString($domainAliasData['forward_url']);
-				$forwardUrlScheme = $uri->getScheme();
-				$forwardUrl = substr($uri->getUri(), strlen($forwardUrlScheme) + 3);
-				$forwardType = $domainAliasData['forward_type'];
-			} else {
-				$urlForwarding = false;
-				$forwardUrlScheme = 'http://';
-				$forwardUrl = '';
-				$forwardType = '302';
-			}
-		} else {
-			$urlForwarding = (isset($_POST['url_forwarding']) && $_POST['url_forwarding'] == 'yes') ? true : false;
-			$forwardUrlScheme = (isset($_POST['forward_url_scheme'])) ? $_POST['forward_url_scheme'] : 'http://';
-			$forwardUrl = isset($_POST['forward_url']) ? $_POST['forward_url'] : '';
-			$forwardType = isset($_POST['forward_type']) && in_array($_POST['forward_type'], array('301', '302', '303', '307'), true)
-				? $_POST['forward_type'] : '302';
-		}
+        if (empty($_POST)) {
+            if ($domainAliasData['forward_url'] != 'no') {
+                $urlForwarding = true;
+                $uri = new \Zend\Uri\Uri($domainAliasData['forward_url']);
+                $forwardUrlScheme = $uri->getScheme();
+                $forwardUrl = substr($uri->toString(), strlen($forwardUrlScheme) + 3);
+                $forwardType = $domainAliasData['forward_type'];
+            } else {
+                $urlForwarding = false;
+                $forwardUrlScheme = 'http://';
+                $forwardUrl = '';
+                $forwardType = '302';
+            }
+        } else {
+            $urlForwarding = (isset($_POST['url_forwarding']) && $_POST['url_forwarding'] == 'yes') ? true : false;
+            $forwardUrlScheme = (isset($_POST['forward_url_scheme'])) ? $_POST['forward_url_scheme'] : 'http://';
+            $forwardUrl = isset($_POST['forward_url']) ? $_POST['forward_url'] : '';
+            $forwardType = isset($_POST['forward_type']) && in_array($_POST['forward_type'], ['301', '302', '303', '307'], true)
+                ? $_POST['forward_type'] : '302';
+        }
 
-		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-		$checked = $cfg['HTML_CHECKED'];
-		$selected = $cfg['HTML_SELECTED'];
-
-		$tpl->assign(array(
-			'DOMAIN_ALIAS_ID' => $domainAliasId,
-			'DOMAIN_ALIAS_NAME' => tohtml($domainAliasData['alias_name_utf8']),
-			'FORWARD_URL_YES' => ($urlForwarding) ? $checked : '',
-			'FORWARD_URL_NO' => ($urlForwarding) ? '' : $checked,
-			'HTTP_YES' => ($forwardUrlScheme == 'http://') ? $selected : '',
-			'HTTPS_YES' => ($forwardUrlScheme == 'https://') ? $selected : '',
-			'FTP_YES' => ($forwardUrlScheme == 'ftp://') ? $selected : '',
-			'FORWARD_URL' => tohtml(decode_idna($forwardUrl)),
-			'FORWARD_TYPE_301' => ($forwardType == '301') ? $checked : '',
-			'FORWARD_TYPE_302' => ($forwardType == '302') ? $checked : '',
-			'FORWARD_TYPE_303' => ($forwardType == '303') ? $checked : '',
-			'FORWARD_TYPE_307' => ($forwardType == '307') ? $checked : ''
-		));
-	} else {
-		showBadRequestErrorPage();
-	}
+        $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+        $checked = $cfg['HTML_CHECKED'];
+        $selected = $cfg['HTML_SELECTED'];
+        $tpl->assign([
+            'DOMAIN_ALIAS_ID' => $domainAliasId,
+            'DOMAIN_ALIAS_NAME' => tohtml($domainAliasData['alias_name_utf8']),
+            'FORWARD_URL_YES' => ($urlForwarding) ? $checked : '',
+            'FORWARD_URL_NO' => ($urlForwarding) ? '' : $checked,
+            'HTTP_YES' => ($forwardUrlScheme == 'http://') ? $selected : '',
+            'HTTPS_YES' => ($forwardUrlScheme == 'https://') ? $selected : '',
+            'FTP_YES' => ($forwardUrlScheme == 'ftp://') ? $selected : '',
+            'FORWARD_URL' => tohtml(decode_idna($forwardUrl)),
+            'FORWARD_TYPE_301' => ($forwardType == '301') ? $checked : '',
+            'FORWARD_TYPE_302' => ($forwardType == '302') ? $checked : '',
+            'FORWARD_TYPE_303' => ($forwardType == '303') ? $checked : '',
+            'FORWARD_TYPE_307' => ($forwardType == '307') ? $checked : ''
+        ]);
+    } else {
+        showBadRequestErrorPage();
+    }
 }
 
 /**
@@ -128,126 +127,128 @@ function client_generatePage($tpl)
  */
 function client_editDomainAlias()
 {
-	if (isset($_GET['id'])) {
-		$domainAliasId = clean_input($_GET['id']);
+    if (isset($_GET['id'])) {
+        $domainAliasId = clean_input($_GET['id']);
 
-		if (($domainAliasData = _client_getAliasData($domainAliasId))) {
-			$forwardUrl = 'no';
-			$forwardType = null;
+        if (($domainAliasData = _client_getAliasData($domainAliasId))) {
+            $forwardUrl = 'no';
+            $forwardType = null;
 
-			if (
-				isset($_POST['url_forwarding']) && $_POST['url_forwarding'] == 'yes' &&
-				isset($_POST['forward_type']) && in_array($_POST['forward_type'], array('301', '302', '303', '307'), true)
-			) {
-				if (isset($_POST['forward_url_scheme']) && isset($_POST['forward_url'])) {
-					$forwardUrl = clean_input($_POST['forward_url_scheme']) . clean_input($_POST['forward_url']);
-					$forwardType = clean_input($_POST['forward_type']);
+            if (
+                isset($_POST['url_forwarding']) && $_POST['url_forwarding'] == 'yes' &&
+                isset($_POST['forward_type']) && in_array($_POST['forward_type'], ['301', '302', '303', '307'], true)
+            ) {
+                if (isset($_POST['forward_url_scheme']) && isset($_POST['forward_url'])) {
+                    $forwardUrl = clean_input($_POST['forward_url_scheme']) . clean_input($_POST['forward_url']);
+                    $forwardType = clean_input($_POST['forward_type']);
 
-					try {
-						try {
-							$uri = iMSCP_Uri_Redirect::fromString($forwardUrl);
-						} catch(Zend_Uri_Exception $e) {
-							throw new InvalidArgumentException(tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>"));
-						}
+                    try {
+                        try {
+                            $uri = new Zend\Uri\Uri($forwardUrl);
+                        } catch (InvalidArgumentException $e) {
+                            throw new InvalidArgumentException(tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>"));
+                        }
 
-						$uri->setHost(encode_idna($uri->getHost()));
+                        $uri->setHost(encode_idna($uri->getHost()));
+                        $uriPath = rtrim(preg_replace('#/+#', '/', $uri->getPath()), '/') . '/'; // normalize path
+                        $uri->setPath($uriPath);
 
-						$uriPath = rtrim(preg_replace('#/+#', '/', $uri->getPath()), '/') . '/'; // normalize path
-						$uri->setPath($uriPath);
+                        if ($uri->getHost() == $domainAliasData['alias_name'] && $uri->getPath() == '/') {
+                            throw new InvalidArgumentException(
+                                tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>") . ' ' .
+                                tr('Domain alias %s cannot be forwarded on itself.', "<strong>{$domainAliasData['alias_name_utf8']}</strong>")
+                            );
+                        }
 
-						if ($uri->getHost() == $domainAliasData['alias_name'] && $uri->getPath() == '/') {
-							throw new InvalidArgumentException(
-								tr('Forward URL %s is not valid.', "<strong>$forwardUrl</strong>") . ' ' .
-								tr('Domain alias %s cannot be forwarded on itself.', "<strong>{$domainAliasData['alias_name_utf8']}</strong>")
-							);
-						}
+                        $forwardUrl = $uri->toString();
+                    } catch (Exception $e) {
+                        set_page_message($e->getMessage(), 'error');
+                        return false;
+                    }
+                } else {
+                    showBadRequestErrorPage();
+                }
+            }
 
-						$forwardUrl = $uri->getUri();
-					} catch (Exception $e) {
-						set_page_message($e->getMessage(), 'error');
-						return false;
-					}
-				} else {
-					showBadRequestErrorPage();
-				}
-			}
+            \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                \iMSCP\Core\Events::onBeforeEditDomainAlias, null, [
+                'domainAliasId' => $domainAliasId,
+                'domainAliasName' => $domainAliasData['alias_name']
+            ]);
 
-			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeEditDomainAlias, array(
-				'domainAliasId' => $domainAliasId,
-				'domainAliasName' => $domainAliasData['alias_name']
-			));
+            exec_query(
+                'UPDATE `domain_aliasses` SET `url_forward` = ?, `type_forward` = ?, `alias_status` = ? WHERE `alias_id` = ?',
+                [$forwardUrl, $forwardType, 'tochange', $domainAliasId]
+            );
 
-			exec_query(
-				'UPDATE `domain_aliasses` SET `url_forward` = ?, `type_forward` = ?, `alias_status` = ? WHERE `alias_id` = ?',
-				array($forwardUrl, $forwardType, 'tochange', $domainAliasId)
-			);
+            \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                \iMSCP\Core\Events::onAfterEditDomainAlias, null, [
+                'domainAliasId' => $domainAliasId,
+                'domainAliasName' => $domainAliasData['alias_name']
+            ]);
 
-			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterEditDomainAlias, array(
-				'domainAliasId' => $domainAliasId,
-				'domainAliasName' => $domainAliasData['alias_name']
-			));
+            send_request();
+            write_log("{$_SESSION['user_logged']}: scheduled update of domain alias: {$domainAliasData['alias_name_utf8']}.", E_USER_NOTICE);
+        } else {
+            showBadRequestErrorPage();
+        }
+    } else {
+        showBadRequestErrorPage();
+    }
 
-			send_request();
-			write_log("{$_SESSION['user_logged']}: scheduled update of domain alias: {$domainAliasData['alias_name_utf8']}.", E_USER_NOTICE);
-		} else {
-			showBadRequestErrorPage();
-		}
-	} else {
-		showBadRequestErrorPage();
-	}
-
-	return true;
+    return true;
 }
 
 /***********************************************************************************************************************
  * Main
  */
 
-
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
+
 check_login('user');
 customerHasFeature('domain_aliases') or showBadRequestErrorPage();
 
 if (!empty($_POST) && client_editDomainAlias()) {
-	set_page_message(tr('Domain alias successfully scheduled for update.'), 'success');
-	redirectTo('domains_manage.php');
+    set_page_message(tr('Domain alias successfully scheduled for update.'), 'success');
+    redirectTo('domains_manage.php');
 } else {
-	$tpl = new \iMSCP\Core\Template\TemplateEngine();
-	$tpl->define_dynamic(array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'client/alias_edit.tpl',
-		'page_message' => 'layout'
-	));
+    $tpl = new \iMSCP\Core\Template\TemplateEngine();
+    $tpl->define_dynamic([
+        'layout' => 'shared/layouts/ui.tpl',
+        'page' => 'client/alias_edit.tpl',
+        'page_message' => 'layout'
+    ]);
+    $tpl->assign([
+        'TR_PAGE_TITLE' => tr('Client / Domains / Edit Domain Alias'),
+        'TR_DOMAIN_ALIAS' => tr('Domain alias'),
+        'TR_DOMAIN_ALIAS_NAME' => tr('Domain alias name'),
+        'TR_URL_FORWARDING' => tr('URL forwarding'),
+        'TR_FORWARD_TO_URL' => tr('Forward to URL'),
+        'TR_URL_FORWARDING_TOOLTIP' => tr('Allows to forward any request made to this domain alias to a specific URL.'),
+        'TR_YES' => tr('Yes'),
+        'TR_NO' => tr('No'),
+        'TR_HTTP' => 'http://',
+        'TR_HTTPS' => 'https://',
+        'TR_FTP' => 'ftp://',
+        'TR_FORWARD_TYPE' => tr('Forward type'),
+        'TR_301' => '301',
+        'TR_302' => '302',
+        'TR_303' => '303',
+        'TR_307' => '307',
+        'TR_UPDATE' => tr('Update'),
+        'TR_CANCEL' => tr('Cancel')
+    ]);
 
-	$tpl->assign(array(
-		'TR_PAGE_TITLE' => tr('Client / Domains / Edit Domain Alias'),
-		'TR_DOMAIN_ALIAS' => tr('Domain alias'),
-		'TR_DOMAIN_ALIAS_NAME' => tr('Domain alias name'),
-		'TR_URL_FORWARDING' => tr('URL forwarding'),
-		'TR_FORWARD_TO_URL' => tr('Forward to URL'),
-		'TR_URL_FORWARDING_TOOLTIP' => tr('Allows to forward any request made to this domain alias to a specific URL.'),
-		'TR_YES' => tr('Yes'),
-		'TR_NO' => tr('No'),
-		'TR_HTTP' => 'http://',
-		'TR_HTTPS' => 'https://',
-		'TR_FTP' => 'ftp://',
-		'TR_FORWARD_TYPE' => tr('Forward type'),
-		'TR_301' => '301',
-		'TR_302' => '302',
-		'TR_303' => '303',
-		'TR_307' => '307',
-		'TR_UPDATE' => tr('Update'),
-		'TR_CANCEL' => tr('Cancel')
-	));
+    generateNavigation($tpl);
+    client_generatePage($tpl);
+    generatePageMessage($tpl);
 
-	generateNavigation($tpl);
-	client_generatePage($tpl);
-	generatePageMessage($tpl);
-
-	$tpl->parse('LAYOUT_CONTENT', 'page');
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-	$tpl->prnt();
-	unsetMessages();
+    $tpl->parse('LAYOUT_CONTENT', 'page');
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+        'templateEngine' => $tpl
+    ]);
+    $tpl->prnt();
+    unsetMessages();
 }

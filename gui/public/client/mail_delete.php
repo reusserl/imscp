@@ -20,120 +20,115 @@
 
 /**
  * Schedule deletion of the given mail account
- *
- * @param int $mailId Mail account unique identifier
- * @param array $dmnProps Main domain properties
- * @return void
+ * /**
+ * @param $mailId
+ * @param $dmnProps
+ * @throws Exception
  */
 function client_deleteMailAccount($mailId, $dmnProps)
 {
-	$stmt = exec_query(
-		'SELECT `mail_addr` FROM `mail_users` WHERE `mail_id` = ? AND `domain_id` = ?',
-		array($mailId, $dmnProps['domain_id'])
-	);
+    $stmt = exec_query(
+        'SELECT `mail_addr` FROM `mail_users` WHERE `mail_id` = ? AND `domain_id` = ?',
+        [$mailId, $dmnProps['domain_id']]
+    );
 
-	if ($stmt->rowCount()) {
-		$mailAddr = $stmt->fields['mail_addr'];
-		$toDeleteStatus = 'todelete';
+    if ($stmt->rowCount()) {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $mailAddr = $row['mail_addr'];
+        $toDeleteStatus = 'todelete';
 
-		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeDeleteMail, array('mailId' => $mailId));
+        \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+            \iMSCP\Core\Events::onBeforeDeleteMail, null, ['mailId' => $mailId]
+        );
 
-		exec_query('UPDATE `mail_users` SET `status` = ? WHERE `mail_id` = ?', array($toDeleteStatus, $mailId));
+        exec_query('UPDATE `mail_users` SET `status` = ? WHERE `mail_id` = ?', [$toDeleteStatus, $mailId]);
+        exec_query(
+            '
+                UPDATE
+                    `mail_users`
+                SET
+                    `status` = ?
+                WHERE
+                    `mail_acc` = ? OR `mail_acc` LIKE ? OR `mail_acc` LIKE ? OR `mail_acc` LIKE ?
+            ',
+            [$toDeleteStatus, $mailAddr, "$mailAddr,%", "%,$mailAddr,%", "%,$mailAddr"]
+        );
+        delete_autoreplies_log_entries();
 
-		// Schedule deleltion of all catchall which belong to the mail account
-		exec_query(
-			'
-				UPDATE
-					`mail_users`
-				SET
-					`status` = ?
-				WHERE
-					`mail_acc` = ? OR `mail_acc` LIKE ? OR `mail_acc` LIKE ? OR `mail_acc` LIKE ?
-			',
-			array($toDeleteStatus, $mailAddr, "$mailAddr,%", "%,$mailAddr,%", "%,$mailAddr")
-		);
+        \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+            \iMSCP\Core\Events::onAfterDeleteMail, null, ['mailId' => $mailId]
+        );
 
-		delete_autoreplies_log_entries();
-
-		\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterDeleteMail, array('mailId' => $mailId));
-
-		set_page_message(
-			tr(
-				'Mail account %s successfully scheduled for deletion.',
-				'<strong>' . decode_idna($mailAddr) .'</strong>'
-			),
-			'success'
-		);
-	} else {
-		throw new Exception('Bad request.', 400);
-	}
+        set_page_message(tr('Mail account %s successfully scheduled for deletion.', '<strong>' . decode_idna($mailAddr) . '</strong>'), 'success');
+    } else {
+        showBadRequestErrorPage();
+    }
 }
 
 /***********************************************************************************************************************
  * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 if (customerHasFeature('mail') && isset($_REQUEST['id'])) {
-	$mainDmnProps = get_domain_default_props($_SESSION['user_id']);
+    $mainDmnProps = get_domain_default_props($_SESSION['user_id']);
+    $nbDeletedMails = 0;
+    $mailIds = (array)$_REQUEST['id'];
+    $mailId = null;
 
-	$nbDeletedMails = 0;
-	$mailIds = (array)$_REQUEST['id'];
+    if (!empty($mailIds)) {
+        /** @var \Doctrine\DBAL\Connection $db */
+        $db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
-	if (!empty($mailIds)) {
-		/** @var \Doctrine\DBAL\Connection $db */
-		$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
+        try {
+            $db->beginTransaction();
 
-		try {
-			$db->beginTransaction();
+            foreach ($mailIds as $mailId) {
+                $mailId = clean_input($mailId);
+                client_deleteMailAccount($mailId, $mainDmnProps);
+                $nbDeletedMails++;
+            }
 
-			foreach ($mailIds as $mailId) {
-				$mailId = clean_input($mailId);
-				client_deleteMailAccount($mailId, $mainDmnProps);
-				$nbDeletedMails++;
-			}
+            $db->commit();
+            send_request();
+            write_log(sprintf("{$_SESSION['user_logged']} deleted %d mail account(s)", $nbDeletedMails), E_USER_NOTICE);
+        } catch (PDOException $e) {
+            $db->rollBack();
 
-			$db->commit();
-			send_request();
-			write_log(sprintf("{$_SESSION['user_logged']} deleted %d mail account(s)", $nbDeletedMails), E_USER_NOTICE);
-		} catch (PDOException $e) {
-			$db->rollBack();
+            if (isset($_SESSION['pageMessages'])) {
+                unset($_SESSION['pageMessages']);
+            }
 
-			if (Zend_Session::namespaceIsset('pageMessages')) {
-				Zend_Session::namespaceUnset('pageMessages');
-			}
+            $errorMessage = $e->getMessage();
+            $code = $e->getCode();
 
-			$errorMessage = $e->getMessage();
-			$code = $e->getCode();
+            write_log(
+                sprintf(
+                    'An unexpected error occurred while attempting to delete mail account with ID %s: %s',
+                    $mailId,
+                    $errorMessage
+                ),
+                E_USER_ERROR
+            );
 
-			write_log(
-				sprintf(
-					'An unexpected error occurred while attempting to delete mail account with ID %s: %s',
-					$mailId,
-					$errorMessage
-				),
-				E_USER_ERROR
-			);
+            if ($code == 403) {
+                set_page_message(tr('Operation canceled: %s', $errorMessage), 'warning');
+            } elseif ($e->getCode() == 400) {
+                showBadRequestErrorPage();
+            } else {
+                set_page_message(tr('An unexpected error occurred. Please contact your reseller.'), 'error');
+            }
+        }
+    } else {
+        set_page_message(tr('You must select a least one mail account to delete.'), 'error');
+    }
 
-			if ($code == 403) {
-				set_page_message(tr('Operation canceled: %s', $errorMessage), 'warning');
-			} elseif ($e->getCode() == 400) {
-				showBadRequestErrorPage();
-			} else {
-				set_page_message(tr('An unexpected error occurred. Please contact your reseller.'), 'error');
-			}
-		}
-	} else {
-		set_page_message(tr('You must select a least one mail account to delete.'), 'error');
-	}
-
-	redirectTo('mail_accounts.php');
+    redirectTo('mail_accounts.php');
 } else {
-	showBadRequestErrorPage();
+    showBadRequestErrorPage();
 }

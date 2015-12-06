@@ -17,65 +17,63 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-/*******************************************************************************
- * Script functions
+/***********************************************************************************************************************
+ * Functions
  */
 
 /**
- * Generates page.
+ * Generates page
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine instance
  */
 function client_generatePage($tpl)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $query = "SELECT domain_created from admin where admin_id = ?";
+    $stmt = exec_query($query, (int)$_SESSION['user_id']);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-	$query = "SELECT domain_created from admin where admin_id = ?";
-	$stmt = exec_query($query, (int)$_SESSION['user_id']);
+    switch ($_SESSION['user_type']) {
+        case "user":
+            $trUserType = tr('User');
+            break;
+        case "reseller":
+            $trUserType = tr('Reseller');
+            break;
+        case "admin":
+            $trUserType = tr('Admin');
+            break;
+        default:
+            $trUserType = tr('Unknown user type');
+    }
 
-	switch($_SESSION['user_type']) {
-		case "user":
-			$trUserType = tr('User');
-			break;
-		case "reseller":
-			$trUserType = tr('Reseller');
-			break;
-		case "admin":
-			$trUserType = tr('Admin');
-			break;
-		default:
-			$trUserType = tr('Unknown user type');
-	}
-
-	$tpl->assign(
-		array(
-			'TR_ACCOUNT_SUMMARY' => tr('Account summary'),
-			'TR_USERNAME' => tr('Username'),
-			'USERNAME' => tohtml($_SESSION['user_logged']),
-			'TR_ACCOUNT_TYPE' => tr('Account type'),
-			'ACCOUNT_TYPE' => $trUserType,
-			'TR_REGISTRATION_DATE' => tr('Registration date'),
-			'REGISTRATION_DATE' => ($stmt->fields['domain_created'] != 0) ? date($cfg['DATE_FORMAT'], $stmt->fields['domain_created']) : tr('Unknown')));
+    $tpl->assign([
+        'TR_ACCOUNT_SUMMARY' => tr('Account summary'),
+        'TR_USERNAME' => tr('Username'),
+        'USERNAME' => tohtml($_SESSION['user_logged']),
+        'TR_ACCOUNT_TYPE' => tr('Account type'),
+        'ACCOUNT_TYPE' => $trUserType,
+        'TR_REGISTRATION_DATE' => tr('Registration date'),
+        'REGISTRATION_DATE' => ($row['domain_created'] != 0) ? date($cfg['DATE_FORMAT'], $row['domain_created']) : tr('Unknown')
+    ]);
 }
 
-/*******************************************************************************
- * Main script
+/***********************************************************************************************************************
+ * Main
  */
 
 require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 check_login('user');
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'client/profile.tpl',
-		'page_message' => 'layout'));
+$tpl->define_dynamic([
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'client/profile.tpl',
+    'page_message' => 'layout'
+]);
 
 $tpl->assign('TR_PAGE_TITLE', tr('Client / Profile / Account Summary'));
 
@@ -84,7 +82,9 @@ client_generatePage($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

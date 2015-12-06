@@ -25,4 +25,4 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-require_once('./dns_edit.php');
+require './dns_edit.php';

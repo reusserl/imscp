@@ -22,33 +22,32 @@
  * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 if (customerHasFeature('domain_aliases') && isset($_GET['id'])) {
-	$alsId = intval($_GET['id']);
-	$stmt = exec_query(
-		'
-			SELECT alias_name FROM
-				domain_aliasses
-			INNER JOIN
-				domain USING(domain_id)
-			WHERE
-				alias_id = ?
-			AND
-				domain_admin_id = ?
-		', array($alsId, intval($_SESSION['user_id']))
-	);
+    $alsId = intval($_GET['id']);
+    $stmt = exec_query(
+        '
+            SELECT alias_name FROM
+                domain_aliasses
+            INNER JOIN
+                domain USING(domain_id)
+            WHERE
+                alias_id = ?
+            AND
+                domain_admin_id = ?
+        ', [$alsId, intval($_SESSION['user_id'])]
+    );
 
-	if ($stmt->rowCount()) {
-		$row = $stmt->fetch(PDO::FETCH_ASSOC);
-		deleteDomainAlias($alsId, $row['alias_name']);
-		redirectTo('domains_manage.php');
-	}
+    if ($stmt->rowCount()) {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        deleteDomainAlias($alsId, $row['alias_name']);
+        redirectTo('domains_manage.php');
+    }
 }
 
 showBadRequestErrorPage();

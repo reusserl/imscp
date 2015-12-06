@@ -26,22 +26,22 @@
  */
 
 /***********************************************************************************************************************
- * Main script
+ * Main
  */
 
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 if (customerHasFeature('sql') && isset($_GET['id'])) {
-	$databaseId = intval($_GET['id']);
+    $databaseId = intval($_GET['id']);
 
-	if (delete_sql_database(get_user_domain_id($_SESSION['user_id']), $databaseId)) {
-		set_page_message(tr('SQL database successfully deleted.'), 'success');
-		write_log(sprintf("{$_SESSION['user_logged']} deleted SQL database with ID %s", $databaseId), E_USER_NOTICE);
-	}
+    if (delete_sql_database(get_user_domain_id($_SESSION['user_id']), $databaseId)) {
+        set_page_message(tr('SQL database successfully deleted.'), 'success');
+        write_log(sprintf("{$_SESSION['user_logged']} deleted SQL database with ID %s", $databaseId), E_USER_NOTICE);
+    }
 
-	redirectTo('sql_manage.php');
+    redirectTo('sql_manage.php');
 }

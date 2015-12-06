@@ -29,102 +29,97 @@
  * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 if (customerHasFeature('domain_aliases') && isset($_GET['id'])) {
-	$alssubId = clean_input($_GET['id']);
-	$dmnId = get_user_domain_id($_SESSION['user_id']);
+    $alssubId = clean_input($_GET['id']);
+    $dmnId = get_user_domain_id($_SESSION['user_id']);
+    $query = "
+        SELECT
+            `t1`.`subdomain_alias_id`,
+            CONCAT(`t1`.`subdomain_alias_name`, '.', `t2`.`alias_name`) AS `subdomain_alias_name`
+        FROM
+            `subdomain_alias` AS `t1`
+        LEFT JOIN
+            `domain_aliasses` AS `t2` ON (`t2`.`alias_id` = `t1`.`alias_id`)
+        WHERE
+            `t2`.`domain_id` = ?
+        AND
+            `t1`.`subdomain_alias_id` = ?
+    ";
+    $stmt = exec_query($query, [$dmnId, $alssubId]);
 
-	$query = "
-		SELECT
-			`t1`.`subdomain_alias_id`,
-			CONCAT(`t1`.`subdomain_alias_name`, '.', `t2`.`alias_name`) AS `subdomain_alias_name`
-		FROM
-			`subdomain_alias` AS `t1`
-		LEFT JOIN
-			`domain_aliasses` AS `t2` ON (`t2`.`alias_id` = `t1`.`alias_id`)
-		WHERE
-			`t2`.`domain_id` = ?
-		AND
-			`t1`.`subdomain_alias_id` = ?
-	";
-	$stmt = exec_query($query, array($dmnId, $alssubId));
+    if ($stmt->rowCount()) {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $alssubName = $row['subdomain_alias_name'];
+        $ret = false;
 
-	if ($stmt->rowCount()) {
-		$alssubName = $stmt->fields['subdomain_alias_name'];
-		$ret = false;
+        // check for mail accounts
+        $query = "
+            SELECT
+                COUNT(`mail_id`) AS `cnt`
+            FROM
+                `mail_users`
+            WHERE
+                (`mail_type` LIKE ? OR `mail_type` = ?)
+            AND
+                `sub_id` = ?
+        ";
+        $stmt = exec_query($query, [MT_ALSSUB_MAIL . '%', MT_ALSSUB_FORWARD, $alssubId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-		// check for mail accounts
-		$query = "
-			SELECT
-				COUNT(`mail_id`) AS `cnt`
-			FROM
-				`mail_users`
-			WHERE
-				(`mail_type` LIKE ? OR `mail_type` = ?)
-			AND
-				`sub_id` = ?
-		";
-		$stmt = exec_query($query, array(MT_ALSSUB_MAIL . '%', MT_ALSSUB_FORWARD, $alssubId));
+        if ($row['cnt']) {
+            set_page_message(tr('Subdomain you are trying to remove has email accounts. Please remove them first.'), 'error');
+            $ret = true;
+        }
 
-		if ($stmt->fields['cnt']) {
-			set_page_message(
-				tr('Subdomain you are trying to remove has email accounts. Please remove them first.'), 'error'
-			);
-			$ret = true;
-		}
+        // Check for FTP accounts
+        $query = "SELECT count(`userid`) AS `cnt` FROM `ftp_users` WHERE `userid` LIKE ?";
+        $stmt = exec_query($query, "%@$alssubName");
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-		// Check for FTP accounts
-		$query = "SELECT count(`userid`) AS `cnt` FROM `ftp_users` WHERE `userid` LIKE ?";
-		$stmt = exec_query($query, "%@$alssubName");
+        if ($row['cnt']) {
+            set_page_message(tr('Subdomain alias you are trying to remove has FTP accounts. Please remove them first.'), 'error');
+            $ret = true;
+        }
 
-		if ($stmt->fields['cnt']) {
-			set_page_message(
-				tr('Subdomain alias you are trying to remove has FTP accounts. Please remove them first.'), 'error'
-			);
-			$ret = true;
-		}
+        if (!$ret) {
+            \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                \iMSCP\Core\Events::onBeforeDeleteSubdomain, null, [
+                'subdomainId' => $alssubId, 'type' => 'alssub', 'subdomainName' => $alssubName
+            ]);
 
-		if (!$ret) {
-			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onBeforeDeleteSubdomain, array(
-					'subdomainId' => $alssubId, 'type' => 'alssub', 'subdomainName' => $alssubName
-			));
+            /** @var \Doctrine\DBAL\Connection $db */
+            $db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
-			/** @var \Doctrine\DBAL\Connection $db */
-			$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
+            try {
+                $db->beginTransaction();
+                $query = "UPDATE subdomain_alias SET subdomain_alias_status = ? WHERE subdomain_alias_id = ?";
+                $stmt = exec_query($query, ['todelete', $alssubId]);
+                $query = "UPDATE ssl_certs SET status = ? WHERE domain_id = ? AND domain_type = ?";
+                $stmt = exec_query($query, ['todelete', $alssubId, 'alssub']);
+                $db->commit();
+            } catch (PDOException $e) {
+                $db->rollBack();
+                throw $e;
+            }
 
-			try {
-				$db->beginTransaction();
+            \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                \iMSCP\Core\Events::onAfterDeleteSubdomain, null, [
+                'subdomainId' => $alssubId, 'type' => 'alssub', 'subdomainName' => $alssubName
+            ]);
 
-				$query = "UPDATE subdomain_alias SET subdomain_alias_status = ? WHERE subdomain_alias_id = ?";
-				$stmt = exec_query($query, array('todelete', $alssubId));
+            send_request();
+            write_log("{$_SESSION['user_logged']} scheduled deletion of subdomain alias $alssubName", E_USER_NOTICE);
+            set_page_message(tr('Subdomain alias successfully scheduled for deletion.'), 'success');
+        }
 
-				$query = "UPDATE ssl_certs SET status = ? WHERE domain_id = ? AND domain_type = ?";
-				$stmt = exec_query($query, array('todelete', $alssubId, 'alssub'));
-
-				$db->commit();
-			} catch (PDOException $e) {
-				$db->rollBack();
-				throw $e;
-			}
-
-			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAfterDeleteSubdomain, array(
-					'subdomainId' => $alssubId, 'type' => 'alssub', 'subdomainName' => $alssubName
-			));
-
-			send_request();
-
-			write_log("{$_SESSION['user_logged']} scheduled deletion of subdomain alias $alssubName", E_USER_NOTICE);
-			set_page_message(tr('Subdomain alias successfully scheduled for deletion.'), 'success');
-		}
-
-		redirectTo('domains_manage.php');
-	}
+        redirectTo('domains_manage.php');
+    }
 }
 
 showBadRequestErrorPage();

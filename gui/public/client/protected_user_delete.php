@@ -25,92 +25,97 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+/***********************************************************************************************************************
+ * Main
+ */
+
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
-
 customerHasFeature('protected_areas') or showBadRequestErrorPage();
 
-$dmn_id = get_user_domain_id($_SESSION['user_id']);
+$domainId = get_user_domain_id($_SESSION['user_id']);
 
 if (isset($_GET['uname']) && $_GET['uname'] !== '' && is_numeric($_GET['uname'])) {
-	$uuser_id = $_GET['uname'];
+    $htuserId = $_GET['uname'];
 } else {
-	redirectTo('protected_areas.php');
+    redirectTo('protected_areas.php');
+    exit;
 }
 
-$query = "SELECT `uname` FROM `htaccess_users` WHERE `dmn_id` = ? AND `id` = ?";
-$rs = exec_query($query, array($dmn_id, $uuser_id));
+$stmt = exec_query('SELECT `uname` FROM `htaccess_users` WHERE `dmn_id` = ? AND `id` = ?', [$domainId, $htuserId]);
 
-$uname = $rs->fields['uname'];
-
-$change_status = 'todelete';
-// let's delete the user from the SQL
-$query = "UPDATE `htaccess_users` SET `status` = ? WHERE `id` = ? AND `dmn_id` = ?";
-$rs = exec_query($query, array($change_status, $uuser_id, $dmn_id));
-
-// let's delete this user if assigned to a group
-$query = "SELECT `id`, `members` FROM `htaccess_groups` WHERE `dmn_id` = ?";
-$rs = exec_query($query, $dmn_id);
-
- if ($rs->rowCount() !== 0) {
-
-	 while (!$rs->EOF) {
-		$members = explode(',',$rs->fields['members']);
-		$group_id = $rs->fields['id'];
-		$key = array_search($uuser_id, $members);
-		if ($key !== false) {
-			unset($members[$key]);
-			$members = implode(",", $members);
-			$change_status = 'tochange';
-			$update_query = "
-				UPDATE
-					`htaccess_groups`
-				SET
-					`members` = ?, `status` = ?
-				WHERE
-					`id` = ?
-			";
-			$rs_update = exec_query($update_query, array($members, $change_status, $group_id));
-		}
-		$rs->moveNext();
-	 }
- }
-
-// let's delete or update htaccess files if this user is assigned
-$query = "SELECT * FROM `htaccess` WHERE `dmn_id` = ?";
-$rs = exec_query($query, $dmn_id);
-
-while (!$rs->EOF) {
-	$ht_id = $rs->fields['id'];
-	$usr_id = $rs->fields['user_id'];
-
-	$usr_id_splited = explode(',', $usr_id);
-
-	$key = array_search($uuser_id,$usr_id_splited);
-	if ($key !== false) {
-		unset($usr_id_splited[$key]);
-		if (count($usr_id_splited) == 0) {
-			$status = 'todelete';
-		} else {
-			$usr_id = implode(",", $usr_id_splited);
-			$status = 'tochange';
-		}
-
-		$update_query = "UPDATE `htaccess` SET `user_id` = ?, `status` = ? WHERE `id` = ?";
-		$rs_update = exec_query($update_query, array($usr_id, $status, $ht_id));
-	}
-
-	$rs->moveNext();
+if (!$stmt->rowCount()) {
+    showBadRequestErrorPage();
 }
 
-set_page_message(tr('User scheduled for deletion.'), 'success');
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$uname = $row['uname'];
 
-send_request();
+/** @var \Doctrine\DBAL\Connection $db */
+$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
-$admin_login = $_SESSION['user_logged'];
-write_log("$admin_login: deletes user ID (protected areas): $uname", E_USER_NOTICE);
-redirectTo('protected_user_manage.php');
+try {
+    $db->beginTransaction();
+
+    // Let's delete the user from the SQL
+    exec_query('UPDATE `htaccess_users` SET `status` = ? WHERE `id` = ? AND `dmn_id` = ?', [
+        'todelete', $htuserId, $domainId
+    ]);
+
+    // Let's delete this user if assigned to a group
+    $stmt = exec_query('SELECT `id`, `members` FROM `htaccess_groups` WHERE `dmn_id` = ?', $domainId);
+
+    if ($stmt->rowCount()) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $members = explode(',', $row['members']);
+            $group_id = $row['id'];
+            $key = array_search($htuserId, $members);
+
+            if ($key !== false) {
+                unset($members[$key]);
+                $members = implode(",", $members);
+                $rs_update = exec_query('UPDATE `htaccess_groups` SET `members` = ?, `status` = ? WHERE `id` = ?', [
+                    $members, 'tochange', $group_id
+                ]);
+            }
+        }
+    }
+
+    // Let's delete or update htaccess files if this user is assigned
+    $stmt = exec_query('SELECT * FROM `htaccess` WHERE `dmn_id` = ?', $domainId);
+
+    if ($stmt->rowCount()) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $htid = $row['id'];
+            $usrid = $row['user_id'];
+            $usridSplited = explode(',', $usrid);
+            $key = array_search($htuserId, $usridSplited);
+
+            if ($key !== false) {
+                unset($usridSplited[$key]);
+
+                if (count($usridSplited) == 0) {
+                    $status = 'todelete';
+                } else {
+                    $usrid = implode(",", $usridSplited);
+                    $status = 'tochange';
+                }
+
+                $rs_update = exec_query('UPDATE `htaccess` SET `user_id` = ?, `status` = ? WHERE `id` = ?', [
+                        $usrid, $status, $htid]
+                );
+            }
+        }
+    }
+
+    set_page_message(tr('User scheduled for deletion.'), 'success');
+    send_request();
+    write_log("{$_SESSION['user_logged']}: deletes user ID (protected areas): $uname", E_USER_NOTICE);
+    redirectTo('protected_user_manage.php');
+} catch (PDOException $e) {
+    $db->rollBack();
+    throw $e;
+}

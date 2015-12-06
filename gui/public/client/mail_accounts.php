@@ -32,23 +32,23 @@
  */
 function _client_countDefaultMails($mainDmnId)
 {
-	$stmt = exec_query(
-		'
-			SELECT
-				COUNT(`mail_id`) AS `cnt`
-			FROM
-				`mail_users`
-			WHERE
-				`domain_id` = ?
-			AND
-				(`status` = ? OR `status` = ?)
-			AND
-				(`mail_acc` = ? OR `mail_acc` = ? OR `mail_acc` = ?)
-		',
-		array($mainDmnId, 'ok', 'toadd', 'abuse', 'postmaster', 'webmaster')
-	);
-
-	return $stmt->fields['cnt'];
+    $stmt = exec_query(
+        '
+            SELECT
+                COUNT(`mail_id`) AS `cnt`
+            FROM
+                `mail_users`
+            WHERE
+                `domain_id` = ?
+            AND
+                (`status` = ? OR `status` = ?)
+            AND
+                (`mail_acc` = ? OR `mail_acc` = ? OR `mail_acc` = ?)
+        ',
+        [$mainDmnId, 'ok', 'toadd', 'abuse', 'postmaster', 'webmaster']
+    );
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $row['cnt'];
 }
 
 /**
@@ -60,14 +60,14 @@ function _client_countDefaultMails($mainDmnId)
  */
 function _client_generateUserMailAction($mailId, $mailStatus)
 {
-	if ($mailStatus == 'ok') {
-		return array(
-			tr('Delete'), "mail_delete.php?id=$mailId",
-			tr('Edit'), "mail_edit.php?id=$mailId"
-		);
-	} else {
-		return array(tr('N/A'), '#', tr('N/A'), '#');
-	}
+    if ($mailStatus == 'ok') {
+        return [
+            tr('Delete'), "mail_delete.php?id=$mailId",
+            tr('Edit'), "mail_edit.php?id=$mailId"
+        ];
+    }
+
+    return [tr('N/A'), '#', tr('N/A'), '#'];
 }
 
 /**
@@ -81,34 +81,30 @@ function _client_generateUserMailAction($mailId, $mailStatus)
  */
 function _client_generateUserMailAutoRespond($tpl, $mailId, $mailStatus, $mailAutoRespond)
 {
-	if ($mailStatus == 'ok') {
-		if (!$mailAutoRespond) {
-			$tpl->assign(
-				array(
-					'AUTO_RESPOND' => tr('Enable'),
-					'AUTO_RESPOND_SCRIPT' =>
-					"mail_autoresponder_enable.php?mail_account_id=$mailId",
-					'AUTO_RESPOND_EDIT_LINK' => ''
-				)
-			);
-		} else {
-			$tpl->assign(
-				array(
-					'AUTO_RESPOND' => tr('Disable'),
-					'AUTO_RESPOND_SCRIPT' =>
-					"mail_autoresponder_disable.php?mail_account_id=$mailId",
-					'AUTO_RESPOND_EDIT' => tr('Edit'),
-					'AUTO_RESPOND_EDIT_SCRIPT' =>
-					"mail_autoresponder_edit.php?mail_account_id=$mailId",
-				)
-			);
+    if ($mailStatus == 'ok') {
+        if (!$mailAutoRespond) {
+            $tpl->assign([
+                'AUTO_RESPOND' => tr('Enable'),
+                'AUTO_RESPOND_SCRIPT' =>
+                    "mail_autoresponder_enable.php?mail_account_id=$mailId",
+                'AUTO_RESPOND_EDIT_LINK' => ''
+            ]);
+        } else {
+            $tpl->assign([
+                'AUTO_RESPOND' => tr('Disable'),
+                'AUTO_RESPOND_SCRIPT' =>
+                    "mail_autoresponder_disable.php?mail_account_id=$mailId",
+                'AUTO_RESPOND_EDIT' => tr('Edit'),
+                'AUTO_RESPOND_EDIT_SCRIPT' =>
+                    "mail_autoresponder_edit.php?mail_account_id=$mailId",
+            ]);
+            $tpl->parse('AUTO_RESPOND_EDIT_LINK', 'auto_respond_edit_link');
+        }
 
-			$tpl->parse('AUTO_RESPOND_EDIT_LINK', 'auto_respond_edit_link');
-		}
-		$tpl->parse('AUTO_RESPOND_ITEM', 'auto_respond_item');
-	} else {
-		$tpl->assign('AUTO_RESPOND_ITEM', '');
-	}
+        $tpl->parse('AUTO_RESPOND_ITEM', 'auto_respond_item');
+    } else {
+        $tpl->assign('AUTO_RESPOND_ITEM', '');
+    }
 }
 
 /**
@@ -120,127 +116,124 @@ function _client_generateUserMailAutoRespond($tpl, $mailId, $mailStatus, $mailAu
  */
 function _client_generateMailAccountsList($tpl, $mainDmnId)
 {
-	$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    $stmt = exec_query(
+        "
+            SELECT
+                `mail_id`, `mail_pass`,
+                 CONCAT(LEFT(`mail_forward`, 30), IF(LENGTH(`mail_forward`) > 30, '...', '')) AS `mail_forward`,
+                 `mail_type`, `status`, `mail_auto_respond`, `quota`, `mail_addr`
+            FROM
+                `mail_users`
+            WHERE
+                `domain_id` = ?
+            AND
+                `mail_type` NOT LIKE '%catchall%'
+            ORDER BY
+                `mail_addr` ASC, `mail_type` DESC
+        ",
+        $mainDmnId
+    );
 
-	$stmt = exec_query(
-		"
-			SELECT
-				`mail_id`, `mail_pass`,
-			 	CONCAT(LEFT(`mail_forward`, 30), IF(LENGTH(`mail_forward`) > 30, '...', '')) AS `mail_forward`,
-			 	`mail_type`, `status`, `mail_auto_respond`, `quota`, `mail_addr`
-			FROM
-				`mail_users`
-			WHERE
-				`domain_id` = ?
-			AND
-				`mail_type` NOT LIKE '%catchall%'
-			ORDER BY
-				`mail_addr` ASC, `mail_type` DESC
-		",
-		$mainDmnId
-	);
+    $rowCount = $stmt->rowCount();
 
-	$rowCount = $stmt->rowCount();
+    if (!$rowCount) {
+        return 0;
+    } else {
+        //$mainDmnProps = get_domain_default_props($_SESSION['user_id']);
+        //$mailQuotaLimit = ($mainDmnProps['mail_quota']) ? bytesHuman($mainDmnProps['mail_quota']) : 0;
 
-	if (!$rowCount) {
-		return 0;
-	} else {
-		$mainDmnProps = get_domain_default_props($_SESSION['user_id']);
-		$mailQuotaLimit  = ($mainDmnProps['mail_quota']) ? bytesHuman($mainDmnProps['mail_quota']) : 0;
+        $imapAvailable = function_exists('imap_open');
 
-		$imapAvailable = function_exists('imap_open');
+        if ($imapAvailable) {
+            imap_timeout(IMAP_OPENTIMEOUT, 1);
+            imap_timeout(IMAP_READTIMEOUT, 2);
+            imap_timeout(IMAP_CLOSETIMEOUT, 4);
+        }
 
-		if($imapAvailable) {
-			imap_timeout(IMAP_OPENTIMEOUT, 1);
-			imap_timeout(IMAP_READTIMEOUT, 2);
-			imap_timeout(IMAP_CLOSETIMEOUT, 4);
-		}
+        //$imapTimeoutReached = false;
 
-		$imapTimeoutReached = false;
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            list(
+                $mailDelete, $mailDeleteScript, $mailEdit, $mailEditScript
+                ) = _client_generateUserMailAction($row['mail_id'], $row['status']);
 
-		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			list(
-				$mailDelete, $mailDeleteScript, $mailEdit, $mailEditScript
-			) = _client_generateUserMailAction($row['mail_id'], $row['status']);
+            $mailAddr = $row['mail_addr'];
+            $mailTypes = explode(',', $row['mail_type']);
+            $mailType = '';
+            $isMailbox = 0;
 
-			$mailAddr = $row['mail_addr'];
-			$mailTypes = explode(',', $row['mail_type']);
-			$mailType = '';
-			$isMailbox = 0;
+            foreach ($mailTypes as $type) {
+                $mailType .= user_trans_mail_type($type);
 
-			foreach ($mailTypes as $type) {
-				$mailType .= user_trans_mail_type($type);
+                if (strpos($type, '_forward') !== false) {
+                    $mailType .= ': ' . str_replace(',', ', ', $row['mail_forward']);
+                } else {
+                    $isMailbox = 1;
+                }
 
-				if (strpos($type, '_forward') !== false) {
-					$mailType .= ': ' . str_replace(',', ', ', $row['mail_forward']);
-				} else {
-					$isMailbox = 1;
-				}
+                $mailType .= '<br />';
+            }
 
-				$mailType .= '<br />';
-			}
+            if ($isMailbox && $row['status'] == 'ok') {
+                if ($imapAvailable) {
+                    $quotaMax = $row['quota'];
 
-			if ($isMailbox && $row['status'] == 'ok') {
-				if ($imapAvailable) {
-					$quotaMax = $row['quota'];
+                    if ($quotaMax) {
+                        # FIXME: Since passwords are now encrypted (1.3.x), we cannot get quota in that way
+                        /*if(
+                            !$imapTimeoutReached &&
+                            $imapStream = @imap_open("{localhost/notls}", $mailAddr, $row['mail_pass'], OP_HALFOPEN)
+                        ) {
+                            $quotaUsage = imap_get_quotaroot($imapStream, 'INBOX');
+                            imap_close($imapStream);
 
-					if ($quotaMax) {
-						# FIXME: Since passwords are now encrypted (1.3.x), we cannot get quota in that way
-						/*if(
-							!$imapTimeoutReached &&
-							$imapStream = @imap_open("{localhost/notls}", $mailAddr, $row['mail_pass'], OP_HALFOPEN)
-						) {
-							$quotaUsage = imap_get_quotaroot($imapStream, 'INBOX');
-							imap_close($imapStream);
+                            if (!empty($quotaUsage)) {
+                                $quotaUsage = $quotaUsage['usage'] * 1024;
+                            } else {
+                                $quotaUsage = 0;
+                            }
 
-							if (!empty($quotaUsage)) {
-								$quotaUsage = $quotaUsage['usage'] * 1024;
-							} else {
-								$quotaUsage = 0;
-							}
+                            $quotaMax = bytesHuman($quotaMax);
 
-							$quotaMax = bytesHuman($quotaMax);
+                            $txtQuota = ($mailQuotaLimit) ?
+                                tr('%s / %s of %s', bytesHuman($quotaUsage), $quotaMax, $mailQuotaLimit)
+                                : sprintf('%s / %s', bytesHuman($quotaUsage), $quotaMax);
+                        } else {
+                            $imapTimeoutReached = true;
+                        */
+                        $txtQuota = tr('Info Unavailable');
+                        /*}*/
+                    } else {
+                        $txtQuota = tr('unlimited');
+                    }
+                } else {
+                    $txtQuota = tr('Info Unavailable');
+                }
+            } else {
+                $txtQuota = '---';
+            }
 
-							$txtQuota = ($mailQuotaLimit) ?
-								tr('%s / %s of %s', bytesHuman($quotaUsage), $quotaMax, $mailQuotaLimit)
-								: sprintf('%s / %s', bytesHuman($quotaUsage), $quotaMax);
-						} else {
-							$imapTimeoutReached = true;
-						*/
-							$txtQuota = tr('Info Unavailable');
-						/*}*/
-					} else {
-						$txtQuota = tr('unlimited');
-					}
-				} else {
-					$txtQuota = tr('Info Unavailable');
-				}
-			} else {
-				$txtQuota = '---';
-			}
+            $tpl->assign([
+                'MAIL_ADDR' => tohtml(decode_idna($mailAddr)),
+                'MAIL_TYPE' => $mailType,
+                'MAIL_STATUS' => translate_dmn_status($row['status']),
+                'MAIL_DELETE' => $mailDelete,
+                'MAIL_DELETE_SCRIPT' => $mailDeleteScript,
+                'MAIL_EDIT' => $mailEdit,
+                'MAIL_EDIT_SCRIPT' => $mailEditScript,
+                'MAIL_QUOTA_VALUE' => $txtQuota,
+                'DEL_ITEM' => $row['mail_id'],
+                'DISABLED_DEL_ITEM' => ($row['status'] != 'ok') ? $cfg['HTML_DISABLED'] : ''
+            ]);
 
-			$tpl->assign(
-				array(
-					'MAIL_ADDR' => tohtml(decode_idna($mailAddr)),
-					'MAIL_TYPE' => $mailType,
-					'MAIL_STATUS' => translate_dmn_status($row['status']),
-					'MAIL_DELETE' => $mailDelete,
-					'MAIL_DELETE_SCRIPT' => $mailDeleteScript,
-					'MAIL_EDIT' => $mailEdit,
-					'MAIL_EDIT_SCRIPT' => $mailEditScript,
-					'MAIL_QUOTA_VALUE' => $txtQuota,
-					'DEL_ITEM' => $row['mail_id'],
-					'DISABLED_DEL_ITEM' => ($row['status'] != 'ok') ? $cfg['HTML_DISABLED'] : ''
-				)
-			);
+            _client_generateUserMailAutoRespond($tpl, $row['mail_id'], $row['status'], $row['mail_auto_respond']);
 
-			_client_generateUserMailAutoRespond($tpl, $row['mail_id'], $row['status'], $row['mail_auto_respond']);
+            $tpl->parse('MAIL_ITEM', '.mail_item');
+        }
 
-			$tpl->parse('MAIL_ITEM', '.mail_item');
-		}
-
-		return $rowCount;
-	}
+        return $rowCount;
+    }
 }
 
 /**
@@ -251,96 +244,94 @@ function _client_generateMailAccountsList($tpl, $mainDmnId)
  */
 function client_generatePage($tpl)
 {
-	if (customerHasFeature('mail')) {
-		$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    if (customerHasFeature('mail')) {
+        $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+        $dmnProps = get_domain_default_props($_SESSION['user_id']);
+        $mainDmnId = $dmnProps['domain_id'];
+        $dmnMailAccLimit = $dmnProps['domain_mailacc_limit'];
+        $countedMails = _client_generateMailAccountsList($tpl, $mainDmnId);
+        $defaultMails = _client_countDefaultMails($mainDmnId);
 
-		$dmnProps = get_domain_default_props($_SESSION['user_id']);
-		$mainDmnId = $dmnProps['domain_id'];
-		$dmnMailAccLimit = $dmnProps['domain_mailacc_limit'];
+        if (!$cfg['COUNT_DEFAULT_EMAIL_ADDRESSES']) {
+            $countedMails -= $defaultMails;
+        }
 
-		$countedMails = _client_generateMailAccountsList($tpl, $mainDmnId);
-		$defaultMails = _client_countDefaultMails($mainDmnId);
+        $totalMails = tr(
+            'Total mails: %s / %s %s',
+            $countedMails,
+            translate_limit_value($dmnMailAccLimit),
+            ($defaultMails)
+                ? ($cfg['COUNT_DEFAULT_EMAIL_ADDRESSES'])
+                ? '(' . tr('Incl. default mails') . ')'
+                : '(' . tr('Excl. default mails') . ')'
+                : ''
+        );
 
-		if (!$cfg['COUNT_DEFAULT_EMAIL_ADDRESSES']) {
-			$countedMails -= $defaultMails;
-		}
-
-		$totalMails = tr(
-			'Total mails: %s / %s %s',
-			$countedMails,
-			translate_limit_value($dmnMailAccLimit),
-			($defaultMails)
-				? ($cfg['COUNT_DEFAULT_EMAIL_ADDRESSES'])
-					? '(' . tr('Incl. default mails') . ')'
-					: '(' .  tr('Excl. default mails') . ')'
-				: ''
-		);
-
-		if ($countedMails || $defaultMails) {
-			$tpl->assign('TOTAL_MAIL_ACCOUNTS', $totalMails);
-		} else {
-			$tpl->assign('MAIL_ITEMS', '');
-			set_page_message(tr('Mail accounts list is empty.'), 'static_info');
-		}
-	} else {
-		$tpl->assign('MAIL_FEATURE', '');
-		set_page_message(tr('Mail feature is disabled.'), 'static_info');
-	}
+        if ($countedMails || $defaultMails) {
+            $tpl->assign('TOTAL_MAIL_ACCOUNTS', $totalMails);
+        } else {
+            $tpl->assign('MAIL_ITEMS', '');
+            set_page_message(tr('Mail accounts list is empty.'), 'static_info');
+        }
+    } else {
+        $tpl->assign('MAIL_FEATURE', '');
+        set_page_message(tr('Mail feature is disabled.'), 'static_info');
+    }
 }
 
 /***********************************************************************************************************************
  * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 if (customerHasMailOrExtMailFeatures()) {
-	$tpl = new \iMSCP\Core\Template\TemplateEngine();
-	$tpl->define_dynamic(array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'client/mail_accounts.tpl',
-		'page_message' => 'layout',
-		'mail_feature' => 'page',
-		'mail_items' => 'mail_feature',
-		'mail_item' => 'mail_items',
-		'auto_respond_item' => 'mail_item',
-		'auto_respond_edit_link' => 'auto_respond_item'
-	));
+    $tpl = new \iMSCP\Core\Template\TemplateEngine();
+    $tpl->define_dynamic([
+        'layout' => 'shared/layouts/ui.tpl',
+        'page' => 'client/mail_accounts.tpl',
+        'page_message' => 'layout',
+        'mail_feature' => 'page',
+        'mail_items' => 'mail_feature',
+        'mail_item' => 'mail_items',
+        'auto_respond_item' => 'mail_item',
+        'auto_respond_edit_link' => 'auto_respond_item'
+    ]);
+    $tpl->assign([
+        'TR_PAGE_TITLE' => tr('Client / Email / Overview'),
+        'TR_MAIL' => tr('Mail'),
+        'TR_TYPE' => tr('Type'),
+        'TR_STATUS' => tr('Status'),
+        'TR_QUOTA' => tr('Quota'),
+        'TR_ACTIONS' => tr('Actions'),
+        'TR_AUTORESPOND' => tr('Auto responder'),
+        'TR_DELETE' => tr('Delete'),
+        'TR_MESSAGE_DELETE' => tr('Are you sure you want to delete %s?', '%s'),
+        'TR_MESSAGE_DELETE_SELECTED_ITEMS' => tr('Are you sure you want to delete all selected items?'),
+        'TR_DELETE_SELECTED_ITEMS' => tr('Delete selected items'),
+        'TR_MESSAGE_DELETE_SELECTED_ITEMS_ERR' => tr('You must select a least one item to delete')
+    ]);
 
-	$tpl->assign(array(
-		'TR_PAGE_TITLE' => tr('Client / Email / Overview'),
-		'TR_MAIL' => tr('Mail'),
-		'TR_TYPE' => tr('Type'),
-		'TR_STATUS' => tr('Status'),
-		'TR_QUOTA' => tr('Quota'),
-		'TR_ACTIONS' => tr('Actions'),
-		'TR_AUTORESPOND' => tr('Auto responder'),
-		'TR_DELETE' => tr('Delete'),
-		'TR_MESSAGE_DELETE' => tr('Are you sure you want to delete %s?', '%s'),
-		'TR_MESSAGE_DELETE_SELECTED_ITEMS' => tr('Are you sure you want to delete all selected items?'),
-		'TR_DELETE_SELECTED_ITEMS' => tr('Delete selected items'),
-		'TR_MESSAGE_DELETE_SELECTED_ITEMS_ERR' => tr('You must select a least one item to delete')
-	));
+    \iMSCP\Core\Application::getInstance()->getEventManager()->attach('onGetJsTranslations', function ($e) {
+        /** @var $e \Zend\EventManager\Event */
+        $e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations(false);
+    });
 
-	\iMSCP\Core\Application::getInstance()->getEventManager()->attach('onGetJsTranslations', function ($e) {
-		/** @var $e \Zend\EventManager\Event */
-		$e->getParam('translations')->core['dataTable'] = getDataTablesPluginTranslations(false);
-	});
+    client_generatePage($tpl);
+    generateNavigation($tpl);
+    generatePageMessage($tpl);
 
-	client_generatePage($tpl);
-	generateNavigation($tpl);
-	generatePageMessage($tpl);
+    $tpl->parse('LAYOUT_CONTENT', 'page');
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+        'templateEngine' => $tpl
+    ]);
+    $tpl->prnt();
 
-	$tpl->parse('LAYOUT_CONTENT', 'page');
-	\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-	$tpl->prnt();
-
-	unsetMessages();
+    unsetMessages();
 } else {
-	showBadRequestErrorPage();
+    showBadRequestErrorPage();
 }

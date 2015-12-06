@@ -30,17 +30,17 @@
  */
 
 /**
- * Schedule backup restoration.
+ * Schedule backup restoration
  *
  * @param int $userId Customer unique identifier
  * @return void
  */
 function scheduleBackupRestoration($userId)
 {
-	exec_query("UPDATE `domain` SET `domain_status` = ? WHERE `domain_admin_id` = ?", array('torestore', $userId));
-	send_request();
-	write_log($_SESSION['user_logged'] . ": scheduled backup restoration.", E_USER_NOTICE);
-	set_page_message(tr('Backup has been successfully scheduled for restoration.'), 'success');
+    exec_query("UPDATE `domain` SET `domain_status` = ? WHERE `domain_admin_id` = ?", ['torestore', $userId]);
+    send_request();
+    write_log($_SESSION['user_logged'] . ": scheduled backup restoration.", E_USER_NOTICE);
+    set_page_message(tr('Backup has been successfully scheduled for restoration.'), 'success');
 
 }
 
@@ -48,58 +48,56 @@ function scheduleBackupRestoration($userId)
  * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
-
 customerHasFeature('backup') or showBadRequestErrorPage();
 
 if (isset($_POST['uaction']) && $_POST['uaction'] == 'bk_restore') {
-	scheduleBackupRestoration($_SESSION['user_id']);
+    scheduleBackupRestoration($_SESSION['user_id']);
 }
 
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'client/backup.tpl',
-		'page_message' => 'layout'
-	)
-);
+$tpl->define_dynamic([
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'client/backup.tpl',
+    'page_message' => 'layout'
+]);
 
 if ($cfg['ZIP'] == 'gzip') {
-	$name = '.*-backup-%Y.%m.%d-%H-%M.tar..tar.gz';
-} else if ($cfg['ZIP'] == 'bzip2' || $cfg['ZIP'] == 'pbzip2') {
-	$name = '.*-backup-%Y.%m.%d-%H-%M.tar.tar.bz2';
+    $name = '.*-backup-%Y.%m.%d-%H-%M.tar..tar.gz';
+} elseif ($cfg['ZIP'] == 'bzip2' || $cfg['ZIP'] == 'pbzip2') {
+    $name = '.*-backup-%Y.%m.%d-%H-%M.tar.tar.bz2';
 } else {
-	$name = '.*-backup-%Y.%m.%d-%H-%M.tar.lzma';
+    $name = '.*-backup-%Y.%m.%d-%H-%M.tar.lzma';
 }
 
 $tpl->assign([
-	'TR_PAGE_TITLE' => tr('Client / Webtools / Daily Backup'),
-	'TR_BACKUP' => tr('Backup'),
-	'TR_DAILY_BACKUP' => tr('Daily backup'),
-	'TR_DOWNLOAD_DIRECTION' => tr("Instructions to download today's backup"),
-	'TR_FTP_LOG_ON' => tr('Login with your FTP account'),
-	'TR_SWITCH_TO_BACKUP' => tr('Switch to the backups directory'),
-	'TR_DOWNLOAD_FILE' => tr('Download the archives stored in this directory'),
-	'TR_USUALY_NAMED' => tr('(usually named') . ' ' . tohtml($name) . ')',
-	'TR_RESTORE_BACKUP' => tr('Restore backup'),
-	'TR_RESTORE_DIRECTIONS' => tr('Click the Restore button and the system will restore the last daily backup'),
-	'TR_RESTORE' => tr('Restore'),
-	'TR_CONFIRM_MESSAGE' => tr('Are you sure you want to restore the backup?')
+    'TR_PAGE_TITLE' => tr('Client / Webtools / Daily Backup'),
+    'TR_BACKUP' => tr('Backup'),
+    'TR_DAILY_BACKUP' => tr('Daily backup'),
+    'TR_DOWNLOAD_DIRECTION' => tr("Instructions to download today's backup"),
+    'TR_FTP_LOG_ON' => tr('Login with your FTP account'),
+    'TR_SWITCH_TO_BACKUP' => tr('Switch to the backups directory'),
+    'TR_DOWNLOAD_FILE' => tr('Download the archives stored in this directory'),
+    'TR_USUALY_NAMED' => tr('(usually named') . ' ' . tohtml($name) . ')',
+    'TR_RESTORE_BACKUP' => tr('Restore backup'),
+    'TR_RESTORE_DIRECTIONS' => tr('Click the Restore button and the system will restore the last daily backup'),
+    'TR_RESTORE' => tr('Restore'),
+    'TR_CONFIRM_MESSAGE' => tr('Are you sure you want to restore the backup?')
 ]);
 
 generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

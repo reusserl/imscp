@@ -26,11 +26,11 @@
  */
 
 /***********************************************************************************************************************
- * Script functions
+ * Functions
  */
 
 /**
- * Generates database sql users list.
+ * Generates database sql users list
  *
  * @access private
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
@@ -39,47 +39,33 @@
  */
 function _client_generateDatabaseSqlUserList($tpl, $databaseId)
 {
-	$stmt = exec_query(
-		'
-			SELECT
-				sqlu_id, sqlu_name, sqlu_host
-			FROM
-				sql_user
-			WHERE
-				sqld_id = ?
-			ORDER BY
-				sqlu_name
-		',
-		$databaseId
-	);
+    $stmt = exec_query(
+        'SELECT sqlu_id, sqlu_name, sqlu_host FROM sql_user WHERE sqld_id = ? ORDER BY sqlu_name', $databaseId
+    );
 
-	if (!$stmt->rowCount()) {
-		$tpl->assign('SQL_USERS_LIST', '');
-	} else {
-		$tpl->assign('SQL_USERS_LIST', '');
+    if (!$stmt->rowCount()) {
+        $tpl->assign('SQL_USERS_LIST', '');
+    } else {
+        $tpl->assign('SQL_USERS_LIST', '');
+        $tpl->assign(
+            [
+                'TR_DB_USER' => 'User',
+                'TR_DB_USER_HOST' => 'Host',
+                'TR_DB_USER_HOST_TOOLTIP' => tr('Host from which SQL user is allowed to connect to SQL server')
+            ]
+        );
 
-		$tpl->assign(
-			array(
-				'TR_DB_USER' => 'User',
-				'TR_DB_USER_HOST' => 'Host',
-				'TR_DB_USER_HOST_TOOLTIP' => tr('Host from which SQL user is allowed to connect to SQL server')
-			)
-		);
-
-		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$sqlUserName = $row['sqlu_name'];
-			$tpl->assign(
-				array(
-					'DB_USER' => tohtml($sqlUserName),
-					'DB_USER_HOST' => tohtml(decode_idna($row['sqlu_host'])),
-					'DB_USER_JS' => tojs($sqlUserName),
-					'USER_ID' => $row['sqlu_id']
-				)
-			);
-
-			$tpl->parse('SQL_USERS_LIST', '.sql_users_list');
-		}
-	}
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $sqlUserName = $row['sqlu_name'];
+            $tpl->assign([
+                'DB_USER' => tohtml($sqlUserName),
+                'DB_USER_HOST' => tohtml(decode_idna($row['sqlu_host'])),
+                'DB_USER_JS' => tojs($sqlUserName),
+                'USER_ID' => $row['sqlu_id']
+            ]);
+            $tpl->parse('SQL_USERS_LIST', '.sql_users_list');
+        }
+    }
 }
 
 /**
@@ -91,92 +77,66 @@ function _client_generateDatabaseSqlUserList($tpl, $databaseId)
  */
 function client_databasesList($tpl, $domainId)
 {
-	$stmt = exec_query(
-		'
-			SELECT
-				sqld_id, sqld_name
-			FROM
-				sql_database
-			WHERE
-				domain_id = ?
-			ORDER BY
-				sqld_name
-		',
-		$domainId
-	);
+    $stmt = exec_query('SELECT sqld_id, sqld_name FROM sql_database WHERE domain_id = ? ORDER BY sqld_name', $domainId);
 
-	if (!$stmt->rowCount()) {
-		set_page_message(tr('You do not have databases.'), 'static_info');
-		$tpl->assign('SQL_DATABASES_USERS_LIST', '');
-	} else {
-		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$tpl->assign(
-				array(
-					'DB_ID' => $row['sqld_id'],
-					'DB_NAME' => tohtml( $row['sqld_name']),
-					'DB_NAME_JS' => tojs( $row['sqld_name'])
-				)
-			);
+    if (!$stmt->rowCount()) {
+        set_page_message(tr('You do not have databases.'), 'static_info');
+        $tpl->assign('SQL_DATABASES_USERS_LIST', '');
+    } else {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $tpl->assign([
+                'DB_ID' => $row['sqld_id'],
+                'DB_NAME' => tohtml($row['sqld_name']),
+                'DB_NAME_JS' => tojs($row['sqld_name'])
+            ]);
 
-			_client_generateDatabaseSqlUserList($tpl, $row['sqld_id']);
-
-			$tpl->parse('SQL_DATABASES_LIST', '.sql_databases_list');
-		}
-	}
+            _client_generateDatabaseSqlUserList($tpl, $row['sqld_id']);
+            $tpl->parse('SQL_DATABASES_LIST', '.sql_databases_list');
+        }
+    }
 }
 
 /***********************************************************************************************************************
- * Main script
+ * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
-
 customerHasFeature('sql') or showBadRequestErrorPage();
 
-$domainProperties = get_domain_default_props($_SESSION['user_id']);
-
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'client/sql_manage.tpl',
-		'page_message' => 'layout',
-		'sql_databases_users_list' => 'page',
-		'sql_databases_list' => 'sql_databases_users_list',
-		'sql_users_list' => 'sql_databases_list'
-	)
-);
-
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Client / Databases / Overview'),
-		'TR_MANAGE_SQL' => tr('Manage SQL'),
-		'TR_DELETE' => tr('Delete'),
-		'TR_DATABASE' => tr('Database Name and Users'),
-		'TR_CHANGE_PASSWORD' => tr('Update password'),
-		'TR_ACTIONS' => tr('Actions'),
-		'TR_DATABASE_USERS' => tr('Database users'),
-		'TR_ADD_USER' => tr('Add SQL user'),
-		'TR_DATABASE_MESSAGE_DELETE' => tr("This database will be permanently deleted. This process cannot be recovered. All users linked to this database will also be deleted if not linked to another database. Are you sure you want to delete the '%s' database?", '%s'),
-		'TR_USER_MESSAGE_DELETE' => tr("Are you sure you want delete the %s SQL user?", '%s')
-	)
-);
+$tpl->define_dynamic([
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'client/sql_manage.tpl',
+    'page_message' => 'layout',
+    'sql_databases_users_list' => 'page',
+    'sql_databases_list' => 'sql_databases_users_list',
+    'sql_users_list' => 'sql_databases_list'
+]);
+$tpl->assign([
+    'TR_PAGE_TITLE' => tr('Client / Databases / Overview'),
+    'TR_MANAGE_SQL' => tr('Manage SQL'),
+    'TR_DELETE' => tr('Delete'),
+    'TR_DATABASE' => tr('Database Name and Users'),
+    'TR_CHANGE_PASSWORD' => tr('Update password'),
+    'TR_ACTIONS' => tr('Actions'),
+    'TR_DATABASE_USERS' => tr('Database users'),
+    'TR_ADD_USER' => tr('Add SQL user'),
+    'TR_DATABASE_MESSAGE_DELETE' => tr("This database will be permanently deleted. This process cannot be recovered. All users linked to this database will also be deleted if not linked to another database. Are you sure you want to delete the '%s' database?", '%s'),
+    'TR_USER_MESSAGE_DELETE' => tr("Are you sure you want delete the %s SQL user?", '%s')
+]);
 
 generateNavigation($tpl);
-client_databasesList($tpl, $domainProperties['domain_id']);
+client_databasesList($tpl, get_domain_default_props($_SESSION['user_id'])['domain_id']);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

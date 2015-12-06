@@ -38,27 +38,26 @@
  */
 function generateErrorPageData($tpl, $errorPageId)
 {
-	$domain = $_SESSION['user_logged'];
+    $domain = $_SESSION['user_logged'];
+    // Check if we already have an error page
+    $vfs = new \iMSCP\Core\VirtualFileSystem($domain);
+    $errorPageContent = $vfs->get('/errors/' . $errorPageId . '.html');
 
-	// Check if we already have an error page
-	$vfs = new \iMSCP\Core\VirtualFileSystem($domain);
-	$errorPageContent = $vfs->get('/errors/' . $errorPageId . '.html');
+    if (false !== $errorPageContent) {
+        // We already have an error page, return it
+        $tpl->assign('ERROR', tohtml($errorPageContent));
+        return;
+    }
 
-	if (false !== $errorPageContent) {
-		// We already have an error page, return it
-		$tpl->assign('ERROR', tohtml($errorPageContent));
-		return;
-	}
-	// No error page
-	$tpl->assign('ERROR', '');
+    // No error page
+    $tpl->assign('ERROR', '');
 }
 
 /***********************************************************************************************************************
  * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
@@ -67,44 +66,40 @@ check_login('user');
 customerHasFeature('custom_error_pages') or showBadRequestErrorPage();
 
 if (!isset($_GET['eid'])) {
-	showBadRequestErrorPage();
-	exit;
-} else {
-	$errorPageId = intval($_GET['eid']);
+    showBadRequestErrorPage();
+    exit;
 }
 
+$errorPageId = intval($_GET['eid']);
+
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'client/error_edit.tpl',
-		'page_message' => 'layout'
-	)
-);
+$tpl->define_dynamic([
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'client/error_edit.tpl',
+    'page_message' => 'layout'
+]);
 
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr(' Client / Webtools / Custom Error Pages / Edit Custom Error Page'),
-		'TR_ERROR_EDIT_PAGE' => tr('Edit error page'),
-		'TR_SAVE' => tr('Save'),
-		'TR_CANCEL' => tr('Cancel'),
-		'EID' => $errorPageId
-	)
-);
+$tpl->assign([
+    'TR_PAGE_TITLE' => tr(' Client / Webtools / Custom Error Pages / Edit Custom Error Page'),
+    'TR_ERROR_EDIT_PAGE' => tr('Edit error page'),
+    'TR_SAVE' => tr('Save'),
+    'TR_CANCEL' => tr('Cancel'),
+    'EID' => $errorPageId
+]);
 
-if (in_array($errorPageId, array('401', '403', '404', '500', '503'))) {
-	generateErrorPageData($tpl, $errorPageId);
+if (in_array($errorPageId, ['401', '403', '404', '500', '503'])) {
+    generateErrorPageData($tpl, $errorPageId);
 } else {
-	showBadRequestErrorPage();
+    showBadRequestErrorPage();
 }
 
 generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

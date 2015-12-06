@@ -29,103 +29,99 @@
  * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
 if (customerHasFeature('subdomains') && isset($_GET['id'])) {
-	$subId = clean_input($_GET['id']);
-	$dmnId = get_user_domain_id($_SESSION['user_id']);
+    $subId = clean_input($_GET['id']);
+    $dmnId = get_user_domain_id($_SESSION['user_id']);
 
-	$query = "
-		SELECT
-			`t1`.`subdomain_id`, CONCAT(`t1`.`subdomain_name`, '.', `t2`.`domain_name`) AS `subdomain_name`
-		FROM
-			`subdomain` AS `t1`
-		LEFT JOIN
-			`domain` AS `t2` ON(`t2`.`domain_id` = `t1`.`domain_id`)
-		WHERE
-			`t2`.`domain_id` = ?
-		AND
-			`t1`.`subdomain_id` = ?
-	";
-	$stmt = exec_query($query, array($dmnId, $subId));
+    $query = "
+        SELECT
+            `t1`.`subdomain_id`, CONCAT(`t1`.`subdomain_name`, '.', `t2`.`domain_name`) AS `subdomain_name`
+        FROM
+            `subdomain` AS `t1`
+        LEFT JOIN
+            `domain` AS `t2` ON(`t2`.`domain_id` = `t1`.`domain_id`)
+        WHERE
+            `t2`.`domain_id` = ?
+        AND
+            `t1`.`subdomain_id` = ?
+    ";
+    $stmt = exec_query($query, [$dmnId, $subId]);
 
-	if ($stmt->rowCount()) {
-		$subName = $stmt->fields['subdomain_name'];
-		$ret = false;
+    if ($stmt->rowCount()) {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $subName = $row['subdomain_name'];
+        $ret = false;
 
-		// Check for mail accounts
-		$query = "
-			SELECT
-				COUNT(`mail_id`) AS `cnt`
-			FROM
-				`mail_users`
-			WHERE
-				(`mail_type` LIKE ? OR `mail_type` = ?)
-			AND
-				`sub_id` = ?
-		";
-		$stmt = exec_query($query, array($subId, MT_SUBDOM_MAIL . '%', MT_SUBDOM_FORWARD));
+        // Check for mail accounts
+        $query = "
+            SELECT
+                COUNT(`mail_id`) AS `cnt`
+            FROM
+                `mail_users`
+            WHERE
+                (`mail_type` LIKE ? OR `mail_type` = ?)
+            AND
+                `sub_id` = ?
+        ";
+        $stmt = exec_query($query, [$subId, MT_SUBDOM_MAIL . '%', MT_SUBDOM_FORWARD]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-		if ($stmt->fields['cnt']) {
-			set_page_message(
-				tr('Subdomain you are trying to remove has email accounts. Remove them first.'), 'error'
-			);
-			$ret = true;
-		}
+        if ($row['cnt'] > 0) {
+            set_page_message(tr('Subdomain you are trying to remove has email accounts. Remove them first.'), 'error');
+            $ret = true;
+        }
 
-		// Check for FTP accounts
-		$query = "SELECT count(`userid`) AS `cnt` FROM `ftp_users` WHERE `userid` LIKE ?";
-		$stmt = exec_query($query, "%@$subName");
+        // Check for FTP accounts
+        $query = "SELECT count(`userid`) AS `cnt` FROM `ftp_users` WHERE `userid` LIKE ?";
+        $stmt = exec_query($query, "%@$subName");
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-		if ($stmt->fields['cnt']) {
-			set_page_message(
-				tr('Subdomain you are trying to remove has FTP accounts. Remove them first.'), 'error'
-			);
-			$ret = true;
-		}
+        if ($row['cnt'] > 0) {
+            set_page_message(tr('Subdomain you are trying to remove has FTP accounts. Remove them first.'), 'error');
+            $ret = true;
+        }
 
-		if (!$ret) {
-			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-				\iMSCP\Core\Events::onBeforeDeleteSubdomain, array('subdomainId' => $subId, 'type' => 'sub')
-			);
+        if (!$ret) {
+            \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                \iMSCP\Core\Events::onBeforeDeleteSubdomain, null, ['subdomainId' => $subId, 'type' => 'sub']
+            );
 
-			$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+            $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-			/** @var \Doctrine\DBAL\Connection $db */
-			$db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
+            /** @var \Doctrine\DBAL\Connection $db */
+            $db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
 
-			try {
-				$db->beginTransaction();
+            try {
+                $db->beginTransaction();
+                $query = "UPDATE subdomain SET subdomain_status = ? WHERE subdomain_id = ?";
+                $stmt = exec_query($query, ['todelete', $subId]);
+                $query = "UPDATE ssl_certs SET status = ? WHERE domain_id = ? AND domain_type = ?";
+                $stmt = exec_query($query, ['todelete', $subId, 'sub']);
+                $db->commit();
+            } catch (PDOException $e) {
+                $db->rollBack();
+                throw $e;
+            }
 
-				$query = "UPDATE subdomain SET subdomain_status = ? WHERE subdomain_id = ?";
-				$stmt = exec_query($query, array('todelete', $subId));
+            \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+                \iMSCP\Core\Events::onAfterDeleteSubdomain, null, [
+                'subdomainId' => $subId,
+                'type' => 'sub'
+            ]);
 
-				$query = "UPDATE ssl_certs SET status = ? WHERE domain_id = ? AND domain_type = ?";
-				$stmt = exec_query($query, array('todelete', $subId, 'sub'));
+            send_request();
+            write_log("{$_SESSION['user_logged']} scheduled deletion of subdomain: $subName", E_USER_NOTICE);
+            set_page_message(tr('Subdomain successfully scheduled for deletion.'), 'success');
+        }
 
-				$db->commit();
-			} catch (PDOException $e) {
-				$db->rollBack();
-				throw $e;
-			}
-
-			\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
-				\iMSCP\Core\Events::onAfterDeleteSubdomain, array('subdomainId' => $subId, 'type' => 'sub')
-			);
-
-			send_request();
-
-			write_log("{$_SESSION['user_logged']} scheduled deletion of subdomain: $subName", E_USER_NOTICE);
-			set_page_message(tr('Subdomain successfully scheduled for deletion.'), 'success');
-		}
-
-		redirectTo('domains_manage.php');
-	}
+        redirectTo('domains_manage.php');
+    }
 }
 
 showBadRequestErrorPage();

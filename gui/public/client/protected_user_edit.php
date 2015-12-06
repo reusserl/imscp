@@ -25,8 +25,8 @@
  * i-MSCP - internet Multi Server Control Panel. All Rights Reserved.
  */
 
-/**********************************************************************
- * Script functions
+/***********************************************************************************************************************
+ * Functions
  *
  */
 
@@ -39,56 +39,37 @@
  */
 function client_updateHtaccessUser(&$dmn_id, &$uuser_id)
 {
-	if (isset($_POST['uaction']) && $_POST['uaction'] == 'modify_user') {
-		// we have to add the user
-		if (isset($_POST['pass']) && isset($_POST['pass_rep'])) {
-			if (!checkPasswordSyntax($_POST['pass'])) {
-				return;
-			}
+    if (isset($_POST['uaction']) && $_POST['uaction'] == 'modify_user') {
+        // we have to add the user
+        if (isset($_POST['pass']) && isset($_POST['pass_rep'])) {
+            if (!checkPasswordSyntax($_POST['pass'])) {
+                return;
+            }
 
-			if ($_POST['pass'] !== $_POST['pass_rep']) {
-				set_page_message(tr("Passwords do not match."), 'error');
-				return;
-			}
+            if ($_POST['pass'] !== $_POST['pass_rep']) {
+                set_page_message(tr("Passwords do not match."), 'error');
+                return;
+            }
 
-			$nadmin_password = \iMSCP\Core\Utils\Crypt::htpasswd($_POST['pass']);
-
-			$change_status = 'tochange';
-
-			$query = "
-				UPDATE
-					`htaccess_users`
-				SET
-					`upass` = ?, `status` = ?
-				WHERE
-					`dmn_id` = ?
-				AND
-					`id` = ?
-			";
-			exec_query($query, array($nadmin_password, $change_status, $dmn_id, $uuser_id,));
-
-			send_request();
-
-			$query = "
-				SELECT
-					`uname`
-				FROM
-					`htaccess_users`
-				WHERE
-					`dmn_id` = ?
-				AND
-					`id` = ?
-			";
-			$rs = exec_query($query, array($dmn_id, $uuser_id));
-			$uname = $rs->fields['uname'];
-
-			$admin_login = $_SESSION['user_logged'];
-			write_log("$admin_login: updated htaccess user ID: $uname", E_USER_NOTICE);
-			redirectTo('protected_user_manage.php');
-		}
-	} else {
-		return;
-	}
+            $nadmin_password = \iMSCP\Core\Utils\Crypt::htpasswd($_POST['pass']);
+            $change_status = 'tochange';
+            $query = "
+                UPDATE
+                    `htaccess_users`
+                SET
+                    `upass` = ?, `status` = ?
+                WHERE
+                    `dmn_id` = ?
+                AND
+                    `id` = ?
+            ";
+            exec_query($query, [$nadmin_password, $change_status, $dmn_id, $uuser_id,]);
+            send_request();
+            redirectTo('protected_user_manage.php');
+        }
+    } else {
+        return;
+    }
 }
 
 /**
@@ -97,109 +78,107 @@ function client_updateHtaccessUser(&$dmn_id, &$uuser_id)
  */
 function check_get(&$get_input)
 {
-	if (!is_numeric($get_input)) {
-		return 0;
-	} else {
-		return 1;
-	}
+    if (!is_numeric($get_input)) {
+        return 0;
+    } else {
+        return 1;
+    }
 }
 
 /***********************************************************************************************************************
- * Main script
+ * Main
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
-
 customerHasFeature('protected_areas') or showBadRequestErrorPage();
 
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'client/puser_edit.tpl',
-		'page_message' => 'layout',
-		'usr_msg' => 'page',
-		'grp_msg' => 'page',
-		'pusres' => 'page',
-		'pgroups' => 'page'));
+$tpl->define_dynamic([
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'client/puser_edit.tpl',
+    'page_message' => 'layout',
+    'usr_msg' => 'page',
+    'grp_msg' => 'page',
+    'pusres' => 'page',
+    'pgroups' => 'page'
+]);
 
 $dmn_id = get_user_domain_id($_SESSION['user_id']);
 
 if (isset($_GET['uname']) && $_GET['uname'] !== '' && is_numeric($_GET['uname'])) {
-	$uuser_id = $_GET['uname'];
+    $uuser_id = $_GET['uname'];
+    $query = "
+        SELECT
+            `uname`
+        FROM
+            `htaccess_users`
+        WHERE
+            `dmn_id` = ?
+        AND
+            `id` = ?
+    ";
+    $stmt = exec_query($query, [(int)$dmn_id, (int)$uuser_id]);
 
-	$query = "
-		SELECT
-			`uname`
-		FROM
-			`htaccess_users`
-		WHERE
-			`dmn_id` = ?
-		AND
-			`id` = ?
-	";
-	$rs = exec_query($query, array((int)$dmn_id, (int)$uuser_id));
-
-	if ($rs->rowCount() == 0) {
-		redirectTo('protected_user_manage.php');
-	} else {
-		$tpl->assign(
-			array(
-				'UNAME' => tohtml($rs->fields['uname']),
-				'UID' => $uuser_id));
-	}
+    if (!$stmt->rowCount()) {
+        redirectTo('protected_user_manage.php');
+    } else {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $tpl->assign([
+            'UNAME' => tohtml($row['uname']),
+            'UID' => $uuser_id
+        ]);
+    }
 } elseif (isset($_POST['nadmin_name']) && !empty($_POST['nadmin_name']) && is_numeric($_POST['nadmin_name'])) {
-	$uuser_id = clean_input($_POST['nadmin_name']);
+    $uuser_id = clean_input($_POST['nadmin_name']);
+    $query = "
+        SELECT
+            `uname`
+        FROM
+            `htaccess_users`
+        WHERE
+            `dmn_id` = ?
+        AND
+            `id` = ?
+    ";
+    $rs = exec_query($query, [(int)$dmn_id, (int)$uuser_id]);
 
-	$query = "
-		SELECT
-			`uname`
-		FROM
-			`htaccess_users`
-		WHERE
-			`dmn_id` = ?
-		AND
-			`id` = ?
-	";
-	$rs = exec_query($query, array((int)$dmn_id, (int)$uuser_id));
+    if ($rs->rowCount() == 0) {
+        redirectTo('protected_user_manage.php');
+    } else {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $tpl->assign([
+            'UNAME' => tohtml($row['uname']),
+            'UID' => $uuser_id
+        ]);
 
-	if ($rs->rowCount() == 0) {
-		redirectTo('protected_user_manage.php');
-	} else {
-		$tpl->assign(
-			array(
-				'UNAME' => tohtml($rs->fields['uname']),
-				'UID' => $uuser_id));
-
-		client_updateHtaccessUser($dmn_id, $uuser_id);
-	}
+        client_updateHtaccessUser($dmn_id, $uuser_id);
+    }
 } else {
-	redirectTo('protected_user_manage.php');
+    redirectTo('protected_user_manage.php');
 }
 
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Client / Webtools / Protected Areas / Manage Users and Groups / Edit User'),
-		'TR_HTACCESS_USER' => tr('Htaccess user'),
-		'TR_USERS' => tr('User'),
-		'TR_USERNAME' => tr('Username'),
-		'TR_PASSWORD' => tr('Password'),
-		'TR_PASSWORD_REPEAT' => tr('Repeat password'),
-		'TR_UPDATE' => tr('Update'),
-		'TR_CANCEL' => tr('Cancel')));
+$tpl->assign([
+    'TR_PAGE_TITLE' => tr('Client / Webtools / Protected Areas / Manage Users and Groups / Edit User'),
+    'TR_HTACCESS_USER' => tr('Htaccess user'),
+    'TR_USERS' => tr('User'),
+    'TR_USERNAME' => tr('Username'),
+    'TR_PASSWORD' => tr('Password'),
+    'TR_PASSWORD_REPEAT' => tr('Repeat password'),
+    'TR_UPDATE' => tr('Update'),
+    'TR_CANCEL' => tr('Cancel')
+]);
 
 generateNavigation($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
-
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();

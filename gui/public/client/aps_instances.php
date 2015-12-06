@@ -18,42 +18,39 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-// Include application library
-require 'application.php';
+/***********************************************************************************************************************
+ * Main
+ */
 
-$eventManager = \iMSCP\Core\Application::getInstance()->getEventManager();
-$eventManager->trigger(\iMSCP\Core\Events::onClientScriptStart);
+require '../../application.php';
+
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
+
 check_login('user');
 
 if (customerHasFeature('aps_standard')) {
-	if (is_xhr()) {
-		try {
-			/** @var \iMSCP\ApsStandard\Controller\ApsInstanceController $controller */
-			$controller = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('ApsInstanceController');
-			$controller->handleRequest();
-		} catch (\Exception $e) {
-			header('Status: 500 Internal Server Error');
-		}
-		exit;
-	}
+    if (is_xhr()) {
+        /** @var \iMSCP\ApsStandard\Controller\ApsInstanceController $controller */
+        $controller = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('ApsInstanceController');
+        $controller->handleRequest();
+    }
 
-	$tpl = new \iMSCP\Core\Template\TemplateEngine();
-	$tpl->define_dynamic([
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'assets/angular/aps-standard/aps-instance/aps-instances.tpl',
-		'page_message' => 'layout'
-	]);
+    $tpl = new \iMSCP\Core\Template\TemplateEngine();
+    $tpl->define_dynamic([
+        'layout' => 'shared/layouts/ui.tpl',
+        'page' => 'assets/angular/aps-standard/aps-instance/aps-instances.tpl',
+        'page_message' => 'layout'
+    ]);
+    $tpl->assign('TR_PAGE_TITLE', tohtml(tr('Client / APS Standard / Application instances'), 'htmlAttr'));
 
-	$tpl->assign([
-		'TR_PAGE_TITLE' => tohtml(tr('Client / APS Standard / Application instances'), 'htmlAttr'),
-	]);
+    generateNavigation($tpl);
+    generatePageMessage($tpl);
 
-	generateNavigation($tpl);
-	generatePageMessage($tpl);
-
-	$tpl->parse('LAYOUT_CONTENT', 'page');
-	$eventManager->trigger(\iMSCP\Core\Events::onClientScriptEnd, ['templateEngine' => $tpl]);
-	$tpl->prnt();
+    $tpl->parse('LAYOUT_CONTENT', 'page');
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+        'templateEngine' => $tpl
+    ]);
+    $tpl->prnt();
 } else {
-	showBadRequestErrorPage();
+    showBadRequestErrorPage();
 }

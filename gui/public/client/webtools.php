@@ -36,28 +36,29 @@
  */
 function client_hideDisabledFeatures($tpl)
 {
-	if (!customerHasFeature('backup')) {
-		$tpl->assign('BACKUP_FEATURE', '');
-	}
+    if (!customerHasFeature('backup')) {
+        $tpl->assign('BACKUP_FEATURE', '');
+    }
 
-	$webmails = getWebmailList();
-	if (!customerHasFeature('mail') || empty($webmails)) {
-		$tpl->assign('MAIL_FEATURE', '');
-	} else {
-		if(in_array('Roundcube', $webmails)) {
-			$tpl->assign('WEBMAIL_RPATH', '/webmail');
-		} else {
-			$tpl->assign('WEBMAIL_RPATH', '/'. strtolower($webmails[0]));
-		}
-	}
+    $webmails = getWebmailList();
 
-	if (!customerHasFeature('ftp')) {
-		$tpl->assign('FTP_FEATURE', '');
-	}
+    if (!customerHasFeature('mail') || empty($webmails)) {
+        $tpl->assign('MAIL_FEATURE', '');
+    } else {
+        if (in_array('Roundcube', $webmails)) {
+            $tpl->assign('WEBMAIL_RPATH', '/webmail');
+        } else {
+            $tpl->assign('WEBMAIL_RPATH', '/' . strtolower($webmails[0]));
+        }
+    }
 
-	if (!customerHasFeature('webstats')) {
-		$tpl->assign('WEBSTATS_FEATURE', '');
-	}
+    if (!customerHasFeature('ftp')) {
+        $tpl->assign('FTP_FEATURE', '');
+    }
+
+    if (!customerHasFeature('webstats')) {
+        $tpl->assign('WEBSTATS_FEATURE', '');
+    }
 }
 
 /***********************************************************************************************************************
@@ -65,54 +66,50 @@ function client_hideDisabledFeatures($tpl)
  *
  */
 
-// Include core library
-require_once 'imscp-lib.php';
+require '../../application.php';
+require 'module/iMSCP/Core/src/Functions/Tickets.php';
 
 \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
 
 check_login('user');
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
 $tpl = new \iMSCP\Core\Template\TemplateEngine();
-$tpl->define_dynamic(
-	array(
-		'layout' => 'shared/layouts/ui.tpl',
-		'page' => 'client/webtools.tpl',
-		'page_message' => 'layout',
-		'backup_feature' => 'page',
-		'mail_feature' => 'page',
-		'ftp_feature' => 'page',
-		'webstats_feature' => 'page'
-	)
-);
+$tpl->define_dynamic([
+    'layout' => 'shared/layouts/ui.tpl',
+    'page' => 'client/webtools.tpl',
+    'page_message' => 'layout',
+    'backup_feature' => 'page',
+    'mail_feature' => 'page',
+    'ftp_feature' => 'page',
+    'webstats_feature' => 'page'
+]);
 
-$tpl->assign(
-	array(
-		'TR_PAGE_TITLE' => tr('Client / Webtools / Overview'),
-		'TR_FEATURE' => tr('Feature'),
-		'TR_DESCRIPTION' => tr('Description'),
-		'TR_HTACCESS' => tr('Protected areas'),
-		'TR_HTACCESS_TXT' => tr('Manage your protected areas, users and groups.'),
-		'TR_ERROR_PAGES' => tr('Error pages'),
-		'TR_ERROR_PAGES_TXT' => tr('Customize error pages for your domain.'),
-		'TR_BACKUP' => tr('Backup'),
-		'TR_BACKUP_TXT' => tr('Backup and restore settings.'),
-		'TR_WEBMAIL' => tr('Webmail'),
-		'TR_WEBMAIL_TXT' => tr('Access your mail through the web interface.'),
-		'TR_FILEMANAGER' => tr('FileManager'),
-		'TR_FILEMANAGER_TXT' => tr('Access your files through the web interface.'),
-		'TR_WEBSTATS' => tr('Web Statistics'),
-		'TR_WEBSTATS_TXT' => tr('Access your domain statistics through the Web interface.')
-	)
-);
+$tpl->assign([
+    'TR_PAGE_TITLE' => tr('Client / Webtools / Overview'),
+    'TR_FEATURE' => tr('Feature'),
+    'TR_DESCRIPTION' => tr('Description'),
+    'TR_HTACCESS' => tr('Protected areas'),
+    'TR_HTACCESS_TXT' => tr('Manage your protected areas, users and groups.'),
+    'TR_ERROR_PAGES' => tr('Error pages'),
+    'TR_ERROR_PAGES_TXT' => tr('Customize error pages for your domain.'),
+    'TR_BACKUP' => tr('Backup'),
+    'TR_BACKUP_TXT' => tr('Backup and restore settings.'),
+    'TR_WEBMAIL' => tr('Webmail'),
+    'TR_WEBMAIL_TXT' => tr('Access your mail through the web interface.'),
+    'TR_FILEMANAGER' => tr('FileManager'),
+    'TR_FILEMANAGER_TXT' => tr('Access your files through the web interface.'),
+    'TR_WEBSTATS' => tr('Web Statistics'),
+    'TR_WEBSTATS_TXT' => tr('Access your domain statistics through the Web interface.')
+]);
 
 generateNavigation($tpl);
 client_hideDisabledFeatures($tpl);
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, array('templateEngine' => $tpl));
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptEnd, null, [
+    'templateEngine' => $tpl
+]);
 $tpl->prnt();
 
 unsetMessages();
