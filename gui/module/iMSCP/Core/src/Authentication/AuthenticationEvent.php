@@ -17,8 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
 namespace iMSCP\Core\Authentication;
 
+use iMSCP\Authentication\Identity\IdentityInterface;
+use iMSCP\Core\ApplicationEvent;
+use Zend\Authentication\Result as AuthResult;
 use Zend\EventManager\Event;
 
 /**
@@ -27,31 +31,184 @@ use Zend\EventManager\Event;
  */
 class AuthenticationEvent extends Event
 {
-    const onBeforeAuthentication = 'onBeforeAuthentication';
     const onAuthentication = 'onAuthentication';
     const onAfterAuthentication = 'onAfterAuthentication';
-    const onBeforeSetIdentity = 'onBeforeSetIdentity';
-    const onAfterSetIdentity = 'onAfterSetIdentity';
-    const onBeforeUnsetIdentity = 'onBeforeUnsetIdentity';
-    const onAfterUnsetIdentity = 'onAfterUnsetIdentity';
+    const onAuthorization = 'onAuthorization';
+    const onAfterAuthorization = 'onAfterAuthorization';
 
     /**
-     * Set authentication result object
-     *
-     * @param AuthenticationResult $authResult
+     * @var ApplicationEvent
      */
-    public function setAuthResult(AuthenticationResult $authResult)
+    protected $appEvent;
+
+    /**
+     * @var mixed
+     */
+    protected $authentication;
+
+    /**
+     * @var AuthResult
+     */
+    protected $authenticationResult;
+
+    /**
+     * @var mixed
+     */
+    protected $authorization;
+
+    /**
+     * Whether or not authorization has completed/succeeded
+     * @var bool
+     */
+    protected $authorized = false;
+
+    /**
+     * The resource used for authorization queries
+     *
+     * @var mixed
+     */
+    protected $resource;
+
+    /**
+     * Constructor
+     *
+     * @param ApplicationEvent $appEvent
+     * @param mixed $authentication
+     * @param mixed $authorization
+     */
+    public function __construct(ApplicationEvent $appEvent, $authentication, $authorization)
     {
-        $this->setParam('authResult', $authResult);
+        parent::__construct(); // Only to make IDEs happy
+
+        $this->appEvent = $appEvent;
+        $this->authentication = $authentication;
+        $this->authorization = $authorization;
     }
 
     /**
-     * Get authentication result object
+     * Get authentication service
      *
-     * @return AuthenticationResult
+     * @return mixed
      */
-    public function getAuthResult()
+    public function getAuthenticationService()
     {
-        return $this->getParam('authResult');
+        return $this->authentication;
+    }
+
+    /**
+     * Has authentication result?
+     *
+     * @return bool
+     */
+    public function hasAuthenticationResult()
+    {
+        return ($this->authenticationResult !== null);
+    }
+
+    /**
+     * Set authentication result
+     *
+     * @param  AuthResult $result
+     * @return self
+     */
+    public function setAuthenticationResult(AuthResult $result)
+    {
+        $this->authenticationResult = $result;
+        return $this;
+    }
+
+    /**
+     * Get authentication result
+     *
+     * @return null|AuthResult
+     */
+    public function getAuthenticationResult()
+    {
+        return $this->authenticationResult;
+    }
+
+    /**
+     * Get authorization service
+     *
+     * @return mixed
+     */
+    public function getAuthorizationService()
+    {
+        return $this->authorization;
+    }
+
+    /**
+     * Get application event
+     * @return ApplicationEvent
+     */
+    public function getApplicationEvent()
+    {
+        return $this->appEvent;
+    }
+
+    /**
+     * Get identity
+     *
+     * @return mixed|null
+     */
+    public function getIdentity()
+    {
+        return $this->authentication->getIdentity();
+    }
+
+    /**
+     * Set identity
+     *
+     * @param IdentityInterface $identity
+     * @return self
+     */
+    public function setIdentity(IdentityInterface $identity)
+    {
+        $this->authentication->getStorage()->write($identity);
+        return $this;
+    }
+
+    /**
+     * Get resource
+     *
+     * @return mixed
+     */
+    public function getResource()
+    {
+        return $this->resource;
+    }
+
+    /**
+     * Set resource
+     *
+     * @param  mixed $resource
+     * @return self
+     */
+    public function setResource($resource)
+    {
+        $this->resource = $resource;
+        return $this;
+    }
+
+    /**
+     * Is authorized?
+     *
+     * @return bool
+     */
+    public function isAuthorized()
+    {
+        return $this->authorized;
+    }
+
+    /**
+     * Set authorization flag
+     *
+     * @param bool $flag
+     * @return self
+     */
+    public function setIsAuthorized($flag)
+    {
+        $this->authorized = (bool)$flag;
+        return $this;
     }
 }
