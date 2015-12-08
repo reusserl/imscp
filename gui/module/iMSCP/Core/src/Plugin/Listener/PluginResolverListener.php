@@ -26,7 +26,7 @@ use iMSCP\Core\Plugin\PluginEvent;
  * Class PluginResolverListener
  *
  * This is the default plugin resolver listener which assumes that the plugins are in the iMSCP\Plugin namespace.
- * It is possible to provide any other resolver logic by providing your own plugin resolver listener.
+ * It is possible to provide any other resolver logic by providing your own plugin resolver.
  *
  * @package iMSCP\Core\Plugin\Listener
  */

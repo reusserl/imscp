@@ -27,7 +27,7 @@ use iMSCP\Core\Utils\OpcodeCache;
  * Class AbstractPlugin
  * @package iMSCP\Core\Plugin
  */
-abstract class AbstractPlugin
+abstract class AbstractPlugin implements PluginInterface
 {
     /**
      * @var array Plugin configuration parameters
@@ -68,18 +68,6 @@ abstract class AbstractPlugin
     public function __construct(PluginManager $pluginManager)
     {
         $this->pluginManager = $pluginManager;
-        $this->init();
-    }
-
-    /**
-     * Allow plugin initialization
-     *
-     * This method allow to do some initialization tasks without overriding the constructor.
-     *
-     * @return void
-     */
-    protected function init()
-    {
     }
 
     /**
@@ -110,7 +98,7 @@ abstract class AbstractPlugin
      */
     function getInfo()
     {
-        $file = $this->getPluginManager()->pluginGetDirectory() . '/' . $this->getName() . '/info.php';
+        $file = $this->pluginManager->pluginGetDirectory() . '/' . $this->getName() . '/info.php';
         $info = [];
 
         if (@is_readable($file)) {
@@ -145,16 +133,6 @@ abstract class AbstractPlugin
             ],
             $info
         );
-    }
-
-    /**
-     * Get plugin manager
-     *
-     * @return PluginManager
-     */
-    public function getPluginManager()
-    {
-        return $this->pluginManager;
     }
 
     /**
@@ -247,7 +225,7 @@ abstract class AbstractPlugin
         $this->isLoadedConfig = false;
 
         $pluginName = $this->getName();
-        $file = $this->getPluginManager()->pluginGetDirectory() . "/$pluginName/config.php";
+        $file = $this->pluginManager->pluginGetDirectory() . "/$pluginName/config.php";
         $config = [];
 
         if (@file_exists($file)) {
@@ -307,130 +285,6 @@ abstract class AbstractPlugin
         }
 
         return (isset($this->configPrev[$paramName])) ? $this->configPrev[$paramName] : $default;
-    }
-
-    /**
-     * Plugin installation
-     *
-     * This method is automatically called by the plugin manager when the plugin is being installed.
-     *
-     * @throws \Exception
-     * @param PluginManager $pluginManager
-     * @return void
-     */
-    public function install(PluginManager $pluginManager)
-    {
-    }
-
-    /**
-     * Plugin activation
-     *
-     * This method is automatically called by the plugin manager when the plugin is being enabled (activated).
-     *
-     * @throws \Exception
-     * @param PluginManager $pluginManager
-     * @return void
-     */
-    public function enable(PluginManager $pluginManager)
-    {
-    }
-
-    /**
-     * Plugin deactivation
-     *
-     * This method is automatically called by the plugin manager when the plugin is being disabled (deactivated).
-     *
-     * @throws \Exception
-     * @param PluginManager $pluginManager
-     * @return void
-     */
-    public function disable(PluginManager $pluginManager)
-    {
-    }
-
-    /**
-     * Plugin update
-     *
-     * This method is automatically called by the plugin manager when the plugin is being updated.
-     *
-     * @throws \Exception
-     * @param PluginManager $pluginManager
-     * @param string $fromVersion Version from which plugin update is initiated
-     * @param string $toVersion Version to which plugin is updated
-     * @return void
-     */
-    public function update(PluginManager $pluginManager, $fromVersion, $toVersion)
-    {
-    }
-
-    /**
-     * Plugin uninstallation
-     *
-     * This method is automatically called by the plugin manager when the plugin is being uninstalled.
-     *
-     * @throws \Exception
-     * @param PluginManager $pluginManager
-     * @return void
-     */
-    public function uninstall(PluginManager $pluginManager)
-    {
-    }
-
-    /**
-     * Plugin deletion
-     *
-     * This method is automatically called by the plugin manager when the plugin is being deleted.
-     *
-     * @throws \Exception
-     * @param PluginManager $pluginManager
-     * @return void
-     */
-    public function delete(PluginManager $pluginManager)
-    {
-    }
-
-    /**
-     * Get plugin item with error status
-     *
-     * This method is called by the i-MSCP debugger.
-     *
-     * Note: *MUST* be implemented by any plugin which manage its own items.
-     *
-     * @return array
-     */
-    public function getItemWithErrorStatus()
-    {
-        return [];
-    }
-
-    /**
-     * Set status of the given plugin item to 'tochange'
-     *
-     * This method is called by the i-MSCP debugger.
-     *
-     * Note: *MUST* be implemented by any plugin which manage its own items.
-     *
-     * @param string $table Table name
-     * @param string $field Status field name
-     * @param int $itemId item unique identifier
-     * @return void
-     */
-    public function changeItemStatus($table, $field, $itemId)
-    {
-    }
-
-    /**
-     * Return count of request in progress
-     *
-     * This method is called by the i-MSCP debugger.
-     *
-     * Note: *MUST* be implemented by any plugin which manage its own items.
-     *
-     * @return int
-     */
-    public function getCountRequests()
-    {
-        return 0;
     }
 
     /**
@@ -501,7 +355,7 @@ abstract class AbstractPlugin
     protected function migrateDb($migrationMode = 'up')
     {
         $pluginName = $this->getName();
-        $pluginManager = $this->getPluginManager();
+        $pluginManager = $this->pluginManager;
         $sqlDir = $pluginManager->pluginGetDirectory() . '/' . $pluginName . '/sql';
 
         if (is_dir($sqlDir)) {
