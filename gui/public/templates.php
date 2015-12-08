@@ -20,23 +20,35 @@
 
 require '../application.php';
 
-check_login();
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+    \iMSCP\Core\Events::onTemplatesScriptStart, \iMSCP\Core\Application::getInstance()->getApplicationEvent()
+);
 
 /** @var \Zend\Http\PhpEnvironment\Request $request */
 $request = \iMSCP\Core\Application::getInstance()->getRequest();
 
-if (($tpl = $request->getQuery($_GET['tpl']))) {
-	$tpl = clean_input($tpl);
+/** @var Zend\Http\PhpEnvironment\Response $response */
+$response = \iMSCP\Core\Application::getInstance()->getResponse();
 
-	try {
-		$tplEngine = new \iMSCP\Core\Template\TemplateEngine();
-		$tplEngine->define('template', $tpl);
-		$tplEngine->parse('TEMPLATE', 'template');
-		$tplEngine->prnt();
-		exit;
-	} catch (\Exception $e) {
-		write_log(sprintf('Could not load the %s template file: %s', $tpl, $e->getMessage()));
-	}
+if (!$request->isXmlHttpRequest() || !($tpl = clean_input($request->getQuery('tpl', '')))) {
+    $response->setStatusCode(400);
+    $response->send();
+    return;
 }
 
-showNotFoundErrorPage();
+try {
+    $tpl = new \iMSCP\Core\Template\TemplateEngine();
+    $tpl->define('template', $tpl);
+    $tpl->parse('TEMPLATE', 'template');
+
+    \iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onTemplatesScriptEnd, null, [
+        'templateEngine' => $tpl
+    ]);
+
+    $response->setContent($tpl->getLastParseResult());
+} catch (\Exception $e) {
+    write_log(sprintf('Could not load the %s template file: %s', $tpl, $e->getMessage()));
+    $response->setStatusCode($e->getCode() == 404 ? 404 : 500);
+}
+
+$response->send();
