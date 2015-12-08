@@ -24,10 +24,7 @@ require '../application.php';
     \iMSCP\Core\Events::onTemplatesScriptStart, \iMSCP\Core\Application::getInstance()->getApplicationEvent()
 );
 
-/** @var \Zend\Http\PhpEnvironment\Request $request */
 $request = \iMSCP\Core\Application::getInstance()->getRequest();
-
-/** @var Zend\Http\PhpEnvironment\Response $response */
 $response = \iMSCP\Core\Application::getInstance()->getResponse();
 
 if (!$request->isXmlHttpRequest() || !($tpl = clean_input($request->getQuery('tpl', '')))) {
