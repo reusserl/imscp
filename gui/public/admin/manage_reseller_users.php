@@ -432,7 +432,9 @@ function check_ip_sets($to, $customersList, &$errorsStack)
 
 require '../../application.php';
 
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+    \iMSCP\Core\Events::onAdminScriptStart, \iMSCP\Core\Application::getInstance()->getApplicationEvent()
+);
 
 check_login('admin');
 

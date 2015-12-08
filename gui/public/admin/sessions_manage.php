@@ -75,7 +75,7 @@ function kill_session()
 }
 
 /**
- * Generates users sessoion list
+ * Generates users session list
  *
  * @param iMSCP\Core\Template\TemplateEngine $tpl Template engine
  * @return void
@@ -123,7 +123,9 @@ function client_generatePage($tpl)
 
 require '../../application.php';
 
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+    \iMSCP\Core\Events::onAdminScriptStart, \iMSCP\Core\Application::getInstance()->getApplicationEvent()
+);
 
 check_login('admin');
 

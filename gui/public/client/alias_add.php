@@ -267,7 +267,10 @@ function client_addDomainAlias()
 
 require '../../application.php';
 
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+    \iMSCP\Core\Events::onClientScriptStart, \iMSCP\Core\Application::getInstance()->getApplicationEvent()
+);
+
 check_login('user');
 customerHasFeature('domain_aliases') or showBadRequestErrorPage();
 

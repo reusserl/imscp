@@ -171,7 +171,9 @@ function generatePage($tpl, $userId)
 
 require '../../application.php';
 
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+    \iMSCP\Core\Events::onResellerScriptStart, \iMSCP\Core\Application::getInstance()->getApplicationEvent()
+);
 
 check_login('reseller');
 

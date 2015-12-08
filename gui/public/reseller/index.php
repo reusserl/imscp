@@ -238,7 +238,9 @@ function reseller_generatePageData($tpl, $resellerId, $resellerName)
 
 require '../../application.php';
 
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onResellerScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+    \iMSCP\Core\Events::onResellerScriptStart, \iMSCP\Core\Application::getInstance()->getApplicationEvent()
+);
 
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 

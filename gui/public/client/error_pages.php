@@ -67,7 +67,9 @@ function update_error_page()
 
 require '../../application.php';
 
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+    \iMSCP\Core\Events::onClientScriptStart, \iMSCP\Core\Application::getInstance()->getApplicationEvent()
+);
 
 check_login('user');
 customerHasFeature('custom_error_pages') or showBadRequestErrorPage();

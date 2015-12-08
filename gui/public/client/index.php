@@ -331,7 +331,9 @@ function client_generateDomainExpiresInformation($tpl)
 
 require '../../application.php';
 
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+    \iMSCP\Core\Events::onClientScriptStart, \iMSCP\Core\Application::getInstance()->getApplicationEvent()
+);
 
 $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 

@@ -32,7 +32,9 @@
 require '../../application.php';
 require 'module/iMSCP/Core/src/Functions/Tickets.php';
 
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onClientScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+    \iMSCP\Core\Events::onClientScriptStart, \iMSCP\Core\Application::getInstance()->getApplicationEvent()
+);
 
 check_login('user');
 customerHasFeature('support') or showBadRequestErrorPage();

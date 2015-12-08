@@ -190,7 +190,11 @@ function admin_generateServerTrafficInfo($tpl)
 
 require '../../application.php';
 
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onAdminScriptStart);
+\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(
+    \iMSCP\Core\Events::onAdminScriptStart, \iMSCP\Core\Application::getInstance()->getApplicationEvent()
+);
+
+$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
 check_login('admin', $cfg['PREVENT_EXTERNAL_LOGIN_ADMIN']);
 
