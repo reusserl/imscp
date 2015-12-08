@@ -1690,12 +1690,11 @@ function is_basicString($string)
  * Note: jQuery and Prototype Javascript libraries sends this header with every Ajax request.
  *
  * @return boolean  TRUE if the request‘s "X-Requested-With" header contains "XMLHttpRequest", FALSE otherwise
+ * @deprecated Deprecated since version 1.3.0. You must now use the request object.
  */
 function is_xhr()
 {
-    return (
-        isset($_SERVER['HTTP_X_REQUESTED_WITH']) && stristr($_SERVER['HTTP_X_REQUESTED_WITH'], 'XMLHttpRequest') !== false
-    );
+    return \iMSCP\Core\Application::getInstance()->getRequest()->isXmlHttpRequest();
 }
 
 /**
