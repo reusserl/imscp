@@ -21,6 +21,11 @@
 namespace iMSCP\DoctrineIntegration;
 
 use Doctrine\Common\Annotations\AnnotationRegistry;
+use Doctrine\DBAL\Tools\Console\Helper\ConnectionHelper;
+use Doctrine\ORM\Tools\Console\Helper\EntityManagerHelper;
+use iMSCP\Core\Events;
+use Symfony\Component\Console\Helper\QuestionHelper;
+use Zend\EventManager\EventInterface;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
 use Zend\ModuleManager\Feature\InitProviderInterface;
 use Zend\ModuleManager\ModuleManagerInterface;
@@ -40,6 +45,9 @@ class Module implements InitProviderInterface, ConfigProviderInterface
         AnnotationRegistry::registerLoader(function ($className) {
             return class_exists($className);
         });
+
+        $events = $manager->getEventManager();
+        $events->getSharedManager()->attach('imscp', Events::onAfterLoadCli, [$this, 'initializeConsole']);
     }
 
     /**
@@ -48,5 +56,53 @@ class Module implements InitProviderInterface, ConfigProviderInterface
     public function getConfig()
     {
         return include __DIR__ . '/config/module.config.php';
+    }
+
+    /**
+     * Initializes the console with additional commands from the ORM and DBAL
+     *
+     * @param \Zend\EventManager\EventInterface $event
+     * @return void
+     */
+    public function initializeConsole(EventInterface $event)
+    {
+        /* @var $cli \Symfony\Component\Console\Application */
+        $cli = $event->getTarget();
+
+        /* @var $serviceLocator \Zend\ServiceManager\ServiceLocatorInterface */
+        $serviceLocator = $event->getParam('ServiceManager');
+
+        $commands = [
+            // DBAL commands
+            'doctrine_integration.dbal_cmd.runsql',
+            'doctrine_integration.dbal_cmd.import',
+
+            // ORM Commands
+            'doctrine_integration.clear_cache_metadata',
+            'doctrine_integration.clear_cache_result',
+            'doctrine_integration.clear_cache_query',
+            'doctrine_integration.schema_tool_create',
+            'doctrine_integration.schema_tool_update',
+            'doctrine_integration.schema_tool_drop',
+            'doctrine_integration.ensure_production_settings',
+            'doctrine_integration.convert_d1_schema',
+            'doctrine_integration.generate_repositories',
+            'doctrine_integration.generate_entities',
+            'doctrine_integration.generate_proxies',
+            'doctrine_integration.convert_mapping',
+            'doctrine_integration.run_dql',
+            'doctrine_integration.validate_schema',
+            'doctrine_integration.info'
+        ];
+
+        $cli->addCommands(array_map([$serviceLocator, 'get'], $commands));
+
+        /* @var $entityManager \Doctrine\ORM\EntityManager */
+        $entityManager = $serviceLocator->get('doctrine_integration.entitymanager.default');
+
+        $helperSet = $cli->getHelperSet();
+        $helperSet->set(new QuestionHelper(), 'dialog');
+        $helperSet->set(new ConnectionHelper($entityManager->getConnection()), 'db');
+        $helperSet->set(new EntityManagerHelper($entityManager), 'em');
     }
 }

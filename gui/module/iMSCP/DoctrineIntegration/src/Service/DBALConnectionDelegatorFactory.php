@@ -19,8 +19,10 @@
 
 namespace iMSCP\DoctrineIntegration\Service;
 
+use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Types\Type;
+use Zend\ServiceManager\DelegatorFactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
@@ -31,13 +33,19 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  * @author  Kyle Spraggs <theman@spiffyjr.me>
  * @package iMSCP\DoctrineIntegration\Service
  */
-class DBALConnectionFactory extends AbstractFactory
+class DBALConnectionDelegatorFactory extends AbstractFactory implements DelegatorFactoryInterface
 {
     /**
-     * {@inheritDoc}
-     * @return \Doctrine\DBAL\Connection
+     * A factory that creates delegates of a given service
+     *
+     * @param ServiceLocatorInterface $sl the service locator which requested the service
+     * @param string $name the normalized service name
+     * @param string $requestedName the requested service name
+     * @param callable $callback the callback that is responsible for creating the service
+     *
+     * @return mixed
      */
-    public function createService(ServiceLocatorInterface $sl)
+    public function createDelegatorWithName(ServiceLocatorInterface $sl, $name, $requestedName, $callback)
     {
         /** @var $options \iMSCP\DoctrineIntegration\Options\DBALConnection */
         $options = $this->getOptions($sl, 'connection');
@@ -54,11 +62,13 @@ class DBALConnectionFactory extends AbstractFactory
         ];
         $params = array_merge($params, $options->getParams());
 
+        /** @var Configuration $configuration */
         $configuration = $sl->get($options->getConfiguration());
         $eventManager = $sl->get($options->getEventManager());
 
         $connection = DriverManager::getConnection($params, $configuration, $eventManager);
         $platform = $connection->getDatabasePlatform();
+
         foreach ($options->getDoctrineTypeMappings() as $dbType => $doctrineType) {
             $platform->registerDoctrineTypeMapping($dbType, $doctrineType);
         }
@@ -68,6 +78,15 @@ class DBALConnectionFactory extends AbstractFactory
         }
 
         return $connection;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @return \Doctrine\DBAL\Connection
+     */
+    public function createService(ServiceLocatorInterface $sl)
+    {
+        throw new \BadMethodCallException('Unssuported.');
     }
 
     /**

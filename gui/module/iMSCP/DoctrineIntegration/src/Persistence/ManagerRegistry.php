@@ -32,7 +32,9 @@ use Zend\ServiceManager\ServiceManagerAwareInterface;
  */
 class ManagerRegistry extends AbstractManagerRegistry implements ServiceManagerAwareInterface
 {
-    /** @var ServiceManager */
+    /**
+     * @var ServiceManager
+     */
     protected $serviceManager;
 
     /**
@@ -59,14 +61,14 @@ class ManagerRegistry extends AbstractManagerRegistry implements ServiceManagerA
         foreach (array_keys($this->getManagers()) as $name) {
             $manager = $this->getManager($name);
 
-            if ($manager instanceof EntityManager) {
-                try {
-                    return $manager->getConfiguration()->getEntityNamespace($alias);
-                } catch (ORMException $ex) {
-                    // Probably mapped by another entity manager, or invalid, just ignore this here.
-                }
-            } else {
+            if (!$manager instanceof EntityManager) {
                 throw new \LogicException(sprintf('Unsupported manager type "%s".', get_class($manager)));
+            }
+
+            try {
+                return $manager->getConfiguration()->getEntityNamespace($alias);
+            } catch (ORMException $ex) {
+                // Probably mapped by another entity manager, or invalid, just ignore this here.
             }
         }
 

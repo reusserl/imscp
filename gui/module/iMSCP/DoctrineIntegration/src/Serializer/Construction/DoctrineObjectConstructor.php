@@ -65,7 +65,13 @@ class DoctrineObjectConstructor implements ObjectConstructorInterface
     /**
      * {@inheritdoc}
      */
-    public function construct(VisitorInterface $visitor, ClassMetadata $metadata, $data, array $type, DeserializationContext $context)
+    public function construct(
+        VisitorInterface $visitor,
+        ClassMetadata $metadata,
+        $data,
+        array $type,
+        DeserializationContext $context
+    )
     {
         // Locate possible ObjectManager
         /** @var EntityManagerInterface $objectManager */
@@ -111,7 +117,6 @@ class DoctrineObjectConstructor implements ObjectConstructorInterface
         }
 
         $objectManager->initializeObject($object);
-
         return $object;
     }
 }
