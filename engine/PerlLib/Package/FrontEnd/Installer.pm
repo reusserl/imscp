@@ -71,6 +71,7 @@ sub registerSetupListeners
 
 		# Register required composer/pear packages
 		$composerManager->registerPackages({
+			'php' => '>=5.4',
 			'doctrine/orm' => '~2.5.0',
 			'jms/serializer' => '~1.0.0',
 			'symfony/console' => '~2.7',
@@ -81,6 +82,7 @@ sub registerSetupListeners
 			'zendframework/zend-authentication' => '~2.4.0',
 			'zendframework/zend-cache' => '~2.4.0',
 			'zendframework/zend-config' => '~2.4.0',
+			'zendframework/zend-console' => '~2.4.0',
 			'zendframework/zend-escaper' => '~2.4.0',
 			'zendframework/zend-eventmanager' => '~2.4.0',
 			'zendframework/zend-http' => '~2.4.0',
@@ -91,6 +93,7 @@ sub registerSetupListeners
 			'zendframework/zend-permissions-acl' => '~2.4.0',
 			'zendframework/zend-permissions-rbac' => '~2.4.0',
 			'zendframework/zend-servicemanager' => '~2.4.0',
+			'zendframework/zend-session' => '~2.4.0',
 			'zendframework/zend-uri' => '~2.4.0',
 			'zendframework/zend-validator' => '~2.4.0'
 		});

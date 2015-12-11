@@ -20,12 +20,14 @@
 
 namespace iMSCP\Core\Service;
 
-use Zend\Http\PhpEnvironment\Request;
+use Zend\Console\Console;
+use Zend\Console\Request as ConsoleRequest;
+use Zend\Http\PhpEnvironment\Request as HttpRequest;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class HttpRequestServiceFactory
+ * Class RequestFactory
  * @package iMSCP\Core\Service
  */
 class RequestFactory implements FactoryInterface
@@ -35,6 +37,10 @@ class RequestFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        return new Request();
+        if (Console::isConsole()) {
+            return new ConsoleRequest();
+        }
+
+        return new HttpRequest();
     }
 }

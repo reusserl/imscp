@@ -58,8 +58,8 @@ sub registerRepository
 {
 	my ($self, $type, $url) = @_;
 
-	defined $type or die('Missing repository $type parameter');
-	defined $url or die('Missing repository $url parameter');
+	defined $type or die('Missing $type parameter');
+	defined $url or die('Missing $url parameter');
 
 	push @{$self->{'repositories'}}, <<REPOSITORY;
         {
@@ -139,9 +139,9 @@ sub registerAutoloaderMap
 {
 	my ($self, $type, $namespace, $path) = @_;
 
-	defined $type or die('Missing autoloading $type parameter');
-	defined $namespace or die('Missing autoloading $namespace parameter');
-	defined $path or die('Missing autoloading $path parameter');
+	defined $type or die('Missing $type parameter');
+	defined $namespace or die('Missing $namespace parameter');
+	defined $path or die('Missing $path parameter');
 
 	if($type eq 'psr-0') {
 		push @{$self->{'autoload_psr0'}}, <<AUTOLOAD_MAP;
@@ -278,7 +278,7 @@ sub _installPackages
 	# Note: Any progress/status info goes to stderr (See https://github.com/composer/composer/issues/3795)
 	executeNoWait(
 		"$self->{'phpCmd'} $self->{'pkgDir'}/composer.phar --no-ansi -d=$self->{'pkgDir'} update" .
-			(!$main::imscpConfig{'DEVMODE'} ? ' --no-dev' : ''),
+			(!$main::imscpConfig{'DEVMODE'} ? ' --no-dev --optimize-autoloader --classmap-authoritative' : ''),
 		sub { my $str = shift; $$str = '' },
 		sub {
 			my $str = shift;
@@ -314,7 +314,7 @@ sub _buildComposerFile
 	my $tpl = <<TPL;
 {
     "name": "imscp/packages",
-    "description": "i-MSCP composer packages",
+    "description": "i-MSCP composer/pear packages",
     "license": "GPL-2.0+",
     "type": "metapackage",
     "repositores": [
@@ -329,8 +329,6 @@ sub _buildComposerFile
     "config": {
         "preferred-install": "dist",
         "process-timeout": 2000,
-        "classmap-authoritative": true,
-        "optimize-autoloader": true,
         "discard-changes": true
     },
     "minimum-stability": "dev",
@@ -401,7 +399,7 @@ sub _checkRequirements
 		return 0 if $rs;
 	}
 
-	# Check for required development package only in development environment
+	# Check for required development packages only in development environment
 	if($main::imscpConfig{'DEVMODE'}) {
 		for(@{$self->{'required_dev_packages'}}) {
 			my ($package, $version) = $_ =~ /"(.*)":\s*"(.*)"/;

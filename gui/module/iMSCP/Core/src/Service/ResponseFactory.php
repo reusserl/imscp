@@ -20,13 +20,15 @@
 
 namespace iMSCP\Core\Service;
 
-use Zend\Http\PhpEnvironment\Request;
-use Zend\Http\PhpEnvironment\Response;
+use Zend\Console\Console;
+use Zend\Console\Response as ConsoleResponse;
+use Zend\Http\PhpEnvironment\Request as HttpRequest;
+use Zend\Http\PhpEnvironment\Response as HttpResponse;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class HttpResponseServiceFactory
+ * Class ResponseFactory
  * @package iMSCP\Core\Service
  */
 class ResponseFactory implements FactoryInterface
@@ -36,11 +38,15 @@ class ResponseFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        /** @var Request $request */
-        $request = $serviceLocator->get('Request');
-        $response = new Response();
+        if (Console::isConsole()) {
+            return new ConsoleResponse();
+        }
 
-        if($request->isXmlHttpRequest()) {
+        /** @var HttpRequest $request */
+        $request = $serviceLocator->get('Request');
+        $response = new HttpResponse();
+
+        if ($request->isXmlHttpRequest()) {
             $response->getHeaders()->addHeaderLine('Content-Type', 'application/json');
         }
 
