@@ -76,7 +76,7 @@ class ManagerRegistry implements ManagerRegistryInterface
      * @param string $defaultManager Default manager name
      * @param string $proxyInterfaceName
      */
-    public function __constructor(
+    public function __construct(
         ServiceManager $serviceManager,
         $name,
         array $connections,
@@ -286,15 +286,18 @@ class ManagerRegistry implements ManagerRegistryInterface
     /**
      * Resets the given services
      *
-     * A service in this context is a a connection or a manager instance.
+     * A service in this context is a connection or a manager instance.
      *
      * @param string $name The name of the service
      * @return void
      */
     protected function resetService($name)
     {
-        $this->serviceManager->setAllowOverride(true);
-        $this->serviceManager->setService($name, null);
-        $this->serviceManager->setAllowOverride(false);
+        $serviceManager = $this->serviceManager;
+        $allowOverride = $serviceManager->getAllowOverride();
+        $serviceManager
+            ->setAllowOverride(true)
+            ->setService($name, null)
+            ->setAllowOverride($allowOverride);
     }
 }

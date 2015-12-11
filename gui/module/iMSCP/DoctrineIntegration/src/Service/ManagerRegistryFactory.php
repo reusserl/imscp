@@ -51,6 +51,6 @@ class ManagerRegistryFactory implements FactoryInterface
             }
         }
 
-        return new ManagerRegistry('ORM', $connections, $managers);
+        return new ManagerRegistry($serviceLocator, 'doctrine', $connections, $managers);
     }
 }

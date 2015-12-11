@@ -33,8 +33,10 @@ return [
 
                 // Connection parameters, see
                 // http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html
+                // Note: For i-MSCP, connection parameters are set at runtime (they are pulled from external conffile)
+                // Defining any parameter here (or in another module) would override the runtime parameters.
                 'params' => []
-            ],
+            ]
         ],
 
         // Configuration details for the module.
@@ -71,7 +73,7 @@ return [
                 'proxy_dir' => 'data/DoctrineIntegrationModule/Proxy',
 
                 // Namespace for generated proxy classes
-                'proxy_namespace' => 'DoctrineIntegrationModule\Proxy',
+                'proxy_namespace' => 'iMSCP\DoctrineIntegrationModule\Proxy',
 
                 // Entity namespaces
                 'entity_namespaces' => [],
@@ -95,49 +97,49 @@ return [
         'cache' => [
             'apc' => [
                 'class' => 'Doctrine\Common\Cache\ApcCache',
-                'namespace' => 'DoctrineIntegration',
+                'namespace' => 'iMSCP\DoctrineIntegration',
             ],
             'array' => [
                 'class' => 'Doctrine\Common\Cache\ArrayCache',
-                'namespace' => 'DoctrineIntegration',
+                'namespace' => 'iMSCP\DoctrineIntegration',
             ],
             'filesystem' => [
                 'class' => 'Doctrine\Common\Cache\FilesystemCache',
                 'directory' => 'data/cache/DoctrineIntegration/cache',
-                'namespace' => 'DoctrineIntegration',
+                'namespace' => 'iMSCP\DoctrineIntegration',
             ],
             'memcache' => [
                 'class' => 'Doctrine\Common\Cache\MemcacheCache',
                 'instance' => 'my_memcache_alias',
-                'namespace' => 'DoctrineIntegration',
+                'namespace' => 'iMSCP\DoctrineIntegration',
             ],
             'memcached' => [
                 'class' => 'Doctrine\Common\Cache\MemcachedCache',
                 'instance' => 'my_memcached_alias',
-                'namespace' => 'DoctrineIntegration',
+                'namespace' => 'iMSCP\DoctrineIntegration',
             ],
             'predis' => [
                 'class' => 'Doctrine\Common\Cache\PredisCache',
                 'instance' => 'my_predis_alias',
-                'namespace' => 'DoctrineIntegration',
+                'namespace' => 'iMSCP\DoctrineIntegration',
             ],
             'redis' => [
                 'class' => 'Doctrine\Common\Cache\RedisCache',
                 'instance' => 'my_redis_alias',
-                'namespace' => 'DoctrineIntegration',
+                'namespace' => 'iMSCP\DoctrineIntegration',
             ],
             'wincache' => [
                 'class' => 'Doctrine\Common\Cache\WinCacheCache',
-                'namespace' => 'DoctrineIntegration',
+                'namespace' => 'iMSCP\DoctrineIntegration',
             ],
             'xcache' => [
                 'class' => 'Doctrine\Common\Cache\XcacheCache',
-                'namespace' => 'DoctrineIntegration',
+                'namespace' => 'iMSCP\DoctrineIntegration',
             ],
             'zenddata' => [
                 'class' => 'Doctrine\Common\Cache\ZendDataCache',
-                'namespace' => 'DoctrineIntegration'
-            ],
+                'namespace' => 'iMSCP\DoctrineIntegration'
+            ]
         ],
 
         // Metadata Mapping driver configuration
@@ -168,6 +170,12 @@ return [
             ]
         ],
 
+        // entity resolver configuration, allows mapping associations to interfaces
+        'entity_resolver' => [
+            // configuration for the `doctrine.entity_resolver.default` service
+            'default' => []
+        ],
+
         'eventmanager' => [
             // Configuration for the `doctrine_integration.eventmanager.default` service
             'default' => []
@@ -193,7 +201,7 @@ return [
         ],
         'authenticationservice' => [
             'default' => true
-        ],
+        ]
     ],
 
     // Factory mappings
@@ -206,10 +214,17 @@ return [
         'connection' => 'iMSCP\DoctrineIntegration\Service\DBALConnectionFactory',
         'driver' => 'iMSCP\DoctrineIntegration\Service\DriverFactory',
         'entitymanager' => 'iMSCP\DoctrineIntegration\Service\EntityManagerFactory',
-        'eventmanager' => 'iMSCP\DoctrineIntegration\Service\EventManagerFactory'
+        'eventmanager' => 'iMSCP\DoctrineIntegration\Service\EventManagerFactory',
+        'entity_resolver' => 'iMSCP\DoctrineIntegration\Service\EntityResolverFactory'
     ],
 
     'service_manager' => [
+        'abstract_factories' => [
+            'DoctrineIntegration' => 'iMSCP\DoctrineIntegration\Service\AbstractServiceFactory',
+        ],
+        'factories' => [
+            'doctrine' => 'iMSCP\DoctrineIntegration\Service\ManagerRegistryFactory',
+        ],
         'invokables' => [
             'iMSCP\DoctrineIntegration\Authentication\Storage\Session' => 'Zend\Authentication\Storage\Session',
 
@@ -233,18 +248,12 @@ return [
             'doctrine_integration.info' => '\Doctrine\ORM\Tools\Console\Command\InfoCommand',
             'doctrine_integration.ensure_production_settings' => '\Doctrine\ORM\Tools\Console\Command\EnsureProductionSettingsCommand',
             'doctrine_integration.generate_repositories' => '\Doctrine\ORM\Tools\Console\Command\GenerateRepositoriesCommand'
-        ],
-        'abstract_factories' => [
-            'DoctrineIntegration' => 'iMSCP\DoctrineIntegration\Service\AbstractServiceFactory',
-        ],
-        'factories' => [
-            'Doctrine' => 'iMSCP\DoctrineIntegration\Service\ManagerRegistryFactory',
         ]
     ],
 
     'hydrators' => [
         'factories' => [
-            'DoctrineIntegration\Stdlib\Hydrator\DoctrineObject' => 'DoctrineIntegration\Service\DoctrineObjectHydratorFactory'
+            'iMSCP\DoctrineIntegration\Stdlib\Hydrator\DoctrineObject' => 'iMSCP\DoctrineIntegration\Service\DoctrineObjectHydratorFactory'
         ]
     ]
 ];
