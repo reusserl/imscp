@@ -31,12 +31,15 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class DbConfigFactory implements FactoryInterface
 {
     /**
-     * {@inheritdoc]
+     * Create the database config handler service
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @return DbConfigHandler
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
         return new DbConfigHandler([
-            'connection' => $serviceLocator->get('DBALConnection'),
+            'connection' => $serviceLocator->get('Database'),
             'table_name' => 'config',
             'key_column' => 'name',
             'value_column' => 'value'

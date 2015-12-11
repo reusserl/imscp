@@ -25,7 +25,7 @@ use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class FrontendConfigFactory
+ * Class ConfigFactory
  * @package iMSCP\Core\Service
  */
 class ConfigFactory implements FactoryInterface

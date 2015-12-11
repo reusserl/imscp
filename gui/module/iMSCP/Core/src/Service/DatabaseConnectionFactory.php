@@ -61,6 +61,11 @@ class DatabaseConnectionFactory implements FactoryInterface
         /** @var EncryptionDataService $encryptionDataService */
         $encryptionDataService = $serviceLocator->get('EncryptionDataService');
 
+        $pdo = $options->getPdo();
+        if (is_string($pdo)) {
+            $pdo = $serviceLocator->get($pdo);
+        }
+
         $params = [
             'driverClass' => $options->getDriverClass(),
             'wrapperClass' => $options->getWrapperClass(),
@@ -72,7 +77,8 @@ class DatabaseConnectionFactory implements FactoryInterface
             'password' => Crypt::decryptRijndaelCBC(
                 $encryptionDataService->getKey(), $encryptionDataService->getIV(), $config['DATABASE_PASSWORD']
             ),
-            'charset' => 'utf8'
+            'charset' => 'utf8',
+            'pdo' => $pdo
         ];
 
         $params = ArrayUtils::merge($params, $options->getParams());
@@ -80,7 +86,6 @@ class DatabaseConnectionFactory implements FactoryInterface
         /** @var Configuration $configuration */
         $configuration = $serviceLocator->get($options->getConfiguration());
         $eventManager = $serviceLocator->get($options->getEventManager());
-
         $connection = DriverManager::getConnection($params, $configuration, $eventManager);
         $platform = $connection->getDatabasePlatform();
 

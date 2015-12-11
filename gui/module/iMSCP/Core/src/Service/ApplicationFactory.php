@@ -24,6 +24,8 @@ use iMSCP\Core\Application;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\ServiceManager\ServiceManager;
+use Zend\Stdlib\RequestInterface;
+use Zend\Stdlib\ResponseInterface;
 
 /**
  * Class ApplicationFactory
@@ -45,6 +47,12 @@ class ApplicationFactory implements FactoryInterface
         /** @var ServiceManager $serviceManager */
         $serviceManager = $serviceLocator;
 
-        return new Application($serviceLocator->get('Config'), $serviceManager);
+        /** @var RequestInterface $request */
+        $request = $serviceManager->get('Request');
+
+        /** @var ResponseInterface $response */
+        $response = $serviceManager->get('Response');
+
+        return new Application($serviceLocator->get('Config'), $request, $response, $serviceManager);
     }
 }
