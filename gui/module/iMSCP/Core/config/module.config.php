@@ -168,7 +168,45 @@ return [
     // Navigation
     'navigation' => [
         'admin' => __DIR__ . '/navigation_admin.php',
-        'client' => __DIR__ . '/navigation_client.php',
+        'user' => __DIR__ . '/navigation_client.php',
         'reseller' => __DIR__ . '/navigation_reseller.php'
-    ]
+    ],
+
+    'service_manager' => [
+        // Factory for overriding default DBALConnectionFactory from DoctrineIntegration module. We need this
+        // to define SQL connection parameters at runtime (they are pulled from the imscp.conf file).
+        'factories' => [
+            'doctrine_integration.connection.default' => 'iMSCP\Core\Service\DatabaseConnectionFactory'
+        ],
+        'aliases' => [
+            'Database' => 'doctrine_integration.connection.default'
+        ]
+    ],
+
+    'doctrine_integration' => [
+        'driver' => [
+            'default_annotation_driver' => [
+                'class' => 'Doctrine\ORM\Mapping\Driver\AnnotationDriver',
+                'cache' => 'array',
+                'paths' => [
+                    './module/iMSCP/Core/src/Entity'
+                ]
+            ],
+            'default' => [
+                // Add the driver in the chain
+                'drivers' => [
+                    'iMSCP\Core\Entity' => 'default_annotation_driver'
+                ]
+            ]
+        ],
+
+        'configuration' => [
+            'default' => [
+                // Add entity namespaces for core module entities
+                'entity_namespaces' => [
+                    'Core' => 'iMSCP\Core\Entity'
+                ]
+            ]
+        ]
+    ],
 ];
