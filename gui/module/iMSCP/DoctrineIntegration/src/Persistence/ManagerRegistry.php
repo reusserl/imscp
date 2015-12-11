@@ -84,8 +84,7 @@ class ManagerRegistry implements ManagerRegistryInterface
         $defaultManager = 'default',
         $defaultConnection = 'default',
         $proxyInterfaceName = 'Doctrine\ORM\Proxy\Proxy'
-    )
-    {
+    ) {
         $this->serviceManager = $serviceManager;
         $this->name = (string)$name;
         $this->connections = $connections;
@@ -174,8 +173,8 @@ class ManagerRegistry implements ManagerRegistryInterface
     public function getManagers()
     {
         $managers = [];
-        foreach ($this->managers as $name) {
-            $managers[$name] = $this->getService($name);
+        foreach ($this->managers as $name => $id) {
+            $managers[$name] = $this->getService($id);
         }
 
         return $managers;
@@ -204,7 +203,7 @@ class ManagerRegistry implements ManagerRegistryInterface
      */
     public function getAliasNamespace($alias)
     {
-        foreach (array_keys($this->getManagers()) as $name) {
+        foreach (array_keys($this->managers) as $name) {
             try {
                 return $this->getManager($name)->getConfiguration()->getEntityNamespace($alias);
             } catch (ORMException $ex) {
