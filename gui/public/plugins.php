@@ -18,56 +18,60 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+use iMSCP\Core\Application;
+use iMSCP\Core\Plugin\Feature\RouteLogicProviderInterface;
+use iMSCP\Core\Plugin\Feature\RoutesProviderInterface;
+use iMSCP\Core\Plugin\PluginEvent;
+
 require '../application.php';
 
 /** @var \iMSCP\Core\Plugin\PluginManager $pluginManager */
-$pluginManager = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('PluginManager');
-$pluginEvent =  new \iMSCP\Core\Plugin\PluginEvent();
+$pluginManager = Application::getInstance()->getServiceManager()->get('PluginManager');
 
-$plugins = $pluginManager->pluginGetLoaded('Action');
+/** @var \Zend\Http\PhpEnvironment\Request $request */
+$request = Application::getInstance()->getRequest();
+
+$plugins = $pluginManager->getLoadedPlugins('Action');
 $scriptPath = null;
 
-if (!empty($plugins)) {
-    $eventsManager = \iMSCP\Core\Application::getInstance()->getEventManager();
+if (empty($plugins)) {
+    showNotFoundErrorPage();
+}
 
-    if (($urlComponents = parse_url($_SERVER['REQUEST_URI'])) !== false) {
-        $responses = $eventsManager->trigger(\iMSCP\Core\Plugin\PluginEvent::onBeforePluginsRoute, $pluginManager);
+$eventsManager = Application::getInstance()->getEventManager();
 
-        if (!$responses->stopped()) {
-            foreach ($plugins as $plugin) {
-                if ($plugin instanceof \iMSCP\Core\Plugin\Feature\RouteLogicProviderInterface) {
-                    if (($scriptPath = $plugin->route($urlComponents))) {
-                        break;
-                    }
-                }
+if (($urlComponents = parse_url($_SERVER['REQUEST_URI'])) !== false) {
+    throw new RuntimeException(sprintf('Could not parse URL: %s', $request->getServer('REQUEST_URI')));
+}
 
-                if ($plugin instanceof \iMSCP\Core\Plugin\Feature\RoutesProviderInterface) {
-                    foreach ($plugin->getRoutes() as $pluginRoute => $pluginControllerPath) {
-                        if ($pluginRoute == $urlComponents['path']) {
-                            $scriptPath = $pluginControllerPath;
-                            $_SERVER['SCRIPT_NAME'] = $pluginRoute;
-                            break;
-                        }
-                    }
-                }
+$pluginEvent = new PluginEvent();
+$responses = $eventsManager->trigger(PluginEvent::onBeforePluginsRoute, $pluginEvent);
 
-                if ($scriptPath) {
-                    break;
-                }
-            }
+if (!$responses->stopped()) {
+    showNotFoundErrorPage();
+}
 
-            $eventsManager->trigger(\iMSCP\Core\Plugin\PluginEvent::onAfterPluginsRoute, $pluginManager, [
-                'scriptPath' => $scriptPath
-            ]);
+foreach ($plugins as $plugin) {
+    if ($plugin instanceof RouteLogicProviderInterface && ($scriptPath = $plugin->route($urlComponents))) {
+        break;
+    }
 
-            if ($scriptPath) {
-                include_once $scriptPath;
-                exit;
+    if ($plugin instanceof RoutesProviderInterface) {
+        foreach ($plugin->getRoutes() as $pluginRoute => $pluginControllerPath) {
+            if ($pluginRoute == $urlComponents['path']) {
+                $scriptPath = $pluginControllerPath;
+                $request->getServer()->set('SCRIPT_NAME', $pluginRoute);
+                $_SERVER['SCRIPT_NAME'] = $pluginRoute;
+                break 2;
             }
         }
-    } else {
-        throw new RuntimeException(sprintf('Unable to parse URL: %s', $_SERVER['REQUEST_URI']));
     }
 }
 
-showNotFoundErrorPage();
+if (!$scriptPath) {
+    showNotFoundErrorPage();
+}
+
+$pluginEvent->setParam('scriptPath', $scriptPath);
+$eventsManager->trigger(PluginEvent::onAfterPluginsRoute, $pluginEvent, ['scriptPath' => $scriptPath]);
+include $scriptPath;
