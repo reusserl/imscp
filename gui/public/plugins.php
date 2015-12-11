@@ -40,14 +40,14 @@ if (empty($plugins)) {
 
 $eventsManager = Application::getInstance()->getEventManager();
 
-if (($urlComponents = parse_url($_SERVER['REQUEST_URI'])) !== false) {
+if (($urlComponents = parse_url($_SERVER['REQUEST_URI'])) === false) {
     throw new RuntimeException(sprintf('Could not parse URL: %s', $request->getServer('REQUEST_URI')));
 }
 
 $pluginEvent = new PluginEvent();
 $responses = $eventsManager->trigger(PluginEvent::onBeforePluginsRoute, $pluginEvent);
 
-if (!$responses->stopped()) {
+if ($responses->stopped()) {
     showNotFoundErrorPage();
 }
 
