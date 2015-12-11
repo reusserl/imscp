@@ -40,7 +40,7 @@ if (empty($plugins)) {
 
 $eventsManager = Application::getInstance()->getEventManager();
 
-if (($urlComponents = parse_url($_SERVER['REQUEST_URI'])) === false) {
+if (($urlComponents = parse_url($request->getServer('REQUEST_URI'))) === false) {
     throw new RuntimeException(sprintf('Could not parse URL: %s', $request->getServer('REQUEST_URI')));
 }
 
