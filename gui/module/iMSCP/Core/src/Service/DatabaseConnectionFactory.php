@@ -39,7 +39,7 @@ use Zend\Stdlib\ArrayUtils;
 class DatabaseConnectionFactory implements FactoryInterface
 {
     /**
-     * Create the default database connection using parameters from our encryption data service
+     * Create the default database connection using our encryption data service and parameters from imscp.conf file
      *
      * @param ServiceLocatorInterface $serviceLocator
      * @return mixed
