@@ -17,13 +17,16 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace iMSCP\DoctrineIntegration\Service;
+namespace iMSCP\Core\Service;
 
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Types\Type;
-use Zend\ServiceManager\DelegatorFactoryInterface;
+use iMSCP\Core\Utils\Crypt;
+use iMSCP\DoctrineIntegration\Options\DBALConnection as DBALConnectionOptions;
+use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\Stdlib\ArrayUtils;
 
 /**
  * DBAL Connection ServiceManager factory
@@ -33,38 +36,50 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  * @author  Kyle Spraggs <theman@spiffyjr.me>
  * @package iMSCP\DoctrineIntegration\Service
  */
-class DBALConnectionDelegatorFactory extends AbstractFactory implements DelegatorFactoryInterface
+class DatabaseConnectionFactory implements FactoryInterface
 {
     /**
-     * A factory that creates delegates of a given service
+     * Create the default database connection using parameters from our encryption data service
      *
-     * @param ServiceLocatorInterface $sl the service locator which requested the service
-     * @param string $name the normalized service name
-     * @param string $requestedName the requested service name
-     * @param callable $callback the callback that is responsible for creating the service
-     *
+     * @param ServiceLocatorInterface $serviceLocator
      * @return mixed
      */
-    public function createDelegatorWithName(ServiceLocatorInterface $sl, $name, $requestedName, $callback)
+    public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        /** @var $options \iMSCP\DoctrineIntegration\Options\DBALConnection */
-        $options = $this->getOptions($sl, 'connection');
-        $pdo = $options->getPdo();
+        $config = $serviceLocator->get('Config');
+        $options = $config['doctrine_integration'];
+        $options = isset($options['connection']['default']) ? $options['connection']['default'] : null;
 
-        if (is_string($pdo)) {
-            $pdo = $sl->get($pdo);
+        if (null === $options) {
+            throw new \RuntimeException(sprintf(
+                'Options with name "%s" could not be found in "doctrine_integration.%s".', 'default', 'connection'
+            ));
         }
+
+        $options = new DBALConnectionOptions($options);
+
+        /** @var EncryptionDataService $encryptionDataService */
+        $encryptionDataService = $serviceLocator->get('EncryptionDataService');
 
         $params = [
             'driverClass' => $options->getDriverClass(),
             'wrapperClass' => $options->getWrapperClass(),
-            'pdo' => $pdo,
+            'driver' => 'pdo_' . $config['DATABASE_TYPE'],
+            'host' => $config['DATABASE_HOST'],
+            'port' => $config['DATABASE_PORT'],
+            'dbname' => $config['DATABASE_NAME'],
+            'user' => $config['DATABASE_USER'],
+            'password' => Crypt::decryptRijndaelCBC(
+                $encryptionDataService->getKey(), $encryptionDataService->getIV(), $config['DATABASE_PASSWORD']
+            ),
+            'charset' => 'utf8'
         ];
-        $params = array_merge($params, $options->getParams());
+
+        $params = ArrayUtils::merge($params, $options->getParams());
 
         /** @var Configuration $configuration */
-        $configuration = $sl->get($options->getConfiguration());
-        $eventManager = $sl->get($options->getEventManager());
+        $configuration = $serviceLocator->get($options->getConfiguration());
+        $eventManager = $serviceLocator->get($options->getEventManager());
 
         $connection = DriverManager::getConnection($params, $configuration, $eventManager);
         $platform = $connection->getDatabasePlatform();
@@ -78,24 +93,5 @@ class DBALConnectionDelegatorFactory extends AbstractFactory implements Delegato
         }
 
         return $connection;
-    }
-
-    /**
-     * {@inheritDoc}
-     * @return \Doctrine\DBAL\Connection
-     */
-    public function createService(ServiceLocatorInterface $sl)
-    {
-        throw new \BadMethodCallException('Unssuported.');
-    }
-
-    /**
-     * Get the class name of the options associated with this factory.
-     *
-     * @return string
-     */
-    public function getOptionsClass()
-    {
-        return 'iMSCP\DoctrineIntegration\Options\DBALConnection';
     }
 }

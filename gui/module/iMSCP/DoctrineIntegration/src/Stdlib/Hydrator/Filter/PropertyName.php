@@ -17,7 +17,7 @@
  * <http://www.doctrine-project.org>.
  */
 
-namespace DoctrineModule\Stdlib\Hydrator\Filter;
+namespace iMSCP\DoctrineIntegration\Stdlib\Hydrator\Filter;
 
 use Zend\Stdlib\Hydrator\Filter\FilterInterface;
 
@@ -27,8 +27,8 @@ use Zend\Stdlib\Hydrator\Filter\FilterInterface;
  *
  * @license MIT
  * @link    http://www.doctrine-project.org/
- * @author  Liam O'Boyle <liam@ontheroad.net.nz>
- * @package DoctrineModule\Stdlib\Hydrator\Filter
+ * @author  Liam O'Boyle <liam@ontheroad.net.nz>r
+ * @package iMSCP\DoctrineIntegration\Stdlib\Hydrator\Filter
  */
 class PropertyName implements FilterInterface
 {

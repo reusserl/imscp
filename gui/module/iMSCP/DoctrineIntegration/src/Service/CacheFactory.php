@@ -59,7 +59,6 @@ class CacheFactory extends AbstractFactory
             $instance = $serviceLocator->get($instance);
         }
 
-
         switch ($this->name) {
             case 'filesystem':
                 $cache = new $class($options->getDirectory());

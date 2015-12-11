@@ -91,7 +91,7 @@ class DBALConfigurationFactory implements FactoryInterface
     public function getOptions(ServiceLocatorInterface $serviceLocator)
     {
         $options = $serviceLocator->get('Config');
-        $options = $options['doctrine'];
+        $options = $options['doctrine_integration'];
         $options = isset($options['configuration'][$this->name]) ? $options['configuration'][$this->name] : null;
 
         if (null === $options) {

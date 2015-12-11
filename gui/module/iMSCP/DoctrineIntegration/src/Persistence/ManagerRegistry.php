@@ -20,37 +20,183 @@
 
 namespace iMSCP\DoctrineIntegration\Persistence;
 
-use Doctrine\Common\Persistence\AbstractManagerRegistry;
-use Doctrine\ORM\EntityManager;
+use Doctrine\Common\Persistence\ManagerRegistry as ManagerRegistryInterface;
 use Doctrine\ORM\ORMException;
 use Zend\ServiceManager\ServiceManager;
-use Zend\ServiceManager\ServiceManagerAwareInterface;
 
 /**
  * Class ManagerRegistry
  * @package iMSCP\DoctrineIntegration\Persistence
  */
-class ManagerRegistry extends AbstractManagerRegistry implements ServiceManagerAwareInterface
+class ManagerRegistry implements ManagerRegistryInterface
 {
+    /**
+     * @var string Registry manager name
+     */
+    protected $name;
+
+    /**
+     * @var string default manager
+     */
+    protected $defaultManager;
+
+    /**
+     * @var string Default connection
+     */
+    protected $defaultConnection;
+
+    /**
+     * @var array managers
+     */
+    protected $managers;
+
+    /**
+     * @var array Connections
+     */
+    protected $connections;
+
+    /**
+     * @var string Proxy interface name
+     */
+    protected $proxyInterfaceName;
+
     /**
      * @var ServiceManager
      */
     protected $serviceManager;
 
     /**
-     * {@inheritdoc}
+     * Constructor
+     *
+     * @param ServiceManager $serviceManager
+     * @param string $name Registry manager name
+     * @param array $connections Connection names
+     * @param array $managers Manager names
+     * @param string $defaultConnection Default connection name
+     * @param string $defaultManager Default manager name
+     * @param string $proxyInterfaceName
      */
-    protected function getService($name)
+    public function __constructor(
+        ServiceManager $serviceManager,
+        $name,
+        array $connections,
+        array $managers,
+        $defaultManager = 'default',
+        $defaultConnection = 'default',
+        $proxyInterfaceName = 'Doctrine\ORM\Proxy\Proxy'
+    )
     {
-        return $this->serviceManager->get($name);
+        $this->serviceManager = $serviceManager;
+        $this->name = (string)$name;
+        $this->connections = $connections;
+        $this->managers = $managers;
+        $this->defaultConnection = (string)$defaultConnection;
+        $this->defaultManager = (string)$defaultManager;
+        $this->proxyInterfaceName = (string)$proxyInterfaceName;
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function resetService($name)
+    public function getDefaultConnectionName()
     {
-        $this->serviceManager->setService($name, null);
+        return $this->defaultConnection;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getConnection($name = null)
+    {
+        if (null === $name) {
+            $name = $this->defaultConnection;
+        }
+
+        if (!isset($this->connections[$name])) {
+            throw new \InvalidArgumentException(sprintf(
+                'Doctrine %s Connection named "%s" does not exist.', $this->name, $name
+            ));
+        }
+
+        return $this->getService($this->connections[$name]);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getConnections()
+    {
+        $connections = [];
+        foreach ($this->connections as $name => $id) {
+            $connections[$name] = $this->getService($id);
+        }
+
+        return $connections;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getConnectionNames()
+    {
+        return $this->connections;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getDefaultManagerName()
+    {
+        return $this->defaultManager;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getManager($name = null)
+    {
+        if (null === $name) {
+            $name = $this->defaultManager;
+        }
+
+        if (!isset($this->managers[$name])) {
+            throw new \InvalidArgumentException(sprintf(
+                'Doctrine %s manager named "%s" does not exist.', $this->name, $name
+            ));
+        }
+
+        return $this->getService($this->managers[$name]);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getManagers()
+    {
+        $managers = [];
+        foreach ($this->managers as $name) {
+            $managers[$name] = $this->getService($name);
+        }
+
+        return $managers;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function resetManager($name = null)
+    {
+        if (null === $name) {
+            $name = $this->defaultManager;
+        }
+
+        if (!isset($this->managers[$name])) {
+            throw new \InvalidArgumentException(sprintf(
+                'Doctrine %s manager named "%s" does not exist.', $this->name, $name
+            ));
+        }
+
+        $this->resetService($this->managers[$name]);
     }
 
     /**
@@ -59,27 +205,96 @@ class ManagerRegistry extends AbstractManagerRegistry implements ServiceManagerA
     public function getAliasNamespace($alias)
     {
         foreach (array_keys($this->getManagers()) as $name) {
-            $manager = $this->getManager($name);
-
-            if (!$manager instanceof EntityManager) {
-                throw new \LogicException(sprintf('Unsupported manager type "%s".', get_class($manager)));
-            }
-
             try {
-                return $manager->getConfiguration()->getEntityNamespace($alias);
+                return $this->getManager($name)->getConfiguration()->getEntityNamespace($alias);
             } catch (ORMException $ex) {
-                // Probably mapped by another entity manager, or invalid, just ignore this here.
             }
         }
 
-        throw new \RuntimeException(sprintf('The namespace alias "%s" is not known to any manager.', $alias));
+        throw ORMException::unknownEntityNamespace($alias);
     }
 
     /**
      * {@inheritdoc}
      */
+    public function getManagerNames()
+    {
+        return $this->managers;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getRepository($persistentObject, $persistentManagerName = null)
+    {
+        return $this->getManager($persistentManagerName)->getRepository($persistentObject);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getManagerForClass($class)
+    {
+        if (strpos($class, ':') !== false) {
+            list($namespaceAlias, $simpleClassName) = explode(':', $class, 2);
+            $class = $this->getAliasNamespace($namespaceAlias) . '\\' . $simpleClassName;
+        }
+
+        $proxyClass = new \ReflectionClass($class);
+
+        if ($proxyClass->implementsInterface($this->proxyInterfaceName)) {
+            if (!$parentClass = $proxyClass->getParentClass()) {
+                return null;
+            }
+
+            $class = $parentClass->getName();
+        }
+
+        foreach ($this->managers as $name) {
+            $manager = $this->serviceManager->get($name);
+            if (!$manager->getMetadataFactory()->isTransient($class)) {
+                return $manager;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Set service manager
+     *
+     * @param ServiceManager $serviceManager
+     */
     public function setServiceManager(ServiceManager $serviceManager)
     {
         $this->serviceManager = $serviceManager;
+    }
+
+    /**
+     * Fetches/creates the given services
+     *
+     * A service in this context is a connection or a manager instance.
+     *
+     * @param string $name The name of the service
+     * @return object The instance of the given service
+     */
+    protected function getService($name)
+    {
+        return $this->serviceManager->get($name);
+    }
+
+    /**
+     * Resets the given services
+     *
+     * A service in this context is a a connection or a manager instance.
+     *
+     * @param string $name The name of the service
+     * @return void
+     */
+    protected function resetService($name)
+    {
+        $this->serviceManager->setAllowOverride(true);
+        $this->serviceManager->setService($name, null);
+        $this->serviceManager->setAllowOverride(false);
     }
 }

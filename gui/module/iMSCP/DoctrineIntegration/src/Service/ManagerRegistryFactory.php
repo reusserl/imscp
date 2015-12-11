@@ -18,24 +18,39 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Service;
+namespace iMSCP\DoctrineIntegration\Service;
 
-use iMSCP\Core\Authentication\Authentication;
+use iMSCP\DoctrineIntegration\Persistence\ManagerRegistry;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Class AuthenticationServiceFactory
- * @package iMSCP\Core\Service
+ * Class ManagerRegistryFactory
+ * @package iMSCP\DoctrineIntegration\Service
  */
-class AuthenticationFactory implements FactoryInterface
+class ManagerRegistryFactory implements FactoryInterface
 {
     /**
      * {@inheritdoc}
      */
-    public function createService(ServiceLocatorInterface $serviceLocator = null)
+    public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $eventManager = $serviceLocator->get('EventManager');
-        return new Authentication($eventManager);
+        $config = $serviceLocator->get('Config')['doctrine_integration'];
+
+        $connections = [];
+        if (isset($config['connection'])) {
+            foreach (array_keys($config['connection']) as $name) {
+                $connections[$name] = 'doctrine_integration.connection.' . $name;
+            }
+        }
+
+        $managers = [];
+        if (isset($config['entitymanager'])) {
+            foreach (array_keys($config['entitymanager']) as $name) {
+                $managers[$name] = 'doctrine_integration.entitymanager.' . $name;
+            }
+        }
+
+        return new ManagerRegistry('ORM', $connections, $managers);
     }
 }

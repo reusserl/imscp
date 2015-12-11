@@ -31,10 +31,10 @@ use Zend\Stdlib\Hydrator\AbstractHydrator;
 use Zend\Stdlib\Hydrator\Filter\FilterProviderInterface;
 
 /**
- * This hydrator has been completely refactored for DoctrineModule 0.7.0. It provides an easy and powerful way
- * of extracting/hydrator objects in Doctrine, by handling most associations types.
+ * This hydrator provides an easy and powerful way of extracting/hydrator objects in Doctrine, by handling most
+ * associations types.
  *
- * Starting from DoctrineModule 0.8.0, the hydrator can be used multiple times with different objects
+ * The hydrator can be used multiple times with different objects.
  *
  * @license MIT
  * @link    http://www.doctrine-project.org/

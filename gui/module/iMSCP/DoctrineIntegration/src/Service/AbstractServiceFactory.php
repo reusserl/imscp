@@ -99,7 +99,7 @@ class AbstractServiceFactory implements AbstractFactoryInterface
 
         return [
             'name' => $name,
-            'factory' => $config['doctrine_factories'][$type],
+            'factory' => $config['doctrine_integration_factories'][$type],
         ];
     }
 }

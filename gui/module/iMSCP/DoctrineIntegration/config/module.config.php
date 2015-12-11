@@ -95,7 +95,7 @@ return [
         'cache' => [
             'apc' => [
                 'class' => 'Doctrine\Common\Cache\ApcCache',
-                'namespace' => 'DoctrineModule',
+                'namespace' => 'DoctrineIntegration',
             ],
             'array' => [
                 'class' => 'Doctrine\Common\Cache\ArrayCache',
@@ -103,7 +103,7 @@ return [
             ],
             'filesystem' => [
                 'class' => 'Doctrine\Common\Cache\FilesystemCache',
-                'directory' => 'data/DoctrineModule/cache',
+                'directory' => 'data/cache/DoctrineIntegration/cache',
                 'namespace' => 'DoctrineIntegration',
             ],
             'memcache' => [
@@ -198,19 +198,20 @@ return [
 
     // Factory mappings
     'doctrine_integration_factories' => [
-        'authenticationadapter' => 'DoctrineIntegration\Service\Authentication\AdapterFactory',
-        'authenticationstorage' => 'DoctrineIntegration\Service\Authentication\StorageFactory',
-        'authenticationservice' => 'DoctrineIntegration\Service\Authentication\AuthenticationServiceFactory',
-        'cache' => 'DoctrineIntegration\Service\CacheFactory',
+        'authenticationadapter' => 'iMSCP\DoctrineIntegration\Service\Authentication\AdapterFactory',
+        'authenticationstorage' => 'iMSCP\DoctrineIntegration\Service\Authentication\StorageFactory',
+        'authenticationservice' => 'iMSCP\DoctrineIntegration\Service\Authentication\AuthenticationServiceFactory',
+        'cache' => 'iMSCP\DoctrineIntegration\Service\CacheFactory',
         'configuration' => 'iMSCP\DoctrineIntegration\Service\ConfigurationFactory',
         'connection' => 'iMSCP\DoctrineIntegration\Service\DBALConnectionFactory',
-        'driver' => 'DoctrineIntegration\Service\DriverFactory',
-        'entitymanager' => 'iMSCP\DoctrineIntegration\Service\EntityManagerFactory'
+        'driver' => 'iMSCP\DoctrineIntegration\Service\DriverFactory',
+        'entitymanager' => 'iMSCP\DoctrineIntegration\Service\EntityManagerFactory',
+        'eventmanager' => 'iMSCP\DoctrineIntegration\Service\EventManagerFactory'
     ],
 
     'service_manager' => [
         'invokables' => [
-            'DoctrineIntegration\Authentication\Storage\Session' => 'Zend\Authentication\Storage\Session',
+            'iMSCP\DoctrineIntegration\Authentication\Storage\Session' => 'Zend\Authentication\Storage\Session',
 
             // DBAL commands
             'doctrine_integration.dbal_cmd.runsql' => '\Doctrine\DBAL\Tools\Console\Command\RunSqlCommand',
@@ -234,8 +235,11 @@ return [
             'doctrine_integration.generate_repositories' => '\Doctrine\ORM\Tools\Console\Command\GenerateRepositoriesCommand'
         ],
         'abstract_factories' => [
-            'DoctrineIntegration' => 'DoctrineModule\Service\AbstractServiceFactory',
+            'DoctrineIntegration' => 'iMSCP\DoctrineIntegration\Service\AbstractServiceFactory',
         ],
+        'factories' => [
+            'Doctrine' => 'iMSCP\DoctrineIntegration\Service\ManagerRegistryFactory',
+        ]
     ],
 
     'hydrators' => [
