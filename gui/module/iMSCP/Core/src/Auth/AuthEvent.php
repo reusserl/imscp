@@ -18,19 +18,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Authentication;
+namespace iMSCP\Core\Auth;
 
-use iMSCP\Authentication\Identity\IdentityInterface;
 use iMSCP\Core\ApplicationEvent;
+use iMSCP\Core\Auth\Authorization\AuthorizationInterface;
+use iMSCP\Core\Auth\Identity\IdentityInterface;
+use Zend\Authentication\AuthenticationService;
+use Zend\Authentication\AuthenticationServiceInterface;
 use Zend\Authentication\Result as AuthResult;
 use Zend\EventManager\Event;
 
 /**
- * Class AuthenticationEvent
+ * Class AuthEvent
  * @package iMSCP\Core\Authentication
  */
-class AuthenticationEvent extends Event
+class AuthEvent extends Event
 {
+    /**
+     * Events which are triggered by authentication components
+     */
     const onAuthentication = 'onAuthentication';
     const onAfterAuthentication = 'onAfterAuthentication';
     const onAuthorization = 'onAuthorization';
@@ -42,7 +48,7 @@ class AuthenticationEvent extends Event
     protected $appEvent;
 
     /**
-     * @var mixed
+     * @var AuthenticationServiceInterface
      */
     protected $authentication;
 
@@ -52,20 +58,17 @@ class AuthenticationEvent extends Event
     protected $authenticationResult;
 
     /**
-     * @var mixed
+     * @var AuthorizationInterface
      */
     protected $authorization;
 
     /**
-     * Whether or not authorization has completed/succeeded
-     * @var bool
+     * @var bool Whether or not authorization has completed/succeeded
      */
     protected $authorized = false;
 
     /**
-     * The resource used for authorization queries
-     *
-     * @var mixed
+     * @var mixed The resource used for authorization queries
      */
     protected $resource;
 
@@ -76,7 +79,11 @@ class AuthenticationEvent extends Event
      * @param mixed $authentication
      * @param mixed $authorization
      */
-    public function __construct(ApplicationEvent $appEvent, $authentication, $authorization)
+    public function __construct(
+        ApplicationEvent $appEvent,
+        AuthenticationServiceInterface $authentication,
+        AuthorizationInterface $authorization
+    )
     {
         parent::__construct(); // Only to make IDEs happy
 
@@ -88,7 +95,7 @@ class AuthenticationEvent extends Event
     /**
      * Get authentication service
      *
-     * @return mixed
+     * @return AuthenticationService
      */
     public function getAuthenticationService()
     {
