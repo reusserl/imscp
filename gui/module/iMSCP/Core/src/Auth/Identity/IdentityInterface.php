@@ -25,7 +25,7 @@ use Zend\Permissions\Rbac\RoleInterface as RbacRoleInterface;
 
 /**
  * Interface IdentityInterface
- * @package ZF\MvcAuth\Identity
+ * @package iMSCP\Core\Auth\Identity
  */
 interface IdentityInterface extends AclRoleInterface, RbacRoleInterface
 {

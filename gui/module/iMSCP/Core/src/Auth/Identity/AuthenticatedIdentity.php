@@ -24,7 +24,7 @@ use Zend\Permissions\Rbac\AbstractRole;
 
 /**
  * Class AuthenticatedIdentity
- * @package iMSCP\Authentication\Identity
+ * @package iMSCP\Core\Auth\Identity
  */
 class AuthenticatedIdentity extends AbstractRole implements IdentityInterface
 {

@@ -7,9 +7,9 @@ namespace iMSCP\Core\Auth\Identity;
  *
  * As it name suggest, this identity allow an authenticated user 'A' to become an user 'B' for a session time.
  *
- * @package iMSCP\Authentication\Identity
+ * @package iMSCP\Core\Auth\Identity
  */
-class SuidIdentity extends AuthenticatedIdentity
+class SuIdentity extends AuthenticatedIdentity
 {
     /**
      * @var AuthenticatedIdentity
