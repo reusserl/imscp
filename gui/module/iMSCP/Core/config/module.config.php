@@ -172,20 +172,12 @@ return [
         'reseller' => __DIR__ . '/navigation_reseller.php'
     ],
 
-    'service_manager' => [
-        // Factory for overriding default DBALConnectionFactory from DoctrineIntegration module. We need this
-        // to define SQL connection parameters at runtime (they are pulled from the imscp.conf file).
-        'factories' => [
-            'doctrine_integration.connection.default' => 'iMSCP\Core\Service\DatabaseConnectionFactory'
-        ],
-        'aliases' => [
-            'Database' => 'doctrine_integration.connection.default'
-        ]
-    ],
+    'service_manager' => [],
 
+    // ORM configuration
     'doctrine_integration' => [
         'connection' => [
-            'default' => [
+            'imscp' => [
                 // Map enum type to varchar type
                 'doctrine_type_mappings' => [
                     'enum' => 'string'
@@ -200,7 +192,7 @@ return [
                     './module/iMSCP/Core/src/Entity'
                 ]
             ],
-            'default' => [
+            'imscp' => [
                 // Add the driver in the chain
                 'drivers' => [
                     'iMSCP\Core\Entity' => 'default_driver'
@@ -208,8 +200,8 @@ return [
             ]
         ],
         'configuration' => [
-            'default' => [
-                // Add entity namespaces for core module entities
+            'imscp' => [
+                // Add namespace for core module entities
                 'entity_namespaces' => [
                     'Core' => 'iMSCP\Core\Entity'
                 ],
@@ -223,6 +215,50 @@ return [
                     'user_gui_props'
                 ]
             ]
+        ],
+        // Entity Manager instantiation settings
+        'entitymanager' => [
+            // Configuration for the `doctrine_integration.entitymanager.default` service
+            'imscp' => [
+                // Connection instance to use. The retrieved service name will
+                // be `doctrine_integration.connection.$thisSetting`
+                'connection' => 'imscp',
+
+                // Configuration instance to use. The retrieved service name
+                // will be `doctrine_integration.configuration.$thisSetting`
+                'configuration' => 'imscp'
+            ]
+        ],
+        // entity resolver configuration, allows mapping associations to interfaces
+        'entity_resolver' => [
+            // configuration for the `doctrine.entity_resolver.default` service
+            'imscp' => []
+        ],
+
+        'eventmanager' => [
+            // Configuration for the `doctrine_integration.eventmanager.default` service
+            'imscp' => []
+        ],
+        // Authentication service configuration
+        'authentication' => [
+            // Configuration for the `doctrine_integration.authentication.default`
+            // authentication service
+            'imscp' => [
+                // name of the object manager to use. By default, the EntityManager is used
+                'objectManager' => 'doctrine_integration.entitymanager.default',
+                'identity_class' => 'iMSCP\Core\Entity\Admin',
+                'identity_property' => 'adminName',
+                'credential_property' => 'adminPass'
+            ],
+        ],
+        'authenticationadapter' => [
+            'imscp' => true
+        ],
+        'authenticationstorage' => [
+            'imscp' => true
+        ],
+        'authenticationservice' => [
+            'imscp' => true
         ]
     ]
 ];
