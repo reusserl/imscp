@@ -70,8 +70,6 @@ class DBALConfigurationFactory implements FactoryInterface
         if ($filterSchemaAssetNames = $options->getFilterSchemaAssetNames()) {
             $config->setFilterSchemaAssetsExpression('/^(?!(?:' . implode('|', $filterSchemaAssetNames) . ')$).*$/');
         }
-        //print_r($config);
-        //exit;
 
         $sqlLogger = $options->sqlLogger;
         if (is_string($sqlLogger) and $serviceLocator->has($sqlLogger)) {
