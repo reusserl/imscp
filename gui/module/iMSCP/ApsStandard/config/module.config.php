@@ -19,21 +19,45 @@
  */
 
 return [
-	// Service manager configuration for the ApsStandard module
-	'service_manager' => [
-		'invokables' => [
-			'ApsStandardListener' => 'iMSCP\ApsStandard\Listener\ApsStandardListener'
-		],
-		'abstract_factories' => [
-			// Abstract factory for APS standard controllers
-			'iMSCP\ApsStandard\Controller\ApsControllerAbstractFactory',
+    // Service manager configuration for the ApsStandard module
+    'service_manager' => [
+        'invokables' => [
+            'aps_standard.update_package_index' => 'iMSCP\ApsStandard\Command\UpdatePackageIndexCommand',
+            'ApsStandardListener' => 'iMSCP\ApsStandard\Listener\ApsStandardListener'
+        ],
+        'abstract_factories' => [
+            // Abstract factory for APS standard controllers
+            'iMSCP\ApsStandard\Controller\ApsControllerAbstractFactory',
 
-			// Abstract factory for APS standard services
-			'iMSCP\ApsStandard\Service\ApsServiceAbstractFactory'
-		],
-	],
-	// Listener aggregates
-	'listeners' => [
-		'ApsStandardListener'
-	]
+            // Abstract factory for APS standard services
+            'iMSCP\ApsStandard\Service\ApsServiceAbstractFactory'
+        ],
+    ],
+
+    // Listener aggregates
+    'listeners' => [
+        'ApsStandardListener'
+    ],
+
+    'doctrine_integration' => [
+        'driver' => [
+            'default_driver' => [
+                'paths' => [
+                    './module/iMSCP/ApsStandard/src/Entity'
+                ]
+            ],
+            'default' => [
+                'drivers' => [
+                    'iMSCP\ApsStandard\Entity' => 'default_driver'
+                ]
+            ]
+        ],
+        'configuration' => [
+            'default' => [
+                'entity_namespaces' => [
+                    'Aps' => 'iMSCP\ApsStandard\Entity'
+                ]
+            ]
+        ]
+    ],
 ];
