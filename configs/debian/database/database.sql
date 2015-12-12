@@ -1,43 +1,4 @@
 --
--- Table structure for table `admin`
---
-
-CREATE TABLE IF NOT EXISTS `admin` (
-  `admin_id` int(10) unsigned NOT NULL auto_increment,
-  `admin_name` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
-  `admin_pass` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
-  `admin_type` varchar(10) collate utf8_unicode_ci DEFAULT NULL,
-  `admin_sys_name` varchar(16) collate utf8_unicode_ci DEFAULT NULL,
-  `admin_sys_uid` int(10) unsigned NOT NULL DEFAULT '0',
-  `admin_sys_gname` varchar(32) collate utf8_unicode_ci DEFAULT NULL,
-  `admin_sys_gid`int(10) unsigned NOT NULL DEFAULT '0',
-  `domain_created` int(10) unsigned NOT NULL DEFAULT '0',
-  `customer_id` varchar(200) collate utf8_unicode_ci DEFAULT '0',
-  `created_by` int(10) unsigned DEFAULT '0',
-  `fname` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
-  `lname` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
-  `gender` varchar(1) collate utf8_unicode_ci DEFAULT NULL,
-  `firm` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
-  `zip` varchar(10) collate utf8_unicode_ci DEFAULT NULL,
-  `city` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
-  `state` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
-  `country` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
-  `email` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
-  `phone` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
-  `fax` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
-  `street1` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
-  `street2` varchar(200) collate utf8_unicode_ci DEFAULT NULL,
-  `uniqkey` varchar(255) collate utf8_unicode_ci DEFAULT NULL,
-  `uniqkey_time` timestamp NULL DEFAULT NULL,
-  `admin_status` varchar(255) collate utf8_unicode_ci NOT NULL DEFAULT 'ok',
-  PRIMARY KEY `admin_id` (`admin_id`),
-  UNIQUE KEY `admin_name` (`admin_name`),
-  KEY `created_by` (`created_by`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `autoreplies_log`
 --
 
@@ -79,10 +40,6 @@ INSERT IGNORE INTO `config` (`name`, `value`) VALUES
 ('PORT_POP3-SSL', '995;tcp;POP3-SSL;0;0.0.0.0'),
 ('PORT_IMAP', '143;tcp;IMAP;1;0.0.0.0'),
 ('PORT_IMAP-SSL', '993;tcp;IMAP-SSL;0;0.0.0.0'),
-('SHOW_COMPRESSION_SIZE', '1'),
-('PREVENT_EXTERNAL_LOGIN_ADMIN', '1'),
-('PREVENT_EXTERNAL_LOGIN_RESELLER', '1'),
-('PREVENT_EXTERNAL_LOGIN_CLIENT', '1'),
 ('DATABASE_REVISION', '227'),
 ('PHPINI_ALLOW_URL_FOPEN', 'off'),
 ('PHPINI_DISPLAY_ERRORS', 'off'),
