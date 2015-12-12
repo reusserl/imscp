@@ -236,6 +236,8 @@ class Authentication extends AbstractOptions
     }
 
     /**
+     * Get crendential property
+     *
      * @return string
      */
     public function getCredentialProperty()

@@ -57,9 +57,7 @@ class EntityResolverFactory extends AbstractFactory
     }
 
     /**
-     * Get the class name of the options associated with this factory.
-     *
-     * @return string
+     * {@inheritdoc]
      */
     public function getOptionsClass()
     {

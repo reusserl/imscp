@@ -49,8 +49,7 @@ class DBALConfigurationFactory implements FactoryInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @return \Doctrine\DBAL\Configuration
+     * {@inheritdoc]
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
@@ -67,6 +66,12 @@ class DBALConfigurationFactory implements FactoryInterface
     {
         $options = $this->getOptions($serviceLocator);
         $config->setResultCacheImpl($serviceLocator->get($options->resultCache));
+
+        if ($filterSchemaAssetNames = $options->getFilterSchemaAssetNames()) {
+            $config->setFilterSchemaAssetsExpression('/^(?!(?:' . implode('|', $filterSchemaAssetNames) . ')$).*$/');
+        }
+        //print_r($config);
+        //exit;
 
         $sqlLogger = $options->sqlLogger;
         if (is_string($sqlLogger) and $serviceLocator->has($sqlLogger)) {
@@ -106,7 +111,7 @@ class DBALConfigurationFactory implements FactoryInterface
     }
 
     /**
-     * @return string
+     * {@inheritdoc]
      */
     protected function getOptionsClass()
     {

@@ -34,8 +34,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class DBALConnectionFactory extends AbstractFactory
 {
     /**
-     * {@inheritDoc}
-     * @return \Doctrine\DBAL\Connection
+     * {@inheritdoc]
      */
     public function createService(ServiceLocatorInterface $sl)
     {
@@ -71,9 +70,7 @@ class DBALConnectionFactory extends AbstractFactory
     }
 
     /**
-     * Get the class name of the options associated with this factory.
-     *
-     * @return string
+     * {@inheritdoc]
      */
     public function getOptionsClass()
     {

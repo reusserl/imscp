@@ -31,7 +31,7 @@ use Zend\ServiceManager\ServiceManager;
 class ManagerRegistry implements ManagerRegistryInterface
 {
     /**
-     * @var string Registry manager name
+     * @var string Manager registry name
      */
     protected $name;
 
@@ -257,16 +257,6 @@ class ManagerRegistry implements ManagerRegistryInterface
         }
 
         return null;
-    }
-
-    /**
-     * Set service manager
-     *
-     * @param ServiceManager $serviceManager
-     */
-    public function setServiceManager(ServiceManager $serviceManager)
-    {
-        $this->serviceManager = $serviceManager;
     }
 
     /**

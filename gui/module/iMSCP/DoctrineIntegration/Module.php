@@ -23,7 +23,6 @@ namespace iMSCP\DoctrineIntegration;
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use Doctrine\DBAL\Tools\Console\Helper\ConnectionHelper;
 use Doctrine\ORM\Tools\Console\Helper\EntityManagerHelper;
-use iMSCP\Core\Events;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Zend\EventManager\EventInterface;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
@@ -47,7 +46,7 @@ class Module implements InitProviderInterface, ConfigProviderInterface
         });
 
         $events = $manager->getEventManager();
-        $events->getSharedManager()->attach('imscp', Events::onAfterLoadCli, [$this, 'initializeConsole']);
+        $events->getSharedManager()->attach('imscp.cli', 'onAfterLoadCli', [$this, 'initializeConsole']);
     }
 
     /**

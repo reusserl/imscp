@@ -51,6 +51,7 @@ class ManagerRegistryFactory implements FactoryInterface
             }
         }
 
+        /** @var \Zend\ServiceManager\ServiceManager $serviceLocator */
         return new ManagerRegistry($serviceLocator, 'doctrine', $connections, $managers);
     }
 }

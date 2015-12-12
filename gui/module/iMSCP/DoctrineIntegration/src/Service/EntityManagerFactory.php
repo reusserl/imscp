@@ -29,8 +29,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class EntityManagerFactory extends AbstractFactory
 {
     /**
-     * {@inheritDoc}
-     * @return EntityManager
+     * {@inheritdoc]
      */
     public function createService(ServiceLocatorInterface $sl)
     {

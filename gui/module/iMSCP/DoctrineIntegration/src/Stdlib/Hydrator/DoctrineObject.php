@@ -73,10 +73,7 @@ class DoctrineObject extends AbstractHydrator
     }
 
     /**
-     * Extract values from an object
-     *
-     * @param  object $object
-     * @return array
+     * {@inheritdoc]
      */
     public function extract($object)
     {
@@ -90,11 +87,7 @@ class DoctrineObject extends AbstractHydrator
     }
 
     /**
-     * Hydrate $object with the provided $data.
-     *
-     * @param  array $data
-     * @param  object $object
-     * @return object
+     * {@inheritdoc]
      */
     public function hydrate(array $data, $object)
     {
@@ -400,13 +393,11 @@ class DoctrineObject extends AbstractHydrator
      * strategies that inherit from AbstractCollectionStrategy class, and that add or remove elements but without
      * changing the collection of the object
      *
+     * @throws \InvalidArgumentException
      * @param  object $object
      * @param  mixed $collectionName
      * @param  string $target
      * @param  mixed $values
-     *
-     * @throws \InvalidArgumentException
-     *
      * @return void
      */
     protected function toMany($object, $collectionName, $target, $values)
@@ -521,7 +512,6 @@ class DoctrineObject extends AbstractHydrator
      *
      * @param  mixed $identifiers
      * @param  string $targetClass
-     *
      * @return object|null
      */
     protected function find($identifiers, $targetClass)
@@ -541,7 +531,6 @@ class DoctrineObject extends AbstractHydrator
      * Verifies if a provided identifier is to be considered null
      *
      * @param  mixed $identifier
-     *
      * @return bool
      */
     private function isNullIdentifier($identifier)
@@ -568,7 +557,6 @@ class DoctrineObject extends AbstractHydrator
      * Applies the naming strategy if there is one set
      *
      * @param string $field
-     *
      * @return string
      */
     protected function computeHydrateFieldName($field)
@@ -584,7 +572,6 @@ class DoctrineObject extends AbstractHydrator
      * Applies the naming strategy if there is one set
      *
      * @param string $field
-     *
      * @return string
      */
     protected function computeExtractFieldName($field)

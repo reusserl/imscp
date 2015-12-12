@@ -24,7 +24,7 @@ use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
- * Base ServiceManager factory to be extended
+ * Class AbstractFactory
  *
  * @license MIT
  * @link    http://www.doctrine-project.org/

@@ -34,9 +34,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class AdapterFactory extends AbstractFactory
 {
     /**
-     * {@inheritDoc}
-     *
-     * @return \iMSCP\DoctrineIntegration\Authentication\Adapter\ObjectRepository
+     * {@inheritdoc]
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {

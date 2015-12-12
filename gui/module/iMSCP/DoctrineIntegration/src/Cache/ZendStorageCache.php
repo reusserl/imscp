@@ -57,7 +57,6 @@ class ZendStorageCache extends CacheProvider
     protected function doFetch($id)
     {
         $hit = $this->storage->getItem($id);
-
         return null === $hit ? false : $hit;
     }
 

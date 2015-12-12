@@ -55,10 +55,7 @@ class PropertyName implements FilterInterface
     }
 
     /**
-     * Filter
-     *
-     * @param string $property
-     * @return bool
+     * {@inheritdoc]
      */
     public function filter($property)
     {

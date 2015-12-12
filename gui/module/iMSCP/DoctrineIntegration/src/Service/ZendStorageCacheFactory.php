@@ -35,9 +35,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class ZendStorageCacheFactory extends CacheFactory
 {
     /**
-     * {@inheritDoc}
-     * @return ZendStorageCache
-     * @throws RuntimeException
+     * {@inheritdoc]
      */
     public function createService(ServiceLocatorInterface $sl)
     {

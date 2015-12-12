@@ -34,7 +34,7 @@ use JMS\Serializer\VisitorInterface;
  * Doctrine object constructor for new (or existing) objects during deserialization.
  *
  * Note: Used in place of JMS DoctrineObjectConstructors as long the bug described by
- * https://github.com/schmittjoh/serializer/pull/299 is not fixed.
+ * https://github.com/schmittjoh/serializer/pull/290 is not fixed.
  *
  * @package iMSCP\DoctrineIntegration\Serializer\Construction
  */
@@ -113,7 +113,6 @@ class DoctrineObjectConstructor implements ObjectConstructorInterface
 
         if (!is_object($object)) {
             throw EntityNotFoundException::fromClassNameAndIdentifier($metadata->name, $identifierList);
-            //return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
         }
 
         $objectManager->initializeObject($object);

@@ -37,10 +37,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class CacheFactory extends AbstractFactory
 {
     /**
-     * {@inheritDoc}
-     *
-     * @return \Doctrine\Common\Cache\Cache
-     * @throws RuntimeException
+     * {@inheritdoc]
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {

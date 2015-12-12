@@ -40,8 +40,7 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 class DriverFactory extends AbstractFactory
 {
     /**
-     * {@inheritDoc}
-     * @return MappingDriver
+     * {@inheritdoc]
      */
     public function createService(ServiceLocatorInterface $sl)
     {
