@@ -183,6 +183,13 @@ return [
             // Configuration for the `doctrine_integration.eventmanager.default` service
             'default' => []
         ],
+        'manager_registry' => [
+            'default' => [
+                'default_connection' => 'default',
+                'default_manager' => 'default',
+                'proxy_interface_name' => 'Doctrine\ORM\Proxy\Proxy'
+            ]
+        ],
 
         // Authentication service configuration
         'authentication' => [
@@ -190,7 +197,7 @@ return [
             // authentication service
             'default' => [
                 // name of the object manager to use. By default, the EntityManager is used
-                'objectManager' => 'doctrine_integration.entitymanager.imscp',
+                'objectManager' => 'doctrine_integration.entitymanager.default',
                 //'identity_class' => 'Application\Model\User',
                 //'identity_property' => 'adminName',
                 //'credential_property' => 'adminPass'
@@ -218,15 +225,13 @@ return [
         'driver' => 'iMSCP\DoctrineIntegration\Service\DriverFactory',
         'entitymanager' => 'iMSCP\DoctrineIntegration\Service\EntityManagerFactory',
         'eventmanager' => 'iMSCP\DoctrineIntegration\Service\EventManagerFactory',
-        'entity_resolver' => 'iMSCP\DoctrineIntegration\Service\EntityResolverFactory'
+        'entity_resolver' => 'iMSCP\DoctrineIntegration\Service\EntityResolverFactory',
+        'manager_registry' => 'iMSCP\DoctrineIntegration\Service\ManagerRegistryFactory'
     ],
 
     'service_manager' => [
         'abstract_factories' => [
             'DoctrineIntegration' => 'iMSCP\DoctrineIntegration\Service\AbstractServiceFactory',
-        ],
-        'factories' => [
-            'doctrine' => 'iMSCP\DoctrineIntegration\Service\ManagerRegistryFactory',
         ],
         'invokables' => [
             'iMSCP\DoctrineIntegration\Authentication\Storage\Session' => 'Zend\Authentication\Storage\Session',
