@@ -18,39 +18,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Console;
+namespace iMSCP\Core\Auth\Identity;
 
-use Symfony\Component\Console\Command\Command;
-use Zend\EventManager\Event;
+use Zend\Permissions\Acl\Role\RoleInterface as AclRoleInterface;
+use Zend\Permissions\Rbac\RoleInterface as RbacRoleInterface;
 
 /**
- * Class ConsoleEvent
- * @package iMSCP\Core\Console
+ * Interface IdentityInterface
+ * @package ZF\MvcAuth\Identity
  */
-class ConsoleEvent extends Event
+interface IdentityInterface extends AclRoleInterface, RbacRoleInterface
 {
     /**
-     * @var Command[]
-     */
-    protected $commands = [];
-
-    /**
-     * Add command
+     * Get authenticated identity
      *
-     * @param Command $command
+     * @return IdentityInterface
      */
-    public function addCommand(Command $command)
-    {
-        $this->commands[] = $command;
-    }
-
-    /**
-     * Get commands
-     *
-     * @return Command[]
-     */
-    public function getCommands()
-    {
-        return $this->commands;
-    }
+    public function getAuthenticationIdentity();
 }
