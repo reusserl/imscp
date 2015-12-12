@@ -81,9 +81,9 @@ class ManagerRegistry implements ManagerRegistryInterface
         $name,
         array $connections,
         array $managers,
-        $defaultManager = 'default',
-        $defaultConnection = 'default',
-        $proxyInterfaceName = 'Doctrine\ORM\Proxy\Proxy'
+        $defaultManager,
+        $defaultConnection,
+        $proxyInterfaceName
     ) {
         $this->serviceManager = $serviceManager;
         $this->name = (string)$name;

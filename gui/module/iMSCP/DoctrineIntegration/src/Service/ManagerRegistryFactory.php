@@ -21,14 +21,13 @@
 namespace iMSCP\DoctrineIntegration\Service;
 
 use iMSCP\DoctrineIntegration\Persistence\ManagerRegistry;
-use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * Class ManagerRegistryFactory
  * @package iMSCP\DoctrineIntegration\Service
  */
-class ManagerRegistryFactory implements FactoryInterface
+class ManagerRegistryFactory extends AbstractFactory
 {
     /**
      * {@inheritdoc}
@@ -36,6 +35,14 @@ class ManagerRegistryFactory implements FactoryInterface
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
         $config = $serviceLocator->get('Config')['doctrine_integration'];
+
+        /** @var $options \iMSCP\DoctrineIntegration\Options\ManagerRegistry */
+        $options = $this->getOptions($serviceLocator, 'manager_registry');
+
+        $name = $options->getName();
+        $defaultConnection = $options->getDefaultConnection();
+        $defaultManager = $options->getDefaultManager();
+        $proxyInterfaceName = $options->getProxyInterfaceName();
 
         $connections = [];
         if (isset($config['connection'])) {
@@ -52,6 +59,16 @@ class ManagerRegistryFactory implements FactoryInterface
         }
 
         /** @var \Zend\ServiceManager\ServiceManager $serviceLocator */
-        return new ManagerRegistry($serviceLocator, 'doctrine', $connections, $managers);
+        return new ManagerRegistry(
+            $serviceLocator, $name, $connections, $managers, $defaultConnection, $defaultManager, $proxyInterfaceName
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getOptionsClass()
+    {
+        return 'iMSCP\DoctrineIntegration\Options\ManagerRegistry';
     }
 }

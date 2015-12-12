@@ -24,6 +24,7 @@ use Doctrine\Common\Annotations\AnnotationRegistry;
 use Doctrine\DBAL\Tools\Console\Helper\ConnectionHelper;
 use Doctrine\ORM\Tools\Console\Helper\EntityManagerHelper;
 use Symfony\Component\Console\Helper\QuestionHelper;
+use Zend\Console\Console;
 use Zend\EventManager\EventInterface;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
 use Zend\ModuleManager\Feature\InitProviderInterface;
@@ -45,8 +46,10 @@ class Module implements InitProviderInterface, ConfigProviderInterface
             return class_exists($className);
         });
 
-        $events = $manager->getEventManager();
-        $events->getSharedManager()->attach('imscp.cli', 'onAfterLoadCli', [$this, 'initializeConsole']);
+        if (Console::isConsole()) {
+            $events = $manager->getEventManager();
+            $events->getSharedManager()->attach('imscp.cli', 'onAfterLoadCli', [$this, 'initializeConsole']);
+        }
     }
 
     /**
@@ -96,8 +99,11 @@ class Module implements InitProviderInterface, ConfigProviderInterface
 
         $cli->addCommands(array_map([$serviceLocator, 'get'], $commands));
 
+        /** @var \iMSCP\DoctrineIntegration\Persistence\ManagerRegistry $managerRegistry */
+        $managerRegistry = $serviceLocator->get('doctrine_integration.manager_registry.default');
+
         /* @var $entityManager \Doctrine\ORM\EntityManager */
-        $entityManager = $serviceLocator->get('doctrine_integration.entitymanager.default');
+        $entityManager = $managerRegistry->getManager();
 
         $helperSet = $cli->getHelperSet();
         $helperSet->set(new QuestionHelper(), 'dialog');
