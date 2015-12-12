@@ -39,9 +39,9 @@ class UpdateDatabaseCommand extends Command
         $this->setName('imscp:update:database')
             ->setDescription('Update i-MSCP Database')
             ->setHelp(<<<EOT
-The <info>imscp:update-database</info> command update i-MSCP database
+The <info>imscp:update:database</info> command update i-MSCP database
 
-  <info>imscp:aps-standard:update-package-index</info>
+  <info>imscp:update:database</info>
 
 EOT
             );
