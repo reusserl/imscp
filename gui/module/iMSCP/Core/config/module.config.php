@@ -184,8 +184,16 @@ return [
     ],
 
     'doctrine_integration' => [
+        'connection' => [
+            'default' => [
+                // Map enum type to varchar type
+                'doctrine_type_mappings' => [
+                    'enum' => 'string'
+                ]
+            ]
+        ],
         'driver' => [
-            'default_annotation_driver' => [
+            'default_driver' => [
                 'class' => 'Doctrine\ORM\Mapping\Driver\AnnotationDriver',
                 'cache' => 'array',
                 'paths' => [
@@ -195,18 +203,26 @@ return [
             'default' => [
                 // Add the driver in the chain
                 'drivers' => [
-                    'iMSCP\Core\Entity' => 'default_annotation_driver'
+                    'iMSCP\Core\Entity' => 'default_driver'
                 ]
             ]
         ],
-
         'configuration' => [
             'default' => [
                 // Add entity namespaces for core module entities
                 'entity_namespaces' => [
                     'Core' => 'iMSCP\Core\Entity'
+                ],
+                // Ignore tables which are not managed by ORM yet
+                'filter_schema_asset_names' => [
+                    'auth_bruteforce', 'autoreplies_log', 'config', 'custom_menus', 'domain', 'domain_aliasses',
+                    'domain_dns', 'domain_traffic', 'email_tpls', 'error_pages', 'ftp_group', 'ftp_users',
+                    'hosting_plans', 'htaccess', 'htaccess_groups', 'htaccess_users', 'httpd_vlogger', 'log', 'login',
+                    'mail_users', 'php_ini', 'plugin', 'quotalimits', 'quotatallies', 'reseller_props', 'server_ips',
+                    'server_traffic', 'sql_database', 'sql_user', 'ssl_certs', 'subdomain', 'subdomain_alias', 'tickets',
+                    'user_gui_props'
                 ]
             ]
         ]
-    ],
+    ]
 ];
