@@ -245,7 +245,7 @@ return [
             // authentication service
             'imscp' => [
                 // name of the object manager to use. By default, the EntityManager is used
-                'objectManager' => 'doctrine_integration.entitymanager.default',
+                'objectManager' => 'doctrine_integration.entitymanager.imscp',
                 'identity_class' => 'iMSCP\Core\Entity\Admin',
                 'identity_property' => 'adminName',
                 'credential_property' => 'adminPass'
