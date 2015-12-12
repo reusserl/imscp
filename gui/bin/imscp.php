@@ -18,14 +18,30 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-chdir(__DIR__);
+use iMSCP\Core\Application;
 
-require_once '../application.php';
+chdir(dirname(__DIR__));
 
-$application = \iMSCP\Core\Application::getInstance();
-$consoleEvent = new \iMSCP\Core\Console\ConsoleEvent(\iMSCP\Core\Events::onBeforeCreateConsoleApplication);
-$application->getEventManager()->trigger($consoleEvent);
-$cli = \iMSCP\Core\Console\ConsoleRunner::createApplication(\iMSCP\Core\Console\ConsoleRunner::createHelperSet(
-	$application->getServiceManager()), $consoleEvent->getCommands()
-);
-$cli->run();
+ini_set('display_errors', 1);
+ini_set('track_errors', 1);
+
+// Composer autoloading
+include '/var/cache/imscp/packages/vendor/autoload.php';
+
+// Include core functions
+require 'module/iMSCP/Core/src/Functions/Admin.php';
+require 'module/iMSCP/Core/src/Functions/Client.php';
+require 'module/iMSCP/Core/src/Functions/Email.php';
+require 'module/iMSCP/Core/src/Functions/Input.php';
+require 'module/iMSCP/Core/src/Functions/Intl.php';
+require 'module/iMSCP/Core/src/Functions/Layout.php';
+require 'module/iMSCP/Core/src/Functions/Login.php';
+require 'module/iMSCP/Core/src/Functions/Shared.php';
+require 'module/iMSCP/Core/src/Functions/Reseller.php';
+require 'module/iMSCP/Core/src/Functions/View.php';
+
+$application = Application::init(include 'config/application.config.php');
+
+/* @var $cli \Symfony\Component\Console\Application */
+$cli = $application->getServiceManager()->get('imscp.cli');
+exit($cli->run());
