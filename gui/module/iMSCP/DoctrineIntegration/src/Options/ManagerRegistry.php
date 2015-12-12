@@ -55,7 +55,7 @@ class ManagerRegistry extends AbstractOptions
      */
     public function getName()
     {
-        return $this->defaultConnection;
+        return $this->name;
     }
 
     /**
