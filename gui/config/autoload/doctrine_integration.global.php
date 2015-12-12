@@ -18,4 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-return [];
+return [
+    'doctrine_integration' => [
+        // Override default manager registry
+        'manager_registry' => [
+            'default' => [
+                'default_connection' => 'imscp',
+                'default_manager' => 'imscp'
+            ]
+        ]
+    ]
+];
