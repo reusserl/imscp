@@ -59,25 +59,27 @@ class DBALConfigurationFactory implements FactoryInterface
     }
 
     /**
+     * Setup DBAL configuration
+     *
      * @param ServiceLocatorInterface $serviceLocator
      * @param Configuration $config
      */
     public function setupDBALConfiguration(ServiceLocatorInterface $serviceLocator, Configuration $config)
     {
+        /** @var \iMSCP\DoctrineIntegration\Options\Configuration $options */
         $options = $this->getOptions($serviceLocator);
-        $config->setResultCacheImpl($serviceLocator->get($options->resultCache));
 
-        if ($filterSchemaAssetNames = $options->getFilterSchemaAssetNames()) {
-            $config->setFilterSchemaAssetsExpression('/^(?!(?:' . implode('|', $filterSchemaAssetNames) . ')$).*$/');
-        }
+        /** @var $resultCache \Doctrine\Common\Cache\Cache */
+        $resultCache = $serviceLocator->get($options->getResultCache());
+        $config->setResultCacheImpl($resultCache);
 
-        $sqlLogger = $options->sqlLogger;
+        $sqlLogger = $options->getSqlLogger();
         if (is_string($sqlLogger) and $serviceLocator->has($sqlLogger)) {
             $sqlLogger = $serviceLocator->get($sqlLogger);
         }
         $config->setSQLLogger($sqlLogger);
 
-        foreach ($options->types as $name => $class) {
+        foreach ($options->getTypes() as $name => $class) {
             if (Type::hasType($name)) {
                 Type::overrideType($name, $class);
             } else {
@@ -87,7 +89,9 @@ class DBALConfigurationFactory implements FactoryInterface
     }
 
     /**
-     * @param  ServiceLocatorInterface $serviceLocator
+     * Get configuration options
+     *
+     * @param ServiceLocatorInterface $serviceLocator
      * @return mixed
      * @throws RuntimeException
      */

@@ -96,7 +96,7 @@ class DBALConfiguration extends AbstractOptions
     /**
      * Get types
      *
-     * @return string
+     * @return array
      */
     public function getTypes()
     {

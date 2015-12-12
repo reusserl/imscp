@@ -46,13 +46,10 @@ class ConfigurationFactory extends DoctrineConfigurationFactory
         $config->setAutoGenerateProxyClasses($options->getGenerateProxies());
         $config->setProxyDir($options->getProxyDir());
         $config->setProxyNamespace($options->getProxyNamespace());
-
         $config->setEntityNamespaces($options->getEntityNamespaces());
-
         $config->setCustomDatetimeFunctions($options->getDatetimeFunctions());
         $config->setCustomStringFunctions($options->getStringFunctions());
         $config->setCustomNumericFunctions($options->getNumericFunctions());
-
         $config->setClassMetadataFactoryName($options->getClassMetadataFactoryName());
 
         if ($filterSchemaAssetNames = $options->getFilterSchemaAssetNames()) {
@@ -75,11 +72,22 @@ class ConfigurationFactory extends DoctrineConfigurationFactory
             $config->addFilter($name, $class);
         }
 
-        $config->setMetadataCacheImpl($serviceLocator->get($options->getMetadataCache()));
-        $config->setQueryCacheImpl($serviceLocator->get($options->getQueryCache()));
-        $config->setResultCacheImpl($serviceLocator->get($options->getResultCache()));
-        $config->setHydrationCacheImpl($serviceLocator->get($options->getHydrationCache()));
-        $config->setMetadataDriverImpl($serviceLocator->get($options->getDriver()));
+        /** @var $cache \Doctrine\Common\Cache\Cache */
+        $cache = $serviceLocator->get($options->getMetadataCache());
+        $config->setMetadataCacheImpl($cache);
+
+        $cache = $serviceLocator->get($options->getQueryCache());
+        $config->setQueryCacheImpl($cache);
+
+        $cache = $serviceLocator->get($options->getResultCache());
+        $config->setResultCacheImpl($cache);
+
+        $cache = $serviceLocator->get($options->getHydrationCache());
+        $config->setHydrationCacheImpl($cache);
+
+        /** @var \Doctrine\Common\Persistence\Mapping\Driver\MappingDriver $metadataDriver */
+        $metadataDriver = $serviceLocator->get($options->getDriver());
+        $config->setMetadataDriverImpl($metadataDriver);
 
         if ($namingStrategy = $options->getNamingStrategy()) {
             if (is_string($namingStrategy)) {
@@ -87,7 +95,9 @@ class ConfigurationFactory extends DoctrineConfigurationFactory
                     throw new InvalidArgumentException(sprintf('Naming strategy "%s" not found', $namingStrategy));
                 }
 
-                $config->setNamingStrategy($serviceLocator->get($namingStrategy));
+                /** @var \Doctrine\ORM\Mapping\NamingStrategy $namingStrategy */
+                $namingStrategy = $serviceLocator->get($namingStrategy);
+                $config->setNamingStrategy($namingStrategy);
             } else {
                 $config->setNamingStrategy($namingStrategy);
             }
@@ -101,7 +111,9 @@ class ConfigurationFactory extends DoctrineConfigurationFactory
                     );
                 }
 
-                $config->setRepositoryFactory($serviceLocator->get($repositoryFactory));
+                /** @var \Doctrine\ORM\Repository\RepositoryFactory $repositoryFactory */
+                $repositoryFactory = $serviceLocator->get($repositoryFactory);
+                $config->setRepositoryFactory($repositoryFactory);
             } else {
                 $config->setRepositoryFactory($repositoryFactory);
             }
@@ -111,7 +123,9 @@ class ConfigurationFactory extends DoctrineConfigurationFactory
             if ($entityListenerResolver instanceof EntityListenerResolver) {
                 $config->setEntityListenerResolver($entityListenerResolver);
             } else {
-                $config->setEntityListenerResolver($serviceLocator->get($entityListenerResolver));
+                /** @var EntityListenerResolver $entityListenerResolver */
+                $entityListenerResolver = $serviceLocator->get($entityListenerResolver);
+                $config->setEntityListenerResolver($entityListenerResolver);
             }
         }
 
