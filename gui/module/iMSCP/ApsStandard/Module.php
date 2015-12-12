@@ -20,28 +20,59 @@
 
 namespace iMSCP\ApsStandard;
 
+use iMSCP\Core\Events;
+use Zend\EventManager\EventInterface;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
 use Zend\ModuleManager\Feature\DependencyIndicatorInterface;
+use Zend\ModuleManager\Feature\InitProviderInterface;
+use Zend\ModuleManager\ModuleManagerInterface;
 
 /**
  * Class Module
  * @package iMSCP\ApsStandard
  */
-class Module implements ConfigProviderInterface, DependencyIndicatorInterface
+class Module implements InitProviderInterface, ConfigProviderInterface, DependencyIndicatorInterface
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getConfig()
-	{
-		return include __DIR__ . '/config/module.config.php';
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function init(ModuleManagerInterface $manager)
+    {
+        $events = $manager->getEventManager();
+        $events->getSharedManager()->attach('imscp.cli', Events::onAfterLoadCli, [$this, 'initializeConsole']);
+    }
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getModuleDependencies()
-	{
-		return ['iMSCP\Core'];
-	}
+    /**
+     * {@inheritdoc}
+     */
+    public function getConfig()
+    {
+        return include __DIR__ . '/config/module.config.php';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getModuleDependencies()
+    {
+        return ['iMSCP\Core'];
+    }
+
+    /**
+     * Initializes the console with additional commands for APS standard
+     *
+     * @param \Zend\EventManager\EventInterface $event
+     *
+     * @return void
+     */
+    public function initializeConsole(EventInterface $event)
+    {
+        /* @var $cli \Symfony\Component\Console\Application */
+        $cli = $event->getTarget();
+
+        /* @var $serviceLocator \Zend\ServiceManager\ServiceLocatorInterface */
+        $serviceLocator = $event->getParam('ServiceManager');
+
+        $cli->addCommands([$serviceLocator->get('aps_standard.update_package_index')]);
+    }
 }
