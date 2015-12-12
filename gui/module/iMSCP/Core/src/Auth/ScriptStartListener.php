@@ -30,8 +30,8 @@ use Zend\Authentication\Result as AuthResult;
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\ListenerAggregateInterface;
 use Zend\EventManager\ListenerAggregateTrait;
-use Zend\Http\Request;
 use Zend\Http\Request as HttpRequest;
+use Zend\Http\Request;
 use Zend\Stdlib\ResponseInterface as Response;
 
 /**
@@ -114,7 +114,9 @@ class ScriptStartListener implements ListenerAggregateInterface
     }
 
     /**
-     * @trigger AuthenticationEvent::onAuthentication
+     * Perform authentication tasks
+     *
+     * @trigger AuthEvent::onAuthentication
      * @param ApplicationEvent $appEvent
      * @return null|Response
      */
@@ -187,7 +189,9 @@ class ScriptStartListener implements ListenerAggregateInterface
     }
 
     /**
-     * @trigger AuthenticationEvent::onAfterAuthentication
+     * Perform post authentication tasks
+     *
+     * @trigger AuthEvent::onAfterAuthentication
      * @param ApplicationEvent $appEvent
      * @return Response|mixed
      */
@@ -207,7 +211,9 @@ class ScriptStartListener implements ListenerAggregateInterface
     }
 
     /**
-     * @trigger AuthenticationEvent::onAuthorization
+     * Perform authorization tasks
+     *
+     * @trigger AuthEvent::onAuthorization
      * @param ApplicationEvent $appEvent
      * @return null|Response
      */
@@ -241,7 +247,9 @@ class ScriptStartListener implements ListenerAggregateInterface
     }
 
     /**
-     * @trigger AuthenticationEvent::onAfterAuthorization
+     * Perform post authorization tasks
+     *
+     * @trigger AuthEvent::onAfterAuthorization
      * @param ApplicationEvent $appEvent
      * @return null|Response
      */
