@@ -198,7 +198,7 @@ class Crypt
                 return static::apr1Md5($password, $salt);
             default:
                 throw new \InvalidArgumentException(sprintf(
-                    'The %s format is not valid. The supported formats are: %s', $format, 'bcrypt, crypt, md5, sha1'
+                    'The %s format is not valid. The supported formats are: %s', $format, 'bcrypt, crypt, md5 and sha1'
                 ));
         }
     }
@@ -315,7 +315,7 @@ class Crypt
     /**
      * Convert a binary string using the "./0-9A-Za-z" alphabet
      *
-     * @param  string $string String to be converted
+     * @param string $string String to be converted
      * @return string
      */
     static protected function toAlphabet64($string)
@@ -394,26 +394,7 @@ class Crypt
     }
 
     /**
-     * Encrypt the given data in CBC mode using the given algorithm
-     *
-     * @throws \InvalidArgumentException
-     * @param int $algorithm Algorithm
-     * @param string $key Encryption key
-     * @param string $iv Initialization vector
-     * @param string $data Data to encrypt
-     * @return string A base64 encoded string representing encrypted data
-     */
-    static protected function encryptCBC($algorithm, $key, $iv, $data)
-    {
-        if (extension_loaded('mcrypt')) {
-            return base64_encode(mcrypt_encrypt($algorithm, $key, $data, MCRYPT_MODE_CBC, $iv));
-        }
-
-        throw new \RuntimeException('Mcrypt extension is not available');
-    }
-
-    /**
-     * Decrypt the given data in CBC mode using Blowfish algorithm
+     * Decrypt the given data in CBC mode using the Blowfish algorithm
      *
      * @param string $key Decryption key (56 bytes long)
      * @param string $iv Initialization vector (8 bytes long)
@@ -423,25 +404,6 @@ class Crypt
     static function decryptBlowfishCBC($key, $iv, $data)
     {
         return static::decryptCBC(MCRYPT_BLOWFISH, $key, $iv, $data);
-    }
-
-    /**
-     * Decrypt the given data in CBC mode using the given algorithm
-     *
-     * @throws \RuntimeException
-     * @param int $algorithm Algorithm
-     * @param string $key Decryption key
-     * @param string $iv Initialization vector
-     * @param string $data A base64 encoded string representing encrypted data
-     * @return string
-     */
-    static protected function decryptCBC($algorithm, $key, $iv, $data)
-    {
-        if (extension_loaded('mcrypt')) {
-            return mcrypt_decrypt($algorithm, $key, base64_decode($data), MCRYPT_MODE_CBC, $iv);
-        }
-
-        throw new \RuntimeException('Mcrypt extension is not available');
     }
 
     /**
@@ -468,5 +430,43 @@ class Crypt
     static function decryptRijndaelCBC($key, $iv, $data)
     {
         return static::decryptCBC(MCRYPT_RIJNDAEL_128, $key, $iv, $data);
+    }
+
+    /**
+     * Encrypt the given data in CBC mode using the given algorithm
+     *
+     * @throws \InvalidArgumentException
+     * @param int $algorithm Algorithm
+     * @param string $key Encryption key
+     * @param string $iv Initialization vector
+     * @param string $data Data to encrypt
+     * @return string A base64 encoded string representing encrypted data
+     */
+    static protected function encryptCBC($algorithm, $key, $iv, $data)
+    {
+        if (extension_loaded('mcrypt')) {
+            return base64_encode(mcrypt_encrypt($algorithm, $key, $data, MCRYPT_MODE_CBC, $iv));
+        }
+
+        throw new \RuntimeException('Mcrypt extension is not available');
+    }
+
+    /**
+     * Decrypt the given data in CBC mode using the given algorithm
+     *
+     * @throws \RuntimeException
+     * @param int $algorithm Algorithm
+     * @param string $key Decryption key
+     * @param string $iv Initialization vector
+     * @param string $data A base64 encoded string representing encrypted data
+     * @return string
+     */
+    static protected function decryptCBC($algorithm, $key, $iv, $data)
+    {
+        if (extension_loaded('mcrypt')) {
+            return mcrypt_decrypt($algorithm, $key, base64_decode($data), MCRYPT_MODE_CBC, $iv);
+        }
+
+        throw new \RuntimeException('Mcrypt extension is not available');
     }
 }
