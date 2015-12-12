@@ -33,7 +33,6 @@ return [
 
                 // Connection parameters, see
                 // http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html
-                // Note: For i-MSCP, connection parameters are set at runtime (they are pulled from external conffile)
                 // Defining any parameter here (or in another module) would override the runtime parameters.
                 'params' => []
             ]
@@ -89,7 +88,11 @@ return [
                 'numeric_functions' => [],
 
                 // Second level cache configuration (see doc to learn about configuration)
-                'second_level_cache' => []
+                'second_level_cache' => [],
+
+                // Filter schema assets names
+                // If you have a database with tables that should not be managed by the ORM, you can list them below
+                'filter_schema_asset_names' => []
             ]
         ],
 

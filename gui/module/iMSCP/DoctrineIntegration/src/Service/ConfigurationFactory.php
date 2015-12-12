@@ -34,6 +34,9 @@ use Zend\ServiceManager\ServiceLocatorInterface;
  */
 class ConfigurationFactory extends DoctrineConfigurationFactory
 {
+    /**
+     * {@inheritdoc]
+     */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
         /** @var $options \iMSCP\DoctrineIntegration\Options\Configuration */
@@ -51,6 +54,10 @@ class ConfigurationFactory extends DoctrineConfigurationFactory
         $config->setCustomNumericFunctions($options->getNumericFunctions());
 
         $config->setClassMetadataFactoryName($options->getClassMetadataFactoryName());
+
+        if ($filterSchemaAssetNames = $options->getFilterSchemaAssetNames()) {
+            $config->setFilterSchemaAssetsExpression('/^(?!(?:' . implode('|', $filterSchemaAssetNames) . ')$).*$/');
+        }
 
         foreach ($options->getNamedQueries() as $name => $query) {
             $config->addNamedQuery($name, $query);
@@ -146,6 +153,9 @@ class ConfigurationFactory extends DoctrineConfigurationFactory
         return $config;
     }
 
+    /**
+     * {@inheritdoc]
+     */
     protected function getOptionsClass()
     {
         return 'iMSCP\DoctrineIntegration\Options\Configuration';

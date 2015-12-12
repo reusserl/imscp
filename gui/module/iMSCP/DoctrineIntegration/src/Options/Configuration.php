@@ -183,6 +183,11 @@ class Configuration extends DBALConfiguration
     protected $secondLevelCache;
 
     /**
+     * @var array List of tables which must be ignored by the ORM
+     */
+    protected $filterSchemaAssetNames;
+
+    /**
      * Set datetime functions
      *
      * @param  array $datetimeFunctions
@@ -251,7 +256,7 @@ class Configuration extends DBALConfiguration
     /**
      * Set generate proxies
      *
-     * @param  boolean $generateProxies
+     * @param boolean $generateProxies
      * @return self
      */
     public function setGenerateProxies($generateProxies)
@@ -273,7 +278,7 @@ class Configuration extends DBALConfiguration
     /**
      * Set metadata cache
      *
-     * @param  string $metadataCache
+     * @param string $metadataCache
      * @return self
      */
     public function setMetadataCache($metadataCache)
@@ -402,13 +407,12 @@ class Configuration extends DBALConfiguration
     /**
      * Set filters
      *
-     * @param  array $filters
+     * @param array $filters
      * @return self
      */
     public function setFilters($filters)
     {
         $this->filters = $filters;
-
         return $this;
     }
 
@@ -431,7 +435,6 @@ class Configuration extends DBALConfiguration
     public function setProxyDir($proxyDir)
     {
         $this->proxyDir = $proxyDir;
-
         return $this;
     }
 
@@ -471,7 +474,7 @@ class Configuration extends DBALConfiguration
     /**
      * Set query cache
      *
-     * @param  string $queryCache
+     * @param string $queryCache
      * @return self
      */
     public function setQueryCache($queryCache)
@@ -612,7 +615,6 @@ class Configuration extends DBALConfiguration
      * Set the metadata factory class name to use
      *
      * @see \Doctrine\ORM\Configuration::setClassMetadataFactoryName()
-     *
      * @param string $factoryName
      */
     public function setClassMetadataFactoryName($factoryName)
@@ -706,5 +708,27 @@ class Configuration extends DBALConfiguration
     public function getDefaultRepositoryClassName()
     {
         return $this->defaultRepositoryClassName;
+    }
+
+    /**
+     * Set filter schema asset names
+     *
+     * @param array $assetNames
+     * @return array
+     */
+    public function setFilterSchemaAssetNames(array $assetNames)
+    {
+        $this->filterSchemaAssetNames = $assetNames;
+        return $this;
+    }
+
+    /**
+     * Get filter schema asset names
+     *
+     * @return array
+     */
+    public function getFilterSchemaAssetNames()
+    {
+        return $this->filterSchemaAssetNames;
     }
 }
