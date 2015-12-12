@@ -1,15 +1,31 @@
 <?php
 /**
- * Global Configuration Override
+ * i-MSCP - internet Multi Server Control Panel
+ * Copyright (C) 2010-2015 by Laurent Declercq <l.declercq@nuxwin.com>
  *
- * You can use this file for overriding configuration values from modules, etc.
- * You would place values in here that are agnostic to the environment and not
- * sensitive to security.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
- * @NOTE: In practice, this file will typically be INCLUDED in your source
- * control, so do not include passwords or other sensitive information in this
- * file.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+
 return [
-	// ...
+    'doctrine_integration' => [
+        // Override default manager registry
+        'manager_registry' => [
+            'default' => [
+                'default_connection' => 'imscp',
+                'default_manager' => 'imscp'
+            ]
+        ]
+    ]
 ];
