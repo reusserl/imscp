@@ -20,83 +20,275 @@
 
 namespace iMSCP\Core;
 
+use iMSCP\Core\Auth\AuthEvent;
+use iMSCP\Core\Auth\ScriptStartListener;
+use iMSCP\Core\Config\DbConfigHandler;
 use iMSCP\Core\Config\FileConfigHandler;
+use Zend\Console\Console;
+use Zend\EventManager\EventInterface;
+use Zend\ModuleManager\Feature\BootstrapListenerInterface;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
 use Zend\ModuleManager\Feature\InitProviderInterface;
+use Zend\ModuleManager\Listener\ConfigListener;
 use Zend\ModuleManager\ModuleEvent;
 use Zend\ModuleManager\ModuleManagerInterface;
+use Zend\ServiceManager\ServiceManager;
 use Zend\Stdlib\ArrayUtils;
+use Zend\Stdlib\CallbackHandler;
 
 /**
  * Class Module
  * @package iMSCP\Core
  */
-class Module implements InitProviderInterface, ConfigProviderInterface
+class Module implements InitProviderInterface, ConfigProviderInterface, BootstrapListenerInterface
 {
-	/**
-	 * {@inheritdoc}
-	 */
-	public function init(ModuleManagerInterface $manager)
-	{
-		// Register listener which is responsible to merge configuration
-		// from database with merged application configuration
-		$manager->getEventManager()->attach(ModuleEvent::EVENT_MERGE_CONFIG, [$this, 'onMergeConfig']);
-	}
+    /**
+     * @var ServiceManager
+     */
+    protected $serviceManager;
 
-	/**
-	 * {@inheritdoc}
-	 */
-	public function getConfig()
-	{
-		$moduleConfig = include __DIR__ . '/config/module.config.php';
+    /**
+     * @var CallbackHandler
+     */
+    protected $substituteMergeConfigEvent;
 
-		if (!($configFilePath = getenv('IMSCP_CONF'))) {
-			switch (PHP_OS) {
-				case 'FreeBSD':
-				case 'OpenBSD':
-				case 'NetBSD':
-					$configFilePath = '/usr/local/etc/imscp/imscp.conf';
-					break;
-				default:
-					$configFilePath = '/etc/imscp/imscp.conf';
-			}
-		}
+    /**
+     * {@inheritdoc}
+     */
+    public function init(ModuleManagerInterface $manager)
+    {
+        $events = $manager->getEventManager();
 
-		$config = ArrayUtils::merge($moduleConfig, (new FileConfigHandler($configFilePath))->toArray());
+        // Attach a listener which will delay the default configuration merging
+        // process by stopping the event propagation as soon as possible (we let
+        // the default listener do its job by attaching our listener with a smaller
+        // priority).
+        $this->substituteMergeConfigEvent = $events->attach(
+            ModuleEvent::EVENT_MERGE_CONFIG, [$this, 'substituteMergeConfigEvent'], 999
+        );
 
-		// Convert IDN to ASCII
-		$config['DEFAULT_ADMIN_ADDRESS'] = encode_idna($config['DEFAULT_ADMIN_ADDRESS']);
-		$config['SERVER_HOSTNAME'] = encode_idna($config['SERVER_HOSTNAME']);
-		$config['BASE_SERVER_VHOST'] = encode_idna($config['BASE_SERVER_VHOST']);
-		$config['DATABASE_HOST'] = encode_idna($config['DATABASE_HOST']);
-		$config['DATABASE_USER_HOST'] = encode_idna($config['DATABASE_USER_HOST']);
+        // Attach a listener which is responsible to merge configuration from
+        // database with the merged application configuration
+        $events->attach(ModuleEvent::EVENT_MERGE_CONFIG, [$this, 'onMergeConfig'], -1000);
 
-		// Add runtime configuration parameters
-		$config['ROOT_TEMPLATE_PATH'] = realpath('themes/' . $config['USER_INITIAL_THEME']);
-		if ($config['DEVMODE']) {
-			$config['ASSETS_PATH'] = '/assets';
-		} else {
-			$config['ROOT_TEMPLATE_PATH'] .= '/dist';
-			$config['ASSETS_PATH'] = '/dist/assets';
-		}
+        if (Console::isConsole()) {
+            // Attach the listener which is responsible to add console commands
+            $events->getSharedManager()->attach('imscp.cli', Events::onAfterLoadCli, [$this, 'initializeConsole']);
+        }
+    }
 
-		return $config;
-	}
+    /**
+     * Listen to the bootstrap event
+     *
+     * @param EventInterface $appEvent
+     * @return void
+     */
+    public function onBootstrap(EventInterface $appEvent)
+    {
+        if (Console::isConsole()) {
+            return;
+        }
 
-	/**
-	 * Merge configuration from database with merged application configuration
-	 *
-	 * Note: When the cache is enabled, this is done only once. Subsequent
-	 * requests use the cached configuration.
-	 *
-	 * @param ModuleEvent $e
-	 * @return void
-	 */
-	public function onMergeConfig(ModuleEvent $e)
-	{
-		$configListener = $e->getConfigListener();
-		$config = $configListener->getMergedConfig(false);
-		$config = ArrayUtils::merge($config, $e->getParam('ServiceManager')->get('DbConfig')->toArray());
-		$configListener->setMergedConfig($config);
-	}
+        /** @var ApplicationEvent $appEvent */
+        /** @var Application $application */
+        $application = $appEvent->getApplication();
+
+        $events = $application->getEventManager();
+        $this->serviceManager = $application->getServiceManager();
+
+        // Initialize and start session
+        /** @var \Zend\Session\ManagerInterface $sessionManager */
+        $sessionManager = $application->getServiceManager()->get('SessionManager');
+        $sessionManager->start();
+
+        // Setup authentication/authorization layer
+
+        /** @var \Zend\Authentication\AuthenticationServiceInterface $authenticationService */
+        $authenticationService = $this->serviceManager->get('Authentication');
+
+        /** @var \iMSCP\Core\Auth\Authorization\AuthorizationInterface $authorizationService */
+        $authorizationService = $this->serviceManager->get('Authorization');
+
+        // Add both authentication and authorization service to the authentication event
+        $authEvent = new AuthEvent($appEvent, $authenticationService, $authorizationService);
+
+        // To be replaced by MvcRoute listener in v2.0.0
+        // Attach listener responsible to trigger authentication events when a i-MSCP action script start
+        $scriptStartListener = new ScriptStartListener($authEvent, $authenticationService);
+        $events->attach($scriptStartListener);
+
+        // Attach default listener for authentication tasks
+        // This listener composes one or many authentication adapters
+        $events->attach(AuthEvent::onAuthentication, $this->serviceManager->get(
+            'iMSCP\Core\Auth\Authentication\DefaultAuthenticationListener'
+        ));
+
+        // Attach default listener for post authentication tasks
+        $events->attach(AuthEvent::onAuthentication, $this->serviceManager->get(
+            'iMSCP\Core\Auth\Authentication\DefaultAuthenticationPostListener'
+        ));
+
+        // Attache listener which is responsible to setup Identity service. This allows to retrieve
+        // current Identity as a service.
+        $events->attach(AuthEvent::onAfterAuthentication, [$this, 'onAuthenticationPost'], -1);
+
+        // TODO
+
+        // Attach default listener to resolve authorization resources
+        //$events->attach(
+        //    AuthEvent::onAuthorization,
+        //    $this->services->get('iMSCP\Core\Auth\DefaultResourceResolverListener'),
+        //    1000
+        //);
+
+        // Attach listener for authorization tasks
+        //$events->attach(AuthEvent::onAuthorization, $this->services->get(
+        //    'iMSCP\Core\Auth\DefaultAuthorizationListener'
+        //));
+
+        // Attach default listener for post authorization tasks
+        //$events->attach(AuthEvent::onAfterAuthentication, $this->services->get(
+        //    'iMSCP\Core\Auth\DefaultAuthorizationPostListener'
+        //));
+
+        //$events->attach(AuthEvent::onAfterAuthentication, [$this, 'onAuthenticationPost'], -1);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getConfig()
+    {
+        $moduleConfig = include __DIR__ . '/config/module.config.php';
+
+        if (!($configFilePath = getenv('IMSCP_CONF'))) {
+            switch (PHP_OS) {
+                case 'FreeBSD':
+                case 'OpenBSD':
+                case 'NetBSD':
+                    $configFilePath = '/usr/local/etc/imscp/imscp.conf';
+                    break;
+                default:
+                    $configFilePath = '/etc/imscp/imscp.conf';
+            }
+        }
+
+        $config = ArrayUtils::merge($moduleConfig, (new FileConfigHandler($configFilePath))->toArray());
+
+        // Convert IDN to ASCII
+        $config['DEFAULT_ADMIN_ADDRESS'] = encode_idna($config['DEFAULT_ADMIN_ADDRESS']);
+        $config['SERVER_HOSTNAME'] = encode_idna($config['SERVER_HOSTNAME']);
+        $config['BASE_SERVER_VHOST'] = encode_idna($config['BASE_SERVER_VHOST']);
+        $config['DATABASE_HOST'] = encode_idna($config['DATABASE_HOST']);
+        $config['DATABASE_USER_HOST'] = encode_idna($config['DATABASE_USER_HOST']);
+
+        // Runtime configuration parameters
+        $config['ROOT_TEMPLATE_PATH'] = realpath('themes/' . $config['USER_INITIAL_THEME']);
+        if ($config['DEVMODE']) {
+            $config['ASSETS_PATH'] = '/assets';
+        } else {
+            $config['ROOT_TEMPLATE_PATH'] .= '/dist';
+            $config['ASSETS_PATH'] = '/dist/assets';
+        }
+
+        return $config;
+    }
+
+    /**
+     * @listen ModuleEvent::EVENT_MERGE_CONFIG
+     * @param ModuleEvent $e
+     * @return void
+     */
+    public function onMergeConfig(ModuleEvent $e)
+    {
+        /** @var ServiceManager $serviceManager */
+        $serviceManager = $e->getParam('ServiceManager');
+
+        /** @var DbConfigHandler $dbConfig */
+        $dbConfig = $serviceManager->get('DbConfig');
+
+        $mergedConfig = $e->getConfigListener()->getMergedConfig(false);
+        $mergedConfig = ArrayUtils::merge($mergedConfig, $dbConfig->toArray());
+        $e->getConfigListener()->setMergedConfig($mergedConfig);
+        $serviceManager->setAllowOverride(true);
+        $serviceManager->setService('Config', $mergedConfig);
+        $serviceManager->setAllowOverride(false);
+    }
+
+    /**
+     * @listen ModuleEvent::EVENT_MERGE_CONFIG
+     * @param ModuleEvent $e
+     * @return void
+     */
+    public function substituteMergeConfigEvent(ModuleEvent $e)
+    {
+        // We must detach yourself to avoid loop (think that we will trigger
+        // the ModuleEvent::EVENT_MERGE_CONFIG by ourself later on
+        $e->getTarget()->getEventManager()->detach($this->substituteMergeConfigEvent);
+
+        // We attach our own listener on the ModuleEvent::EVENT_LOAD_MODULES_POST
+        // which will sustitute the default merge logic
+        $e->getTarget()->getEventManager()->attach(
+            ModuleEvent::EVENT_LOAD_MODULES_POST, [$this, 'onLoadModulePost'], -9000
+        );
+
+        $e->stopPropagation();
+    }
+
+    /**
+     * @listen ModuleEvent::EVENT_LOAD_MODULES_POST
+     * @param ModuleEvent $e
+     * @return void
+     */
+    public function onLoadModulePost(ModuleEvent $e)
+    {
+        // We trigger ModuleEvent::EVENT_MERGE_CONFIG again (some other components could listen on it)
+        $e->getTarget()->getEventManager()->trigger(ModuleEvent::EVENT_MERGE_CONFIG, $e->getTarget(), $e);
+
+        /** @var ConfigListener $configListener */
+        $configListener = $e->getConfigListener();
+
+        // If enabled, update the config cache
+        if ($configListener->getOptions()->getConfigCacheEnabled()) {
+            $configFile = $configListener->getOptions()->getConfigCacheFile();
+            $content = "<?php\nreturn " . var_export($configListener->getMergedConfig(false), 1) . ';';
+            file_put_contents($configFile, $content);
+        }
+    }
+
+    /**
+     * @listen AuthenticationEvent::onAfterAuthentication
+     * @param AuthEvent $e
+     * @return void
+     */
+    public function onAuthenticationPost(AuthEvent $e)
+    {
+        if ($this->serviceManager->has('Identity')) {
+            return;
+        }
+
+        $this->serviceManager->setService('Identity', $e->getIdentity());
+    }
+
+    /**
+     * Initializes the console with commands for i-MSCP
+     *
+     * @param \Zend\EventManager\EventInterface $event
+     * @return void
+     */
+    public function initializeConsole(EventInterface $event)
+    {
+        /* @var $cli \Symfony\Component\Console\Application */
+        $cli = $event->getTarget();
+
+        /* @var $serviceLocator \Zend\ServiceManager\ServiceLocatorInterface */
+        $serviceLocator = $event->getParam('ServiceManager');
+
+        $commands = [
+            'core.build_language_index',
+            'core.update_database'
+        ];
+
+        $cli->addCommands(array_map([$serviceLocator, 'get'], $commands));
+    }
 }
