@@ -172,36 +172,29 @@ return [
         'reseller' => __DIR__ . '/navigation_reseller.php'
     ],
 
-    'service_manager' => [],
-
     // ORM configuration
     'doctrine_integration' => [
         'connection' => [
             'imscp' => [
+                'configuration' => 'imscp',
+                'eventmanager' => 'imscp',
                 // Map enum type to varchar type
                 'doctrine_type_mappings' => [
                     'enum' => 'string'
-                ]
+                ],
             ]
         ],
-        'driver' => [
-            'default_driver' => [
-                'class' => 'Doctrine\ORM\Mapping\Driver\AnnotationDriver',
-                'cache' => 'array',
-                'paths' => [
-                    './module/iMSCP/Core/src/Entity'
-                ]
-            ],
-            'imscp' => [
-                // Add the driver in the chain
-                'drivers' => [
-                    'iMSCP\Core\Entity' => 'default_driver'
-                ]
-            ]
-        ],
+
         'configuration' => [
             'imscp' => [
-                // Add namespace for core module entities
+                'metadata_cache'    => 'array',
+                'query_cache'       => 'array',
+                'result_cache'      => 'array',
+                'hydration_cache'   => 'array',
+                'driver'            => 'imscp',
+                'generate_proxies'  => true,
+                'proxy_dir'         => 'data/DoctrineIntegration/Proxy',
+                'proxy_namespace'   => 'iMSCP\DoctrineIntegration\Proxy',
                 'entity_namespaces' => [
                     'Core' => 'iMSCP\Core\Entity'
                 ],
@@ -216,6 +209,37 @@ return [
                 ]
             ]
         ],
+        'driver' => [
+            'imscp' => [
+                'class' => 'Doctrine\ORM\Mapping\Driver\AnnotationDriver',
+                'cache' => 'array',
+                'paths' => [
+                    './module/iMSCP/Core/src/Entity'
+                ]
+            ],
+
+            // Should we use driver chain?
+            // Right now, it is assumed that all modules/plugins will
+            // simply add entity paths to the imscp_annotation_driver driver
+            // Doing this avoid useless loops through all namespaces...
+            'imscp_annotation_driver' => [
+                'class' => 'Doctrine\ORM\Mapping\Driver\AnnotationDriver',
+                'cache' => 'array',
+                'paths' => [
+                    './module/iMSCP/Core/src/Entity'
+                ]
+            ],
+            /*
+            'imscp' => [
+                'class' => 'Doctrine\ORM\Mapping\Driver\DriverChain',
+
+                // Add the driver in the chain
+                'drivers' => [
+                    'iMSCP\Core\Entity' => 'imscp_annotation_driver'
+                ]
+            ],
+            */
+        ],
         // Entity Manager instantiation settings
         'entitymanager' => [
             // Configuration for the `doctrine_integration.entitymanager.default` service
@@ -226,12 +250,16 @@ return [
 
                 // Configuration instance to use. The retrieved service name
                 // will be `doctrine_integration.configuration.$thisSetting`
-                'configuration' => 'imscp'
+                'configuration' => 'imscp',
+
+                // Entity resolver to use. The retrieved service name
+                // will be `doctrine_integration.entity_resolver.$thisSetting`
+                'entity_resolver' => 'imscp'
             ]
         ],
         // entity resolver configuration, allows mapping associations to interfaces
         'entity_resolver' => [
-            // configuration for the `doctrine.entity_resolver.default` service
+            // Configuration for the `doctrine.entity_resolver.default` service
             'imscp' => []
         ],
 
@@ -248,7 +276,12 @@ return [
                 'objectManager' => 'doctrine_integration.entitymanager.imscp',
                 'identity_class' => 'iMSCP\Core\Entity\Admin',
                 'identity_property' => 'adminName',
-                'credential_property' => 'adminPass'
+                'credential_property' => 'adminPass',
+                //'storage' => 'Zend\Authentication\Storage\NonPersistent',
+                'credential_callable' => function($user, $inputPassword) {
+                    /** @var $user \iMSCP\Core\Entity\Admin */
+                    return \iMSCP\Core\Utils\Crypt::verify($inputPassword, $user->getAdminPass());
+                }
             ],
         ],
         'authenticationadapter' => [
@@ -259,6 +292,51 @@ return [
         ],
         'authenticationservice' => [
             'imscp' => true
+        ],
+        'manager_registry' => [
+            'imscp' => [
+                'default_connection' => 'imscp',
+                'default_manager' => 'imscp'
+            ]
         ]
-    ]
+    ],
+    'service_manager' => [
+        'invokables' => [
+            'Zend\Authentication\Storage\NonPersistent' => 'Zend\Authentication\Storage\NonPersistent'
+          ],
+    ],
+
+    'session_config' => [
+        'name' => 'iMSCP', // Session name
+
+        // Session cookie settings
+        'use_cookies' => true,
+        'cookie_path' => '/',
+        'cookie_lifetime' => 604800,
+        'cookie_httponly' => true,
+        'cookie_secure' => false,
+
+        'cache_expire' => 1200,
+        //'remember_me_seconds' => 604800, // Not implemented yet
+
+        // PHP session related settings
+        'gc_divisor' => 100,
+        'gc_maxlifetime' => 1440,
+        'gc_probability' => 1,
+        'save_path' => './data/sessions', // Path where session files are stored
+        'php_save_handler' => 'files', // Only for reference (it is the default value)
+        'use_trans_sid' => false, // Should be false (security issue)
+        'config_class' => 'Zend\Session\Config\SessionConfig', // Only there for reference (it is the default value)
+    ],
+    'session_storage' => [
+        'type' => 'SessionArrayStorage',
+        'options' => [], // Only there for reference
+    ],
+    'session_manager' => [
+        'enable_default_container_manager' => true,
+        'validators' => [
+            'Zend\Session\Validator\RemoteAddr',
+            'Zend\Session\Validator\HttpUserAgent'
+        ],
+    ],
 ];
