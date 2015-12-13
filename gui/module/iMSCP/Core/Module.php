@@ -78,10 +78,7 @@ class Module implements InitProviderInterface, ConfigProviderInterface, Bootstra
     }
 
     /**
-     * Listen to the bootstrap event
-     *
-     * @param EventInterface $appEvent
-     * @return void
+     * {@inheritdoc}
      */
     public function onBootstrap(EventInterface $appEvent)
     {
@@ -159,6 +156,7 @@ class Module implements InitProviderInterface, ConfigProviderInterface, Bootstra
      */
     public function getConfig()
     {
+        // TODO: Should we wrap this in service factory?
         $moduleConfig = include __DIR__ . '/config/module.config.php';
 
         if (!($configFilePath = getenv('IMSCP_CONF'))) {
