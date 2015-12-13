@@ -51,24 +51,52 @@ class ServiceListenerFactory implements FactoryInterface
      */
     protected $defaultServiceConfig = [
         'invokables' => [
+            'core.build_language_index' => 'iMSCP\Core\i18n\BuildLanguageIndexCommand',
+            'core.update_database' => 'iMSCP\Core\Updater\UpdateDatabaseCommand',
+
+            'iMSCP\Core\Auth\Authentication\DefaultAuthenticationPostListener' => 'iMSCP\Core\Auth\Authentication\DefaultAuthenticationPostListener',
+            //'iMSCP\Auth\Authorization\DefaultAuthorizationPostListener' => 'iMSCP\Auth\Authorization\DefaultAuthorizationPostListener',
         ],
         'factories' => [
-            'Authentication' => 'iMSCP\Core\Service\AuthenticationFactory',
             'Application' => 'iMSCP\Core\Service\ApplicationFactory',
             'Config' => 'iMSCP\Core\Service\ConfigFactory',
             'DbConfig' => 'iMSCP\Core\Service\DbConfigFactory',
+            'doctrine_integration.connection.imscp' => 'iMSCP\Core\Service\DatabaseConnectionFactory',
             'EncryptionDataService' => 'iMSCP\Core\Service\EncryptionDataService',
-            'ManagerRegistry' => 'iMSCP\Core\Service\ManagerRegistryFactory',
+            'imscp.cli' => 'iMSCP\Core\Service\CliFactory',
             'Navigation' => 'iMSCP\Core\Service\NavigationFactory',
             'PluginManager' => 'iMSCP\Core\Service\PluginManagerFactory',
             'Request' => 'iMSCP\Core\Service\RequestFactory',
             'Response' => 'iMSCP\Core\Service\ResponseFactory',
             'Serializer' => 'iMSCP\Core\Service\SerializerFactory',
             'Translator' => 'iMSCP\Core\Service\TranslatorFactory',
-            'Validator' => 'iMSCP\Core\Service\ValidatorFactory'
+            'Validator' => 'iMSCP\Core\Service\ValidatorFactory',
+
+            // Auth component related factory
+            'iMSCP\Core\Auth\Authentication' => 'iMSCP\Core\Auth\Factory\AuthenticationServiceFactory',
+            'iMSCP\Core\Auth\Authentication\DefaultAuthenticationListener' => 'iMSCP\Core\Auth\Factory\DefaultAuthenticationListenerFactory',
+
+            'iMSCP\Core\Auth\Authorization\AclAuthorization' => 'iMSCP\Core\Auth\Factory\AclAuthorizationFactory',
+            //'iMSCP\Core\Auth\Authorization\DefaultAuthorizationListener' => 'iMSCP\Core\Auth\Factory\DefaultAuthorizationListenerFactory',
+            //'iMSCP\Core\Auth\Authorization\DefaultResourceResolverListener' => 'iMSCP\Core\Auth\Factory\DefaultResourceResolverListenerFactory',
+
+            // Session
+            'Zend\Session\Config\ConfigInterface' => 'Zend\Session\Service\SessionConfigFactory',
+            'Zend\Session\Storage\StorageInterface' => 'Zend\Session\Service\StorageFactory',
+            'Zend\Session\ManagerInterface' => 'Zend\Session\Service\SessionManagerFactory',
         ],
         'aliases' => [
-            'Configuration' => 'Config'
+            'Configuration' => 'Config',
+
+            'Database' => 'doctrine_integration.connection.imscp',
+
+            // Auth component related aliases
+            'Authentication' => 'iMSCP\Core\Auth\Authentication',
+            'Authorization' => 'iMSCP\Core\Auth\Authorization\AuthorizationInterface',
+            'iMSCP\Core\Auth\Authorization\AuthorizationInterface' => 'iMSCP\Core\Auth\Authorization\AclAuthorization',
+
+            // Session
+            'SessionManager' => 'Zend\Session\ManagerInterface'
         ],
         'abstract_factories' => []
     ];
