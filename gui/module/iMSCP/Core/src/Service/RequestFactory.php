@@ -20,9 +20,9 @@
 
 namespace iMSCP\Core\Service;
 
+use iMSCP\Core\Http\PhpEnvironment\Request as HttpRequest;
 use Zend\Console\Console;
 use Zend\Console\Request as ConsoleRequest;
-use Zend\Http\PhpEnvironment\Request as HttpRequest;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
