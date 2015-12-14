@@ -47,7 +47,7 @@ interface AdapterInterface
      * @param Request $request
      * @param Response $Response
      * @param AuthEvent $authEvent
-     * @return false|IdentityInterface FALSE An IdentityInterface object, FALSE on failure
+     * @return false|IdentityInterface An IdentityInterface object, FALSE on failure
      */
     public function authentication(Request $request, Response $Response, AuthEvent $authEvent);
 }
