@@ -32,8 +32,9 @@ class DefaultAuthenticationPostListener
     /**
      * Set 401 response status code in case of a failed authentication
      *
-     * The status code set here is only valuable for API consumers. The 401 HTTP code is ignored when using a
-     * form-based authentication adapter. We set this status code here because The auth component will provide different
+     * The status code set here is only valuable for API consumers. The 401 HTTP
+     * code is ignored when using a form-based authentication adapter. We set
+     * this status code here because The auth component will provide different
      * authentication adpaters such Form-based, HTTP basic, HTTP digest, and OAuth.
      *
      * @listen AuthEvent::onAfterAuthentication
