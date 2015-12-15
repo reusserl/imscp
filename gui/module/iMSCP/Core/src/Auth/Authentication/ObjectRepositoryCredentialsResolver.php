@@ -82,7 +82,7 @@ class ObjectRepositoryCredentialsResolver implements CredentialsResolverInterfac
         }
 
         $identityRepository = $this->objectManager->getRepository($this->identityClass);
-        $identity = $identityRepository->findOneBy([$this->identityProperty = $identity]);
+        $identity = $identityRepository->findOneBy([$this->identityProperty => $identity]);
 
         if (!$identity) {
             return false;
