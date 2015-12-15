@@ -31,7 +31,7 @@ interface CredentialsResolverInterface
      *
      * @param string $identity
      * @param string $credential
-     * @return mixed Identity data if credentials were resolved, FALSE otherwise
+     * @return mixed Resolved credentials, FALSE otherwise
      */
     public function resolve($identity, $credential);
 }
