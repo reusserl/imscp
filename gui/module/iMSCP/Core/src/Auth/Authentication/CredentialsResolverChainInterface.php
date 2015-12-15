@@ -26,10 +26,10 @@ namespace iMSCP\Core\Auth\Authentication;
 interface CredentialsResolverChainInterface extends CredentialsResolverInterface
 {
     /**
-     * Add a resolver in the chain
+     * Add a credentials resolver in the chain
      *
      * @param CredentialsResolverInterface $resolver
      * @return self
      */
-    public function addAdapter(CredentialsResolverInterface $resolver);
+    public function addResolver(CredentialsResolverInterface $resolver);
 }

@@ -27,7 +27,7 @@ interface CredentialsResolverInterface
 {
     /**
      * Resolve authentication credentials by looking up client's identity in
-     * one or many data stores.
+     * a data store.
      *
      * @param string $identity
      * @param string $credential
