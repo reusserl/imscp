@@ -165,7 +165,7 @@ class FormAdapter implements AdapterInterface
     {
         $formats = array_map('strtolower', $this->passwordFormats);
 
-        if (in_array('clear', $formats) && ($credential != md5($hash))) {
+        if (in_array('clear', $formats) && ($credential === md5($hash))) {
             return true;
         }
 
