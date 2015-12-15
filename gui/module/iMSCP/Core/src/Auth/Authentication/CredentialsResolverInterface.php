@@ -20,7 +20,7 @@
 namespace iMSCP\Core\Auth\Authentication;
 
 /**
- * Interface CredentialResolverInterface
+ * Interface CredentialsResolverInterface
  * @package iMSCP\Core\Auth\Authentication
  */
 interface CredentialsResolverInterface
@@ -29,9 +29,9 @@ interface CredentialsResolverInterface
      * Resolve authentication credentials by looking up client's identity in
      * one or many data stores.
      *
-     * @param mixed $identity
+     * @param string $identity
      * @param string $credential
-     * @return mixed
+     * @return mixed Identity data if credentials were resolved, FALSE otherwise
      */
     public function resolve($identity, $credential);
 }
