@@ -18,16 +18,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Auth\Options;
-
-use Zend\Stdlib\AbstractOptions;
+namespace iMSCP\Core\Auth\Authentication\Adapter\Resolver;
+use Doctrine\Common\Persistence\ObjectManager;
 
 /**
  * Class ObjectRepositoryResolverOptions
  * @package iMSCP\Core\Auth\Options
  */
-class ObjectRepositoryResolverOptions extends AbstractOptions
+class ObjectRepositoryResolverOptions extends ResolverOptions
 {
+    /**
+     * @var ObjectManager
+     */
+    protected $objectManager;
+
     /**
      * @var string Identity class
      */
@@ -42,6 +46,28 @@ class ObjectRepositoryResolverOptions extends AbstractOptions
      * @var string Credential property
      */
     protected $credentialProperty;
+
+    /**
+     * Get object manager
+     *
+     * @return ObjectManager
+     */
+    public function getObjectManager()
+    {
+        return $this->objectManager;
+    }
+
+    /**
+     * Set object manager
+     *
+     * @param ObjectManager $objectManager
+     * @return $this
+     */
+    public function setObjectManager($objectManager)
+    {
+        $this->objectManager = $objectManager;
+        return $this;
+    }
 
     /**
      * Get identity class

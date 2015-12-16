@@ -17,14 +17,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-namespace iMSCP\Core\Auth\Authentication;
+
+namespace iMSCP\Core\Auth\Authentication\Adapter\Resolver;
 
 /**
- * Interface CredentialsResolverInterface
- * @package iMSCP\Core\Auth\Authentication
+ * Interface ResolverInterface
+ * @package iMSCP\Core\Auth\Authentication\Adapter\Resolver
  */
-interface CredentialsResolverInterface
+interface ResolverInterface
 {
+    /**
+     * Set options
+     *
+     * @param array|\Traversable|ResolverOptions $options
+     * @return ResolverInterface Fluent interface
+     */
+    public function setOptions($options);
+
+    /**
+     * Get options
+     *
+     * @return ResolverInterface
+     */
+    public function getOptions();
+
     /**
      * Resolve authentication credentials by looking up client's identity in
      * a data store.

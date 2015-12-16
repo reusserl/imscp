@@ -17,19 +17,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-namespace iMSCP\Core\Auth\Authentication;
+
+namespace iMSCP\Core\Auth\Authentication\Adapter\Resolver;
 
 /**
- * Interface CredentialsResolverChainInterface
- * @package iMSCP\Core\Auth\Authentication
+ * Interface ResolverChainInterface
+ * @package iMSCP\Core\Auth\Authentication\Adapter\Resolver
  */
-interface CredentialsResolverChainInterface extends CredentialsResolverInterface
+interface ResolverChainInterface extends ResolverInterface
 {
     /**
      * Add a credentials resolver in the chain
      *
-     * @param CredentialsResolverInterface $resolver
+     * @param ResolverInterface $resolver
      * @return self
      */
-    public function addResolver(CredentialsResolverInterface $resolver);
+    public function addResolver(ResolverInterface $resolver);
 }

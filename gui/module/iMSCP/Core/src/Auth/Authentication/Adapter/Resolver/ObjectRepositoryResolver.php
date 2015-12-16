@@ -17,53 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-namespace iMSCP\Core\Auth\Authentication;
-
-use Doctrine\Common\Persistence\ObjectManager;
+namespace iMSCP\Core\Auth\Authentication\Adapter\Resolver;
 
 /**
- * Class ObjectRepositoryCredentialsResolver
- * @package iMSCP\Core\Auth\Authentication
+ * Class ObjectRepositoryResolver
+ * @package iMSCP\Core\Auth\Authentication\Adapter\Resolver
  */
-class ObjectRepositoryCredentialsResolver implements CredentialsResolverInterface
+class ObjectRepositoryResolver extends AbstractResolver
 {
-    /**
-     * @var ObjectManager
-     */
-    protected $objectManager;
-
-    /**
-     * @var string Identity class
-     */
-    protected $identityClass;
-
-    /**
-     * @var string Identity property
-     */
-    protected $identityProperty;
-
-    /**
-     * @var string Credential property
-     */
-    protected $credentialProperty;
-
-    /**
-     * Constructor
-     *
-     * @param ObjectManager $objectManager
-     * @param string $identityClass
-     * @param string $identityProperty
-     * @param string $credentialProperty
-     * @internal param ObjectRepository $objectRepository
-     */
-    public function __constructor(ObjectManager $objectManager, $identityClass, $identityProperty, $credentialProperty)
-    {
-        $this->objectManager = $objectManager;
-        $this->identityClass = (string)$identityClass;
-        $this->identityProperty = (string)$identityProperty;
-        $this->credentialProperty = (string)$credentialProperty;
-    }
-
     /**
      * Resolve authentication credentials using an object repository
      *
@@ -81,14 +42,15 @@ class ObjectRepositoryCredentialsResolver implements CredentialsResolverInterfac
             throw new \InvalidArgumentException('Credential is required');
         }
 
-        $identityRepository = $this->objectManager->getRepository($this->identityClass);
-        $identity = $identityRepository->findOneBy([$this->identityProperty => $identity]);
+        $options = $this->getOptions();
+        $identityRepository = $options->getObjectManager()->getRepository($options->getIdentityClass());
+        $identity = $identityRepository->findOneBy([$options->getIdentityProperty() => $identity]);
 
         if (!$identity) {
             return false;
         }
 
-        $credentialProperty = $this->credentialProperty;
+        $credentialProperty = $options->getCredentialProperty();
         $getter = 'get' . ucfirst($credentialProperty);
 
         if (!is_callable([$identity, $getter])) {
@@ -102,5 +64,31 @@ class ObjectRepositoryCredentialsResolver implements CredentialsResolverInterfac
         }
 
         return ['identity' => $identity, 'credential' => $identity->$getter()];
+    }
+
+    /**
+     * {@inheritdoc}
+     * @return ObjectRepositoryResolverOptions
+     */
+    public function getOptions()
+    {
+        if (!$this->options) {
+            $this->setOptions(new ObjectRepositoryResolverOptions());
+        }
+
+        return $this->options;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @return ObjectRepositoryResolverOptions
+     */
+    public function setOptions($options)
+    {
+        if (!$options instanceof ObjectRepositoryResolverOptions) {
+            $options = new ObjectRepositoryResolverOptions($options);
+        }
+
+        return parent::setOptions($options);
     }
 }
