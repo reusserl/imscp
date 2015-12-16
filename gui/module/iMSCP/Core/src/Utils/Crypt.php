@@ -38,7 +38,7 @@ class Crypt
      *
      * @throws \InvalidArgumentException
      * @param string $password The password to be hashed
-     * @param string $salt An optional salt string to base the hashing on
+     * @param null|string $salt An optional salt string to base the hashing on
      * @return string
      * @deprecated As of 2012-6-7, this algorithm is "no longer considered safe" by its author. Use bcrypt instead.
      */
@@ -46,7 +46,7 @@ class Crypt
     {
         $salt = (string)$salt;
 
-        if ($salt !== '') {
+        if ($salt !== null) {
             if (strlen($salt) < 8) {
                 throw new \InvalidArgumentException('The salt length must be at least 8 bytes long');
             }
@@ -99,7 +99,7 @@ class Crypt
      * @throws \InvalidArgumentException
      * @param string $password Password to be hashed
      * @param int $rounds A numeric value  used to indicate how many times the hashing loop should be executed
-     * @param string $salt An optional salt string to base the hashing on
+     * @param null|string $salt An optional salt string to base the hashing on
      * @return string
      */
     static public function sha256($password, $rounds = 5000, $salt = null)
@@ -113,7 +113,7 @@ class Crypt
 
         $rounds = sprintf('%1$04d', $rounds);
 
-        if ($salt !== '') {
+        if ($salt !== null) {
             if (strlen($salt) < 16) {
                 throw new \InvalidArgumentException('The salt length must be at least 16 bytes long');
             }
@@ -130,7 +130,7 @@ class Crypt
      * @throws \InvalidArgumentException
      * @param string $password The password to be hashed
      * @param int $rounds A numeric value  used to indicate how many times the hashing loop should be executed
-     * @param string $salt An optional salt string to base the hashing on
+     * @param null||string $salt An optional salt string to base the hashing on
      * @return string
      */
     static public function sha512($password, $rounds = 5000, $salt = null)
@@ -144,7 +144,7 @@ class Crypt
 
         $rounds = sprintf('%1$04d', $rounds);
 
-        if ($salt !== '') {
+        if ($salt !== null) {
             if (strlen($salt) < 16) {
                 throw new \InvalidArgumentException('The salt length must be at least 16 bytes long');
             }
@@ -163,7 +163,7 @@ class Crypt
      * @throws \InvalidArgumentException
      * @param string $password The password to be hashed
      * @param int $cost Base-2 logarithm of the iteration count (only relevant for bcrypt format)
-     * @param string $salt An optional salt string to base the hashing on (only relevant for bcrypt, crypt and md5 formats)
+     * @param null|string $salt An optional salt string to base the hashing on (only relevant for bcrypt, crypt and md5 formats)
      * @param string $format Format in which the password must be hashed (bcrypt|crypt|md5|sha1) -  Default is md5 (APR1)
      * @return string
      */
@@ -175,7 +175,7 @@ class Crypt
             case 'bcrypt':
                 return static::bcrypt($password, $cost, $salt);
             case 'crypt':
-                if ($salt !== '') {
+                if ($salt !== null) {
                     if (strlen($salt) != 2) {
                         throw new \InvalidArgumentException('The salt length must be 2 bytes long');
                     }
@@ -209,7 +209,7 @@ class Crypt
      * @throws \InvalidArgumentException|\RuntimeException
      * @param string $password The password to be hashed
      * @param int $cost Base-2 logarithm of the iteration count
-     * @param string $salt An optional salt string to base the hashing on
+     * @param null|string $salt An optional salt string to base the hashing on
      * @return string
      */
     static public function bcrypt($password, $cost = 10, $salt = null)
@@ -223,7 +223,7 @@ class Crypt
 
         $cost = sprintf('%1$02d', $cost);
 
-        if ($salt !== '') {
+        if ($salt !== null) {
             if (strlen($salt) < 16) {
                 throw new \InvalidArgumentException('The salt length must be at least 16 bytes long');
             }
@@ -246,14 +246,14 @@ class Crypt
      * APR1 MD5 algorithm (see http://svn.apache.org/viewvc/apr/apr/trunk/crypto/apr_md5.c?view=markup)
      *
      * @param string $password The password to be hashed
-     * @param null $salt Salt An optional salt string to base the hashing on
+     * @param null|string $salt Salt An optional salt string to base the hashing on
      * @return string
      */
     static protected function apr1Md5($password, $salt = null)
     {
         $salt = (string)$salt;
 
-        if ($salt !== '') {
+        if ($salt !== null) {
             if (strlen($salt) !== 8) {
                 throw new \InvalidArgumentException('The salt for APR1 algorithm must be 8 characters long');
             }
@@ -347,12 +347,14 @@ class Crypt
             return static::hashEqual($hash, static::apr1Md5($password, $token[2]));
         }
 
+        // Crypt DES/MD5/BLOWFISH/SHA256/SHA512 hashed password
         return static::hashEqual($hash, crypt($password, $hash));
     }
 
     /**
      * Timing attack safe string comparison
      *
+     * @see hash_equals()
      * @param string $knownString The string of known length to compare against
      * @param string $userString The user-supplied string
      * @return bool
@@ -376,12 +378,11 @@ class Crypt
         }
 
         $result |= $lenExpected ^ $lenActual;
-
         return ($result === 0);
     }
 
     /**
-     * Encrypt the given data in in CBC mode using the Blowfish algorithm
+     * Encrypt the given data in CBC mode using the Blowfish algorithm
      *
      * @param string $key Encryption key (56 bytes long)
      * @param string $iv Initialization vector (8 bytes long)
