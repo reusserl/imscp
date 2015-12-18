@@ -319,12 +319,12 @@ return [
         'cookie_lifetime' => 604800,
         'cookie_httponly' => true,
         'cookie_secure' => false,
-        'cache_expire' => 1200,
+        //'cache_expire' => 0,
         //'remember_me_seconds' => 604800, // Not implemented yet
         // PHP session related settings
         'gc_divisor' => 100,
         'gc_maxlifetime' => 1440,
-        'gc_probability' => 1,
+        'gc_probability' => 100,
         'save_path' => './data/sessions', // Path where session files are stored
         'php_save_handler' => 'files', // Only for reference (it is the default value)
         'use_trans_sid' => false, // Should be false (security reason)
@@ -343,84 +343,6 @@ return [
     ],
 
     //
-    // Core\Auth component comfiguration
-    //
-
-    'imscp_core_auth' => [
-        // There are the factories used by this component to instantiate services
-        'service_factories' => [
-            // There are the factories used by the authentication sub-component to instantiate services
-            'authentication' => [
-                'adapter' => 'iMSCP\Core\Auth\Authentication\Service\AdapterFactory',
-                'listener' => 'iMSCP\Core\Auth\Authentication\Service\ListenerFactory',
-                'resolver' => 'iMSCP\Core\Auth\Authentication\Service\CredentialResolverFactory',
-            ]
-        ],
-
-        // Authentication sub-component configuration
-        'authentication' => [
-            // Credential resolver used by authentication adapters to resolve credentials
-            'resolver' => [
-                // Object repository resolver. This resolver use a Doctrine object repository for resolving
-                // credentials
-                'object_repository' => [
-                    'class' => 'imscp.core_auth.authentication.object_repository_credential_resolver',
-                    'object_manager' => 'doctrine_integration.entitymanager.imscp',
-                    'identity_class' => 'iMSCP\Core\Entity\Admin',
-                    'identity_property' => 'adminName',
-                    'credential_property' => 'adminPass'
-                ],
-
-                // We use a credential resolver chain. This allows any other module to add its own resolvers.
-                'default' => [
-                    'resolver' => [
-                        'class' => 'iMSCP\Core\Auth\Authentication\Adapter\Resolver\ResolverChain',
-                        'resolvers' => [
-                            'object_repository'
-                        ]
-                    ]
-                ]
-            ],
-
-            // Authentication adapter used by the authentication listener to authenticate the requests
-            'adapter' => [
-                // We use an adapter chain. This allow any 3rd-party module to attach its own adapters.
-                'default' => [
-                    'class' => 'iMSCP\Core\Auth\Authentication\Adapter\AdapterChain',
-                    'adapters' => [
-                        // Form-based authentication adapter. This adapter attemps to authenticate request using
-                        // data from a Web-Form. It use an ObjectRespository credential resolver to resolve credentials.
-                        'form' => [
-                            'class' => 'iMSCP\Core\Auth\Authentication\Adapter\FormAdapter',
-                            'options' => [
-                                'identity_field' => 'uname', // The POST field name for the username
-                                'credential_field' => 'upass', // The POST field name for the password
-                                // Supported credential formats
-                                // We support md5 format for backward compatibility reasons only.
-                                'credential_formats' => ['md5', 'crypt'],
-                                // The credential resolver to use for resolving credential
-                                // Will be retrieved as "imscp_core_auth.authentication.credential_resolver.default
-                                'credential_resolver' => 'default',
-                                'csrf_token_field' => '_csrf', // The POST field name for the CSRF token
-                                'csrf_token_timeout' => 120, // Timeout for the CSRF token
-                            ]
-                        ]
-                    ]
-                ]
-            ],
-
-            // Authentication listener that listen on the authentication events
-            'listener' => [
-                'default' => [
-                    'map_auth_type' => [
-                        '/(?:index.php)?' => 'default'
-                    ]
-                ]
-            ]
-        ]
-    ],
-
-    //
     // Navigation configuration
     //
 
@@ -428,21 +350,5 @@ return [
         'admin' => __DIR__ . '/navigation_admin.php',
         'user' => __DIR__ . '/navigation_client.php',
         'reseller' => __DIR__ . '/navigation_reseller.php'
-    ],
-
-    //
-    // Service manager configuration
-    //
-    'service_manager' => [
-        'abstract_factories' => [
-            'AbstractServiceFactory' => 'iMSCP\Core\Auth\Service\AbstractServiceFactory'
-        ],
-        'factories' => [
-            'imscp.core_auth.authentication.object_repository_credential_resolver' =>
-                'iMSCP\Core\Auth\Authentication\Service\ObjectRepositoryCredentialResolverFactory'
-        ],
-        'shared' => [
-            'imscp.core_auth.authentication.object_repository_credential_resolver' => false
-        ]
-    ],
+    ]
 ];
