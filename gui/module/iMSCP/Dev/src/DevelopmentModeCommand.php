@@ -63,9 +63,8 @@ class DevelopmentModeCommand extends Command
     protected function configure()
     {
         $this
-            ->setDescription('Enable or disable development mode (FrontEnd)')
-            ->addArgument('action', InputArgument::REQUIRED, 'Enable/Disable development mode')
-            ->addArgument('action', InputArgument::REQUIRED, 'Enable/Disable development mode')
+            ->setDescription('Enable/Disable development mode (FrontEnd)')
+            ->addArgument('action', InputArgument::REQUIRED, 'enable|disable')
             ->setHelp(<<<EOT
 The <info>imscp:development:mode</info> command enable or disable development mode:
 
@@ -81,7 +80,7 @@ EOT
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $action = $input->getArgument('name');
+        $action = strtolower($input->getArgument('action'));
 
         if (!in_array($action, ['enable', 'disable'])) {
             throw new \InvalidArgumentException(sprintf(

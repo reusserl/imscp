@@ -24,13 +24,14 @@ use Symfony\Component\Console\Command\Command;
 use Zend\Console\Console;
 use Zend\EventManager\EventInterface;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
+use Zend\ModuleManager\Feature\DependencyIndicatorInterface;
 use Zend\ModuleManager\ModuleManagerInterface;
 
 /**
  * Class Module
  * @package iMSCP\Dev
  */
-class Module implements ConfigProviderInterface
+class Module implements ConfigProviderInterface, DependencyIndicatorInterface
 {
     /**
      * {@inheritdoc}
@@ -41,6 +42,14 @@ class Module implements ConfigProviderInterface
             $events = $manager->getEventManager();
             $events->getSharedManager()->attach('imscp.cli', 'onAfterLoadCli', [$this, 'initializeConsole']);
         }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getModuleDependencies()
+    {
+        return ['iMSCP\Core'];
     }
 
     /**
