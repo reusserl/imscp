@@ -21,11 +21,12 @@
 namespace iMSCP\Core\i18n;
 
 /**
- * Class iMSCP_I18n_Parser_Gettext
+ * Class GettextParser
  *
  * Gettext Machine Object (MO) file parser.
  *
  * @see http://www.gnu.org/software/gettext/manual/gettext.html#MO-Files
+ * @package iMSCP\Core\i18n
  */
 class GettextParser
 {
@@ -165,12 +166,15 @@ class GettextParser
             $this->nbStrings = $this->readInteger(); // Number of strings
             $msgidtableOffset = $this->readInteger(); // Offset of table with original strings
             $msgstrTableOffset = $this->readInteger(); // Offset of table with translation strings
+
             // Getting index of original strings
             fseek($this->fh, $msgidtableOffset);
             $this->msgidIndexTable = $this->readIntegerList(2 * $this->nbStrings);
+
             // Getting index of translated strings
             fseek($this->fh, $msgstrTableOffset);
             $this->msgstrIndexTable = $this->readIntegerList(2 * $this->nbStrings);
+
             $this->isLoaded = true;
         }
 
@@ -187,6 +191,7 @@ class GettextParser
                     // Getting msgid
                     fseek($this->fh, $this->msgidIndexTable[$index * 2 + 2]);
                     $msgid = fread($this->fh, $this->msgidIndexTable[$index * 2 + 1]);
+
                     // Getting msgstr
                     fseek($this->fh, $this->msgstrIndexTable[$index * 2 + 2]);
 

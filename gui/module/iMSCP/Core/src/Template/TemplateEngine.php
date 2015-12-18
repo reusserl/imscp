@@ -353,7 +353,6 @@ class TemplateEngine
                 stripos($this->templateNames[$templateName], '.tpl') !== false
             )
         ) { // static NO FILE - static FILE
-
             if ($this->templateData[$templateName] == '') {
                 $this->templateData[$templateName] = $this->getFile($this->templateNames[$templateName]);
             }
@@ -366,8 +365,8 @@ class TemplateEngine
 
             $this->lastParsed = $this->namespaces[$parentTemplateName];
         } elseif (
-            $this->dynamicTemplateNames[$templateName] == '_no_file_' ||
-            stripos($this->dynamicTemplateNames[$templateName], 'tpl') !== false ||
+            @$this->dynamicTemplateNames[$templateName] == '_no_file_' ||
+            stripos(@$this->dynamicTemplateNames[$templateName], 'tpl') !== false ||
             $this->findOrigin($templateName)
         ) { // dynamic NO FILE - dynamic FILE
             if (!$this->parseDynamic($parentTemplateName, $templateName, $addFlag)) {
@@ -379,7 +378,7 @@ class TemplateEngine
             if ($addFlag && isset($this->namespaces[$parentTemplateName])) {
                 $this->namespaces[$parentTemplateName] .= $this->namespaces[$templateName];
             } else {
-                $this->namespaces[$parentTemplateName] = $this->namespaces[$templateName];
+                $this->namespaces[$parentTemplateName] = @$this->namespaces[$templateName];
             }
         }
     }
@@ -430,7 +429,7 @@ class TemplateEngine
         }
 
         if ($addFlag) {
-            $safe = $this->namespaces[$pname];
+            $safe = isset($this->namespaces[$pname]) ? $this->namespaces[$pname] : '';
             $this->namespaces[$pname] = $safe . ($this->substituteDynamic($this->dynamicTemplateData[$tname]));
         } else {
             $this->namespaces[$pname] = $this->substituteDynamic($this->dynamicTemplateData[$tname]);
@@ -456,10 +455,10 @@ class TemplateEngine
 
     /**
      *
-     * @param string $parentTemplateName
+     * @param null|string $parentTemplateName
      * @return void
      */
-    public function prnt($parentTemplateName = '')
+    public function prnt($parentTemplateName = null)
     {
         if ($parentTemplateName) {
             echo $this->namespaces[$parentTemplateName];
@@ -515,7 +514,9 @@ class TemplateEngine
         }
 
         if (!$this->isSafe($templateFile)) {
-            throw new \RuntimeException(sprintf('Unable to find the %s template file', $this->templateRootDir . '/' . $templateFile));
+            throw new \RuntimeException(sprintf(
+                'Could not find the %s template file', $this->templateRootDir . '/' . $templateFile), 404
+            );
         }
 
         $prevParentTplDir = $parentTplDir;

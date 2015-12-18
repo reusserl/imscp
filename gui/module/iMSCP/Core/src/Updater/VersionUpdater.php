@@ -19,6 +19,7 @@
  */
 
 namespace iMSCP\Core\Updater;
+
 use iMSCP\Core\Application;
 
 /**
@@ -103,21 +104,19 @@ class VersionUpdater extends AbstractUpdater
             if ($forceReload || !file_exists($file) || strtotime('+1 day', filemtime($file)) < time()) {
                 clearstatcache();
 
-                $context = stream_context_create(
-                    [
-                        'http' => [
-                            'method' => 'GET',
-                            'protocol_version' => '1.1',
-                            'header' => [
-                                'Host: api.github.com',
-                                'Accept: application/vnd.github.v3+json',
-                                'User-Agent: i-MSCP',
-                                'Connection: close',
-                                'timeout' => 3
-                            ]
+                $context = stream_context_create([
+                    'http' => [
+                        'method' => 'GET',
+                        'protocol_version' => '1.1',
+                        'header' => [
+                            'Host: api.github.com',
+                            'Accept: application/vnd.github.v3+json',
+                            'User-Agent: i-MSCP',
+                            'Connection: close',
+                            'timeout' => 3
                         ]
                     ]
-                );
+                ]);
 
                 if (!stream_context_set_option($context, 'ssl', 'verify_peer', false)) {
                     $this->setError(tr('Unable to set sslverifypeer option'));
@@ -129,13 +128,11 @@ class VersionUpdater extends AbstractUpdater
                     return false;
                 }
 
-                // Retrieving latest release info from GitHub
+                // Retrieve latest release info from GitHub
                 $info = @file_get_contents('https://api.github.com/repos/i-MSCP/imscp/releases/latest', false, $context);
 
                 if ($info === false) {
                     $this->setError(tr('Unable to get update info from Github'));
-                } elseif (!isJson($info)) {
-                    $this->setError(tr('Invalid payload received from GitHub'));
                     return false;
                 }
 
@@ -190,7 +187,6 @@ class VersionUpdater extends AbstractUpdater
     public function applyUpdates()
     {
         $this->setError('i-MSCP version update can be initiated through the i-MSCP installer only.');
-
         return false;
     }
 

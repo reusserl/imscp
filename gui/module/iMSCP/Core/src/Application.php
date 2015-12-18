@@ -20,14 +20,21 @@
 
 namespace iMSCP\Core;
 
+use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
 use Zend\ServiceManager\ServiceManager;
-use Zend\Stdlib\Request;
-use Zend\Stdlib\Response;
+use Zend\Stdlib\RequestInterface;
+use Zend\Stdlib\ResponseInterface;
+
 
 /**
  * Class Application
+ *
+ * Expects a ServiceManager configured with the following services
+ *
+ * - ModuleManager
+ *
  * @package iMSCP
  */
 class Application implements ApplicationInterface, EventManagerAwareInterface
@@ -56,12 +63,12 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
     protected $events;
 
     /**
-     * @var Request
+     * @var RequestInterface
      */
     protected $request;
 
     /**
-     * @var Response
+     * @var ResponseInterface
      */
     protected $response;
 
@@ -74,16 +81,20 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
      * Constructor
      *
      * @param mixed $configuration
+     * @param RequestInterface $request
+     * @param ResponseInterface $response
      * @param ServiceManager $serviceManager
      */
-    public function __construct($configuration, ServiceManager $serviceManager)
-    {
-
+    public function __construct(
+        $configuration,
+        RequestInterface $request,
+        ResponseInterface $response,
+        ServiceManager $serviceManager
+    ) {
         $this->configuration = $configuration;
         $this->serviceManager = $serviceManager;
-        $this->setEventManager($serviceManager->get('EventManager'));
-        $this->request = $serviceManager->get('Request');
-        $this->response = $serviceManager->get('Response');
+        $this->request = $request;
+        $this->response = $response;
     }
 
     /**
@@ -102,6 +113,7 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
      * Defines and binds the ApplicationEvent, and passes it the request and response.
      * Triggers the bootstrap event.
      *
+     * @trigger ApplicationEvent::EVENT_BOOTSTRAP
      * @param array $listeners List of listeners to attach
      * @return Application
      */
@@ -116,13 +128,15 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
             $eventManager->attach($serviceManager->get($listener));
         }
 
-        $this->event = $event = (new ApplicationEvent('application', $this))
-            ->setApplication($this)
+        // Setup Appplication event
+        $this->event = $event = new ApplicationEvent('application');
+        $event->setTarget($this);
+        $event->setApplication($this)
             ->setRequest($this->request)
             ->setResponse($this->response);
 
+        // Trigger bootstrap event
         $eventManager->trigger(ApplicationEvent::EVENT_BOOTSTRAP, $event);
-
         return $this;
     }
 
@@ -168,7 +182,7 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
         $events->setIdentifiers([
             __CLASS__,
             get_class($this),
-            // Needed because zend-modulemanager attach listeners using this identifier
+            // Needed because zend-modulemanager attach listeners using the Zend\Mvc\Application identifier
             // See https://github.com/zendframework/zend-modulemanager/issues/15
             'Zend\Mvc\Application'
         ]);
@@ -181,6 +195,9 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
      */
     public function getEventManager()
     {
+        if (null === $this->events) {
+            $this->setEventManager(new EventManager());
+        }
         return $this->events;
     }
 
@@ -223,7 +240,8 @@ class Application implements ApplicationInterface, EventManagerAwareInterface
      */
     public function run()
     {
-        // Nothing to do ATM. This will take place in version 2.0.0 when we will use MVC architecture
+        // Nothing to do here. This will take place in version 2.0.0 when we will use MVC architecture
+        // Right now, run phase is done through action scripts (There is not routing/dispatch process ATM).
     }
 
     /**

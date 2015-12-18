@@ -20,8 +20,6 @@
 
 namespace iMSCP\Core;
 
-use iMSCP\Core\Auth\AuthEvent;
-use iMSCP\Core\Auth\ScriptStartListener;
 use iMSCP\Core\Config\DbConfigHandler;
 use iMSCP\Core\Config\FileConfigHandler;
 use Zend\Console\Console;
@@ -42,11 +40,6 @@ use Zend\Stdlib\CallbackHandler;
  */
 class Module implements InitProviderInterface, ConfigProviderInterface, BootstrapListenerInterface
 {
-    /**
-     * @var ServiceManager
-     */
-    protected $serviceManager;
-
     /**
      * @var CallbackHandler
      */
@@ -90,65 +83,10 @@ class Module implements InitProviderInterface, ConfigProviderInterface, Bootstra
         /** @var Application $application */
         $application = $appEvent->getApplication();
 
-        $events = $application->getEventManager();
-        $this->serviceManager = $application->getServiceManager();
-
         // Initialize and start session
         /** @var \Zend\Session\ManagerInterface $sessionManager */
         $sessionManager = $application->getServiceManager()->get('SessionManager');
         $sessionManager->start();
-
-        // Setup authentication/authorization layer
-
-        /** @var \Zend\Authentication\AuthenticationServiceInterface $authenticationService */
-        $authenticationService = $this->serviceManager->get('Authentication');
-
-        /** @var \iMSCP\Core\Auth\Authorization\AuthorizationInterface $authorizationService */
-        $authorizationService = $this->serviceManager->get('Authorization');
-
-        // Add both authentication and authorization service to the authentication event
-        $authEvent = new AuthEvent($appEvent, $authenticationService, $authorizationService);
-
-        // To be replaced by MvcRoute listener in v2.0.0
-        // Attach listener responsible to trigger authentication events when a i-MSCP action script start
-        $scriptStartListener = new ScriptStartListener($authEvent, $authenticationService);
-        $events->attach($scriptStartListener);
-
-        // Attach default listener for authentication tasks
-        // This listener composes one or many authentication adapters
-        $events->attach(AuthEvent::onAuthentication, $this->serviceManager->get(
-            'iMSCP\Core\Auth\Authentication\DefaultAuthenticationListener'
-        ));
-
-        // Attach default listener for post authentication tasks
-        $events->attach(AuthEvent::onAuthentication, $this->serviceManager->get(
-            'iMSCP\Core\Auth\Authentication\DefaultAuthenticationPostListener'
-        ));
-
-        // Attache listener which is responsible to setup Identity service. This allows to retrieve
-        // current Identity as a service.
-        $events->attach(AuthEvent::onAfterAuthentication, [$this, 'onAuthenticationPost'], -1);
-
-        // TODO
-
-        // Attach default listener to resolve authorization resources
-        //$events->attach(
-        //    AuthEvent::onAuthorization,
-        //    $this->services->get('iMSCP\Core\Auth\DefaultResourceResolverListener'),
-        //    1000
-        //);
-
-        // Attach listener for authorization tasks
-        //$events->attach(AuthEvent::onAuthorization, $this->services->get(
-        //    'iMSCP\Core\Auth\DefaultAuthorizationListener'
-        //));
-
-        // Attach default listener for post authorization tasks
-        //$events->attach(AuthEvent::onAfterAuthentication, $this->services->get(
-        //    'iMSCP\Core\Auth\DefaultAuthorizationPostListener'
-        //));
-
-        //$events->attach(AuthEvent::onAfterAuthentication, [$this, 'onAuthenticationPost'], -1);
     }
 
     /**
@@ -246,26 +184,12 @@ class Module implements InitProviderInterface, ConfigProviderInterface, Bootstra
         /** @var ConfigListener $configListener */
         $configListener = $e->getConfigListener();
 
-        // If enabled, update the config cache
+        // If enabled, update the configuration cache
         if ($configListener->getOptions()->getConfigCacheEnabled()) {
             $configFile = $configListener->getOptions()->getConfigCacheFile();
             $content = "<?php\nreturn " . var_export($configListener->getMergedConfig(false), 1) . ';';
             file_put_contents($configFile, $content);
         }
-    }
-
-    /**
-     * @listen AuthenticationEvent::onAfterAuthentication
-     * @param AuthEvent $e
-     * @return void
-     */
-    public function onAuthenticationPost(AuthEvent $e)
-    {
-        if ($this->serviceManager->has('Identity')) {
-            return;
-        }
-
-        $this->serviceManager->setService('Identity', $e->getIdentity());
     }
 
     /**

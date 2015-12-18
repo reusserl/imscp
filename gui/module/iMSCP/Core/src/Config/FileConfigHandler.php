@@ -45,7 +45,7 @@ class FileConfigHandler extends AbstractConfigHandler
     protected function loadConfig($configFilePath)
     {
         if (($string = @file_get_contents($configFilePath)) == false) {
-            throw new \RuntimeException(sprintf('Could not open the `%s` configuration file.', $configFilePath));
+            throw new \RuntimeException(sprintf('Could not read the `%s` configuration file.', $configFilePath));
         }
 
         $lines = explode("\n", $string);

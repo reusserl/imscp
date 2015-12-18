@@ -31,50 +31,37 @@ namespace iMSCP\Core;
 class NetworkCard
 {
     /**
-     * Should be documented
-     *
-     * @var array
+     * @var array Interface info
      */
     protected $interfacesInfo = [];
 
     /**
-     * Should be documented
-     *
-     * @var array
+     * @var array Interfaces
      */
     protected $interfaces = [];
 
     /**
-     * Should be documented
-     *
-     * array
+     * @var array Offline interfas
      */
     protected $offlineInterfaces = [];
 
     /**
-     * Should be documented
-     *
-     * @var array
+     * @var array Virtual interfaces
      */
     protected $virtualInterfaces = [];
 
     /**
-     * Should be documented
-     *
-     * @var array
+     * @var array Available interfaces
      */
     protected $availableInterfaces = [];
 
     /**
-     * Should be documented
-     *
-     * @var array
+     * @var array Errors
      */
     protected $errors = '';
 
     /**
-     * Should be documented
-     *
+     * Constructor
      */
     public function __construct()
     {
@@ -83,7 +70,7 @@ class NetworkCard
     }
 
     /**
-     * Should be documented
+     * Get device information
      *
      * @return array
      */
@@ -95,9 +82,9 @@ class NetworkCard
     }
 
     /**
-     * Should be documented
+     * Read the given file
      *
-     * @param  $filename
+     * @param string $filename
      * @return string
      */
     public function read($filename)
@@ -111,7 +98,7 @@ class NetworkCard
     }
 
     /**
-     * Should be documented
+     * Get list of available interface
      *
      * @return array
      */
@@ -121,7 +108,7 @@ class NetworkCard
     }
 
     /**
-     * Should be documented
+     * Get errors
      *
      * @return string
      */
@@ -131,10 +118,10 @@ class NetworkCard
     }
 
     /**
-     * Should be documented
+     * Get netcard associated with the given IP address
      *
      * @param string $ip
-     * @return mixed
+     * @return null|string
      */
     public function ip2NetworkCard($ip)
     {
@@ -142,14 +129,14 @@ class NetworkCard
 
         if ($key === false) {
             $this->errors .= sprintf(tr("This IP (%s) is not assigned to any network card!"), $ip);
-            return false;
+            return null;
         }
 
         return $this->interfacesInfo[1][$key];
     }
 
     /**
-     * Should be documented
+     * Load interface info
      *
      * @return void
      */
@@ -161,7 +148,7 @@ class NetworkCard
     }
 
     /**
-     * Should be documented
+     * Extract interface info
      *
      * @return void
      */
@@ -193,10 +180,10 @@ class NetworkCard
     }
 
     /**
-     * Should be documented
+     * Execute external command
      *
-     * @param  string $strProgram
-     * @param  string &$strError
+     * @param string $strProgram
+     * @param string &$strError
      * @return bool|string
      */
     protected function executeExternal($strProgram, &$strError)

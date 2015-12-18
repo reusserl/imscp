@@ -27,9 +27,29 @@ namespace iMSCP\Core;
 class Events
 {
     /**
+     * The onTemplatesScriptStart event is triggered at the very beginning of templates.php script.
+     *
+     * The listeners receive an iMSCP\Core\ApplicationEvent object.
+     *
+     * @const string
+     */
+    const onTemplatesScriptStart = 'onTemplateScriptStart';
+
+    /**
+     * The onLoginScriptEnd event is triggered at the end of templates.php script.
+     *
+     * The listeners receive a Zend\EventManager\Event object with the following parameter:
+     *
+     * - templateEngine: TemplateEngine instance
+     *
+     * @const string
+     */
+    const onTemplatesScriptEnd = 'onTemplateScriptEnd';
+
+    /**
      * The onLoginScriptStart event is triggered at the very beginning of Login script.
      *
-     * The listeners receive an Zend\EventManager\Event object.
+     * The listeners receive an iMSCP\Core\ApplicationEvent object.
      *
      * @const string
      */
@@ -49,7 +69,7 @@ class Events
     /**
      * The onLostPasswordScriptStart event is triggered at the very beginning of the LostPassword script.
      *
-     * The listeners receive a Zend\EventManager\Event object.
+     * The listeners receive an iMSCP\Core\ApplicationEvent object.
      *
      * @const string
      */
@@ -69,7 +89,7 @@ class Events
     /**
      * The onAdminScriptStart event is triggered at the very beginning of admin scripts.
      *
-     * The listeners receive a Zend\EventManager\Event object.
+     * The listeners receive an iMSCP\Core\ApplicationEvent object.
      *
      * @const string
      */
@@ -89,7 +109,7 @@ class Events
     /**
      * The onResellerScriptStart event is triggered at the very beginning of reseller scripts.
      *
-     * The listeners receive a Zend\EventManager\Event object.
+     * The listeners receive an iMSCP\Core\ApplicationEvent object.
      *
      * @const string
      */
@@ -109,7 +129,7 @@ class Events
     /**
      * The onClientScriptStart event is triggered at the very beginning of client scripts.
      *
-     * The listeners receive a Zend\EventManager\Event instance.
+     * The listeners receive an iMSCP\Core\ApplicationEvent object.
      *
      * @const string
      */
@@ -923,10 +943,12 @@ class Events
     const onGetJsTranslations = 'onGetJsTranslations';
 
     /**
-     * The onBeforeCreateConsoleApplicationevent allow 3rd-party components to add their own commands into the i-MSCP
+     * The onAfterLoadCli allow 3rd-party components to add their own commands into the i-MSCP
      * Frontend Command Line Tool.
      *
-     * The listeners receive an iMSCP\Tools\Console\ConsoleEvent object
+     * The listeners receive a Zend\EventManager\Event object with the following parameters:
+     *
+     * - ServiceManager An instance of Zend\ServiceManager\ServiceManager
      */
-    const onBeforeCreateConsoleApplication = 'onBeforeCreateConsoleApplication';
+    const onAfterLoadCli =  'onAfterLoadCli';
 }

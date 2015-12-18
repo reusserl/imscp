@@ -60,7 +60,7 @@ class ApplicationEvent extends Event
     /**
      * Set request Object
      *
-     * @param RequestInterface$request
+     * @param RequestInterface $request
      * @return $this
      */
     public function setRequest(RequestInterface $request)

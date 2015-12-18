@@ -18,40 +18,47 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Translation;
+namespace iMSCP\Core\Console;
 
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Helper\Helper;
+use Zend\ServiceManager\ServiceManager;
 
 /**
- * Class BuildLanguageIndexCommand
- * @package iMSCP\Core\Translation
+ * Class ServiceManagerHelper
+ * @package iMSCP\Core\Console
  */
-class BuildLanguageIndexCommand extends Command
+class ServiceManagerHelper extends Helper
 {
     /**
-     * {@inheritdoc}
+     * @var ServiceManager
      */
-    protected function configure()
+    protected $serviceManager;
+
+    /**
+     * Constructor
+     *
+     * @param ServiceManager $serviceManager
+     */
+    public function __construct(ServiceManager $serviceManager)
     {
-        $this->setName('imscp:build:language:index')
-            ->setDescription('Build i-MSCP Frontend language index')
-            ->setHelp(<<<EOT
-The <info>imscp:build:language:index</info> command build the i-MSCP Frontend language index:
+        $this->serviceManager = $serviceManager;
+    }
 
-  <info>imscp:build:language:index</info>
-
-EOT
-            );
+    /**
+     * Retrieves the service manager
+     *
+     * @return ServiceManager $serviceManager
+     */
+    public function getServiceManager()
+    {
+        return $this->serviceManager;
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    public function getName()
     {
-        i18n_buildLanguageIndex();
-        $output->writeln('i-MSCP Frontend language index built successfully!');
+        return 'servicemanager';
     }
 }

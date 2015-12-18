@@ -24,6 +24,7 @@ use Doctrine\DBAL\Connection;
 use iMSCP\Core\Application;
 use iMSCP\Core\Config\DbConfigHandler;
 use iMSCP\Core\Utils\Crypt;
+use Zend\Console\Console;
 use Zend\Uri\Uri;
 
 /**
@@ -38,9 +39,7 @@ class DatabaseUpdater extends AbstractUpdater
     protected static $instance;
 
     /**
-     * Database name being updated
-     *
-     * @var string
+     * @var string Database name being updated
      */
     protected $databaseName;
 
@@ -125,7 +124,7 @@ class DatabaseUpdater extends AbstractUpdater
             }
         }
 
-        if (PHP_SAPI != 'cli' && $this->_daemonRequest) {
+        if (!Console::isConsole() && $this->_daemonRequest) {
             send_request();
         }
 
@@ -220,15 +219,16 @@ class DatabaseUpdater extends AbstractUpdater
                 array_shift($details);
 
                 foreach ($details as $detail) {
-                    if (preg_match('/^(?: |\t)*\*(?: |\t)+([^@]*)$/', $detail, $matches)) {
-                        if (empty($normalizedDetails)) {
-                            $normalizedDetails = $matches[1];
-                        } else {
-                            $normalizedDetails .= '<br />' . $matches[1];
-                        }
-                    } else {
+                    if (!preg_match('/^(?: |\t)*\*(?: |\t)+([^@]*)$/', $detail, $matches)) {
                         break;
                     }
+
+                    if (empty($normalizedDetails)) {
+                        $normalizedDetails = $matches[1];
+                    } else {
+                        $normalizedDetails .= '<br />' . $matches[1];
+                    }
+
                 }
 
                 $updatesDetails[$revision] = $normalizedDetails;
@@ -278,6 +278,7 @@ class DatabaseUpdater extends AbstractUpdater
 
                 // Clear out passphrase
                 $privateKey->setPassword();
+
                 // Get unencrypted private key
                 $privateKey = $privateKey->getPrivateKey();
                 $privateKey = quoteValue($privateKey);
@@ -469,6 +470,7 @@ class DatabaseUpdater extends AbstractUpdater
     protected function r60()
     {
         $sqlUpd = [];
+
         /** @var Connection $db */
         $db = Application::getInstance()->getServiceManager()->get('ServiceLocator')->get('Database');
 
@@ -546,7 +548,6 @@ class DatabaseUpdater extends AbstractUpdater
         foreach ($languagesMap as $language => $locale) {
             $locale = quoteValue($locale);
             $language = quoteValue("lang_$language");
-
             $sqlUpd[] = "UPDATE user_gui_props SET lang = $locale WHERE lang = $language";
         }
 
@@ -568,7 +569,6 @@ class DatabaseUpdater extends AbstractUpdater
                 $cardname = explode(':', $row['ip_card']);
                 $cardname = quoteValue($cardname[0]);
                 $ipId = quoteValue($row['ip_id']);
-
                 $sqlUpd[] = "UPDATE server_ips SET ip_card = $cardname WHERE ip_id = $ipId";
             }
         }
@@ -2080,7 +2080,6 @@ class DatabaseUpdater extends AbstractUpdater
         }
 
         $this->removeDuplicateRowsOnColumns('sql_database', 'sqld_name');
-
         return $this->addIndex('sql_database', 'sqld_name', 'UNIQUE', 'sqld_name');
     }
 
@@ -2229,7 +2228,6 @@ class DatabaseUpdater extends AbstractUpdater
     protected function r166()
     {
         $stmt = exec_query('SELECT domain_id, mail_quota FROM domain');
-
         while ($data = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             sync_mailboxes_quota($data['domain_id'], $data['mail_quota']);
         }

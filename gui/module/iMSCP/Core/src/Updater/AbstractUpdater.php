@@ -44,22 +44,6 @@ abstract class AbstractUpdater
     }
 
     /**
-     * Apply all available update
-     *
-     * @abstract
-     * @return bool TRUE on success, FALSE othewise
-     */
-    abstract public function applyUpdates();
-
-    /**
-     * Checks for available update
-     *
-     * @abstract
-     * @return bool TRUE if an update available, FALSE otherwise
-     */
-    abstract public function isAvailableUpdate();
-
-    /**
      * Set error
      *
      * @param string $error
@@ -68,14 +52,26 @@ abstract class AbstractUpdater
     protected function setError($error)
     {
         $this->lastError = $error;
-
         return $this;
     }
 
     /**
+     * Apply all available update
+     *
+     * @return bool TRUE on success, FALSE othewise
+     */
+    abstract public function applyUpdates();
+
+    /**
+     * Checks for available update
+     *
+     * @return bool TRUE if an update available, FALSE otherwise
+     */
+    abstract public function isAvailableUpdate();
+
+    /**
      * Returns last applied update
      *
-     * @abstract
      * @return mixed
      */
     abstract protected function getLastAppliedUpdate();
@@ -83,7 +79,6 @@ abstract class AbstractUpdater
     /**
      * Return next update
      *
-     * @abstract
      * @return mixed next update info
      */
     abstract protected function getNextUpdate();

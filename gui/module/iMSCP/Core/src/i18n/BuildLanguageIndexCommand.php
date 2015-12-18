@@ -18,42 +18,40 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core;
+namespace iMSCP\Core\i18n;
 
-use Zend\Http\Response;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Interface ApplicationInterface
- * @package iMSCP
+ * Class BuildLanguageIndexCommand
+ * @package iMSCP\Core\i18n
  */
-interface ApplicationInterface
+class BuildLanguageIndexCommand extends Command
 {
     /**
-     * Get service locator object
-     *
-     * @return ServiceLocatorInterface
+     * {@inheritdoc}
      */
-    public function getServiceManager();
+    protected function configure()
+    {
+        $this->setName('imscp:build:language:index')
+            ->setDescription('Build i-MSCP Frontend language index')
+            ->setHelp(<<<EOT
+The <info>imscp:build:language:index</info> command build the i-MSCP Frontend language index:
+
+  <info>imscp:build:language:index</info>
+
+EOT
+            );
+    }
 
     /**
-     * Get request object
-     *
-     * @return \Zend\Stdlib\RequestInterface
+     * {@inheritdoc}
      */
-    public function getRequest();
-
-    /**
-     * Get response object
-     *
-     * @return \Zend\Stdlib\ResponseInterface
-     */
-    public function getResponse();
-
-    /**
-     * Run application
-     *
-     * @return self
-     */
-    public function run();
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        i18n_buildLanguageIndex();
+        $output->writeln('i-MSCP Frontend language index built successfully!');
+    }
 }

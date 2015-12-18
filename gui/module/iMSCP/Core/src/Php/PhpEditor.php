@@ -29,51 +29,37 @@ use iMSCP\Core\Config\FileConfigHandler;
 class PhpEditor
 {
     /**
-     * iMSCP_PHPini instance
-     *
      * @var PhpEditor
      */
     static protected $instance;
 
     /**
-     * Flag that is set to TRUE if an error occurs at {link setData()}
-     *
-     * @var bool
+     * @var bool Flag that is set to TRUE if an error occurs at {link setData()}
      */
     public $flagValueError = false;
 
     /**
-     * Flag that is sets to TRUE if the loaded data are customized
-     *
-     * @var bool
+     * @var bool Flag that is sets to TRUE if the loaded data are customized
      */
     public $flagCustomIni;
 
     /**
-     *  Flag that is sets to TRUE if an error occurs at setClPerm()
-     *
-     * @var bool
+     * @var bool Flag that is sets to TRUE if an error occurs at setClPerm()
      */
     public $flagValueClError = false;
 
     /**
-     * Associative array that contains php.ini data
-     *
-     * @var array
+     * @var array Associative array that contains php.ini data
      */
     protected $phpiniData = [];
 
     /**
-     * Associative array that contains the reseller's permissions, including its max values for PHP directives
-     *
-     * @var array
+     * @var array Associative array that contains the reseller's permissions, including its max values for PHP directives
      */
     protected $phpiniRePerm = [];
 
     /**
-     * Associative array that contains client permissions
-     *
-     * @var array
+     * @var array Associative array that contains client permissions
      */
     protected $phpiniClPerm = [];
 
@@ -88,13 +74,16 @@ class PhpEditor
     private function __construct()
     {
         $this->cfg = Application::getInstance()->getServiceManager()->get('config');
-        // Populate $_phpiniData with default data.
+
+        // Populate $phpiniData with default data.
         // Default data are those set by admin via the admin/settings.php page
         $this->loadDefaultData();
-        // Populate $_phpiniRePerm with default reseller permissions, including
+
+        // Populate $phpiniRePerm with default reseller permissions, including
         // its max values for the PHP directives. Max values are those set by admin via the admin/settings.php page
         $this->loadReDefaultPerm();
-        // Populate $_phpiniClPerm with default customer permissions
+
+        // Populate $phpiniClPerm with default customer permissions
         $this->loadClDefaultPerm();
     }
 
@@ -109,16 +98,18 @@ class PhpEditor
         $this->phpiniData['phpiniSystem'] = 'no';
 
         // Default permissions on PHP directives
-        $this->phpiniData['phpiniAllowUrlFopen'] = $this->cfg->PHPINI_ALLOW_URL_FOPEN;
-        $this->phpiniData['phpiniDisplayErrors'] = $this->cfg->PHPINI_DISPLAY_ERRORS;
-        $this->phpiniData['phpiniErrorReporting'] = $this->cfg->PHPINI_ERROR_REPORTING;
-        $this->phpiniData['phpiniDisableFunctions'] = $this->cfg->PHPINI_DISABLE_FUNCTIONS;
+        $this->phpiniData['phpiniAllowUrlFopen'] = $this->cfg['PHPINI_ALLOW_URL_FOPEN'];
+        $this->phpiniData['phpiniDisplayErrors'] = $this->cfg['PHPINI_DISPLAY_ERRORS'];
+        $this->phpiniData['phpiniErrorReporting'] = $this->cfg['PHPINI_ERROR_REPORTING'];
+        $this->phpiniData['phpiniDisableFunctions'] = $this->cfg['PHPINI_DISABLE_FUNCTIONS'];
+
         // Default value for PHP directives
-        $this->phpiniData['phpiniPostMaxSize'] = $this->cfg->PHPINI_POST_MAX_SIZE;
-        $this->phpiniData['phpiniUploadMaxFileSize'] = $this->cfg->PHPINI_UPLOAD_MAX_FILESIZE;
-        $this->phpiniData['phpiniMaxExecutionTime'] = $this->cfg->PHPINI_MAX_EXECUTION_TIME;
-        $this->phpiniData['phpiniMaxInputTime'] = $this->cfg->PHPINI_MAX_INPUT_TIME;
-        $this->phpiniData['phpiniMemoryLimit'] = $this->cfg->PHPINI_MEMORY_LIMIT;
+        $this->phpiniData['phpiniPostMaxSize'] = $this->cfg['PHPINI_POST_MAX_SIZE'];
+        $this->phpiniData['phpiniUploadMaxFileSize'] = $this->cfg['PHPINI_UPLOAD_MAX_FILESIZE'];
+        $this->phpiniData['phpiniMaxExecutionTime'] = $this->cfg['PHPINI_MAX_EXECUTION_TIME'];
+        $this->phpiniData['phpiniMaxInputTime'] = $this->cfg['PHPINI_MAX_INPUT_TIME'];
+        $this->phpiniData['phpiniMemoryLimit'] = $this->cfg['PHPINI_MEMORY_LIMIT'];
+
         $this->flagCustomIni = false;
     }
 
@@ -134,12 +125,13 @@ class PhpEditor
         $this->phpiniRePerm['phpiniAllowUrlFopen'] = 'no';
         $this->phpiniRePerm['phpiniDisplayErrors'] = 'no';
         $this->phpiniRePerm['phpiniDisableFunctions'] = 'no';
+
         // Default reseller max value for PHP directives (based on system wide values)
-        $this->phpiniRePerm['phpiniPostMaxSize'] = $this->cfg->PHPINI_POST_MAX_SIZE;
-        $this->phpiniRePerm['phpiniUploadMaxFileSize'] = $this->cfg->PHPINI_UPLOAD_MAX_FILESIZE;
-        $this->phpiniRePerm['phpiniMaxExecutionTime'] = $this->cfg->PHPINI_MAX_EXECUTION_TIME;
-        $this->phpiniRePerm['phpiniMaxInputTime'] = $this->cfg->PHPINI_MAX_INPUT_TIME;
-        $this->phpiniRePerm['phpiniMemoryLimit'] = $this->cfg->PHPINI_MEMORY_LIMIT;
+        $this->phpiniRePerm['phpiniPostMaxSize'] = $this->cfg['PHPINI_POST_MAX_SIZE'];
+        $this->phpiniRePerm['phpiniUploadMaxFileSize'] = $this->cfg['PHPINI_UPLOAD_MAX_FILESIZE'];
+        $this->phpiniRePerm['phpiniMaxExecutionTime'] = $this->cfg['PHPINI_MAX_EXECUTION_TIME'];
+        $this->phpiniRePerm['phpiniMaxInputTime'] = $this->cfg['PHPINI_MAX_INPUT_TIME'];
+        $this->phpiniRePerm['phpiniMemoryLimit'] = $this->cfg['PHPINI_MEMORY_LIMIT'];
     }
 
     /**
@@ -207,17 +199,18 @@ class PhpEditor
     public function loadRePerm($resellerId)
     {
         $resellerId = (int)$resellerId;
-        $query = "
-            SELECT
-                `php_ini_system`, `php_ini_al_disable_functions`, `php_ini_al_allow_url_fopen`,
-                `php_ini_al_display_errors`, `php_ini_max_post_max_size`, `php_ini_max_upload_max_filesize`,
-                `php_ini_max_max_execution_time`, `php_ini_max_max_input_time`, `php_ini_max_memory_limit`
-            FROM
-                `reseller_props`
-            WHERE
-                `reseller_id` = ?
-        ";
-        $stmt = exec_query($query, $resellerId);
+        $stmt = exec_query(
+            '
+                SELECT
+                    `php_ini_system`, `php_ini_al_disable_functions`, `php_ini_al_allow_url_fopen`,
+                    `php_ini_al_display_errors`, `php_ini_max_post_max_size`, `php_ini_max_upload_max_filesize`,
+                    `php_ini_max_max_execution_time`, `php_ini_max_max_input_time`, `php_ini_max_memory_limit`
+                FROM
+                    `reseller_props`
+                WHERE
+                    `reseller_id` = ?
+                ', $resellerId
+        );
 
         if ($stmt->rowCount()) {
             $row = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -228,6 +221,7 @@ class PhpEditor
                 $this->phpiniRePerm['phpiniAllowUrlFopen'] = $row['php_ini_al_allow_url_fopen'];
                 $this->phpiniRePerm['phpiniDisplayErrors'] = $row['php_ini_al_display_errors'];
                 $this->phpiniRePerm['phpiniDisableFunctions'] = $row['php_ini_al_disable_functions'];
+
                 // Max values for PHP directives
                 $this->phpiniRePerm['phpiniPostMaxSize'] = $row['php_ini_max_post_max_size'];
                 $this->phpiniRePerm['phpiniUploadMaxFileSize'] = $row['php_ini_max_upload_max_filesize'];
@@ -320,8 +314,11 @@ class PhpEditor
             return true;
         }
 
-        if ($key == 'phpiniErrorReporting' && ($value == 'E_ALL & ~E_NOTICE' || $value == 'E_ALL | E_STRICT' ||
-                $value == 'E_ALL & ~E_DEPRECATED' || $value == '0')
+        if (
+            $key == 'phpiniErrorReporting' && (
+                $value == 'E_ALL & ~E_NOTICE' || $value == 'E_ALL | E_STRICT' ||
+                $value == 'E_ALL & ~E_DEPRECATED' || $value == '0'
+            )
         ) {
             return true;
         }
@@ -596,39 +593,43 @@ class PhpEditor
     public function saveCustomPHPiniIntoDb($domainId)
     {
         if ($this->checkExistCustomPHPini($domainId)) {
-            $query = "
-                UPDATE
-                    `php_ini`
-                SET
-                    `disable_functions` = ?, `allow_url_fopen` = ?, `display_errors` = ?,
-                    `error_reporting` = ?, `post_max_size` = ?, `upload_max_filesize` = ?, `max_execution_time` = ?,
-                    `max_input_time` = ?, `memory_limit` = ?
-                WHERE
-                    `domain_id` = ?
-            ";
-            exec_query($query, [
-                $this->phpiniData['phpiniDisableFunctions'], $this->phpiniData['phpiniAllowUrlFopen'],
-                $this->phpiniData['phpiniDisplayErrors'], $this->phpiniData['phpiniErrorReporting'],
-                $this->phpiniData['phpiniPostMaxSize'], $this->phpiniData['phpiniUploadMaxFileSize'],
-                $this->phpiniData['phpiniMaxExecutionTime'], $this->phpiniData['phpiniMaxInputTime'],
-                $this->phpiniData['phpiniMemoryLimit'], $domainId
-            ]);
+            exec_query(
+                '
+                    UPDATE
+                        `php_ini`
+                    SET
+                        `disable_functions` = ?, `allow_url_fopen` = ?, `display_errors` = ?,
+                        `error_reporting` = ?, `post_max_size` = ?, `upload_max_filesize` = ?, `max_execution_time` = ?,
+                        `max_input_time` = ?, `memory_limit` = ?
+                    WHERE
+                        `domain_id` = ?
+                ',
+                [
+                    $this->phpiniData['phpiniDisableFunctions'], $this->phpiniData['phpiniAllowUrlFopen'],
+                    $this->phpiniData['phpiniDisplayErrors'], $this->phpiniData['phpiniErrorReporting'],
+                    $this->phpiniData['phpiniPostMaxSize'], $this->phpiniData['phpiniUploadMaxFileSize'],
+                    $this->phpiniData['phpiniMaxExecutionTime'], $this->phpiniData['phpiniMaxInputTime'],
+                    $this->phpiniData['phpiniMemoryLimit'], $domainId
+                ]
+            );
         } else {
-            $query = "
-                INSERT INTO `php_ini` (
-                    `disable_functions`, `allow_url_fopen`, `display_errors`, `error_reporting`, `post_max_size`,
-                    `upload_max_filesize`, `max_execution_time`, `max_input_time`, `memory_limit`, `domain_id`
-                ) VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-                )
-            ";
-            exec_query($query, [
-                $this->phpiniData['phpiniDisableFunctions'], $this->phpiniData['phpiniAllowUrlFopen'],
-                $this->phpiniData['phpiniDisplayErrors'], $this->phpiniData['phpiniErrorReporting'],
-                $this->phpiniData['phpiniPostMaxSize'], $this->phpiniData['phpiniUploadMaxFileSize'],
-                $this->phpiniData['phpiniMaxExecutionTime'], $this->phpiniData['phpiniMaxInputTime'],
-                $this->phpiniData['phpiniMemoryLimit'], $domainId
-            ]);
+            exec_query(
+                '
+                    INSERT INTO `php_ini` (
+                        `disable_functions`, `allow_url_fopen`, `display_errors`, `error_reporting`, `post_max_size`,
+                        `upload_max_filesize`, `max_execution_time`, `max_input_time`, `memory_limit`, `domain_id`
+                    ) VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    )
+                ',
+                [
+                    $this->phpiniData['phpiniDisableFunctions'], $this->phpiniData['phpiniAllowUrlFopen'],
+                    $this->phpiniData['phpiniDisplayErrors'], $this->phpiniData['phpiniErrorReporting'],
+                    $this->phpiniData['phpiniPostMaxSize'], $this->phpiniData['phpiniUploadMaxFileSize'],
+                    $this->phpiniData['phpiniMaxExecutionTime'], $this->phpiniData['phpiniMaxInputTime'],
+                    $this->phpiniData['phpiniMemoryLimit'], $domainId
+                ]
+            );
         }
     }
 
@@ -640,15 +641,8 @@ class PhpEditor
      */
     public function checkExistCustomPHPini($domainId)
     {
-        $query = 'SELECT COUNT(`domain_id`) `cnt` FROM `php_ini` WHERE `domain_id` = ?';
-        $stmt = exec_query($query, (int)$domainId);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-
-        if ($row['cnt'] > 0) {
-            return true;
-        }
-
-        return false;
+        $stmt = exec_query('SELECT COUNT(`domain_id`) `cnt` FROM `php_ini` WHERE `domain_id` = ?', $domainId);
+        return (bool)$stmt->fetch(\PDO::FETCH_ASSOC)['cnt'];
     }
 
     /**
@@ -673,8 +667,7 @@ class PhpEditor
     public function delCustomPHPiniFromDb($domainId)
     {
         if ($this->checkExistCustomPHPini($domainId)) {
-            $query = "DELETE FROM `php_ini` WHERE `domain_id` = ?";
-            exec_query($query, $domainId);
+            exec_query('DELETE FROM `php_ini` WHERE `domain_id` = ?', $domainId);
         }
     }
 
@@ -686,20 +679,22 @@ class PhpEditor
      */
     public function saveClPermIntoDb($domainId)
     {
-        $query = "
-            UPDATE
-                `domain`
-            SET
-                `phpini_perm_system` = ?, `phpini_perm_allow_url_fopen` = ?, `phpini_perm_display_errors` = ?,
-                `phpini_perm_disable_functions` = ?
-            WHERE
-                `domain_id` = ?
-        ";
-        exec_query($query, [
-            $this->phpiniClPerm['phpiniSystem'], $this->phpiniClPerm['phpiniAllowUrlFopen'],
-            $this->phpiniClPerm['phpiniDisplayErrors'], $this->phpiniClPerm['phpiniDisableFunctions'],
-            $domainId
-        ]);
+        exec_query(
+            '
+                UPDATE
+                    `domain`
+                SET
+                    `phpini_perm_system` = ?, `phpini_perm_allow_url_fopen` = ?, `phpini_perm_display_errors` = ?,
+                    `phpini_perm_disable_functions` = ?
+                WHERE
+                    `domain_id` = ?
+            ',
+            [
+                $this->phpiniClPerm['phpiniSystem'], $this->phpiniClPerm['phpiniAllowUrlFopen'],
+                $this->phpiniClPerm['phpiniDisplayErrors'], $this->phpiniClPerm['phpiniDisableFunctions'],
+                $domainId
+            ]
+        );
     }
 
     /**
@@ -805,16 +800,18 @@ class PhpEditor
      */
     public function loadClPerm($domainId)
     {
-        $query = "
-            SELECT
-                `phpini_perm_system`, `phpini_perm_allow_url_fopen`, `phpini_perm_display_errors`,
-                `phpini_perm_disable_functions`
-            FROM
-                `domain`
-            WHERE
-                `domain_id` = ?
-        ";
-        $stmt = exec_query($query, (int)$domainId);
+        $stmt = exec_query(
+            '
+                SELECT
+                    `phpini_perm_system`, `phpini_perm_allow_url_fopen`, `phpini_perm_display_errors`,
+                    `phpini_perm_disable_functions`
+                FROM
+                    `domain`
+                WHERE
+                    `domain_id` = ?
+            ',
+            $domainId
+        );
 
         if ($stmt->rowCount()) {
             $row = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -851,17 +848,11 @@ class PhpEditor
      */
     public function getDomStatus($domainId)
     {
-        $row = exec_query(
+        return exec_query(
             'SELECT `domain_status` FROM `domain` WHERE `domain_id` = ?', $domainId
         )->fetch(
             \PDO::FETCH_ASSOC
-        );
-
-        if ($row['domain_status'] == 'ok') {
-            return true;
-        }
-
-        return false;
+        )['domain_status'] === 'ok';
     }
 
     /**

@@ -44,16 +44,24 @@ class VirtualFileSystem
     const VFS_ASCII = FTP_ASCII;
     const VFS_BINARY = FTP_BINARY;
 
-    /** @var string Domain name of this filesystem */
+    /**
+     * @var string Domain name of this filesystem
+     */
     protected $domain;
 
-    /** @var resource FTP connection handle */
+    /**
+     * @var resource FTP connection handle
+     */
     protected $handle;
 
-    /** @var string FTP user associated to this object */
+    /**
+     * @var string FTP user associated to this object
+     */
     protected $user;
 
-    /** @var string FTP user password associated to this object */
+    /**
+     * @var string FTP user password associated to this object
+     */
     protected $password;
 
     /**
@@ -76,7 +84,6 @@ class VirtualFileSystem
     /**
      * Create an FTP user for this object
      *
-
      * @return void
      */
     protected function createFtpUser()
