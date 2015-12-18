@@ -74,29 +74,36 @@ return [
     // Domain rows pagination
     'DOMAIN_ROWS_PER_PAGE' => 10,
 
-    // admin    : hosting plans are available only in admin level, the reseller cannot make custom changes
-    // reseller : hosting plans are available only in reseller level
+    // admin    : hosting plans are available only on admin level, the reseller cannot make custom changes
+    // reseller : hosting plans are available only on reseller level
     'HOSTING_PLANS_LEVEL' => 10,
 
-    // Enable or disable support system
+    // Enable or disable support system globally
     'IMSCP_SUPPORT_SYSTEM' => 1,
 
     // Enable or disable lost password support
     'LOSTPASSWORD' => 1,
 
-    // Uniqkeytimeout in minutes
+    // Unique key timeout (in minutes).
+    // These are the unique keys which are sent to users for password retrieval.
     'LOSTPASSWORD_TIMEOUT' => 30,
 
-    // Enable or disable bruteforce detection
+    // Enable or disable bruteforce detection plugin
     'BRUTEFORCE' => 1,
 
-    // Blocktime in minutes
+    // Time blocking (in minutes)
+    // This is the time period for which the user will be blocked on too many
+    // authentication attemps.
     'BRUTEFORCE_BLOCK_TIME' => 30,
 
-    // Max login before block
+    // Max authentication attemps
+    // This is the max number of authentication attemps before the user is
+    // blocked
     'BRUTEFORCE_MAX_LOGIN' => 3,
 
     // Max login attempts before forced to wait
+    // This is the max number of authentication attemps before the user must
+    // wait for the next attemps.
     'BRUTEFORCE_MAX_ATTEMPTS_BEFORE_WAIT' => 2,
 
     // Max captcha failed attempts before block
@@ -113,7 +120,7 @@ return [
     // 0: Maintenance mode disabled
     'MAINTENANCEMODE' => 0,
 
-    // Minimum password chars
+    // Minimum character length for passwords
     'PASSWD_CHARS' => 6,
 
     // Enable or disable strong passwords
@@ -124,7 +131,7 @@ return [
     /**
      * Logging Mailer default level (messages sent to DEFAULT_ADMIN_ADDRESS)
      *
-     * E_USER_NOTICE: common operations (normal work flow)
+     * E_USER_NOTICE: common operations (normal work flow).
      * E_USER_WARNING: Operations that may be related to a problem
      * E_USER_ERROR: Errors for which the admin should pay attention
      *
@@ -132,13 +139,20 @@ return [
      */
     'LOG_LEVEL' => E_USER_WARNING,
 
-    // Creation of webmaster, postmaster and abuse forwarders when
+    // Creation of default abuse, ftp, hostmaster, postmaster and webmaster email addresses
+    // These are email addresses described by RFC 2142
+    //
+    // abuse:      Customer Relations - See RFC 2142 - (forwarded to reseller email address)
+    // ftp         FTP service - RFC959 - (forwarded to reseller email address)
+    // hostmaster: DNS service - See RFC1033 to RFC1035 - (forwarded to reseller email address)
+    // postmaster: SMTP service - See RFC821 and RFC8822 - (forwarded to reseller email address)
+    // webmaster:  HTTP service - RFC 2068 - (forwarded to customer email address)
     'CREATE_DEFAULT_EMAIL_ADDRESSES' => 1,
 
-    // Count default email accounts (abuse, postmaster, webmaster) in user limit
+    // Count default email accounts (abuse, ftp, hostmaster, postmaster and webmaster) in user limit
     // 1: default email accounts are counted
     // 0: default email accounts are NOT counted
-    'COUNT_DEFAULT_EMAIL_ADDRESSES' => 1,
+    'COUNT_DEFAULT_EMAIL_ADDRESSES' => 0,
 
     // Use hard mail suspension when suspending a domain:
     // 1: email accounts are hard suspended (completely unreachable)
@@ -156,23 +170,22 @@ return [
 
     // Automatic search for new version
     'CHECK_FOR_UPDATES' => false,
-    'ENABLE_SSL' => false,
+
+    // SSL support
+    'ENABLE_SSL' => true,
 
     // Server traffic settings
     'SERVER_TRAFFIC_LIMIT' => 0,
     'SERVER_TRAFFIC_WARN' => 0,
 
     // Paths appended to the default PHP open_basedir directive of customers
+    // This options is used on new domain creation only.
     'PHPINI_OPEN_BASEDIR' => '',
 
-    // Navigation
-    'navigation' => [
-        'admin' => __DIR__ . '/navigation_admin.php',
-        'user' => __DIR__ . '/navigation_client.php',
-        'reseller' => __DIR__ . '/navigation_reseller.php'
-    ],
+    //
+    // DoctrineIntegration module configuration
+    //
 
-    // ORM configuration
     'doctrine_integration' => [
         'connection' => [
             'imscp' => [
@@ -187,14 +200,14 @@ return [
 
         'configuration' => [
             'imscp' => [
-                'metadata_cache'    => 'array',
-                'query_cache'       => 'array',
-                'result_cache'      => 'array',
-                'hydration_cache'   => 'array',
-                'driver'            => 'imscp',
-                'generate_proxies'  => true,
-                'proxy_dir'         => 'data/DoctrineIntegration/Proxy',
-                'proxy_namespace'   => 'iMSCP\DoctrineIntegration\Proxy',
+                'metadata_cache' => 'array',
+                'query_cache' => 'array',
+                'result_cache' => 'array',
+                'hydration_cache' => 'array',
+                'driver' => 'imscp',
+                'generate_proxies' => true,
+                'proxy_dir' => './data/DoctrineIntegration/Proxy',
+                'proxy_namespace' => 'iMSCP\DoctrineIntegration\Proxy',
                 'entity_namespaces' => [
                     'Core' => 'iMSCP\Core\Entity'
                 ],
@@ -209,6 +222,7 @@ return [
                 ]
             ]
         ],
+
         'driver' => [
             'imscp' => [
                 'class' => 'Doctrine\ORM\Mapping\Driver\AnnotationDriver',
@@ -232,7 +246,6 @@ return [
             /*
             'imscp' => [
                 'class' => 'Doctrine\ORM\Mapping\Driver\DriverChain',
-
                 // Add the driver in the chain
                 'drivers' => [
                     'iMSCP\Core\Entity' => 'imscp_annotation_driver'
@@ -240,6 +253,7 @@ return [
             ],
             */
         ],
+
         // Entity Manager instantiation settings
         'entitymanager' => [
             // Configuration for the `doctrine_integration.entitymanager.default` service
@@ -257,6 +271,7 @@ return [
                 'entity_resolver' => 'imscp'
             ]
         ],
+
         // entity resolver configuration, allows mapping associations to interfaces
         'entity_resolver' => [
             // Configuration for the `doctrine.entity_resolver.default` service
@@ -267,22 +282,12 @@ return [
             // Configuration for the `doctrine_integration.eventmanager.default` service
             'imscp' => []
         ],
+
         // Authentication service configuration
         'authentication' => [
             // Configuration for the `doctrine_integration.authentication.default`
             // authentication service
-            'imscp' => [
-                // name of the object manager to use. By default, the EntityManager is used
-                'objectManager' => 'doctrine_integration.entitymanager.imscp',
-                'identity_class' => 'iMSCP\Core\Entity\Admin',
-                'identity_property' => 'adminName',
-                'credential_property' => 'adminPass',
-                //'storage' => 'Zend\Authentication\Storage\NonPersistent',
-                'credential_callable' => function($user, $inputPassword) {
-                    /** @var $user \iMSCP\Core\Entity\Admin */
-                    return \iMSCP\Core\Utils\Crypt::verify($inputPassword, $user->getAdminPass());
-                }
-            ],
+            'imscp' => [],
         ],
         'authenticationadapter' => [
             'imscp' => true
@@ -293,6 +298,7 @@ return [
         'authenticationservice' => [
             'imscp' => true
         ],
+
         'manager_registry' => [
             'imscp' => [
                 'default_connection' => 'imscp',
@@ -300,33 +306,29 @@ return [
             ]
         ]
     ],
-    'service_manager' => [
-        'invokables' => [
-            'Zend\Authentication\Storage\NonPersistent' => 'Zend\Authentication\Storage\NonPersistent'
-          ],
-    ],
+
+    //
+    // Session configuration
+    //
 
     'session_config' => [
         'name' => 'iMSCP', // Session name
-
         // Session cookie settings
         'use_cookies' => true,
         'cookie_path' => '/',
         'cookie_lifetime' => 604800,
         'cookie_httponly' => true,
         'cookie_secure' => false,
-
         'cache_expire' => 1200,
         //'remember_me_seconds' => 604800, // Not implemented yet
-
         // PHP session related settings
         'gc_divisor' => 100,
         'gc_maxlifetime' => 1440,
         'gc_probability' => 1,
         'save_path' => './data/sessions', // Path where session files are stored
         'php_save_handler' => 'files', // Only for reference (it is the default value)
-        'use_trans_sid' => false, // Should be false (security issue)
-        'config_class' => 'Zend\Session\Config\SessionConfig', // Only there for reference (it is the default value)
+        'use_trans_sid' => false, // Should be false (security reason)
+        'config_class' => 'Zend\Session\Config\SessionConfig', // Only for reference (it is the default value)
     ],
     'session_storage' => [
         'type' => 'SessionArrayStorage',
@@ -338,5 +340,109 @@ return [
             'Zend\Session\Validator\RemoteAddr',
             'Zend\Session\Validator\HttpUserAgent'
         ],
+    ],
+
+    //
+    // Core\Auth component comfiguration
+    //
+
+    'imscp_core_auth' => [
+        // There are the factories used by this component to instantiate services
+        'service_factories' => [
+            // There are the factories used by the authentication sub-component to instantiate services
+            'authentication' => [
+                'adapter' => 'iMSCP\Core\Auth\Authentication\Service\AdapterFactory',
+                'listener' => 'iMSCP\Core\Auth\Authentication\Service\ListenerFactory',
+                'resolver' => 'iMSCP\Core\Auth\Authentication\Service\CredentialResolverFactory',
+            ]
+        ],
+
+        // Authentication sub-component configuration
+        'authentication' => [
+            // Credential resolver used by authentication adapters to resolve credentials
+            'resolver' => [
+                // Object repository resolver. This resolver use a Doctrine object repository for resolving
+                // credentials
+                'object_repository' => [
+                    'class' => 'imscp.core_auth.authentication.object_repository_credential_resolver',
+                    'object_manager' => 'doctrine_integration.entitymanager.imscp',
+                    'identity_class' => 'iMSCP\Core\Entity\Admin',
+                    'identity_property' => 'adminName',
+                    'credential_property' => 'adminPass'
+                ],
+
+                // We use a credential resolver chain. This allows any other module to add its own resolvers.
+                'default' => [
+                    'resolver' => [
+                        'class' => 'iMSCP\Core\Auth\Authentication\Adapter\Resolver\ResolverChain',
+                        'resolvers' => [
+                            'object_repository'
+                        ]
+                    ]
+                ]
+            ],
+
+            // Authentication adapter used by the authentication listener to authenticate the requests
+            'adapter' => [
+                // We use an adapter chain. This allow any 3rd-party module to attach its own adapters.
+                'default' => [
+                    'class' => 'iMSCP\Core\Auth\Authentication\Adapter\AdapterChain',
+                    'adapters' => [
+                        // Form-based authentication adapter. This adapter attemps to authenticate request using
+                        // data from a Web-Form. It use an ObjectRespository credential resolver to resolve credentials.
+                        'form' => [
+                            'class' => 'iMSCP\Core\Auth\Authentication\Adapter\FormAdapter',
+                            'options' => [
+                                'identity_field' => 'uname', // The POST field name for the username
+                                'credential_field' => 'upass', // The POST field name for the password
+                                // Supported credential formats
+                                // We support md5 format for backward compatibility reasons only.
+                                'credential_formats' => ['md5', 'crypt'],
+                                // The credential resolver to use for resolving credential
+                                // Will be retrieved as "imscp_core_auth.authentication.credential_resolver.default
+                                'credential_resolver' => 'default',
+                                'csrf_token_field' => '_csrf', // The POST field name for the CSRF token
+                                'csrf_token_timeout' => 120, // Timeout for the CSRF token
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+
+            // Authentication listener that listen on the authentication events
+            'listener' => [
+                'default' => [
+                    'map_auth_type' => [
+                        '/(?:index.php)?' => 'default'
+                    ]
+                ]
+            ]
+        ]
+    ],
+
+    //
+    // Navigation configuration
+    //
+
+    'navigation' => [
+        'admin' => __DIR__ . '/navigation_admin.php',
+        'user' => __DIR__ . '/navigation_client.php',
+        'reseller' => __DIR__ . '/navigation_reseller.php'
+    ],
+
+    //
+    // Service manager configuration
+    //
+    'service_manager' => [
+        'abstract_factories' => [
+            'AbstractServiceFactory' => 'iMSCP\Core\Auth\Service\AbstractServiceFactory'
+        ],
+        'factories' => [
+            'imscp.core_auth.authentication.object_repository_credential_resolver' =>
+                'iMSCP\Core\Auth\Authentication\Service\ObjectRepositoryCredentialResolverFactory'
+        ],
+        'shared' => [
+            'imscp.core_auth.authentication.object_repository_credential_resolver' => false
+        ]
     ],
 ];
