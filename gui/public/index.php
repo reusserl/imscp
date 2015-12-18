@@ -18,44 +18,50 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+use iMSCP\Core\Application;
+use iMSCP\Core\Events;
+use iMSCP\Core\Template\TemplateEngine;
+use Zend\Validator\Csrf;
+
 require '../application.php';
 
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onLoginScriptStart);
+$application = Application::getInstance();
+$application->getEventManager()->trigger(Events::onLoginScriptStart, $application->getApplicationEvent());
 
 /** @var \Zend\Http\PhpEnvironment\Request $request */
-$request = \iMSCP\Core\Application::getInstance()->getRequest();
+$request = $application->getRequest();
 
-if (($action = $request->getPost('action'))) {
-    init_login(\iMSCP\Core\Application::getInstance()->getEventManager());
+/** @var \Zend\Authentication\AuthenticationServiceInterface $authentication */
+$authentication = $application->getServiceManager()->get('authentication');
 
-    /** @var \iMSCP\Core\Authentication\Authentication $authentication */
-    $authentication = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Authentication');
+if ($action = $request->getPost('action')) {
+    init_login($application->getEventManager());
 
     switch ($action) {
-        case 'logout':
-            if ($authentication->hasIdentity()) {
-                $adminName = $authentication->getIdentity()->admin_name;
-                $authentication->unsetIdentity();
-                set_page_message(tr('You have been successfully logged out.'), 'success');
-                write_log(sprintf("%s logged out", decode_idna($adminName)), E_USER_NOTICE);
-            }
-            break;
         case 'login':
             $authResult = $authentication->authenticate();
 
             if ($authResult->isValid()) {
-                write_log(sprintf("%s logged in", $authResult->getIdentity()->admin_name), E_USER_NOTICE);
-            } elseif (($messages = $authResult->getMessages())) {
-                $messages = format_message($messages);
-                set_page_message($messages, 'error');
-                write_log(sprintf("Authentication failed. Reason: %s", $messages), E_USER_NOTICE);
+                write_log(sprintf("%s logged in", $authentication->getIdentity()->getName()), E_USER_NOTICE);
+                redirectToUiLevel();
+            }
+
+            $messages = format_message($authResult->getMessages());
+            set_page_message($messages, 'error');
+            write_log(sprintf("Authentication failed. Reason: %s", $messages), E_USER_WARNING);
+            break;
+        case 'logout':
+            if ($authentication->hasIdentity()) {
+                /** @var \iMSCP\Core\Auth\Identity\IdentityInterface $identity */
+                $identity = $authentication->getIdentity();
+                $authentication->clearIdentity();
+                set_page_message(tr('You have been successfully logged out.'), 'success');
+                write_log(sprintf("%s logged out", decode_idna($identity->getName())), E_USER_NOTICE);
             }
     }
 }
 
-redirectToUiLevel();
-
-$tpl = new \iMSCP\Core\Template\TemplateEngine();
+$tpl = new TemplateEngine();
 $tpl->defineDynamic([
     'layout' => 'shared/layouts/simple.tpl',
     'page_message' => 'layout',
@@ -68,7 +74,7 @@ $tpl->assign([
     'productCopyright' => tr('© 2010-2015 i-MSCP Team<br/>All Rights Reserved')
 ]);
 
-$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+$cfg = $application->getConfig();
 
 if ($cfg['MAINTENANCEMODE'] && !$request->getQuery('admin')) {
     $tpl->defineDynamic('page', 'message.tpl');
@@ -92,8 +98,9 @@ if ($cfg['MAINTENANCEMODE'] && !$request->getQuery('admin')) {
         'TR_PAGE_TITLE' => tr('i-MSCP - Multi Server Control Panel / Login'),
         'TR_LOGIN' => tr('Login'),
         'TR_USERNAME' => tr('Username'),
+        'TR_PASSWORD' => tr('Password'),
         'UNAME' => tohtml($request->getPost('uname', ''), 'htmlAttr'),
-        'TR_PASSWORD' => tr('Password')
+        'CSRF_TOKEN' => (new Csrf(['timeout' => 120, 'name' => '_csrf']))->getHash(),
     ]);
 
     if (
@@ -130,8 +137,5 @@ if ($cfg['MAINTENANCEMODE'] && !$request->getQuery('admin')) {
 generatePageMessage($tpl);
 
 $tpl->parse('LAYOUT_CONTENT', 'page');
-\iMSCP\Core\Application::getInstance()->getEventManager()->trigger(\iMSCP\Core\Events::onLoginScriptEnd, null, [
-    'templateEngine' => $tpl
-]);
+Application::getInstance()->getEventManager()->trigger(Events::onLoginScriptEnd, null, ['templateEngine' => $tpl]);
 $tpl->prnt();
-

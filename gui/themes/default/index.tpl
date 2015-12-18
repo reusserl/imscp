@@ -26,7 +26,7 @@
 			</tr>
 			<!-- EDP: ssl_support -->
 		</table>
-
 		<input type="hidden" name="action" value="login">
+		<input type="hidden" name="_csrf" value="{CSRF_TOKEN}"
 	</form>
 </div>
