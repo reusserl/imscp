@@ -19,6 +19,7 @@
  */
 
 use iMSCP\Core\Application;
+use Zend\Stdlib\ArrayUtils;
 
 chdir(dirname(__DIR__));
 
@@ -40,7 +41,12 @@ require 'module/iMSCP/Core/src/Functions/Shared.php';
 require 'module/iMSCP/Core/src/Functions/Reseller.php';
 require 'module/iMSCP/Core/src/Functions/View.php';
 
-$application = Application::init(include 'config/application.config.php');
+$appConfig = include 'config/application.config.php';
+if (file_exists('config/development.config.php')) {
+    $appConfig = ArrayUtils::merge($appConfig, include 'config/development.config.php');
+}
+
+$application = Application::init($appConfig);
 
 /* @var $cli \Symfony\Component\Console\Application */
 $cli = $application->getServiceManager()->get('imscp.cli');

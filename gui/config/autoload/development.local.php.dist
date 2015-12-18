@@ -28,5 +28,23 @@ return [
     // Force devmode (override value from imscp.conf file)
     'DEVMODE' => 1,
 
-    // TODO force array cache for doctrine (and any other cache system)
+    // Force array cache for any doctrine component
+    // Force generation of proxies
+    'doctrine' => [
+        'configuration' => [
+            'imscp' => [
+                'metadata_cache' => 'array',
+                'query_cache' => 'array',
+                'result_cache' => 'array',
+                'hydration_cache' => 'array',
+                'generate_proxies' => true,
+            ]
+        ],
+
+        'driver' => [
+            'imscp_annotation_driver' => [
+                'cache' => 'array',
+            ],
+        ],
+    ],
 ];

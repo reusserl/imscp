@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+use iMSCP\Core\Application;
+use Zend\Stdlib\ArrayUtils;
+
 // Doing this allows to make all paths relative to the Frontend
 // root directory.
 chdir(__DIR__);
@@ -42,5 +45,16 @@ require 'module/iMSCP/Core/src/Functions/Shared.php';
 require 'module/iMSCP/Core/src/Functions/Reseller.php';
 require 'module/iMSCP/Core/src/Functions/View.php';
 
-// Bootstrap application
-iMSCP\Core\Application::init(require 'config/application.config.php');
+try {
+    $appConfig = include 'config/application.config.php';
+    if (file_exists('config/development.config.php')) {
+        $appConfig = ArrayUtils::merge($appConfig, include 'config/development.config.php');
+    }
+
+    // Initialize application
+    Application::init($appConfig);
+} catch (Exception $e) {
+    echo '<pre>';
+    echo $e;
+    exit;
+}

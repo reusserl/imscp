@@ -19,7 +19,7 @@
  */
 
 return [
-    'doctrine_integration' => [
+    'doctrine' => [
         // Override default manager registry
         'manager_registry' => [
             'default' => [

@@ -22,9 +22,12 @@
 // This file is managed by the iMSCP\Dev module. Don't rename it manually.
 
 return [
-    // Disable cache for application configuration (merged configuration)
     'module_listener_options' => array(
-        'config_cache_enabled'     => false,
-        'module_map_cache_enabled' => false
+        // Disable cache for application configuration (merged configuration)
+        'config_cache_enabled' => false,
+        // Disable module map cache
+        'module_map_cache_enabled' => false,
+        // Check module dependencies
+        'check_dependencies' => true
     )
 ];

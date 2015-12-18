@@ -183,8 +183,9 @@ EOT
      */
     private function disableOPCache()
     {
+        // TODO Improve this...
         exec('php5dismod apc opcache xcache 2>/dev/null', $out, $ret);
-        exec('service imscp_panel restart', $out, $ret);
+        exec('service imscp_panel restart 2>/dev/null', $out, $ret);
     }
 
     /**
@@ -194,7 +195,8 @@ EOT
      */
     public function enableOPCache()
     {
+        // TODO Improve this...
         exec('php5enmod apc opcache 2>/dev/null', $out, $ret);
-        exec('service imscp_panel restart', $out, $ret);
+        exec('service imscp_panel restart 2>/dev/null', $out, $ret);
     }
 }
