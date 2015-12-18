@@ -44,7 +44,7 @@ define('MT_ALSSUB_CATCHALL', 'alssub_catchall');
 /**
  * Returns email template data
  *
- * @param int $userId User unique identifier
+ * @param int $userId User identifier
  * @param string $tplName Template name
  * @return array An array containing email parts (sender_name, sender_name_email, subject, message)
  */
@@ -81,9 +81,7 @@ function get_email_tpl_data($userId, $tplName)
     }
 
     $data['sender_email'] = $row['email'];
-    $stmt = exec_query('SELECT subject, message FROM email_tpls WHERE owner_id = ? AND name = ?', [
-        $userId, $tplName
-    ]);
+    $stmt = exec_query('SELECT subject, message FROM email_tpls WHERE owner_id = ? AND name = ?', [$userId, $tplName]);
 
     if ($stmt->rowCount()) {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -100,14 +98,16 @@ function get_email_tpl_data($userId, $tplName)
 /**
  * Sets or updates an email template in database
  *
- * @param int $userId User unique identifier
- * @param string $tplName Template name
+ * @param int $templateOwnerId Template owner identifier
+ * @param string $templateName Template name
  * @param array $data An associative array where each key correspond to a specific email parts: subject, message
  * @return void
  */
-function set_email_tpl_data($userId, $tplName, $data)
+function set_email_tpl_data($templateOwnerId, $templateName, $data)
 {
-    $stmt = exec_query('SELECT subject, message FROM email_tpls WHERE owner_id = ? AND name = ?', [$userId, $tplName]);
+    $stmt = exec_query('SELECT subject, message FROM email_tpls WHERE owner_id = ? AND name = ?', [
+        $templateOwnerId, $templateName
+    ]);
 
     if (!$stmt->rowCount()) {
         $query = 'INSERT INTO email_tpls (subject, message, owner_id, name) VALUES (?, ?, ?, ?)';
@@ -115,14 +115,14 @@ function set_email_tpl_data($userId, $tplName, $data)
         $query = 'UPDATE email_tpls SET subject = ?, message = ? WHERE owner_id = ? AND name = ?';
     }
 
-    exec_query($query, [$data['subject'], $data['message'], $userId, $tplName]);
+    exec_query($query, [$data['subject'], $data['message'], $templateOwnerId, $templateName]);
 }
 
 /**
  * Generates and returns welcome email
  *
  * @see get_email_tpl_data()
- * @param int $userId User unique identifier - Template owner
+ * @param int $userId User identifier
  * @param string $userType User type
  * @return array An associative array where each key correspond to a specific email parts: sender_name,
  *               sender_name_email, subject, message
@@ -233,7 +233,7 @@ The i-MSCP Team
 }
 
 /**
- * Sets or updates lostpassword activation email parts.
+ * Sets or updates lostpassword activation email parts
  *
  * @see set_email_tpl_data()
  * @param int $adminId User unique identifier
@@ -246,7 +246,7 @@ function set_lostpassword_activation_email($adminId, $data)
 }
 
 /**
- * Generate and returns lostpassword email parts.
+ * Generate and returns lostpassword email parts
  *
  * @see get_email_tpl_data()
  * @param int $userId User uniqaue identifier - Template owner
@@ -283,7 +283,7 @@ The i-MSCP Team
 }
 
 /**
- * Sets or updates lostpassword email parts.
+ * Sets or updates lostpassword email parts
  *
  * @see set_email_tpl_data()
  * @param int $userId User unique identifier - Template owner
@@ -296,7 +296,7 @@ function set_lostpassword_password_email($userId, $data)
 }
 
 /**
- * Generates and returns alias order email.
+ * Generates and returns alias order email
  *
  * @see get_email_tpl_data()
  * @param int $userId User unique identifier - Template owner

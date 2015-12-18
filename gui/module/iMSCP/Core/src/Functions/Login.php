@@ -27,19 +27,19 @@
 function init_login($eventManager)
 {
     // Purge expired sessions
-    do_session_timeout();
+    //do_session_timeout();
 
-//    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+    //$cfg = \iMSCP\Core\Application::getInstance()->getConfig();
 
-//    if ($cfg['BRUTEFORCE']) {
-//        /** @var \iMSCP\Core\Plugin\PluginManager $pluginManager */
-//        $pluginManager = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('PluginManager');
-//        $bruteforce = new iMSCP\Core\Plugin\Bruteforce($pluginManager);
-//        $bruteforce->attach($pluginManager->getEventManager());
-//    }
+    //if ($cfg['BRUTEFORCE']) {
+    //    /** @var \iMSCP\Core\Plugin\PluginManager $pluginManager */
+    //    $pluginManager = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('PluginManager');
+    //    $bruteforce = new iMSCP\Core\Security\Bruteforce($pluginManager);
+    //    $bruteforce->attach($pluginManager->getEventManager());
+    //}
 
-    // Attach listener that is responsible to check domain status and expire date
-    $eventManager->attach(\iMSCP\Core\Authentication\AuthenticationEvent::onBeforeSetIdentity, 'login_checkDomainAccount');
+    // Attach a listener that is responsible to check domain status and expire date
+    $eventManager->attach(\iMSCP\Core\Auth\AuthEvent::onAfterAuthentication, 'login_checkDomainAccount');
 }
 
 /**
@@ -47,35 +47,36 @@ function init_login($eventManager)
  *
  * Note: Listen to the onBeforeSetIdentity event triggered in the iMSCP_Authentication component.
  *
- * @param \Zend\EventManager\Event $event An Zend\EventManager\EventInterface object representing an onBeforeSetIdentity event.
+ * @param \iMSCP\Core\Auth\AuthEvent $event
  * @return void
  */
-function login_checkDomainAccount($event)
+function login_checkDomainAccount(\iMSCP\Core\Auth\AuthEvent $event)
 {
     /** @var $identity stdClass */
-    $identity = $event->getParam('identity');
+    $identity = $event->getIdentity();
 
-    if ($identity->admin_type == 'user') {
-        $query = '
-            SELECT
-                domain_expires, domain_status, admin_status
-            FROM
-                domain
-            INNER JOIN
-                admin ON(domain_admin_id = admin_id)
-            WHERE
-                domain_admin_id = ?
-        ';
-        $stmt = exec_query($query, $identity->admin_id);
+    if ($identity['admin_type'] === 'user') {
+        $stmt = exec_query(
+            '
+                SELECT
+                    domain_expires, domain_status, admin_status
+                FROM
+                    domain
+                INNER JOIN
+                    admin ON(domain_admin_id = admin_id)
+                WHERE
+                    domain_admin_id = ?
+            ',
+            $identity['admin_id']
+        );
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         $isAccountStateOk = true;
 
         if (($row['admin_status'] != 'ok') || ($row['domain_status'] != 'ok')) {
             $isAccountStateOk = false;
-            set_page_message(
-                tr('Your account is currently under maintenance or disabled. Please, contact your reseller.'), 'error'
-            );
+
+            set_page_message(tr('Your account is currently under maintenance or disabled. Please, contact your reseller.'), 'error');
         } else {
             $domainExpireDate = $row['domain_expires'];
 
@@ -110,15 +111,15 @@ function do_session_timeout()
  * @param string $userLevel User level (admin|reseller|user)
  * @param bool $preventExternalLogin If TRUE, external login is disallowed
  */
-function check_login($userLevel = '', $preventExternalLogin = true)
+function check_login($userLevel = '', $preventExternalLogin = false)
 {
     do_session_timeout();
 
-    /** @var \iMSCP\Core\Authentication\Authentication $authentication */
+    /** @var \iMSCP\Core\Auth\AuthenticationService $authentication */
     $authentication = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Authentication');
 
     if (!$authentication->hasIdentity()) {
-        $authentication->unsetIdentity(); // Ensure deletion of all identity data
+        $authentication->clearIdentity(); // Ensure deletion of all identity data
 
         if (is_xhr()) {
             header('Status: 401 Unauthorized');
@@ -129,58 +130,60 @@ function check_login($userLevel = '', $preventExternalLogin = true)
     }
 
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-
     $identity = $authentication->getIdentity();
 
-    if ($cfg['MAINTENANCEMODE'] && $identity->admin_type != 'admin' &&
-        (!isset($_SESSION['logged_from_type']) || $_SESSION['logged_from_type'] != 'admin')
+    // When panel is in maintenance mode, only administrators can access it
+    if (
+        $cfg['MAINTENANCEMODE'] && $identity['admin_type'] !== 'admin' &&
+        (!isset($_SESSION['logged_from_type']) || $_SESSION['logged_from_type'] !== 'admin')
     ) {
-        $authentication->unsetIdentity();
+        $authentication->clearIdentity();
         redirectTo('/index.php');
     }
 
     // Check user level
-    if (!empty($userLevel) && ($userType = $identity->admin_type) != $userLevel) {
-        if ($userType != 'admin' && (!isset($_SESSION['logged_from']) || $_SESSION['logged_from'] != 'admin')) {
-            $loggedUser = isset($_SESSION['logged_from']) ? $_SESSION['logged_from'] : $identity->admin_name;
-            write_log('Warning! user |' . $loggedUser . '| requested |' . tohtml($_SERVER['REQUEST_URI']) .
-                '| with REQUEST_METHOD |' . $_SERVER['REQUEST_METHOD'] . '|', E_USER_WARNING);
-        }
-
+    $userType = $identity['admin_type'];
+    if (!empty($userLevel) && $userType !== $userLevel) {
         redirectTo('/index.php');
     }
 
-    // prevent external login / check for referer
-    if ($preventExternalLogin && !empty($_SERVER['HTTP_REFERER'])) {
-        // Extracting hostname from referer URL
-        // Note2: We remove any braket in referer (ipv6 issue)
-        $refererHostname = str_replace(['[', ']'], '', parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST));
+    // Prevent external login / check from referer
+    if ($preventExternalLogin) {
+        /** @var \Zend\Http\PhpEnvironment\Request $request */
+        $request = \iMSCP\Core\Application::getInstance()->getRequest();
+        $httpReferer = $request->getServer('HTTP_REFERER');
 
-        // The URL does contains the host element ?
-        if (!is_null($refererHostname)) {
-            // Note1: We don't care about the scheme, we only want make parse_url() happy
-            // Note2: We remove any braket in hostname (ipv6 issue)
-            $http_host = str_replace(['[', ']'], '', parse_url("http://{$_SERVER['HTTP_HOST']}", PHP_URL_HOST));
+        if($httpReferer) {
+            // Extracting hostname from referer URL
+            // Note2: We remove any braket in referer (ipv6 issue)
+            $refererHostname = str_replace(['[', ']'], '', parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST));
 
-            // The referer doesn't match the panel hostname ?
-            if (!in_array($refererHostname, [$http_host, $_SERVER['SERVER_NAME']])) {
-                set_page_message(tr('Request from foreign host was blocked.'), 'info');
+            // The URL does contains the host element?
+            if ($refererHostname) {
+                // Note1: We don't care about the scheme, we only want make parse_url() happy
+                // Note2: We remove any braket in hostname (ipv6 issue)
+                $hostname = str_replace(['[', ']'], '', parse_url("http://{$_SERVER['HTTP_HOST']}", PHP_URL_HOST));
 
-                # Quick fix for #96 (will be rewritten ASAP)
-                isset($_SERVER['REDIRECT_URL']) ?: $_SERVER['REDIRECT_URL'] = '';
+                // The referer doesn't match the panel hostname?
+                if (!in_array($refererHostname, [$hostname, $request->getServer('SERVER_NAME')])) {
+                    set_page_message(tr('Request from foreign host was blocked.'), 'info');
 
-                if (!(substr($_SERVER['SCRIPT_FILENAME'], (int)-strlen($_SERVER['REDIRECT_URL']),
-                        strlen($_SERVER['REDIRECT_URL'])) == $_SERVER['REDIRECT_URL'])
-                ) {
-                    redirectToUiLevel();
+                    if (
+                        substr(
+                            $request->getServer('SCRIPT_FILENAME'),
+                            (int)-strlen($request->getServer('REDIRECT_URL')),
+                            strlen($request->getServer('REDIRECT_URL'))
+                        ) !== $request->getServer('REDIRECT_URL')
+                    ) {
+                        redirectToUiLevel();
+                    }
                 }
             }
         }
     }
 
     // If all goes fine update session and lastaccess
-    $_SESSION['user_login_time'] = time();
-    exec_query('UPDATE login SET lastaccess = ? WHERE session_id = ?', [$_SESSION['user_login_time'], session_id()]);
+    exec_query('UPDATE login SET lastaccess = ? WHERE session_id = ?', [time(), session_id()]);
 }
 
 /**
@@ -213,7 +216,7 @@ function change_user_interface($fromId, $toId)
             set_page_message(tr('Wrong request.'), 'error');
         }
 
-        list($from, $to) = $stmt->fetchAll(PDO::FETCH_OBJ);
+        list($from, $to) = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $fromToMap = [];
         $fromToMap['admin']['BACK'] = 'manage_users.php';
@@ -222,42 +225,68 @@ function change_user_interface($fromId, $toId)
         $fromToMap['reseller']['user'] = 'index.php';
         $fromToMap['reseller']['BACK'] = 'users.php';
 
-        if (!isset($fromToMap[$from->admin_type][$to->admin_type]) || ($from->admin_type == $to->admin_type)) {
-            if (isset($_SESSION['logged_from_id']) && $_SESSION['logged_from_id'] == $to->admin_id) {
-                $toActionScript = $fromToMap[$to->admin_type]['BACK'];
+        if (!isset($fromToMap[$from['admin_type']][$to['admin_type']]) || ($from['admin_type'] == $to['admin_type'])) {
+            if (isset($_SESSION['logged_from_id']) && $_SESSION['logged_from_id'] == $to['admin_id']) {
+                $toActionScript = $fromToMap[$to['admin_type']]['BACK'];
             } else {
                 set_page_message(tr('Wrong request.'), 'error');
                 write_log(
-                    sprintf("%s tried to switch onto %s's interface", $from->admin_name, decode_idna($to->admin_name)),
+                    sprintf("%s tried to switch onto %s's interface", $from['admin_name'], decode_idna($to['admin_name'])),
                     E_USER_WARNING
                 );
                 break;
             }
         }
 
-        $toActionScript = ($toActionScript) ? $toActionScript : $fromToMap[$from->admin_type][$to->admin_type];
+        $toActionScript = ($toActionScript) ? $toActionScript : $fromToMap[$from['admin_type']][$to['admin_type']];
 
         // Set new identity
-        /** @var \iMSCP\Core\Authentication\Authentication $authentication */
+        /** @var \Zend\Authentication\AuthenticationService $authentication */
         $authentication = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Authentication');
-        $authentication->unsetIdentity();
-        $authentication->setIdentity($to);
 
-        if ($from->admin_type != 'user' && $to->admin_type != 'admin') {
+        $identity =  new \iMSCP\Core\Auth\Identity\AuthenticatedIdentity($to);
+        $realIdentity = $authentication->getIdentity();
+
+
+        $authentication->clearIdentity();
+
+        class SuAdapter extends \Zend\Authentication\Adapter\AbstractAdapter
+        {
+            protected $identtiy;
+            protected $realIdentity;
+
+            public function __construct($identity, $realIdentity)
+            {
+                $this->identity = $identity;
+                $this->$realIdentity = $realIdentity;
+            }
+
+            /**
+             * Performs an authentication attempt
+             *
+             * @return \Zend\Authentication\Result
+             * @throws \Zend\Authentication\Adapter\Exception\ExceptionInterface If authentication cannot be performed
+             */
+            public function authenticate()
+            {
+                return new \Zend\Authentication\Result(
+                    \Zend\Authentication\Result::SUCCESS, new \iMSCP\Core\Auth\Identity\SuidIdentity(
+                    $this->identity, $this->realIdentity
+                ));
+            }
+        }
+
+        $authentication->authenticate(new SuAdapter($identity, $realIdentity));
+
+        if ($from['admin_type'] != 'user' && $to['admin_type'] != 'admin') {
             // Set additional data about user from wich we are logged from
-            $_SESSION['logged_from_type'] = $from->admin_type;
-            $_SESSION['logged_from'] = $from->admin_name;
-            $_SESSION['logged_from_id'] = $from->admin_id;
+            $_SESSION['logged_from_type'] = $from['admin_type'];
+            $_SESSION['logged_from'] = $from['admin_name'];
+            $_SESSION['logged_from_id'] = $from['admin_id'];
 
-            write_log(
-                sprintf("%s switched onto %s's interface", $from->admin_name, decode_idna($to->admin_name)),
-                E_USER_NOTICE
-            );
+            write_log(sprintf("%s switched onto %s's interface", $from['admin_name'], decode_idna($to['admin_name'])), E_USER_NOTICE);
         } else {
-            write_log(
-                sprintf("%s switched back from %s's interface", $to->admin_name, decode_idna($from->admin_name)),
-                E_USER_NOTICE
-            );
+            write_log(sprintf("%s switched back from %s's interface", $to['admin_name'], decode_idna($from['admin_name'])), E_USER_NOTICE);
         }
 
         break;
@@ -269,26 +298,27 @@ function change_user_interface($fromId, $toId)
 /**
  * Redirects to user ui level
  *
- * @param string $actionScript Action script on which user should be redirected
+ * @param string $redirect Script on which user should be redirected
  * @return void
  */
-function redirectToUiLevel($actionScript = 'index.php')
+function redirectToUiLevel($redirect = 'index.php')
 {
-    /** @var \iMSCP\Core\Authentication\Authentication $authentication */
+    /** @var \iMSCP\Core\Auth\AuthenticationService $authentication */
     $authentication = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Authentication');
 
     if ($authentication->hasIdentity()) {
-        $userType = $authentication->getIdentity()->admin_type;
+        $userType = $authentication->getIdentity()['admin_type'];
+
         switch ($userType) {
             case 'user':
             case 'admin':
             case 'reseller':
                 // Prevents display of any old message when switching to another user level
                 unset($_SESSION['pageMessages']);
-                redirectTo('/' . (($userType == 'user') ? 'client' : $userType . '/' . $actionScript));
+                redirectTo('/' . (($userType === 'user') ? 'client' : $userType . '/' . $redirect));
                 exit;
             default:
-                throw new InvalidArgumentException('Unknown UI level');
+                throw new RuntimeException('Unknown UI level');
         }
     }
 }

@@ -26,243 +26,20 @@
  */
 
 /**
- * Returns total number of subdomains that belong to a specific domain
+ * Checks if the given user is the owner of the given SQL user
  *
- * Note, this function doesn't make any differentiation between sub domains and the
- * aliasses subdomains. The result is simply the sum of both.
- *
- * @param  int $domain_id Domain unique identifier
- * @return int Total number of subdomains
+ * @param int $userId User identifier
+ * @param int $sqlUserId SQL user identifier
+ * @return bool TRUE if the given user is the owner of the given SQL user
  */
-function get_domain_running_sub_cnt($domain_id)
+function checkSqlUserOwner($userId, $sqlUserId)
 {
-    return exec_query(
-        'SELECT COUNT(*) AS cnt FROM subdomain WHERE domain_id = ?', $domain_id
-    )->fetch(
-        PDO::FETCH_ASSOC
-    )['cnt'] + exec_query(
-        '
-            SELECT
-                COUNT(subdomain_alias_id) AS cnt
-            FROM
-                subdomain_alias
-            WHERE
-                alias_id IN (SELECT alias_id FROM domain_aliasses WHERE domain_id = ?)
-        ',
-        $domain_id
-    )->fetch(
-        PDO::FETCH_ASSOC
-    )['cnt'];
+    $userId = (int)$userId;
+    return ($userId === (int)who_owns_this($sqlUserId, 'sqlu_id'));
 }
 
 /**
- * Returns number of domain aliases that belong to a specific domain
- *
- * @param  int $domain_id Domain unique identifier
- * @return int Total number of domain aliases
- */
-function get_domain_running_als_cnt($domain_id)
-{
-    return exec_query(
-        'SELECT COUNT(alias_id) AS cnt FROM domain_aliasses WHERE domain_id = ? AND alias_status != ?', [
-        $domain_id, 'ordered'
-    ])->fetch(
-        PDO::FETCH_ASSOC
-    )['cnt'];
-}
-
-/**
- * Returns information about number of mail account for a specific domain
- *
- * @param int $domainId Domain unique identifier
- * @return array An array of values where the first item is the sum of all other items, and where each other item
- *               represents total number of a specific Mail account type
- */
-function get_domain_running_mail_acc_cnt($domainId)
-{
-    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
-    $query = "
-        SELECT
-            COUNT(mail_id) AS cnt
-        FROM
-            mail_users
-        WHERE
-            mail_type RLIKE ?
-        AND
-            mail_type NOT LIKE ?
-        AND
-            domain_id = ?
-    ";
-
-    if ($cfg['COUNT_DEFAULT_EMAIL_ADDRESSES'] == 0) {
-        $query .=
-            "
-                AND
-                    mail_acc != 'abuse'
-                AND
-                    mail_acc != 'postmaster'
-                AND
-                    mail_acc != 'webmaster'
-            ";
-    }
-
-    $stmt = exec_query($query, ['normal_', 'normal_catchall', $domainId]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    $dmnMailAcc = $row['cnt'];
-    $stmt = exec_query($query, ['alias_', 'alias_catchall', $domainId]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    $alsMailAcc = $row['cnt'];
-    $stmt = exec_query($query, ['subdom_', 'subdom_catchall', $domainId]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    $subMailAcc = $row['cnt'];
-    $stmt = exec_query($query, ['alssub_', 'alssub_catchall', $domainId]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    $alssubMailAcc = $row['cnt'];
-    return [$dmnMailAcc + $alsMailAcc + $subMailAcc + $alssubMailAcc, $dmnMailAcc, $alsMailAcc, $subMailAcc, $alssubMailAcc];
-}
-
-/**
- * Returns total number of FTP account owned by the given customer
- *
- * @param  int $customerId Customer unique identifier
- * @return int Number of FTP account owned by the given customer
- */
-function get_customer_running_ftp_acc_cnt($customerId)
-{
-    return exec_query(
-        'SELECT COUNT(userid) AS cnt FROM ftp_users WHERE admin_id = ?', $customerId
-    )->fetch(
-        PDO::FETCH_ASSOC
-    )['cnt'];
-}
-
-/**
- * Returns total number of databases that belong to a specific domain
- *
- * @param  int $domainId Domain unique identifier
- * @return int Total number of databases for a specific domain
- */
-function get_domain_running_sqld_acc_cnt($domainId)
-{
-    return exec_query(
-        'SELECT COUNT(*) AS cnt FROM sql_database WHERE domain_id = ?', $domainId
-    )->fetch(
-        PDO::FETCH_ASSOC
-    )['cnt'];
-}
-
-/**
- * Returns total number of SQL user that belong to a specific domain
- *
- * @param  int $domainId Domain unique identifier
- * @return int Total number of SQL users for a specific domain
- */
-function get_domain_running_sqlu_acc_cnt($domainId)
-{
-    return exec_query(
-        'SELECT DISTINCT sqlu_name FROM sql_user INNER JOIN sql_database USING(sqld_id) WHERE domain_id = ?', $domainId
-    )->rowCount();
-}
-
-/**
- * Returns both total number of database and SQL user that belong to a specific domain
- *
- * @param  int $domainId Domain unique identifier
- * @return array An array where the first item is the Database total number, and the second the SQL users total number.
- */
-function get_domain_running_sql_acc_cnt($domainId)
-{
-    return [get_domain_running_sqld_acc_cnt($domainId), get_domain_running_sqlu_acc_cnt($domainId)];
-}
-
-/**
- * Get domain limit properties
- *
- * @param  int $domainId Domain unique identifier
- * @return array
- */
-function get_domain_running_props_cnt($domainId)
-{
-    $subCount = get_domain_running_sub_cnt($domainId);
-    $alsCount = get_domain_running_als_cnt($domainId);
-
-    list($mailAccCount) = get_domain_running_mail_acc_cnt($domainId);
-
-    // Transitional query - Will be removed asap
-    $stmt = exec_query('SELECT domain_admin_id FROM domain WHERE domain_id = ?', $domainId);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    $ftpAccCount = get_customer_running_ftp_acc_cnt($row['domain_admin_id']);
-    list($sqlDbCount, $sqlUserCount) = get_domain_running_sql_acc_cnt($domainId);
-    return [$subCount, $alsCount, $mailAccCount, $ftpAccCount, $sqlDbCount, $sqlUserCount];
-}
-
-/**
- * Translate mail type
- *
- * @param  string $mail_type
- * @return string Translated mail type
- */
-function user_trans_mail_type($mail_type)
-{
-    if ($mail_type === MT_NORMAL_MAIL) {
-        return tr('Domain mail');
-    } else if ($mail_type === MT_NORMAL_FORWARD) {
-        return tr('Email forward');
-    } else if ($mail_type === MT_ALIAS_MAIL) {
-        return tr('Alias mail');
-    } else if ($mail_type === MT_ALIAS_FORWARD) {
-        return tr('Alias forward');
-    } else if ($mail_type === MT_SUBDOM_MAIL) {
-        return tr('Subdomain mail');
-    } else if ($mail_type === MT_SUBDOM_FORWARD) {
-        return tr('Subdomain forward');
-    } else if ($mail_type === MT_ALSSUB_MAIL) {
-        return tr('Alias subdomain mail');
-    } else if ($mail_type === MT_ALSSUB_FORWARD) {
-        return tr('Alias subdomain forward');
-    } else if ($mail_type === MT_NORMAL_CATCHALL) {
-        return tr('Domain mail');
-    } else if ($mail_type === MT_ALIAS_CATCHALL) {
-        return tr('Domain mail');
-    }
-
-    return tr('Unknown mail type.');
-}
-
-/**
- * Checks if an user has permissions on a specific SQL user
- *
- * @param  int $sqlUserId SQL user unique identifier
- * @return bool TRUE if the logged in user has permission on SQL user, FALSE otherwise
- */
-function check_user_sql_perms($sqlUserId)
-{
-    return (who_owns_this($sqlUserId, 'sqlu_id') == $_SESSION['user_id']);
-}
-
-/**
- * Returns translated gender code
- *
- * @param string $code Gender code to be returned
- * @param bool $nullOnBad Tells whether or not null must be returned on unknow $code
- * @return null|string Translated gender or null in some circonstances.
- */
-function get_gender_by_code($code, $nullOnBad = false)
-{
-    switch (strtolower($code)) {
-        case 'm':
-        case 'M':
-            return tr('Male');
-        case 'f':
-        case 'F':
-            return tr('Female');
-        default:
-            return (!$nullOnBad) ? tr('Unknown') : null;
-    }
-}
-
-/**
- * Tells whether or not the current customer can access to the given feature(s)
+ * Tells whether or not the authenticated customer can access to the given feature(s)
  *
  * @param array|string $featureNames Feature name(s) (insensitive case)
  * @param bool $forceReload If true force data to be reloaded
@@ -347,31 +124,30 @@ function customerHasMailOrExtMailFeatures()
 }
 
 /**
- * Does the given customer is the owner of the given domain?
+ * Checks if the given user is the owner of the given domain name
  *
- * @param string $domainName Domain name (dmn,sub,als,alssub)
- * @param int $customerId Customer unique identifier
- * @return bool TRUE if the given customer is the owner of the given domain, FALSE otherwise
- * TODO add admin_id as foreign key in all domain tables too avoid too many jointures
+ * @param int $customerId User identifier
+ * @param string $domainName Domain name
+ * @return bool TRUE if the given user is the owner of the given SQL user
  */
-function customerHasDomain($domainName, $customerId)
+function checkDomainNameOwner($customerId, $domainName)
 {
     $domainName = encode_idna($domainName);
 
-    // Check in domain table
-    $stmt = exec_query("SELECT 'found' FROM domain WHERE domain_admin_id = ? AND domain_name = ?", [
+    // Check for domain
+    $stmt = exec_query("SELECT COUNT(*) AS cnt FROM domain WHERE domain_admin_id = ? AND domain_name = ?", [
         $customerId, $domainName
     ]);
 
-    if ($stmt->rowCount()) {
+    if ($stmt->fetch(PDO::FETCH_ASSOC)['cnt'] > 0) {
         return true;
     }
 
-    // Check in domain_aliasses table
+    // Check for domain aliases
     $stmt = exec_query(
         "
             SELECT
-                'found'
+                COUNT(*) AS cnt
             FROM
                 domain AS t1
             INNER JOIN
@@ -384,15 +160,15 @@ function customerHasDomain($domainName, $customerId)
         [$customerId, $domainName]
     );
 
-    if ($stmt->rowCount()) {
+    if ($stmt->fetch(PDO::FETCH_ASSOC)['cnt'] > 0) {
         return true;
     }
 
-    // Check in subdomain table
+    // Check for subdomains
     $stmt = exec_query(
         "
             SELECT
-                'found'
+                 COUNT(*) AS cnt
             FROM
                 domain AS t1
             INNER JOIN
@@ -405,15 +181,15 @@ function customerHasDomain($domainName, $customerId)
         [$customerId, $domainName]
     );
 
-    if ($stmt->rowCount()) {
+    if ($stmt->fetch(PDO::FETCH_ASSOC)['cnt'] > 0) {
         return true;
     }
 
-    // Check in subdomain_alias table
+    // Check for subdomain aliases
     $stmt = exec_query(
         "
             SELECT
-                'found'
+                COUNT(*) AS cnt
             FROM
                 domain AS t1
             INNER JOIN
@@ -428,7 +204,7 @@ function customerHasDomain($domainName, $customerId)
         [$customerId, $domainName]
     );
 
-    if ($stmt->rowCount()) {
+    if ($stmt->fetch(PDO::FETCH_ASSOC)['cnt'] > 0) {
         return true;
     }
 
@@ -440,7 +216,7 @@ function customerHasDomain($domainName, $customerId)
  *
  * @return void
  */
-function delete_autoreplies_log_entries()
+function deleteAutorepliesLogEntries()
 {
-    exec_query("DELETE FROM autoreplies_log WHERE `from` NOT IN (SELECT mail_addr FROM mail_users)");
+    exec_query('DELETE FROM autoreplies_log WHERE `from` NOT IN (SELECT mail_addr FROM mail_users)');
 }

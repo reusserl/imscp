@@ -90,7 +90,6 @@ function createImage($strSessionVar)
         imageline($image, $x1, $y1, $x2, $y2, $white);
     }
 
-
     imagepng($image);
     imagedestroy($image);
 
@@ -176,8 +175,13 @@ function setPassword($uniqueKey, $userPassword)
  */
 function uniqueKeyExists($uniqueKey)
 {
-    $stmt = exec_query('SELECT `uniqkey` FROM `admin` WHERE `uniqkey` = ?', $uniqueKey);
-    return (bool)$stmt->rowCount();
+    return (
+        exec_query(
+            'SELECT COUNT(*) AS `cnt` FROM `admin` WHERE `uniqkey` = ?', $uniqueKey
+        )->fetch(
+            PDO::FETCH_ASSOC)
+        ['cnt'] > 0
+    );
 }
 
 /**
@@ -216,8 +220,10 @@ function sendPassword($uniqueKey)
         $adminFirstName = $row['fname'];
         $adminLastName = $row['lname'];
         $to = $row['email'];
+
         $userPassword = \iMSCP\Core\Utils\Crypt::randomStr($cfg['PASSWD_CHARS']);
         setPassword($uniqueKey, $userPassword);
+
         write_log('Lostpassword: ' . $adminName . ': password updated', E_USER_NOTICE);
         exec_query('UPDATE `admin` SET `uniqkey` = ?, `uniqkey_time` = ? WHERE `uniqkey` = ?', ['', '', $uniqueKey]);
 

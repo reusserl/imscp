@@ -224,7 +224,7 @@ function get_user_props($adminId)
     }
 
     $data = $stmt->fetch();
-    $sub_current = get_domain_running_sub_cnt($adminId);
+    $sub_current = getDomainAccountSubdomainsCount($adminId);
     $sub_max = $data['domain_subd_limit'];
     $als_current = records_count('domain_aliasses', 'domain_id', $adminId);
     $als_max = $data['domain_alias_limit'];
@@ -254,7 +254,7 @@ function get_user_props($adminId)
     $ftp_max = $data['domain_ftpacc_limit'];
     $sql_db_current = records_count('sql_database', 'domain_id', $adminId);
     $sql_db_max = $data['domain_sqld_limit'];
-    $sql_user_current = get_domain_running_sqlu_acc_cnt($adminId);
+    $sql_user_current = getDomainAccountSqlUsersCount($adminId);
     $sql_user_max = $data['domain_sqlu_limit'];
     $traff_max = $data['domain_traffic_limit'];
     $disk_max = $data['domain_disk_limit'];
@@ -623,7 +623,10 @@ function client_mail_add_default_accounts($dmnId, $userEmail, $dmnName, $dmnType
 
         foreach (
             [
-                'abuse' => $resellerEmail, 'hostmaster' => $resellerEmail, 'postmaster' => $resellerEmail,
+                'abuse' => $resellerEmail,
+                'ftp' => $resellerEmail,
+                'hostmaster' => $resellerEmail,
+                'postmaster' => $resellerEmail,
                 'webmaster' => $userEmail
             ] as $umail => $forwardTo
         ) {
@@ -773,7 +776,7 @@ function check_ruser_data($noPass = false)
         $lastName = '';
     }
 
-    if (isset($_POST['gender']) && get_gender_by_code($_POST['gender'], true) !== null) {
+    if (isset($_POST['gender']) && getGenderByCode($_POST['gender'], true) !== null) {
         $gender = $_POST['gender'];
     } else {
         $gender = 'U';

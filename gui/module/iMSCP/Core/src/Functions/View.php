@@ -254,9 +254,9 @@ function generateNavigation($tpl)
     }
 
     /** @var $activePage \Zend\Navigation\Page\Uri */
-    foreach ($navigation->findAllBy('uri', $_SERVER['SCRIPT_NAME']) as $activePage) {
-        $activePage->setActive();
-    }
+    //foreach ($navigation->findAllBy('uri', $_SERVER['SCRIPT_NAME']) as $activePage) {
+    //    //$activePage->setActive();
+    //}
 
     if (!empty($_GET)) {
         $query = '?' . http_build_query($_GET);
@@ -284,11 +284,11 @@ function generateNavigation($tpl)
         if ($page->isVisible()) {
             $tpl->assign([
                 'HREF' => $page->getHref(),
-                'CLASS' => $page->getClass() . (($_SESSION['show_main_menu_labels']) ? ' show_labels' : ''),
+                'CLASS' => $page->getClass() . ((@$_SESSION['show_main_menu_labels']) ? ' show_labels' : ''),
                 'IS_ACTIVE_CLASS' => ($page->isActive(true)) ? 'active' : 'dummy',
                 'TARGET' => ($page->getTarget()) ? tohtml($page->getTarget()) : '_self',
                 'MAIN_MENU_LABEL_TOOLTIP' => tohtml($page->getLabel(), 'htmlAttr'),
-                'MAIN_MENU_LABEL' => ($_SESSION['show_main_menu_labels']) ? tohtml($page->getLabel()) : ''
+                'MAIN_MENU_LABEL' => (@$_SESSION['show_main_menu_labels']) ? tohtml($page->getLabel()) : ''
             ]);
 
             // Add page to main menu

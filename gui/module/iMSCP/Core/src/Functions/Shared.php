@@ -29,27 +29,22 @@
  * This file contains functions that are used at many level (eg. admin, reseller, client)
  */
 
-/***********************************************************************************************************************
- * Account functions
- */
-
 /**
- * Returns user name matching identifier
+ * Returns username matching identifier
  *
- * @param  int $user_id User unique identifier
+ * @param int $userId User unique identifier
  * @return string Username
  */
-function get_user_name($user_id)
+function getUsername($userId)
 {
-    $query = "SELECT `admin_name` FROM `admin` WHERE `admin_id` = ?";
-    $stmt = exec_query($query, $user_id);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    return $row['admin_name'];
-}
+    $stmt = exec_query('SELECT `admin_name` FROM `admin` WHERE `admin_id` = ?', $userId);
 
-/***********************************************************************************************************************
- * Domain related functions
- */
+    if (!$stmt->rowCount()) {
+        throw new RuntimeException(sprintf('Could not find username of user with ID: %s', $userId));
+    }
+
+    return $stmt->fetch(PDO::FETCH_ASSOC)['admin_name'];
+}
 
 /**
  * Checks if the given domain name already exist
@@ -72,22 +67,19 @@ function imscp_domain_exists($domainName, $resellerId)
     $domainName = encode_idna($domainName);
 
     // Does the domain already exist in the domain table?
-    $stmt = exec_query('SELECT COUNT(domain_id) AS cnt FROM domain WHERE domain_name = ?', $domainName);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = exec_query('SELECT COUNT(*) AS cnt FROM domain WHERE domain_name = ?', $domainName);
 
-    if ($row['cnt']) {
+    if ($stmt->fetch(PDO::FETCH_ASSOC)['cnt'] > 0) {
         return true;
     }
 
     // Does the domain already exists in the domain_aliasses table?
     $stmt = exec_query(
-        'SELECT COUNT(alias_id) AS cnt FROM domain_aliasses INNER JOIN domain USING(domain_id) WHERE alias_name = ?',
+        'SELECT COUNT(*) AS cnt FROM domain_aliasses INNER JOIN domain USING(domain_id) WHERE alias_name = ?',
         $domainName
     );
 
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($row['cnt']) {
+    if ($stmt->fetch(PDO::FETCH_ASSOC)['cnt'] > 0) {
         return true;
     }
 
@@ -95,7 +87,7 @@ function imscp_domain_exists($domainName, $resellerId)
 
     $queryDomain = '
         SELECT
-            COUNT(domain_id) AS cnt
+            COUNT(*) AS cnt
         FROM
             domain
         INNER JOIN
@@ -108,7 +100,7 @@ function imscp_domain_exists($domainName, $resellerId)
 
     $queryAliases = '
         SELECT
-            COUNT(alias_id) AS cnt
+            COUNT(*) AS cnt
         FROM
             domain_aliasses
         INNER JOIN
@@ -130,26 +122,21 @@ function imscp_domain_exists($domainName, $resellerId)
 
         // Execute query the redefined queries for domains/accounts and aliases tables
         $stmt = exec_query($queryDomain, [$parentDomain, $resellerId]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($row['cnt']) {
+        if ($stmt->fetch(PDO::FETCH_ASSOC)['cnt'] > 0) {
             return true;
         }
 
         $stmt = exec_query($queryAliases, [$parentDomain, $resellerId]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($row['cnt']) {
+        if ($stmt->fetch(PDO::FETCH_ASSOC)['cnt'] > 0) {
             return true;
         }
     }
 
     // Does the domain already exists as subdomain?
-
     $stmt = exec_query(
         "
             SELECT
-                'found'
+                COUNT(*) AS cnt
             FROM
                 subdomain
             INNER JOIN
@@ -160,14 +147,14 @@ function imscp_domain_exists($domainName, $resellerId)
         $domainName
     );
 
-    if ($stmt->rowCount()) {
+    if ($stmt->fetch(PDO::FETCH_ASSOC)['cnt'] > 0) {
         return true;
     }
 
     $stmt = exec_query(
         "
             SELECT
-                'found'
+                COUNT(*) AS cnt
             FROM
                 subdomain_alias
             INNER JOIN
@@ -178,7 +165,7 @@ function imscp_domain_exists($domainName, $resellerId)
         $domainName
     );
 
-    if ($stmt->rowCount()) {
+    if ($stmt->fetch(PDO::FETCH_ASSOC)['cnt'] > 0) {
         return true;
     }
 
@@ -1185,10 +1172,6 @@ function sub_records_rlike_count($field, $table, $where, $value, $subfield, $sub
     return $result;
 }
 
-/***********************************************************************************************************************
- * Reseller related functions
- */
-
 /**
  * Returns properties for the given reseller
  *
@@ -1250,10 +1233,6 @@ function update_reseller_props($resellerId, $props)
         ]
     );
 }
-
-/***********************************************************************************************************************
- * Mail functions
- */
 
 /**
  * Encode a string to be valid as mail header
@@ -1656,10 +1635,6 @@ function utils_arrayDiffRecursive(array $array1, array $array2)
     return $diff;
 }
 
-/***********************************************************************************************************************
- * Checks functions
- */
-
 /**
  * Checks if all of the characters in the provided string are numerical
  *
@@ -1694,7 +1669,9 @@ function is_basicString($string)
  */
 function is_xhr()
 {
-    return \iMSCP\Core\Application::getInstance()->getRequest()->isXmlHttpRequest();
+    /** @var \Zend\Http\Request $request */
+    $request = \iMSCP\Core\Application::getInstance()->getRequest();
+    return $request->isXmlHttpRequest();
 }
 
 /**
@@ -1786,10 +1763,6 @@ function getBaseUrl()
     $port = getUriPort();
     return getUriScheme() . $_SERVER['SERVER_NAME'] . (($port) ? ':' . $port : '');
 }
-
-/***********************************************************************************************************************
- * Accounting related functions
- */
 
 /**
  * Return usage in percent
@@ -1898,10 +1871,6 @@ function calc_bar_value($value, $value_max, $bar_width)
     return ($ret_value > $bar_width) ? $bar_width : $ret_value;
 
 }
-
-/***********************************************************************************************************************
- * Logging related functions
- */
 
 /**
  * Writes a log message in the database and sends it to the administrator by email according log level
@@ -2040,10 +2009,6 @@ function send_add_user_auto_msg($adminId, $uname, $upass, $uemail, $ufname, $uln
     write_log("{$_SESSION['user_logged']}: Auto Add User To: |$name - $uemail |, From: |$logEntry|, Status: |$mailStatus|!", E_USER_NOTICE);
 }
 
-/***********************************************************************************************************************
- * iMSCP daemon related functions
- */
-
 /**
  * Read an answer from i-MSCP daemon
  *
@@ -2133,15 +2098,12 @@ function send_request()
     return $ret;
 }
 
-/***********************************************************************************************************************
- * Database related functions
- */
-
 /**
  * Executes a SQL statement
  *
  * @param string $query Sql statement to be executed
  * @return \Doctrine\DBAL\Driver\Statement
+ * @deprecated Deprecated since 1.3.0. Please now use the Database service directly.
  */
 function execute_query($query)
 {
@@ -2161,6 +2123,7 @@ function execute_query($query)
  * @param string $query Sql statement
  * @param string|int|array $bind Data to bind to the placeholders
  * @return \Doctrine\DBAL\Driver\Statement
+ * @deprecated Deprecated since 1.3.0. Please now use the Database service directly.
  */
 function exec_query($query, $bind = null)
 {
@@ -2181,6 +2144,7 @@ function exec_query($query, $bind = null)
  *
  * @param  string $identifier Identifier to quote
  * @return string quoted identifier
+ * @deprecated Deprecated since 1.3.0. Please now use the Database service directly.
  */
 function quoteIdentifier($identifier)
 {
@@ -2200,6 +2164,7 @@ function quoteIdentifier($identifier)
  * @param mixed $value Value to quote
  * @param int $parameterType Parameter type
  * @return mixed quoted value
+ * @deprecated Deprecated since 1.3.0. Please now use the Database service directly.
  */
 function quoteValue($value, $parameterType = PDO::PARAM_STR)
 {
@@ -2212,10 +2177,6 @@ function quoteValue($value, $parameterType = PDO::PARAM_STR)
 
     return $db->quote($value, $parameterType);
 }
-
-/***********************************************************************************************************************
- * Unclassified functions
- */
 
 /**
  * Returns a count of items present in a database table with optional search criterias
@@ -2421,6 +2382,10 @@ function getDataTablesPluginTranslations($json = true)
 function showBadRequestErrorPage()
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+
+    /** @var \Zend\Http\Request $request */
+    $request = \iMSCP\Core\Application::getInstance()->getRequest();
+
     $filePath = $cfg['GUI_ROOT_DIR'] . '/public/errordocs/400.html';
     header("Status: 400 Bad Request");
     $response = '';
@@ -2430,7 +2395,7 @@ function showBadRequestErrorPage()
             (
                 strpos($_SERVER['HTTP_ACCEPT'], 'text/html') !== false ||
                 strpos($_SERVER['HTTP_ACCEPT'], 'application/xhtml') !== false
-            ) && !is_xhr()
+            ) && !$request->isXmlHttpRequest()
         ) {
             $response = file_get_contents($filePath);
         } elseif (strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
@@ -2441,10 +2406,10 @@ function showBadRequestErrorPage()
             $response = '<?xml version="1.0" encoding="utf-8"?>';
             $response = $response . '<response><code>400</code>';
             $response = $response . '<message>Bad Request</message></response>';
-        } elseif (!is_xhr()) {
+        } elseif (!$request->isXmlHttpRequest()) {
             include $filePath;
         }
-    } elseif (!is_xhr()) {
+    } elseif (!$request->isXmlHttpRequest()) {
         $response = file_get_contents($filePath);
     }
 
@@ -2463,6 +2428,10 @@ function showBadRequestErrorPage()
 function showNotFoundErrorPage()
 {
     $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+
+    /** @var \Zend\Http\Request $request */
+    $request = \iMSCP\Core\Application::getInstance()->getRequest();
+
     $filePath = $cfg['GUI_ROOT_DIR'] . '/public/errordocs/404.html';
     header("Status: 404 Not Found");
     $response = '';
@@ -2472,7 +2441,7 @@ function showNotFoundErrorPage()
             (
                 strpos($_SERVER['HTTP_ACCEPT'], 'text/html') !== false ||
                 strpos($_SERVER['HTTP_ACCEPT'], 'application/xhtml') !== false
-            ) && !is_xhr()
+            ) && !$request->isXmlHttpRequest()
         ) {
             $response = file_get_contents($filePath);
         } elseif (strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
@@ -2483,10 +2452,10 @@ function showNotFoundErrorPage()
             $response = '<?xml version="1.0" encoding="utf-8"?>';
             $response = $response . '<response><code>404</code>';
             $response = $response . '<message>Not Found</message></response>';
-        } elseif (!is_xhr()) {
+        } elseif (!$request->isXmlHttpRequest()) {
             include $filePath;
         }
-    } elseif (!is_xhr()) {
+    } elseif (!$request->isXmlHttpRequest()) {
         $response = file_get_contents($filePath);
     }
 
@@ -2749,4 +2718,254 @@ function getIpAddr()
     }
 
     return ($ipAddr ? $ipAddr : $_SERVER['REMOTE_ADDR']);
+}
+
+/**
+ * Translate the given mail account type
+ *
+ * @param string $mailAccountType
+ * @return string Translated mail type
+ */
+function translateMailAccountType($mailAccountType)
+{
+    if ($mailAccountType === MT_NORMAL_MAIL) {
+        return tr('Domain mail');
+    }
+
+    if ($mailAccountType === MT_NORMAL_FORWARD) {
+        return tr('Email forward');
+    }
+
+    if ($mailAccountType === MT_ALIAS_MAIL) {
+        return tr('Alias mail');
+    }
+
+    if ($mailAccountType === MT_ALIAS_FORWARD) {
+        return tr('Alias forward');
+    }
+
+    if ($mailAccountType === MT_SUBDOM_MAIL) {
+        return tr('Subdomain mail');
+    }
+
+    if ($mailAccountType === MT_SUBDOM_FORWARD) {
+        return tr('Subdomain forward');
+    }
+
+    if ($mailAccountType === MT_ALSSUB_MAIL) {
+        return tr('Alias subdomain mail');
+    }
+
+    if ($mailAccountType === MT_ALSSUB_FORWARD) {
+        return tr('Alias subdomain forward');
+    }
+
+    if ($mailAccountType === MT_NORMAL_CATCHALL) {
+        return tr('Domain mail');
+    }
+
+    if ($mailAccountType === MT_ALIAS_CATCHALL) {
+        return tr('Domain mail');
+    }
+
+    return tr('Unknown mail type.');
+}
+
+/**
+ * Returns translated gender code
+ *
+ * @param string $code Gender code to be returned
+ * @param bool $nullOnUnknown Tells whether or not null must be returned on unknown code
+ * @return null|string Translated gender or null in some circonstances.
+ */
+function getGenderByCode($code, $nullOnUnknown = false)
+{
+    switch (strtolower($code)) {
+        case 'm':
+        case 'M':
+            return tr('Male');
+        case 'f':
+        case 'F':
+            return tr('Female');
+        default:
+            return (!$nullOnUnknown) ? tr('Unknown') : null;
+    }
+}
+
+/**
+ * Returns count of subdomains for the given domain account
+ *
+ * @param int $domainId Domain account identifier
+ * @return int
+ */
+function getDomainAccountSubdomainsCount($domainId)
+{
+    return exec_query(
+        'SELECT COUNT(*) AS cnt FROM subdomain WHERE domain_id = ?', $domainId
+    )->fetch(
+        PDO::FETCH_ASSOC
+    )['cnt'] + exec_query(
+        '
+            SELECT
+                COUNT(subdomain_alias_id) AS cnt
+            FROM
+                subdomain_alias
+            WHERE
+                alias_id IN (SELECT alias_id FROM domain_aliasses WHERE domain_id = ?)
+        ',
+        $domainId
+    )->fetch(
+        PDO::FETCH_ASSOC
+    )['cnt'];
+}
+
+/**
+ * Returns count of domain aliases for the given domain account
+ *
+ * @param int $domainId Domain account identifier
+ * @return int
+ */
+function getDomainAccountAliasesCount($domainId)
+{
+    return exec_query(
+        'SELECT COUNT(alias_id) AS cnt FROM domain_aliasses WHERE domain_id = ? AND alias_status != ?', [
+        $domainId, 'ordered'
+    ])->fetch(
+        PDO::FETCH_ASSOC
+    )['cnt'];
+}
+
+/**
+ * Returns count information about mail accounts for a specific domain account
+ *
+ * @param int $domainId Domain account identifier
+ * @return array An array holding information about mail account for the given domain account
+ */
+function getDomainAccountMailAccountsCountInfo($domainId)
+{
+    /** @var \Doctrine\DBAL\Connection $db */
+    $db = \iMSCP\Core\Application::getInstance()->getServiceManager()->get('Database');
+    $cfg = \iMSCP\Core\Application::getInstance()->getConfig();
+
+    $query = "
+        SELECT
+            COUNT(mail_id) AS cnt
+        FROM
+            mail_users
+        WHERE
+            mail_type RLIKE ?
+        AND
+            mail_type NOT LIKE ?
+        AND
+            domain_id = ?
+    ";
+
+    if ($cfg['COUNT_DEFAULT_EMAIL_ADDRESSES'] == 0) {
+        $query .=
+            "
+                AND
+                    mail_acc != 'abuse'
+                AND
+                    mail_acc != 'postmaster'
+                AND
+                    mail_acc != 'webmaster'
+            ";
+    }
+
+    $stmt = $db->prepare($query);
+
+    $stmt->execute(['normal_', 'normal_catchall', $domainId]);
+    $dmnMailAcc = $stmt->fetch(PDO::FETCH_ASSOC)['cnt'];
+
+    $stmt->execute(['alias_', 'alias_catchall', $domainId]);
+    $alsMailAcc = $stmt->fetch(PDO::FETCH_ASSOC)['cnt'];
+
+    $stmt->execute(['subdom_', 'subdom_catchall', $domainId]);
+    $subMailAcc = $stmt->fetch(PDO::FETCH_ASSOC)['cnt'];
+
+    $stmt->execute(['alssub_', 'alssub_catchall', $domainId]);
+    $alssubMailAcc = $stmt->fetch(PDO::FETCH_ASSOC)['cnt'];
+
+    return [
+        $dmnMailAcc + $alsMailAcc + $subMailAcc + $alssubMailAcc,
+        $dmnMailAcc,
+        $alsMailAcc,
+        $subMailAcc,
+        $alssubMailAcc
+    ];
+}
+
+/**
+ * Returns count of FTP users for the given customer account
+ *
+ * @param int $customerId Customer identifier
+ * @return int
+ */
+function getCustomerFtpUsersCount($customerId)
+{
+    return exec_query(
+        'SELECT COUNT(userid) AS cnt FROM ftp_users WHERE admin_id = ?', $customerId
+    )->fetch(
+        PDO::FETCH_ASSOC
+    )['cnt'];
+}
+
+/**
+ * Returns count of SQL database for the given domain account
+ *
+ * @param int $domainId Domain account identifier
+ * @return int
+ */
+function getDomainAccountSqlDatabasesCount($domainId)
+{
+    return exec_query(
+        'SELECT COUNT(*) AS cnt FROM sql_database WHERE domain_id = ?', $domainId
+    )->fetch(
+        PDO::FETCH_ASSOC
+    )['cnt'];
+}
+
+/**
+ * Returns count of SQL users for the given domain account
+ *
+ * @param  int $domainId Domain account identifier
+ * @return int Total number of SQL users for a specific domain
+ */
+function getDomainAccountSqlUsersCount($domainId)
+{
+    return exec_query(
+        'SELECT DISTINCT COUNT(*) AS cnt FROM sql_user INNER JOIN sql_database USING(sqld_id) WHERE domain_id = ?',
+        $domainId
+    )->fetch(
+        PDO::FETCH_ASSOC
+    )['cnt'];
+}
+
+/**
+ * Get count of core objects (subdomain, domain aliases, mail accounts, FTP users, SQL datatabases and SQL users) for
+ * the given domain account
+ *
+ * @param  int $domainId Domain unique identifier
+ * @return array
+ */
+function getDomainAccountCoreObjectsCount($domainId)
+{
+    // Transitional query - Will be removed asap
+    $stmt = exec_query('SELECT domain_admin_id FROM domain WHERE domain_id = ?', $domainId);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$stmt->rowCount()) {
+        throw new RuntimeException('Could not retrieve domain owner identitier');
+    }
+
+    $subdomainsCount = getDomainAccountSubdomainsCount($domainId);
+    $domainAliasesCount = getDomainAccountAliasesCount($domainId);
+    $mailAccountsCount = getDomainAccountMailAccountsCountInfo($domainId)[0];
+    $ftpUsersCount = getCustomerFtpUsersCount($row['domain_admin_id']);
+    $sqlDatabasesCount = getDomainAccountSqlDatabasesCount($domainId);
+    $sqlUsersCount = getDomainAccountSqlUsersCount($domainId);
+
+    return [
+        $subdomainsCount, $domainAliasesCount, $mailAccountsCount, $ftpUsersCount, $sqlDatabasesCount, $sqlUsersCount
+    ];
 }

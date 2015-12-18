@@ -30,7 +30,7 @@
  */
 function get_sql_user_count()
 {
-    return execute_query('SELECT DISTINCT sqlu_name FROM sql_user')->rowCount();
+    return execute_query('SELECT DISTINCT COUNT(*) as cnt FROM sql_user')->fetch(PDO::FETCH_ASSOC)['cnt'];
 }
 
 /**
@@ -157,13 +157,13 @@ function generate_reseller_users_props($resellerId)
 /**
  * Generate query for user search form
  *
- * @param  string &$searchQuery
- * @param  string &$countQuery
- * @param  int $startIndex
- * @param  int $rowsPerPage
- * @param  string $searchFor
- * @param  string $searchCommon
- * @param  string $searchStatus
+ * @param string &$searchQuery
+ * @param string &$countQuery
+ * @param int $startIndex
+ * @param int $rowsPerPage
+ * @param string $searchFor
+ * @param string $searchCommon
+ * @param string $searchStatus
  * @return void
  */
 function gen_admin_domain_query(&$searchQuery, &$countQuery, $startIndex, $rowsPerPage, $searchFor, $searchCommon, $searchStatus)
@@ -280,9 +280,11 @@ function systemHasResellers($minNbResellers = 1)
     static $resellersCount = null;
 
     if (null === $resellersCount) {
-        $stmt = exec_query('SELECT COUNT(`admin_id`) AS `count` FROM `admin` WHERE `admin_type` = ?', 'reseller');
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        $resellersCount = $row['count'];
+        $resellersCount = exec_query(
+            'SELECT COUNT(`*`) AS `cnt` FROM `admin` WHERE `admin_type` = ?', 'reseller'
+        )->fetch(
+            PDO::FETCH_ASSOC
+        )['cnt'];
     }
 
     return ($resellersCount >= $minNbResellers);
@@ -299,13 +301,11 @@ function systemHasCustomers($minNbCustomers = 1)
     static $customersCount = null;
 
     if (null === $customersCount) {
-        $stmt = exec_query(
-            'SELECT COUNT(`admin_id`) AS `count` FROM `admin` WHERE `admin_type` = ? AND `admin_status` <> ?',
-            ['user', 'todelete']
-        );
-
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        $customersCount = $row['count'];
+        $customersCount = exec_query(
+            'SELECT COUNT(*) AS `cnt` FROM `admin` WHERE `admin_type` = ? AND `admin_status` <> ?', ['user', 'todelete']
+        )->fetch(
+            PDO::FETCH_ASSOC
+        )['cnt'];
     }
 
     return ($customersCount >= $minNbCustomers);
@@ -349,13 +349,11 @@ function systemHasManyAdmins()
     static $hasManyAdmins = null;
 
     if (null === $hasManyAdmins) {
-        $stmt = exec_query('SELECT `admin_id` FROM `admin` WHERE `admin_type` = ? LIMIT 2', 'admin');
-
-        if ($stmt->rowCount() > 1) {
-            $hasManyAdmins = true;
-        } else {
-            $hasManyAdmins = false;
-        }
+        $hasManyAdmins = (
+            exec_query('SELECT COUNT(*) FROM `admin` WHERE `admin_type` = ? LIMIT 2', 'admin')->fetch(
+                PDO::FETCH_ASSOC
+            )['cnt'] > 1
+        );
     }
 
     return $hasManyAdmins;
