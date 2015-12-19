@@ -46,7 +46,7 @@ class ConfigHandlerFactory
     {
         $configHandlerName = strtolower($configHandlerName);
 
-        if (!array_key_exists($configHandlerName, self::$configHandlerClasses) === false) {
+        if (array_key_exists($configHandlerName, self::$configHandlerClasses) === false) {
             throw new \InvalidArgumentException('Unknown configuration handler adapter');
         }
 
