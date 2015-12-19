@@ -45,17 +45,24 @@ class DevelopmentModeCommand extends Command
     private $configCacheKey;
 
     /**
+     * @var string PHP ini file path
+     */
+    private $phpIniPath;
+
+    /**
      * Constructor
      *
      * @param null|string $configCacheDir
      * @param null|string $configCacheKey
+     * @param string $phpIniPath
      */
-    public function __construct($configCacheDir, $configCacheKey)
+    public function __construct($configCacheDir, $configCacheKey, $phpIniPath)
     {
         parent::__construct('imscp:development:mode');
 
         $this->configCacheDir = $configCacheDir;
         $this->configCacheKey = $configCacheKey;
+        $this->phpIniPath = $phpIniPath;
     }
 
     /**
@@ -217,8 +224,13 @@ EOT
      */
     private function disableOPCache()
     {
-        // TODO Improve this...
-        exec('php5dismod apc opcache xcache 2>/dev/null', $out, $ret);
+        $path = $this->phpIniPath;
+
+        if (empty($path)) {
+            return;
+        }
+
+        exec("sed -i'' -e 's/^\\(\\(apc\\|opcache\\).enabled\\?[[:space:]]\\+=[[:space:]]\\+\\)1/\\10/g' $path", $out);
         exec('service imscp_panel restart 2>/dev/null', $out, $ret);
     }
 
@@ -229,8 +241,14 @@ EOT
      */
     private function enableOPCache()
     {
-        // TODO Improve this...
-        exec('php5enmod apc opcache 2>/dev/null', $out, $ret);
+        $path = $this->phpIniPath;
+
+        if (empty($path)) {
+            return;
+        }
+
+        exec("sed -i'' -e 's/^\\(\\(apc\\|opcache\\).enabled\\?[[:space:]]\\+=[[:space:]]\\+\\)0/\\11/g' $path", $out);
         exec('service imscp_panel restart 2>/dev/null', $out, $ret);
+
     }
 }

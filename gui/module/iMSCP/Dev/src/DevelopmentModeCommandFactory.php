@@ -20,6 +20,7 @@
 
 namespace iMSCP\Dev;
 
+use iMSCP\Core\Config\ConfigHandlerFactory;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -36,6 +37,7 @@ class DevelopmentModeCommandFactory implements FactoryInterface
     {
         $configCacheDir = null;
         $configCacheKey = null;
+        $phpIniPath = null;
 
         if ($serviceLocator->has('ApplicationConfig')) {
             $config = $serviceLocator->get('ApplicationConfig');
@@ -53,6 +55,32 @@ class DevelopmentModeCommandFactory implements FactoryInterface
             }
         }
 
-        return new DevelopmentModeCommand($configCacheDir, $configCacheKey);
+        if ($serviceLocator->has('Config')) {
+            $config = $serviceLocator->get('Config');
+            $phpIniPath = $this->getPhpIniFilePath($config);
+        }
+
+        return new DevelopmentModeCommand($configCacheDir, $configCacheKey, $phpIniPath);
+    }
+
+    /**
+     * Get PHP ini file path
+     *
+     * @param array $config
+     * @return null|string
+     */
+    protected function getPhpIniFilePath($config)
+    {
+        if (isset($config['CONF_DIR']) && file_exists($config['CONF_DIR'] . '/nginx/nginx.data')) {
+            $nginxConfig = ConfigHandlerFactory::factory('file', $config['CONF_DIR'] . '/nginx/nginx.data');
+
+            if (isset($nginxConfig['PHP_STARTER_DIR'])
+                && file_exists($nginxConfig['PHP_STARTER_DIR'] . '/master/php5/php.ini')
+            ) {
+                return $nginxConfig['PHP_STARTER_DIR'] . '/master/php5/php.ini';
+            }
+        }
+
+        return null;
     }
 }
