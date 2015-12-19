@@ -12,7 +12,7 @@ cd /var/www/imscp/gui/bin
 php imscp.php imscp:development:mode enable
 ```
 
-**Note:** Enabling development mode will also clear your module configuation
+**Note:** Enabling development mode will also clear your module configuration
 cache, to allow safely updating dependencies and ensuring any new configuration
 is picked up by your application.
 

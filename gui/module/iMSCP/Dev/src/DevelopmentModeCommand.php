@@ -32,6 +32,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class DevelopmentModeCommand extends Command
 {
     const CONFIG_CACHE_BASE = 'module-config-cache';
+    const MODULE_MAP_CACHE_BASE = 'module-classmap-cache';
 
     /**
      * @var string Configuration cache directory, if any
@@ -47,7 +48,7 @@ class DevelopmentModeCommand extends Command
      * Constructor
      *
      * @param null|string $configCacheDir
-     * @param $configCacheKey
+     * @param null|string $configCacheKey
      */
     public function __construct($configCacheDir, $configCacheKey)
     {
@@ -113,11 +114,11 @@ EOT
         copy('config/development.config.php.dist', 'config/development.config.php');
 
         if (file_exists('config/autoload/development.local.php.dist')) {
-            // optional application config override
             copy('config/autoload/development.local.php.dist', 'config/autoload/development.local.php');
         }
 
         $this->removeConfigCacheFile($this->getConfigCacheFile());
+        $this->removeModuleMapCacheFile($this->getModuleMapCacheFile());
         $this->disableOPCache();
 
         return 'You are now in development mode.';
@@ -133,21 +134,22 @@ EOT
         }
 
         if (file_exists('config/autoload/development.local.php')) {
-            // optional application config override
             unlink('config/autoload/development.local.php');
         }
 
         unlink('config/development.config.php');
+
         $this->removeConfigCacheFile($this->getConfigCacheFile());
+        $this->removeModuleMapCacheFile($this->getModuleMapCacheFile());
         $this->enableOPCache();
 
         return 'Development mode is now disabled.';
     }
 
     /**
-     * Removes the application configuration cache file, if present
+     * Removes the application configuration cache file if present
      *
-     * @param $configCacheFile
+     * @param string $configCacheFile
      */
     private function removeConfigCacheFile($configCacheFile)
     {
@@ -159,15 +161,47 @@ EOT
     /**
      * Retrieve the config cache file, if any
      *
-     * @return false|string
+     * @return null|string
      */
     private function getConfigCacheFile()
     {
         if (empty($this->configCacheDir)) {
-            return false;
+            return null;
         }
 
         $path = sprintf('%s/%s.', $this->configCacheDir, self::CONFIG_CACHE_BASE);
+
+        if (!empty($this->configCacheKey)) {
+            $path .= $this->configCacheKey . '.';
+        }
+
+        return $path . 'php';
+    }
+
+    /**
+     * Removes the module map cache file if present
+     *
+     * @param string $moduleMapCacheFile
+     */
+    private function removeModuleMapCacheFile($moduleMapCacheFile)
+    {
+        if ($moduleMapCacheFile && file_exists($moduleMapCacheFile)) {
+            unlink($moduleMapCacheFile);
+        }
+    }
+
+    /**
+     * Retrieve the module map cache file, if any
+     *
+     * @return null|string
+     */
+    private function getModuleMapCacheFile()
+    {
+        if (empty($this->configCacheDir)) {
+            return null;
+        }
+
+        $path = sprintf('%s/%s.', $this->configCacheDir, self::MODULE_MAP_CACHE_BASE);
 
         if (!empty($this->configCacheKey)) {
             $path .= $this->configCacheKey . '.';
@@ -193,7 +227,7 @@ EOT
      *
      * @return void
      */
-    public function enableOPCache()
+    private function enableOPCache()
     {
         // TODO Improve this...
         exec('php5enmod apc opcache 2>/dev/null', $out, $ret);
