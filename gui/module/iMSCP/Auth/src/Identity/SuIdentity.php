@@ -18,52 +18,41 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Auth\Identity;
-
-use Zend\Permissions\Rbac\AbstractRole;
+namespace iMSCP\Auth\Identity;
 
 /**
  * Class AuthenticatedIdentity
- * @package iMSCP\Core\Auth\Identity
+ *
+ * As it name suggest, this identity allow an authenticated user 'A' to become
+ * an user 'B' for a session time.
+ *
+ * @package iMSCP\Auth\Identity
  */
-class AuthenticatedIdentity extends AbstractRole implements IdentityInterface
+class SuIdentity extends AuthenticatedIdentity
 {
     /**
-     * @var mixed
+     * @var AuthenticatedIdentity
      */
-    protected $identity;
+    protected $realIdentity;
 
     /**
      * Constructor
      *
-     * @param $identity
+     * @param mixed $identity
+     * @param mixed $realIdentity
      */
-    public function __construct($identity)
+    public function __construct($identity, AuthenticatedIdentity $realIdentity)
     {
-        $this->identity = $identity;
+        parent::__construct($identity);
+
+        $this->realIdentity = $realIdentity;
     }
 
     /**
-     * {@inheritdoc}
+     * @return AuthenticatedIdentity|mixed
      */
-    public function getRoleId()
+    public function getRealIdentity()
     {
-        return $this->name;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getAuthenticationIdentity()
-    {
-        return $this->identity;
-    }
-
-    /**
-     * @param $name
-     */
-    public function setName($name)
-    {
-        $this->name = $name;
+        return $this->realIdentity;
     }
 }

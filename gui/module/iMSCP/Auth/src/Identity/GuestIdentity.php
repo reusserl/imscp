@@ -18,13 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Auth\Identity;
+namespace iMSCP\Auth\Identity;
 
 use Zend\Permissions\Rbac\AbstractRole;
 
 /**
  * Class GuestIdentity
- * @package iMSCP\Core\Auth\Identity
+ * @package iMSCP\Auth\Identity
  */
 class GuestIdentity extends AbstractRole implements IdentityInterface
 {

@@ -18,21 +18,52 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Auth\Identity;
+namespace iMSCP\Auth\Identity;
 
-use Zend\Permissions\Acl\Role\RoleInterface as AclRoleInterface;
-use Zend\Permissions\Rbac\RoleInterface as RbacRoleInterface;
+use Zend\Permissions\Rbac\AbstractRole;
 
 /**
- * Interface IdentityInterface
- * @package iMSCP\Core\Auth\Identity
+ * Class AuthenticatedIdentity
+ * @package iMSCP\Auth\Identity
  */
-interface IdentityInterface extends AclRoleInterface, RbacRoleInterface
+class AuthenticatedIdentity extends AbstractRole implements IdentityInterface
 {
     /**
-     * Get authenticated identity
-     *
-     * @return IdentityInterface
+     * @var mixed
      */
-    public function getAuthenticationIdentity();
+    protected $identity;
+
+    /**
+     * Constructor
+     *
+     * @param $identity
+     */
+    public function __construct($identity)
+    {
+        $this->identity = $identity;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getRoleId()
+    {
+        return $this->name;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getAuthenticationIdentity()
+    {
+        return $this->identity;
+    }
+
+    /**
+     * @param $name
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+    }
 }
