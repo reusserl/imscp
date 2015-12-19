@@ -18,18 +18,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Auth;
+namespace iMSCP\Auth;
 
+use iMSCP\Auth\Identity\AuthenticatedIdentity;
+use iMSCP\Auth\Identity\GuestIdentity;
+use iMSCP\Auth\Identity\IdentityInterface;
 use iMSCP\Core\ApplicationEvent;
-use iMSCP\Core\Auth\Identity\AuthenticatedIdentity;
-use iMSCP\Core\Auth\Identity\GuestIdentity;
-use iMSCP\Core\Auth\Identity\IdentityInterface;
 use iMSCP\Core\Events;
-use Zend\Authentication\AuthenticationServiceInterface;
-use Zend\Authentication\Result as AuthResult;
 use Zend\EventManager\EventManagerInterface;
 use Zend\EventManager\ListenerAggregateInterface;
 use Zend\EventManager\ListenerAggregateTrait;
+use Zend\Http\PhpEnvironment\Response as HttpResponse;
 use Zend\Http\Request as HttpRequest;
 use Zend\Http\Request;
 use Zend\Stdlib\ResponseInterface as Response;
@@ -41,11 +40,6 @@ use Zend\Stdlib\ResponseInterface as Response;
 class ScriptStartListener implements ListenerAggregateInterface
 {
     use ListenerAggregateTrait;
-
-    /**
-     * @var AuthenticationService
-     */
-    protected $authentication;
 
     /**
      * @var EventManagerInterface
@@ -60,14 +54,15 @@ class ScriptStartListener implements ListenerAggregateInterface
     /**
      * Constructor
      *
-     * @param $authEvent $mvcAuthEvent
-     * @param AuthenticationServiceInterface $authentication
+     * @param AuthEvent $authEvent $mvcAuthEvent
+     * @param EventManagerInterface $events
      */
-    public function __construct(AuthEvent $authEvent, AuthenticationServiceInterface $authentication)
+    public function __construct(AuthEvent $authEvent, EventManagerInterface $events)
     {
         $authEvent->setTarget($this);
+
         $this->authEvent = $authEvent;
-        $this->authentication = $authentication;
+        $this->events = $events;
     }
 
     /**
@@ -75,7 +70,6 @@ class ScriptStartListener implements ListenerAggregateInterface
      */
     public function attach(EventManagerInterface $events)
     {
-        $this->events = $events;
         $this->listeners[] = $events->attach(
             [
                 Events::onLoginScriptStart, Events::onLostPasswordScriptStart, Events::onAdminScriptStart,
@@ -118,64 +112,60 @@ class ScriptStartListener implements ListenerAggregateInterface
      *
      * @trigger AuthEvent::onAuthentication
      * @param ApplicationEvent $appEvent
-     * @return null|Response
+     * @return void
      */
     public function authentication(ApplicationEvent $appEvent)
     {
         /** @var Request $request */
         $request = $appEvent->getRequest();
         if (!$request instanceof HttpRequest || $request->isOptions()) {
-            return null;
+            return;
         }
 
         $authEvent = $this->authEvent;
+        $authService = $authEvent->getAuthenticationService();
 
-        // if We have already an authenticated identity, return immediately
-        //if($mvcAuthEvent->getIdentity() instanceof AuthenticatedIdentity) {
-        //   return $mvcAuthEvent->getAuthenticationService()->getIdentity();
-        //}
-
-        // Triggers the onAuthentication event until we get an identity, an authentication result, or a response
-        $responses = $this->events->trigger($authEvent::onAuthentication, $authEvent, function ($r) {
-            return (
-                $r instanceof IdentityInterface ||
-                $r instanceof AuthResult ||
-                $r instanceof Response
-            );
+        // Triggers the authEvent::onAuthentication event until we get an
+        // identity or a response
+        $responses = $this->events->trigger(authEvent::onAuthentication, $authEvent, function ($r) {
+            return ($r instanceof IdentityInterface || $r instanceof Response);
         });
 
         $result = $responses->last();
 
-        // If we have a response, return immediately
+        // If we have a response, send it immediately
+        // TODO: In v2.0.0, we will have to return the response instead (MVC).
         if ($result instanceof Response) {
-            return $result;
+            if (!$result instanceof HttpResponse) {
+                $result = (new HttpResponse())->fromString((string)$result);
+            }
+
+            $result->send();
+            return;
         }
 
         // If we have a identity, store it
         if ($result instanceof IdentityInterface) {
-            $storage = $this->authentication->getStorage();
+            $storage = $authService->getStorage();
             $storage->write($result);
         }
 
-        // If we have an authentication result, we create an authenticated identity from it
-        if ($result instanceof AuthResult && $result->isValid()) {
-            $authEvent->setAuthenticationResult($result);
-            $authEvent->setIdentity(new AuthenticatedIdentity($result->getIdentity()));
-            return null;
-        }
-
-        $identity = $this->authentication->getIdentity();
+        $identity = $authService->getIdentity();
         if ($identity === null && !$authEvent->hasAuthenticationResult()) {
-            // If there is no authenticated identity nor an authentication result, it is safe to assume we have a guest
+            // If there is no authenticated identity nor an authentication
+            // result, it is safe to assume we have a guest
             $authEvent->setIdentity(new GuestIdentity());
             return null;
         }
 
         if ($authEvent->hasAuthenticationResult() && $authEvent->getAuthenticationResult()->isValid()) {
-            $authEvent->setIdentity(new AuthenticatedIdentity($authEvent->getAuthenticationResult()->getIdentity()));
+            $authEvent->setIdentity(new AuthenticatedIdentity(
+                $authEvent->getAuthenticationResult()->getIdentity()
+            ));
         }
 
         if ($identity instanceof IdentityInterface) {
+            // Store identity in storage
             $authEvent->setIdentity($identity);
             return null;
         }
