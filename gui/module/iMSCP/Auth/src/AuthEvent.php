@@ -18,11 +18,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Auth;
+namespace iMSCP\Auth;
 
+use iMSCP\Auth\Authorization\AuthorizationInterface;
+use iMSCP\Auth\Identity\IdentityInterface;
 use iMSCP\Core\ApplicationEvent;
-use iMSCP\Core\Auth\Authorization\AuthorizationInterface;
-use iMSCP\Core\Auth\Identity\IdentityInterface;
 use Zend\Authentication\AuthenticationService;
 use Zend\Authentication\AuthenticationServiceInterface;
 use Zend\Authentication\Result as AuthResult;
@@ -30,7 +30,7 @@ use Zend\EventManager\Event;
 
 /**
  * Class AuthEvent
- * @package iMSCP\Core\Authentication
+ * @package iMSCP\Auth\Authentication
  */
 class AuthEvent extends Event
 {
