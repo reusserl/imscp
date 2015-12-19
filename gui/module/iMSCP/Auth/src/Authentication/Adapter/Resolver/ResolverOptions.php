@@ -18,36 +18,30 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Auth\Authentication\Adapter\Resolver;
+namespace iMSCP\Auth\Authentication\Adapter\Resolver;
+
+use Zend\Stdlib\AbstractOptions;
 
 /**
- * Interface ResolverInterface
- * @package iMSCP\Core\Auth\Authentication\Adapter\Resolver
+ * Class ResolverOptions
+ * @package iMSCP\Auth\Authentication\Adapter\Resolver
  */
-interface ResolverInterface
+class ResolverOptions extends AbstractOptions
 {
     /**
-     * Set options
-     *
-     * @param array|\Traversable|ResolverOptions $options
-     * @return ResolverInterface Fluent interface
+     * @var ResolverInterface The resolver that uses this instance
      */
-    public function setOptions($options);
+    protected $resolver;
 
     /**
-     * Get options
+     * Sets the resolver that uses this instance
      *
-     * @return ResolverInterface
+     * @param ResolverInterface $resolver
+     * @return ResolverOptions
      */
-    public function getOptions();
-
-    /**
-     * Resolve authentication credentials by looking up client's identity in
-     * a data store.
-     *
-     * @param string $identity
-     * @param string $credential
-     * @return mixed Resolved credentials, FALSE otherwise
-     */
-    public function resolve($identity, $credential);
+    public function setResolver(ResolverInterface $resolver)
+    {
+        $this->resolver = $resolver;
+        return $this;
+    }
 }

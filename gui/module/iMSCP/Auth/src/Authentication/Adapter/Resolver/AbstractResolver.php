@@ -18,11 +18,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Auth\Authentication\Adapter\Resolver;
+namespace iMSCP\Auth\Authentication\Adapter\Resolver;
 
 /**
  * Class AbstractResolver
- * @package iMSCP\Core\Auth\Authentication\Adapter\Resolver
+ * @package iMSCP\Auth\Authentication\Adapter\Resolver
  */
 abstract class AbstractResolver implements ResolverInterface
 {

@@ -18,30 +18,41 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Auth\Authentication\Adapter\Resolver;
-
-use Zend\Stdlib\AbstractOptions;
+namespace iMSCP\Auth\Authentication\Adapter\Resolver;
 
 /**
- * Class ResolverOptions
- * @package iMSCP\Core\Auth\Authentication\Adapter\Resolver
+ * Class ResolverChain
+ * @package iMSCP\Auth\Authentication\Adapter\Resolver
  */
-class ResolverOptions extends AbstractOptions
+class ResolverChain extends AbstractResolver implements ResolverChainInterface
 {
     /**
-     * @var ResolverInterface The resolver that uses this instance
+     * @var ResolverInterface[]
      */
-    protected $resolver;
+    protected $resolvers;
 
     /**
-     * Sets the resolver that uses this instance
-     *
-     * @param ResolverInterface $resolver
-     * @return ResolverOptions
+     * {@inheritdoc}
      */
-    public function setResolver(ResolverInterface $resolver)
+    public function addResolver(ResolverInterface $resolver)
     {
-        $this->resolver = $resolver;
+        $this->resolvers[] = $resolver;
         return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function resolve($identity, $credential)
+    {
+        foreach ($this->resolvers as $resolver) {
+            $credentials = $resolver->resolve($identity, $credential);
+
+            if (false !== $credentials) {
+                return $credentials;
+            }
+        }
+
+        return false;
     }
 }

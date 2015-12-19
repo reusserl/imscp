@@ -18,41 +18,19 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Auth\Authentication\Adapter\Resolver;
+namespace iMSCP\Auth\Authentication\Adapter\Resolver;
 
 /**
- * Class ResolverChain
- * @package iMSCP\Core\Auth\Authentication\Adapter\Resolver
+ * Interface ResolverChainInterface
+ * @package iMSCP\Auth\Authentication\Adapter\Resolver
  */
-class ResolverChain extends AbstractResolver implements ResolverChainInterface
+interface ResolverChainInterface extends ResolverInterface
 {
     /**
-     * @var ResolverInterface[]
+     * Add a credentials resolver in the chain
+     *
+     * @param ResolverInterface $resolver
+     * @return self
      */
-    protected $resolvers;
-
-    /**
-     * {@inheritdoc}
-     */
-    public function addResolver(ResolverInterface $resolver)
-    {
-        $this->resolvers[] = $resolver;
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function resolve($identity, $credential)
-    {
-        foreach ($this->resolvers as $resolver) {
-            $credentials = $resolver->resolve($identity, $credential);
-
-            if (false !== $credentials) {
-                return $credentials;
-            }
-        }
-
-        return false;
-    }
+    public function addResolver(ResolverInterface $resolver);
 }

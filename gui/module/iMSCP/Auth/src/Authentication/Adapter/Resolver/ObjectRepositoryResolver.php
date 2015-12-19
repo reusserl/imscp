@@ -17,11 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-namespace iMSCP\Core\Auth\Authentication\Adapter\Resolver;
+
+namespace iMSCP\Auth\Authentication\Adapter\Resolver;
 
 /**
  * Class ObjectRepositoryResolver
- * @package iMSCP\Core\Auth\Authentication\Adapter\Resolver
+ * @package iMSCP\Auth\Authentication\Adapter\Resolver
  */
 class ObjectRepositoryResolver extends AbstractResolver
 {
@@ -43,8 +44,7 @@ class ObjectRepositoryResolver extends AbstractResolver
         }
 
         $options = $this->getOptions();
-        $identityRepository = $options->getObjectManager()->getRepository($options->getIdentityClass());
-        $identity = $identityRepository->findOneBy([$options->getIdentityProperty() => $identity]);
+        $identity = $options->getObjectRepository()->findOneBy([$options->getIdentityProperty() => $identity]);
 
         if (!$identity) {
             return false;

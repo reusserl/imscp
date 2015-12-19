@@ -18,19 +18,36 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Auth\Authentication\Adapter\Resolver;
+namespace iMSCP\Auth\Authentication\Adapter\Resolver;
 
 /**
- * Interface ResolverChainInterface
- * @package iMSCP\Core\Auth\Authentication\Adapter\Resolver
+ * Interface ResolverInterface
+ * @package iMSCP\Auth\Authentication\Adapter\Resolver
  */
-interface ResolverChainInterface extends ResolverInterface
+interface ResolverInterface
 {
     /**
-     * Add a credentials resolver in the chain
+     * Set options
      *
-     * @param ResolverInterface $resolver
-     * @return self
+     * @param array|\Traversable|ResolverOptions $options
+     * @return ResolverInterface Fluent interface
      */
-    public function addResolver(ResolverInterface $resolver);
+    public function setOptions($options);
+
+    /**
+     * Get options
+     *
+     * @return ResolverInterface
+     */
+    public function getOptions();
+
+    /**
+     * Resolve authentication credentials by looking up client's identity in
+     * a data store.
+     *
+     * @param string $identity
+     * @param string $credential
+     * @return mixed Resolved credentials, FALSE otherwise
+     */
+    public function resolve($identity, $credential);
 }

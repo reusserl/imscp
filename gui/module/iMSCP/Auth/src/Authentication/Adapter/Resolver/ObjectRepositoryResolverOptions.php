@@ -18,19 +18,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Auth\Authentication\Adapter\Resolver;
+namespace iMSCP\Auth\Authentication\Adapter\Resolver;
+
 use Doctrine\Common\Persistence\ObjectManager;
+use Doctrine\Common\Persistence\ObjectRepository;
 
 /**
  * Class ObjectRepositoryResolverOptions
- * @package iMSCP\Core\Auth\Options
+ * @package iMSCP\Auth\Options
  */
 class ObjectRepositoryResolverOptions extends ResolverOptions
 {
     /**
-     * @var ObjectManager
+     * Either an ObjectManager object or a string used to retrieve an
+     * ObjectManager object from the service locator
+     *
+     * @var string|ObjectManager
      */
     protected $objectManager;
+
+    /**
+     * @var ObjectRepository
+     */
+    protected $objectRepository;
 
     /**
      * @var string Identity class
@@ -60,13 +70,37 @@ class ObjectRepositoryResolverOptions extends ResolverOptions
     /**
      * Set object manager
      *
-     * @param ObjectManager $objectManager
+     * @param string|ObjectManager $objectManager
      * @return $this
      */
     public function setObjectManager($objectManager)
     {
         $this->objectManager = $objectManager;
         return $this;
+    }
+
+    /**
+     * Set object repository
+     *
+     * @return ObjectRepository
+     */
+    public function getObjectRepository()
+    {
+        if ($this->objectRepository) {
+            return $this->objectRepository;
+        }
+
+        return $this->objectManager->getRepository($this->identityClass);
+    }
+
+    /**
+     * Get object repository
+     *
+     * @param ObjectRepository $objectRepository
+     */
+    public function setObjectRepository($objectRepository)
+    {
+        $this->objectRepository = $objectRepository;
     }
 
     /**
