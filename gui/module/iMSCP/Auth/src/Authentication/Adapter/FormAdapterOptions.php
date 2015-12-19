@@ -18,15 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Auth\Options;
+namespace iMSCP\Auth\Authentication\Adapter;
 
-use Zend\Stdlib\AbstractOptions;
+use iMSCP\Auth\Authentication\Adapter\Resolver\ResolverInterface;
 
 /**
  * Class FormAdapterOptions
- * @package iMSCP\Core\Auth\Options
+ * @package iMSCP\Auth\Options
  */
-class FormAdapterOptions extends AbstractOptions
+class FormAdapterOptions extends AdapterOptions
 {
     /**
      * @var string identity field
@@ -39,14 +39,24 @@ class FormAdapterOptions extends AbstractOptions
     protected $credentialField;
 
     /**
-     * @var array Credential format
+     * @var string CSRF token field
+     */
+    protected $csrfTokenField;
+
+    /**
+     * @var int CSRF token timeout
+     */
+    protected $csrfTokenTimeout = 240;
+
+    /**
+     * @var array Credential formats
      */
     protected $credentialFormats;
 
     /**
-     * @var string resolver configuration key
+     * @var ResolverInterface
      */
-    protected $resolver;
+    protected $credentialResolver;
 
     /**
      * Get identity field
@@ -122,10 +132,10 @@ class FormAdapterOptions extends AbstractOptions
      */
     public function setCredentialFormats(array $credentialFormats)
     {
-        $supportedFormats = ['apr1', 'crypt', 'md5', 'sha1'];
+        $supportedFormats = ['apr1', 'clear', 'crypt', 'md5', 'sha1'];
         if (array_intersect($credentialFormats, $supportedFormats) != $credentialFormats) {
             throw new \InvalidArgumentException(sprintf(
-                'Unsupported credential format(s). Supported formats are: %s', implode(' ', $supportedFormats)
+                'Unsupported credential format(s). Supported formats: %s', implode(', ', $supportedFormats)
             ));
         }
 
@@ -134,20 +144,80 @@ class FormAdapterOptions extends AbstractOptions
     }
 
     /**
+     * Get CSRF token field
+     *
      * @return string
      */
-    public function getResolver()
+    public function getCsrfTokenField()
     {
-        return $this->resolver;
+        return $this->csrfTokenField;
     }
 
     /**
-     * @param string $resolver
+     * Set CSRF token field
+     *
+     * @param string $csrfTokenField
      * @return $this
      */
-    public function setResolver($resolver)
+    public function setCsrfTokenField($csrfTokenField)
     {
-        $this->resolver = $resolver;
+        if (!is_string($csrfTokenField) || $csrfTokenField === '') {
+            throw new \InvalidArgumentException(
+                sprintf('Provided $csrfTokenField is invalid, %s given', gettype($csrfTokenField))
+            );
+        }
+
+        $this->csrfTokenField = $csrfTokenField;
+        return $this;
+    }
+
+    /**
+     * Get CSRF token timeout
+     *
+     * @return int
+     */
+    public function getCsrfTokenTimeout()
+    {
+        return $this->csrfTokenTimeout;
+    }
+
+    /**
+     * Set CSRF token timeout
+     *
+     * @param int $csrfTokenTimeout
+     * @return $this
+     */
+    public function setCsrfTokenTimeout($csrfTokenTimeout)
+    {
+        if (!is_int($csrfTokenTimeout) || $csrfTokenTimeout === '') {
+            throw new \InvalidArgumentException(
+                sprintf('Provided $csrfTokenTimeout is invalid, %s given', gettype($csrfTokenTimeout))
+            );
+        }
+
+        $this->csrfTokenTimeout = $csrfTokenTimeout;
+        return $this;
+    }
+
+    /**
+     * Get resolver
+     *
+     * @return ResolverInterface
+     */
+    public function getCredentialResolver()
+    {
+        return $this->credentialResolver;
+    }
+
+    /**
+     * Set resolver
+     *
+     * @param ResolverInterface $credentialResolver
+     * @return $this
+     */
+    public function setCredentialResolver(ResolverInterface $credentialResolver)
+    {
+        $this->credentialResolver = $credentialResolver;
         return $this;
     }
 }

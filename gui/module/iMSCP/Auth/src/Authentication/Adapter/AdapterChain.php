@@ -18,26 +18,51 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace iMSCP\Core\Auth\Authentication;
+namespace iMSCP\Auth\Authentication\Adapter;
 
-use iMSCP\Core\Auth\AuthEvent;
-use iMSCP\Core\Auth\Identity\IdentityInterface;
+use iMSCP\Auth\AuthEvent;
+use iMSCP\Auth\Identity\IdentityInterface;
 use Zend\Http\Request;
 use Zend\Http\Response;
 
 /**
- * Interface AdapterInterface
- * @package iMSCP\Core\Auth\Authentication
+ * Class AdapterChain
+ * @package iMSCP\Auth\Authentication\Adapter
  */
-interface AdapterInterface
+class AdapterChain extends AbstractAdapter implements AdapterChainInterface
 {
+    /**
+     * @var AdapterInterface[]
+     */
+    protected $adapters;
+
+    /**
+     * Add an authentication adapter in the chain
+     *
+     * @param AdapterInterface $adapter
+     * @return self
+     */
+    public function addAdapter(AdapterInterface $adapter)
+    {
+        $this->adapters[] = $adapter;
+    }
+
     /**
      * Whether or not the adapter can handle the given authentication type
      *
      * @param string $authType Authentication type
      * @return bool
      */
-    public function canHandleAuthType($authType);
+    public function canHandleAuthType($authType)
+    {
+        foreach ($this->adapters as $adapter) {
+            if ($adapter->canHandleAuthType($authType)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * Determine the authentication type based on request information
@@ -45,7 +70,16 @@ interface AdapterInterface
      * @param Request $request
      * @return null|string
      */
-    public function getAuthTypeFromRequest(Request $request);
+    public function getAuthTypeFromRequest(Request $request)
+    {
+        foreach ($this->adapters as $adapter) {
+            if (null !== ($authType = $adapter->getAuthTypeFromRequest($request))) {
+                return $authType;
+            }
+        }
+
+        return null;
+    }
 
     /**
      * Perform pre-flight authenticationt tasks
@@ -56,7 +90,12 @@ interface AdapterInterface
      * @param Response $response
      * @return void
      */
-    public function preAuth(Request $request, Response $response);
+    public function preAuth(Request $request, Response $response)
+    {
+        foreach ($this->adapters as $adapter) {
+            $adapter->preAuth($request, $response);
+        }
+    }
 
     /**
      * Attempts to authenticate the current request
@@ -64,7 +103,12 @@ interface AdapterInterface
      * @param Request $request
      * @param Response $response
      * @param AuthEvent $authEvent
-     * @return false|IdentityInterface An IdentityInterface object, FALSE on failure
+     * @return false|Response|IdentityInterface An IdentityInterface object, FALSE on failure
      */
-    public function authenticate(Request $request, Response $response, AuthEvent $authEvent);
+    public function authenticate(Request $request, Response $response, AuthEvent $authEvent)
+    {
+        foreach($this->adapters as $adapter) {
+
+        }
+    }
 }
