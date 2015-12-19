@@ -230,8 +230,8 @@ EOT
             return;
         }
 
-        exec("sed -i'' -e 's/^\\(\\(apc\\|opcache\\).enabled\\?[[:space:]]\\+=[[:space:]]\\+\\)1/\\10/g' $path", $out);
-        exec('service imscp_panel restart 2>/dev/null', $out, $ret);
+        exec("sed -i'' -e 's/^\\(\\(apc\\|opcache\\).enabled\\?[[:space:]]\\+=[[:space:]]\\+\\)1/\\10/g' $path");
+        exec('service imscp_panel restart 2>/dev/null');
     }
 
     /**
@@ -247,8 +247,7 @@ EOT
             return;
         }
 
-        exec("sed -i'' -e 's/^\\(\\(apc\\|opcache\\).enabled\\?[[:space:]]\\+=[[:space:]]\\+\\)0/\\11/g' $path", $out);
-        exec('service imscp_panel restart 2>/dev/null', $out, $ret);
-
+        exec("sed -i'' -e 's/^\\(\\(apc\\|opcache\\).enabled\\?[[:space:]]\\+=[[:space:]]\\+\\)0/\\11/g' $path");
+        exec('service imscp_panel restart 2>/dev/null');
     }
 }
