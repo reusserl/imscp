@@ -126,7 +126,9 @@ EOT
 
         $this->removeConfigCacheFile($this->getConfigCacheFile());
         $this->removeModuleMapCacheFile($this->getModuleMapCacheFile());
-        $this->disableOPCache();
+        $this->disableOpcodeCache();
+        $this->dumpComposerAutoloader();
+        $this->restartPanelService();
 
         return 'You are now in development mode.';
     }
@@ -148,7 +150,9 @@ EOT
 
         $this->removeConfigCacheFile($this->getConfigCacheFile());
         $this->removeModuleMapCacheFile($this->getModuleMapCacheFile());
-        $this->enableOPCache();
+        $this->enableOpcodeCache();
+        $this->dumpComposerAutoloader(true);
+        $this->restartPanelService();
 
         return 'Development mode is now disabled.';
     }
@@ -218,11 +222,11 @@ EOT
     }
 
     /**
-     * Disable opcode cache if any
+     * Disable opcode cache if any (For the i-MSCP Frontend only)
      *
      * @return void
      */
-    private function disableOPCache()
+    private function disableOpcodeCache()
     {
         $path = $this->phpIniPath;
 
@@ -231,15 +235,14 @@ EOT
         }
 
         exec("sed -i'' -e 's/^\\(\\(apc\\|opcache\\).enabled\\?[[:space:]]\\+=[[:space:]]\\+\\)1/\\10/g' $path");
-        exec('service imscp_panel restart 2>/dev/null');
     }
 
     /**
-     * Enable opcode cache if any
+     * Enable opcode cache if any (For the i-MSCP Frontend only)
      *
      * @return void
      */
-    private function enableOPCache()
+    private function enableOpcodeCache()
     {
         $path = $this->phpIniPath;
 
@@ -248,6 +251,33 @@ EOT
         }
 
         exec("sed -i'' -e 's/^\\(\\(apc\\|opcache\\).enabled\\?[[:space:]]\\+=[[:space:]]\\+\\)0/\\11/g' $path");
+    }
+
+    /**
+     * Dump composer autoloader
+     *
+     * @param bool|false $classmapAuthoritative Wheter or not to autoload classes from the classmap only.
+     */
+    private function dumpComposerAutoloader($classmapAuthoritative = false)
+    {
+        putenv('COMPOSER_HOME=/var/cache/imscp/packages/.composer');
+
+        $cmd = 'php /var/cache/imscp/packages/composer.phar -d=/var/cache/imscp/packages dumpautoload -q';
+
+        if ($classmapAuthoritative) {
+            $cmd .= ' -a';
+        }
+
+        exec("$cmd 2>/dev/null");
+    }
+
+    /**
+     * Restart i-MSCP panel service (PHP instance)
+     *
+     * @return void
+     */
+    private function restartPanelService()
+    {
         exec('service imscp_panel restart 2>/dev/null');
     }
 }
