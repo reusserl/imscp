@@ -278,9 +278,13 @@ sub addDmn
     my $rs = $self->{'eventManager'}->trigger( 'beforeMtaAddDmn', $data );
     $rs ||= $self->deleteMapEntry( $self->{'config'}->{'MTA_VIRTUAL_DMN_HASH'}, qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );
     $rs ||= $self->deleteMapEntry( $self->{'config'}->{'MTA_RELAY_HASH'}, qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );
+    # remove entry from relay_domains2 file
+    $rs ||= $self->deleteMapEntry( '/etc/postfix/imscp/relay_domains2', qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );
 
     if ($data->{'MAIL_ENABLED'}) { # Mail is managed by this server
         $rs ||= $self->addMapEntry( $self->{'config'}->{'MTA_VIRTUAL_DMN_HASH'}, "$data->{'DOMAIN_NAME'}\tOK" );
+        # create relay_domains2 file for lmtp delivery to localhost
+        $rs ||= $self->addMapEntry( '/etc/postfix/imscp/relay_domains2', "$data->{'DOMAIN_NAME'}\tlmtp:[127.0.0.1]" );
     } elsif ($data->{'EXTERNAL_MAIL'} eq 'on') { # Mail is managed by external server
         $rs ||= $self->addMapEntry( $self->{'config'}->{'MTA_RELAY_HASH'}, "$data->{'DOMAIN_NAME'}\tOK" );
     }
@@ -304,6 +308,8 @@ sub disableDmn
     my $rs = $self->{'eventManager'}->trigger( 'beforeMtaDisableDmn', $data );
     $rs ||= $self->deleteMapEntry( $self->{'config'}->{'MTA_VIRTUAL_DMN_HASH'}, qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );
     $rs ||= $self->deleteMapEntry( $self->{'config'}->{'MTA_RELAY_HASH'}, qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );
+    # remove entry from relay_domains2 file
+    $rs ||= $self->deleteMapEntry( '/etc/postfix/imscp/relay_domains2', qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );
     $rs ||= $self->{'eventManager'}->trigger( 'afterMtaDisableDmn', $data );
 }
 
@@ -323,6 +329,8 @@ sub deleteDmn
     my $rs = $self->{'eventManager'}->trigger( 'beforeMtaDelDmn', $data );
     $rs ||= $self->deleteMapEntry( $self->{'config'}->{'MTA_VIRTUAL_DMN_HASH'}, qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );
     $rs ||= $self->deleteMapEntry( $self->{'config'}->{'MTA_RELAY_HASH'}, qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );
+    # remove entry from relay_domains2 file
+    $rs ||= $self->deleteMapEntry( '/etc/postfix/imscp/relay_domains2', qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );
     $rs ||= iMSCP::Dir->new( dirname => "$self->{'config'}->{'MTA_VIRTUAL_MAIL_DIR'}/$data->{'DOMAIN_NAME'}" )->remove();
     $rs ||= $self->{'eventManager'}->trigger( 'afterMtaDelDmn', $data );
 }
@@ -342,9 +350,13 @@ sub addSub
 
     my $rs = $self->{'eventManager'}->trigger( 'beforeMtaAddSub', $data );
     $rs ||= $self->deleteMapEntry( $self->{'config'}->{'MTA_VIRTUAL_DMN_HASH'}, qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );
+    # remove entry from relay_domains2 file
+    $rs ||= $self->deleteMapEntry( '/etc/postfix/imscp/relay_domains2', qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );    
 
     if($data->{'MAIL_ENABLED'}) {
         $rs ||= $self->addMapEntry( $self->{'config'}->{'MTA_VIRTUAL_DMN_HASH'}, "$data->{'DOMAIN_NAME'}\tOK" );
+        # create relay_domains2 file for lmtp delivery to localhost
+        $rs ||= $self->addMapEntry( '/etc/postfix/imscp/relay_domains2', "$data->{'DOMAIN_NAME'}\tlmtp:[127.0.0.1]" );
     }
 
     $rs ||= $self->{'eventManager'}->trigger( 'afterMtaAddSub', $data );
@@ -365,6 +377,8 @@ sub disableSub
 
     my $rs = $self->{'eventManager'}->trigger( 'beforeMtaDisableSub', $data );
     $rs ||= $self->deleteMapEntry( $self->{'config'}->{'MTA_VIRTUAL_DMN_HASH'}, qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );
+    # remove entry from relay_domains2 file
+    $rs ||= $self->deleteMapEntry( '/etc/postfix/imscp/relay_domains2', qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );    
     $rs ||= $self->{'eventManager'}->trigger( 'afterMtaDisableSub', $data );
 }
 
@@ -383,6 +397,8 @@ sub deleteSub
 
     my $rs = $self->{'eventManager'}->trigger( 'beforeMtaDelSub', $data );
     $rs ||= $self->deleteMapEntry( $self->{'config'}->{'MTA_VIRTUAL_DMN_HASH'}, qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );
+    # remove entry from relay_domains2 file
+    $rs ||= $self->deleteMapEntry( '/etc/postfix/imscp/relay_domains2', qr/\Q$data->{'DOMAIN_NAME'}\E\s+[^\n]*/ );    
     $rs ||= iMSCP::Dir->new( dirname => "$self->{'config'}->{'MTA_VIRTUAL_MAIL_DIR'}/$data->{'DOMAIN_NAME'}" )->remove();
     $rs ||= $self->{'eventManager'}->trigger( 'afterMtaDelSub', $data );
 }
